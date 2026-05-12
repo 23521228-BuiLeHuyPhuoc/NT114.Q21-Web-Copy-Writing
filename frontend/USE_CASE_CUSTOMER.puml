@@ -1,0 +1,79 @@
+@startuml CopyProCustomerUseCase
+title CopyPro - Use Case khách hàng
+
+left to right direction
+
+actor "Khách hàng" as Customer
+
+rectangle "Cổng khách hàng CopyPro" {
+  usecase "Đăng nhập khách hàng" as UC_Login
+  usecase "Xác thực tài khoản" as UC_Authenticate
+  usecase "Xem dashboard" as UC_Dashboard
+  usecase "Quản lý hồ sơ" as UC_Profile
+  usecase "Đổi mật khẩu" as UC_ChangePassword
+  usecase "Cấu hình thông báo" as UC_NotificationSettings
+  usecase "Đăng xuất" as UC_Logout
+
+  usecase "Tạo nội dung AI" as UC_Generate
+  usecase "Áp dụng mẫu khi tạo nội dung" as UC_ApplyTemplate
+  usecase "Lưu nội dung đã tạo" as UC_SaveGeneratedContent
+  usecase "Quản lý nội dung đã tạo" as UC_Contents
+  usecase "Chỉnh sửa nội dung đã lưu" as UC_EditContent
+  usecase "Xuất nội dung" as UC_ExportContent
+  usecase "Quản lý dự án" as UC_Projects
+  usecase "Sử dụng thư viện mẫu" as UC_Templates
+
+  usecase "Tinh chỉnh mô hình" as UC_FineTune
+  usecase "Cung cấp dữ liệu huấn luyện" as UC_ProvideTrainingData
+  usecase "Theo dõi tiến trình huấn luyện" as UC_TrainingProgress
+  usecase "Kiểm tra đạo văn" as UC_Plagiarism
+  usecase "Xem nguồn trùng lặp" as UC_PlagiarismSources
+
+  usecase "Quản lý gói dịch vụ" as UC_Subscription
+  usecase "Thanh toán gói dịch vụ" as UC_PaySubscription
+  usecase "Xem hóa đơn" as UC_Invoices
+  usecase "Tải hóa đơn" as UC_DownloadInvoice
+
+  usecase "Xem thông báo" as UC_Notifications
+  usecase "Đánh dấu thông báo đã đọc" as UC_MarkNotificationRead
+}
+
+Customer --> UC_Login
+Customer --> UC_Dashboard
+Customer --> UC_Profile
+Customer --> UC_Logout
+
+Customer --> UC_Generate
+Customer --> UC_Contents
+Customer --> UC_Projects
+Customer --> UC_Templates
+
+Customer --> UC_FineTune
+Customer --> UC_Plagiarism
+
+Customer --> UC_Subscription
+Customer --> UC_Invoices
+Customer --> UC_Notifications
+
+UC_Login ..> UC_Authenticate : <<include>>
+
+UC_ChangePassword ..> UC_Profile : <<extend>>
+UC_NotificationSettings ..> UC_Profile : <<extend>>
+
+UC_ApplyTemplate ..> UC_Generate : <<extend>>
+UC_SaveGeneratedContent ..> UC_Generate : <<extend>>
+
+UC_EditContent ..> UC_Contents : <<extend>>
+UC_ExportContent ..> UC_Contents : <<extend>>
+
+UC_FineTune ..> UC_ProvideTrainingData : <<include>>
+UC_TrainingProgress ..> UC_FineTune : <<extend>>
+
+UC_PlagiarismSources ..> UC_Plagiarism : <<extend>>
+
+UC_PaySubscription ..> UC_Subscription : <<extend>>
+UC_DownloadInvoice ..> UC_Invoices : <<extend>>
+
+UC_MarkNotificationRead ..> UC_Notifications : <<extend>>
+
+@enduml
