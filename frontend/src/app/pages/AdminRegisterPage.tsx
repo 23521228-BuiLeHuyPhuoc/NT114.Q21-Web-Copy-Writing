@@ -8,18 +8,7 @@ import {
   CheckCircle2, AlertTriangle, ChevronDown,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { ADMIN_ROLES, type AdminRole } from '@/lib/permissions';
-
-const ROLE_OPTIONS = Object.entries(ADMIN_ROLES).map(([key, def]) => ({
-  value: key as AdminRole,
-  label: def.label,
-  description: def.description,
-  color: def.color,
-  textColor: def.textColor,
-  borderColor: def.borderColor,
-  dotColor: def.dotColor,
-  permissions: def.permissions,
-}));
+import { getAdminRoles, type AdminRole } from '@/lib/permissions';
 
 export function AdminRegisterPage() {
   const navigate = useNavigate();
@@ -38,6 +27,16 @@ export function AdminRegisterPage() {
   const [isLoading, setIsLoading]     = useState(false);
   const [success, setSuccess]         = useState(false);
 
+  const ROLE_OPTIONS = Object.entries(getAdminRoles()).map(([key, def]) => ({
+    value: key as AdminRole,
+    label: def.label,
+    description: def.description,
+    color: def.color,
+    textColor: def.textColor,
+    borderColor: def.borderColor,
+    dotColor: def.dotColor,
+    permissions: def.permissions,
+  }));
   const selectedRole = ROLE_OPTIONS.find(r => r.value === adminRole)!;
 
   const passwordStrength = (() => {

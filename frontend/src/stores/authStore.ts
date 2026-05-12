@@ -39,8 +39,10 @@ interface AuthState {
   login: (email: string, password: string) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => void;
+  addUser: (data: Omit<StoredUser, 'id' | 'createdAt'> & { createdAt?: string }) => StoredUser;
   approveAdmin: (id: string) => void;
   rejectAdmin: (id: string) => void;
+  updateUser: (id: string, updates: Partial<Omit<StoredUser, 'id' | 'password' | 'createdAt'>>) => void;
   getPendingAdmins: () => StoredUser[];
   getAllUsers: () => StoredUser[];
 }
@@ -100,6 +102,21 @@ export const useAuthStore = create<AuthState>((set) => ({
     localStorage.removeItem('user');
   },
 
+  addUser: (data) => {
+    const users = getStoredUsers();
+    if (users.find((u) => u.email === data.email)) {
+      throw new Error('Email này đã được sử dụng');
+    }
+
+    const newUser: StoredUser = {
+      ...data,
+      id: Date.now().toString(),
+      createdAt: data.createdAt || new Date().toISOString().split('T')[0],
+    };
+    saveStoredUsers([...users, newUser]);
+    return newUser;
+  },
+
   approveAdmin: (id) => {
     const users = getStoredUsers();
     saveStoredUsers(users.map((u) => (u.id === id ? { ...u, status: 'active' as UserStatus } : u)));
@@ -108,6 +125,25 @@ export const useAuthStore = create<AuthState>((set) => ({
   rejectAdmin: (id) => {
     const users = getStoredUsers();
     saveStoredUsers(users.map((u) => (u.id === id ? { ...u, status: 'rejected' as UserStatus } : u)));
+  },
+
+  updateUser: (id, updates) => {
+    const users = getStoredUsers();
+    const nextUsers = users.map((u) => (u.id === id ? { ...u, ...updates } : u));
+    saveStoredUsers(nextUsers);
+
+    const currentRaw = localStorage.getItem('user');
+    if (currentRaw) {
+      const current = JSON.parse(currentRaw) as User;
+      if (current.id === id) {
+        const updated = nextUsers.find((u) => u.id === id);
+        if (updated) {
+          const { password: _, ...rest } = updated;
+          set({ user: rest as User });
+          localStorage.setItem('user', JSON.stringify(rest));
+        }
+      }
+    }
   },
 
   getPendingAdmins: () => getStoredUsers().filter((u) => u.role === 'admin' && u.status === 'pending'),

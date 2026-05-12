@@ -16,6 +16,7 @@ import { ForgotPasswordPage } from '@/app/pages/ForgotPasswordPage';
 import { ResetPasswordPage } from '@/app/pages/ResetPasswordPage';
 import { AboutPage } from '@/app/pages/AboutPage';
 import { BlogPage } from '@/app/pages/BlogPage';
+import { BlogDetailPage } from '@/app/pages/BlogDetailPage';
 import { ContactPage } from '@/app/pages/ContactPage';
 import { AdminLoginPage } from '@/app/pages/AdminLoginPage';
 import { AdminRegisterPage } from '@/app/pages/AdminRegisterPage';
@@ -45,6 +46,7 @@ import { AdminPayments } from '@/app/pages/admin/Payments';
 import { AdminModelManagement } from '@/app/pages/admin/ModelManagement';
 import { AdminSettings } from '@/app/pages/admin/Settings';
 import { AdminAuditLogs } from '@/app/pages/admin/AuditLogs';
+import { AdminPermissions } from '@/app/pages/admin/Permissions';
 
 /* ── Generic protected route (customer / admin check) ─────────── */
 function ProtectedRoute({
@@ -123,6 +125,7 @@ export default function App() {
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/blog" element={<BlogPage />} />
+          <Route path="/blog/:slug" element={<BlogDetailPage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/admin/login" element={<AdminLoginPage />} />
           <Route path="/admin/register" element={<AdminRegisterPage />} />
@@ -159,6 +162,7 @@ export default function App() {
           <Route path="/admin/models"       element={<AdminRoute path="/admin/models"><AdminModelManagement /></AdminRoute>} />
           <Route path="/admin/settings"     element={<AdminRoute path="/admin/settings"><AdminSettings /></AdminRoute>} />
           <Route path="/admin/audit-logs"   element={<AdminRoute path="/admin/audit-logs"><AdminAuditLogs /></AdminRoute>} />
+          <Route path="/admin/permissions"  element={<AdminRoute path="/admin/permissions"><AdminPermissions /></AdminRoute>} />
 
           {/* Legacy admin redirects */}
           <Route path="/admin/analytics"   element={<Navigate to="/admin" replace />} />

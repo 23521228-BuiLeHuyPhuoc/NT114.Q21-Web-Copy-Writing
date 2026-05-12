@@ -13,7 +13,7 @@ import {
   Clock, Shield, Users as UsersIcon, ChevronDown, Edit2, Trash2, RotateCcw,
 } from 'lucide-react';
 import { useAuth } from '@/app/contexts/AuthContext';
-import { ADMIN_ROLES } from '@/lib/permissions';
+import { getAdminRoleDef, getAdminRoles } from '@/lib/permissions';
 import { ConfirmDialog } from '@/app/components/admin/ConfirmDialog';
 import { TrashBin } from '@/app/components/admin/TrashBin';
 import { AdminFilterBar } from '@/app/components/admin/AdminFilterBar';
@@ -30,8 +30,9 @@ interface DeletedUser {
 }
 
 export function AdminUsers() {
-  const { user, approveAdmin, rejectAdmin, getAllUsers, getPendingAdmins } = useAuth();
+  const { user, addUser, approveAdmin, rejectAdmin, updateUser, getAllUsers, getPendingAdmins } = useAuth();
   const isSuperAdmin = user?.adminRole === 'super_admin';
+  const adminRoles = getAdminRoles();
 
   const [tab, setTab] = useState<Tab>('pending');
   const [search, setSearch] = useState('');
@@ -44,7 +45,18 @@ export function AdminUsers() {
   const [editName, setEditName] = useState('');
   const [editEmail, setEditEmail] = useState('');
   const [editRole, setEditRole] = useState('');
+  const [editStatus, setEditStatus] = useState('');
   const [editSaving, setEditSaving] = useState(false);
+
+  // Add user
+  const [addOpen, setAddOpen] = useState(false);
+  const [addName, setAddName] = useState('');
+  const [addEmail, setAddEmail] = useState('');
+  const [addPassword, setAddPassword] = useState('');
+  const [addRole, setAddRole] = useState<'customer' | 'admin'>('customer');
+  const [addAdminRole, setAddAdminRole] = useState('analyst');
+  const [addStatus, setAddStatus] = useState('active');
+  const [addSaving, setAddSaving] = useState(false);
 
   // Soft delete
   const [deletedUsers, setDeletedUsers] = useState<DeletedUser[]>([]);
@@ -53,6 +65,15 @@ export function AdminUsers() {
   const [trashLoading, setTrashLoading] = useState<string | null>(null);
 
   const forceRefresh = () => setTick(t => t + 1);
+
+  const resetAddForm = () => {
+    setAddName('');
+    setAddEmail('');
+    setAddPassword('');
+    setAddRole('customer');
+    setAddAdminRole('analyst');
+    setAddStatus('active');
+  };
 
   const allUsers = getAllUsers().map(({ password: _, ...u }) => u).filter(
     u => !deletedUsers.find(d => d.id === u.id)
@@ -79,12 +100,56 @@ export function AdminUsers() {
   const openEdit = (u: any) => {
     setEditUser(u); setEditName(u.name); setEditEmail(u.email);
     setEditRole(u.adminRole || u.role);
+    setEditStatus(u.status);
   };
 
   const handleSaveEdit = async () => {
     setEditSaving(true); await new Promise(r => setTimeout(r, 700));
+    if (editUser) {
+      updateUser(editUser.id, {
+        name: editName,
+        email: editEmail,
+        status: editStatus,
+        ...(editUser.role === 'admin' ? { adminRole: editRole } : {}),
+      });
+      forceRefresh();
+    }
     setEditSaving(false); setEditUser(null);
     toast.success(`Đã cập nhật thông tin "${editName}"`);
+  };
+
+  const handleCreateUser = async () => {
+    if (!addName.trim() || !addEmail.trim() || !addPassword.trim()) {
+      toast.error('Vui lòng nhập đầy đủ tên, email và mật khẩu');
+      return;
+    }
+    if (addPassword.length < 6) {
+      toast.error('Mật khẩu phải có ít nhất 6 ký tự');
+      return;
+    }
+
+    setAddSaving(true);
+    await new Promise(r => setTimeout(r, 500));
+    try {
+      addUser({
+        name: addName.trim(),
+        email: addEmail.trim(),
+        password: addPassword,
+        role: addRole,
+        status: addStatus,
+        ...(addRole === 'admin' ? { adminRole: addAdminRole } : {}),
+      });
+      const createdName = addName.trim();
+      resetAddForm();
+      setAddOpen(false);
+      setTab('all');
+      forceRefresh();
+      toast.success(`Đã tạo tài khoản "${createdName}"`);
+    } catch (err: any) {
+      toast.error(err.message || 'Không thể tạo tài khoản');
+    } finally {
+      setAddSaving(false);
+    }
   };
 
   const handleSoftDelete = async () => {
@@ -123,7 +188,7 @@ export function AdminUsers() {
   const roleBadge = (u: any) => {
     if (u.role === 'customer') return <Badge className="bg-gray-100 text-gray-600 border-0">Customer</Badge>;
     if (!u.adminRole) return <Badge className="bg-red-100 text-red-700 border-0">Admin</Badge>;
-    const def = ADMIN_ROLES[u.adminRole as keyof typeof ADMIN_ROLES];
+    const def = getAdminRoleDef(u.adminRole);
     if (!def) return null;
     return (
       <Badge className={`${def.color} ${def.textColor} border-0 gap-1`}>
@@ -162,7 +227,10 @@ export function AdminUsers() {
               )}
             </button>
             {isSuperAdmin && (
-              <Button className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl gap-2 text-sm">
+              <Button
+                onClick={() => setAddOpen(true)}
+                className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl gap-2 text-sm"
+              >
                 <UserPlus className="w-4 h-4" /> Thêm User
               </Button>
             )}
@@ -198,7 +266,7 @@ export function AdminUsers() {
             ) : (
               <div className="space-y-3">
                 {freshPending.map(u => {
-                  const roleDef = u.adminRole ? ADMIN_ROLES[u.adminRole] : null;
+                  const roleDef = u.adminRole ? getAdminRoleDef(u.adminRole) : null;
                   const isApproving = approvingId === u.id;
                   const isRejecting = rejectingId  === u.id;
                   return (
@@ -319,6 +387,81 @@ export function AdminUsers() {
         )}
       </div>
 
+      {/* ADD USER DIALOG */}
+      <Dialog open={addOpen} onOpenChange={(open) => { setAddOpen(open); if (!open) resetAddForm(); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                <UserPlus className="w-4 h-4 text-green-600" />
+              </div>
+              Thêm User
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-1">
+            <div>
+              <Label className="text-xs text-gray-500 uppercase tracking-wider mb-1.5 block">Họ và tên</Label>
+              <Input value={addName} onChange={e => setAddName(e.target.value)} placeholder="Nguyễn Văn A" className="h-10" />
+            </div>
+            <div>
+              <Label className="text-xs text-gray-500 uppercase tracking-wider mb-1.5 block">Email</Label>
+              <Input value={addEmail} onChange={e => setAddEmail(e.target.value)} placeholder="user@copypro.vn" className="h-10" />
+            </div>
+            <div>
+              <Label className="text-xs text-gray-500 uppercase tracking-wider mb-1.5 block">Mật khẩu</Label>
+              <Input type="password" value={addPassword} onChange={e => setAddPassword(e.target.value)} placeholder="Tối thiểu 6 ký tự" className="h-10" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs text-gray-500 uppercase tracking-wider mb-1.5 block">Vai trò</Label>
+                <Select value={addRole} onValueChange={(value: 'customer' | 'admin') => setAddRole(value)}>
+                  <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="customer">Customer</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs text-gray-500 uppercase tracking-wider mb-1.5 block">Trạng thái</Label>
+                <Select value={addStatus} onValueChange={setAddStatus}>
+                  <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="pending">Chờ duyệt</SelectItem>
+                    <SelectItem value="rejected">Từ chối</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            {addRole === 'admin' && (
+              <div>
+                <Label className="text-xs text-gray-500 uppercase tracking-wider mb-1.5 block">Loại Admin</Label>
+                <Select value={addAdminRole} onValueChange={setAddAdminRole}>
+                  <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(adminRoles).map(([key, def]) => (
+                      <SelectItem key={key} value={key}>
+                        <div className="flex items-center gap-2">
+                          <span className={`w-2 h-2 rounded-full ${def.dotColor}`} />
+                          {def.label}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <div className="flex gap-2 pt-2">
+              <button onClick={() => setAddOpen(false)} className="flex-1 h-10 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">Huỷ</button>
+              <button onClick={handleCreateUser} disabled={addSaving} className="flex-1 h-10 bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+                {addSaving ? <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : 'Tạo user'}
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* ── EDIT DIALOG ── */}
       <Dialog open={!!editUser} onOpenChange={() => setEditUser(null)}>
         <DialogContent className="max-w-md">
@@ -346,7 +489,7 @@ export function AdminUsers() {
                   <Select value={editRole} onValueChange={setEditRole}>
                     <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {Object.entries(ADMIN_ROLES).map(([key, def]) => (
+                      {Object.entries(adminRoles).map(([key, def]) => (
                         <SelectItem key={key} value={key}>
                           <div className="flex items-center gap-2">
                             <span className={`w-2 h-2 rounded-full ${def.dotColor}`} />
@@ -360,7 +503,7 @@ export function AdminUsers() {
               )}
               <div>
                 <Label className="text-xs text-gray-500 uppercase tracking-wider mb-1.5 block">Trạng thái</Label>
-                <Select defaultValue={editUser.status}>
+                <Select value={editStatus} onValueChange={setEditStatus}>
                   <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="active">✅ Active</SelectItem>

@@ -12,7 +12,7 @@ import {
   FileCheck, Crown,
 } from 'lucide-react';
 import {
-  ADMIN_MENU_ITEMS, ADMIN_ROLES, hasPermission,
+  ADMIN_MENU_ITEMS, getAdminRoleDef, hasPermission,
 } from '@/lib/permissions';
 import { CustomerHeader } from '@/app/components/CustomerHeader';
 import { CustomerFooter } from '@/app/components/CustomerFooter';
@@ -46,7 +46,7 @@ export function Layout({ children }: LayoutProps) {
   const handleLogout = () => { logout(); navigate('/login'); };
 
   const adminRoleDef = user?.role === 'admin' && user.adminRole
-    ? ADMIN_ROLES[user.adminRole]
+    ? getAdminRoleDef(user.adminRole)
     : null;
 
   const Sidebar = () => (

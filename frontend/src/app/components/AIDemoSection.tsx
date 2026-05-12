@@ -179,14 +179,14 @@ export function AIDemoSection() {
   };
 
   return (
-    <section className="py-24 bg-gradient-to-b from-white to-gray-50 relative overflow-hidden">
+    <section className="py-16 md:py-20 bg-gradient-to-b from-white to-gray-50 relative overflow-hidden">
       {/* Subtle radial glow */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_50%_60%,rgba(34,197,94,0.05),transparent)] pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-5 lg:px-8 relative">
 
         {/* Section header */}
-        <div className="text-center max-w-2xl mx-auto mb-14">
+        <div className="text-center max-w-2xl mx-auto mb-10">
           <Badge className="mb-5 bg-green-100 text-green-700 border-0 px-4 py-1.5 text-sm">
             ✨ Demo tương tác
           </Badge>
@@ -200,7 +200,7 @@ export function AIDemoSection() {
 
         {/* Demo card */}
         <div className="max-w-5xl mx-auto">
-          <div className="bg-white rounded-3xl shadow-2xl shadow-green-100/60 border border-gray-100 overflow-hidden">
+          <div className="bg-white rounded-lg shadow-lg shadow-green-100/50 border border-gray-100 overflow-hidden">
 
             {/* Window bar */}
             <div className="flex items-center gap-2 px-5 py-3.5 bg-gray-50 border-b border-gray-100">
@@ -212,10 +212,10 @@ export function AIDemoSection() {
               </div>
             </div>
 
-            <div className="grid lg:grid-cols-[340px_1fr] min-h-[560px]">
+            <div className="grid lg:grid-cols-[320px_1fr] min-h-[500px]">
 
               {/* ── LEFT: Controls ── */}
-              <div className="bg-gray-50/80 border-r border-gray-100 p-6 flex flex-col gap-6">
+              <div className="bg-gray-50/80 border-r border-gray-100 p-5 flex flex-col gap-5">
 
                 {/* Step 1: Content type */}
                 <div>
@@ -230,7 +230,7 @@ export function AIDemoSection() {
                         <button
                           key={t.id}
                           onClick={() => handleTypeChange(t)}
-                          className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 text-center transition-all ${
+                          className={`flex flex-col items-center gap-1.5 p-3 rounded-lg border text-center transition-all ${
                             isActive
                               ? 'border-green-500 bg-green-50 shadow-sm shadow-green-100'
                               : 'border-gray-200 bg-white hover:border-green-300 hover:bg-green-50/50'
@@ -257,7 +257,7 @@ export function AIDemoSection() {
                     placeholder={activeType.placeholder}
                     value={inputValue}
                     onChange={e => setInputValue(e.target.value)}
-                    className="rounded-xl border-gray-200 focus:border-green-500 bg-white h-11 text-sm"
+                    className="rounded-lg border-gray-200 focus:border-green-500 bg-white h-11 text-sm"
                     onKeyDown={e => { if (e.key === 'Enter') handleGenerate(); }}
                   />
                   <p className="text-xs text-gray-400 mt-2">
@@ -276,7 +276,7 @@ export function AIDemoSection() {
                 <button
                   onClick={handleGenerate}
                   disabled={isGenerating}
-                  className={`relative w-full py-3.5 rounded-2xl font-bold text-sm transition-all flex items-center justify-center gap-2 overflow-hidden ${
+                  className={`relative w-full py-3.5 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 overflow-hidden ${
                     isGenerating
                       ? 'bg-green-100 text-green-600 cursor-not-allowed'
                       : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white shadow-lg shadow-green-200 hover:shadow-green-300 hover:-translate-y-0.5 active:translate-y-0'
@@ -304,7 +304,7 @@ export function AIDemoSection() {
               {/* ── RIGHT: Output ── */}
               <div className="flex flex-col">
                 {/* Output header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
                   <div className="flex items-center gap-2">
                     <div className={`w-2 h-2 rounded-full ${isGenerating ? 'bg-yellow-400 animate-pulse' : hasGenerated ? 'bg-green-500' : 'bg-gray-300'}`} />
                     <span className="text-xs font-semibold text-gray-500">
@@ -328,7 +328,7 @@ export function AIDemoSection() {
                   {/* Empty state */}
                   {!hasGenerated && !isGenerating && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-center px-8">
-                      <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center">
+                      <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
                         <Sparkles className="w-7 h-7 text-gray-300" />
                       </div>
                       <div>
@@ -367,7 +367,7 @@ export function AIDemoSection() {
 
                   {/* Typewriter output */}
                   {(displayed || rawOutput) && (
-                    <div className="absolute inset-0 overflow-y-auto p-6">
+                    <div className="absolute inset-0 overflow-y-auto p-5">
                       <pre className="whitespace-pre-wrap text-gray-800 text-sm leading-relaxed font-sans break-words">
                         {displayed}
                         {!done && (
@@ -380,11 +380,11 @@ export function AIDemoSection() {
 
                 {/* Action bar — shown after done */}
                 {hasGenerated && done && (
-                  <div className="border-t border-gray-100 px-6 py-4 flex items-center justify-between gap-3 bg-gray-50/60">
+                  <div className="border-t border-gray-100 px-5 py-4 flex items-center justify-between gap-3 bg-gray-50/60">
                     <div className="flex gap-2">
                       <button
                         onClick={handleCopy}
-                        className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition-all border ${
+                        className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-all border ${
                           copied
                             ? 'bg-green-100 text-green-700 border-green-200'
                             : 'bg-white text-gray-700 border-gray-200 hover:border-green-300 hover:bg-green-50'
@@ -395,13 +395,13 @@ export function AIDemoSection() {
                       </button>
                       <button
                         onClick={handleGenerate}
-                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-white text-gray-700 border border-gray-200 hover:border-green-300 hover:bg-green-50 transition-all"
+                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold bg-white text-gray-700 border border-gray-200 hover:border-green-300 hover:bg-green-50 transition-all"
                       >
                         <RotateCcw className="w-3.5 h-3.5" />
                         Tạo lại
                       </button>
                     </div>
-                    <button className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-green-600 hover:bg-green-500 text-white transition-colors">
+                    <button className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold bg-green-600 hover:bg-green-500 text-white transition-colors">
                       <ThumbsUp className="w-3.5 h-3.5" />
                       Tốt lắm!
                     </button>
