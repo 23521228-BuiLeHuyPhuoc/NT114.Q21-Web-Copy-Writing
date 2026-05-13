@@ -19,6 +19,7 @@ import { TrashBin } from '@/app/components/admin/TrashBin';
 import { AdminFilterBar } from '@/app/components/admin/AdminFilterBar';
 import { AdminTable } from '@/app/components/admin/AdminTable';
 import toast from 'react-hot-toast';
+import type { UserStatus } from '@/types/auth';
 
 type Tab = 'all' | 'pending';
 
@@ -45,7 +46,7 @@ export function AdminUsers() {
   const [editName, setEditName] = useState('');
   const [editEmail, setEditEmail] = useState('');
   const [editRole, setEditRole] = useState('');
-  const [editStatus, setEditStatus] = useState('');
+  const [editStatus, setEditStatus] = useState<UserStatus>('active');
   const [editSaving, setEditSaving] = useState(false);
 
   // Add user
@@ -55,7 +56,7 @@ export function AdminUsers() {
   const [addPassword, setAddPassword] = useState('');
   const [addRole, setAddRole] = useState<'customer' | 'admin'>('customer');
   const [addAdminRole, setAddAdminRole] = useState('analyst');
-  const [addStatus, setAddStatus] = useState('active');
+  const [addStatus, setAddStatus] = useState<UserStatus>('active');
   const [addSaving, setAddSaving] = useState(false);
 
   // Soft delete
@@ -100,7 +101,7 @@ export function AdminUsers() {
   const openEdit = (u: any) => {
     setEditUser(u); setEditName(u.name); setEditEmail(u.email);
     setEditRole(u.adminRole || u.role);
-    setEditStatus(u.status);
+    setEditStatus(u.status as UserStatus);
   };
 
   const handleSaveEdit = async () => {
@@ -424,7 +425,7 @@ export function AdminUsers() {
               </div>
               <div>
                 <Label className="text-xs text-gray-500 uppercase tracking-wider mb-1.5 block">Trạng thái</Label>
-                <Select value={addStatus} onValueChange={setAddStatus}>
+                <Select value={addStatus} onValueChange={(value) => setAddStatus(value as UserStatus)}>
                   <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="active">Active</SelectItem>
@@ -503,7 +504,7 @@ export function AdminUsers() {
               )}
               <div>
                 <Label className="text-xs text-gray-500 uppercase tracking-wider mb-1.5 block">Trạng thái</Label>
-                <Select value={editStatus} onValueChange={setEditStatus}>
+                <Select value={editStatus} onValueChange={(value) => setEditStatus(value as UserStatus)}>
                   <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="active">✅ Active</SelectItem>

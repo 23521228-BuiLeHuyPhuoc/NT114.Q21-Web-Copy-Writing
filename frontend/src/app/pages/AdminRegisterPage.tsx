@@ -63,7 +63,7 @@ export function AdminRegisterPage() {
     try {
       await register({ email, password, name, role: 'admin', adminRole, inviteCode });
       setSuccess(true);
-      toast.info('Yêu cầu đã gửi — đang chờ Super Admin phê duyệt.');
+      toast('Yêu cầu đã gửi — đang chờ Super Admin phê duyệt.');
     } catch (err: any) {
       toast.error(err.message || 'Đăng ký thất bại');
     }

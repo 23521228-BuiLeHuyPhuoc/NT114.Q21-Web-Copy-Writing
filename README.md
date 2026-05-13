@@ -283,5 +283,34 @@ Các tính năng dưới đây là những thành phần **kỹ thuật khó**, 
 + **API:** `/api/plagiarism/*` (check, check-web, history)
 + **DB:** PlagiarismReports
 
+---
 
+## 8. Tổng quan tiến độ thực hiện ngày 13/05/2026
 
+### 8.1. Công việc đã thực hiện
+
++ Đã chuyển frontend CopyPro sang Next.js/App Router + React + TypeScript, có Tailwind CSS, React Query, Zustand, Axios, Chart.js và hệ component UI.
++ Đã thay cấu hình Vite bằng `next.config.mjs`, `tsconfig.json`, `postcss.config.mjs`, root layout và client providers của Next.js.
++ Đã có các route công khai: trang chủ, bảng giá, giới thiệu, blog, chi tiết blog, liên hệ, đăng nhập, đăng ký, quên mật khẩu, đặt lại mật khẩu.
++ Đã có luồng khách hàng: dashboard, sinh nội dung AI, quản lý nội dung, dự án, template, fine-tuning, kiểm tra đạo văn, hồ sơ, billing, thông báo.
++ Đã có luồng admin: dashboard, quản lý user, nội dung, template, danh mục, gói dịch vụ, thanh toán, model AI, cài đặt, audit log, phân quyền.
++ Đã có auth mock bằng `localStorage`, mã mời admin, trạng thái admin chờ duyệt/từ chối/hoạt động, route guard theo customer/admin và phân quyền admin chi tiết.
++ Đã có service layer, hook React Query và mock data cho các module nội dung, dự án, fine-tuning, thanh toán, thông báo, audit log, API key, plagiarism.
++ Đã có tài liệu use case dạng Markdown và PlantUML cho tổng quan, khách hàng và admin.
+
+### 8.2. Chưa hoàn thành so với README
+
++ Frontend đã chuyển sang Next.js/App Router nhưng auth/permission vẫn đang chạy bằng mock `localStorage`, chưa phải NextAuth/JWT thật.
++ Backend Express chưa được triển khai thực tế; `backend/package.json`, `backend/src/app.js`, `docker-compose.yml`, `.env.example` hiện chưa có cấu hình/nội dung đáng kể.
++ Chưa có MongoDB/Mongoose models, REST API, JWT thật, middleware bảo mật, upload Cloudinary, Stripe webhook, OpenAI/Ollama integration, SSE streaming, fine-tuning thật và plagiarism detection backend.
++ Các chức năng AI, thanh toán, thống kê và quản trị hiện chủ yếu là giao diện/mock data, chưa nối backend/database thật.
+
+### 8.3. Kế hoạch thực hiện công việc tiếp theo dự kiến
+
++ Tiếp tục chuẩn hóa cấu trúc frontend theo route group `(auth)`, `(public)`, `(user)`, `(admin)` nếu cần tách layout sâu hơn.
++ Hoàn thiện backend Express: cấu hình app, middleware, error handler, route structure, validation, auth JWT và phân quyền.
++ Thiết kế MongoDB/Mongoose models cho các collection trong README: Users, Contents, Templates, Categories, Projects, Plans, Subscriptions, Payments, FineTuneJobs, Notifications, UsageLogs, AuditLogs, SystemSettings, PlagiarismReports.
++ Thay mock service frontend bằng API thật theo từng module, ưu tiên Auth, Content, Project, Template, Billing, Notification, Admin.
++ Tích hợp AI generation với OpenAI/Ollama, sau đó bổ sung SSE streaming, lưu nội dung, usage log và lựa chọn model.
++ Triển khai fine-tuning, kiểm tra đạo văn, thanh toán và audit log theo mức độ ưu tiên đồ án.
++ Bổ sung test/build smoke check cho frontend và test API thủ công/Postman cho backend trước khi demo.

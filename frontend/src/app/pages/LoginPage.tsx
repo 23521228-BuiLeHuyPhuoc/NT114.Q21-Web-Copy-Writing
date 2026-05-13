@@ -39,7 +39,7 @@ export function LoginPage() {
         const u = JSON.parse(saved);
         if (u.role === 'admin') {
           // Redirect admin away
-          toast.info('Tài khoản Admin — chuyển hướng đến Admin Console');
+          toast('Tài khoản Admin — chuyển hướng đến Admin Console');
           navigate('/admin');
         } else {
           toast.success('Đăng nhập thành công! Chào mừng trở lại 👋');
