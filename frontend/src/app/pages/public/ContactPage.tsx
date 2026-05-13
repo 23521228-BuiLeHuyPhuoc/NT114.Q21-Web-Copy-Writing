@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { PublicNavbar } from '@/app/components/PublicNavbar';
-import { PublicFooter } from '@/app/components/PublicFooter';
+import { PublicNavbar } from '@/app/components/public/PublicNavbar';
+import { PublicFooter } from '@/app/components/public/PublicFooter';
 import { Badge } from '@/app/components/ui/badge';
 import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';

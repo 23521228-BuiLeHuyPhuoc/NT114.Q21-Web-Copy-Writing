@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/contexts/AuthContext';
-import { AdminAccessDenied } from '@/app/components/AdminAccessDenied';
+import { AdminAccessDenied } from '@/app/components/admin/AdminAccessDenied';
 import { hasPermission, PERMISSION_ROUTE_MAP } from '@/lib/permissions';
 import type { AdminPermission } from '@/lib/permissions';
 

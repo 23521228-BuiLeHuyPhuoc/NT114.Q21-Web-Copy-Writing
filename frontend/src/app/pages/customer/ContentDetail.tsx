@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useContent } from '@/hooks/queries/useContents';
-import { Markdown } from '@/app/components/Markdown';
+import { Markdown } from '@/app/components/common/Markdown';
 
 export function CustomerContentDetail() {
   const { id } = useParams();

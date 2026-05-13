@@ -1,6 +1,6 @@
 'use client';
 
-import { BlogPage } from '@/app/pages/BlogPage';
+import { BlogPage } from '@/app/pages/public/BlogPage';
 
 export default function Blog() {
   return <BlogPage />;

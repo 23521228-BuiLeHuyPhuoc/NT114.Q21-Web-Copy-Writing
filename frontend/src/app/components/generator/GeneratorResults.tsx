@@ -8,7 +8,7 @@ import {
   CheckCircle2, ThumbsUp, ThumbsDown, Eye, Pencil,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { Markdown } from '@/app/components/Markdown';
+import { Markdown } from '@/app/components/common/Markdown';
 
 interface Props {
   isGenerating: boolean;

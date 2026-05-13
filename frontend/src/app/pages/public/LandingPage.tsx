@@ -1,8 +1,8 @@
 import { useNavigate, Link } from 'react-router-dom';
-import { PublicNavbar } from '@/app/components/PublicNavbar';
-import { PublicFooter } from '@/app/components/PublicFooter';
-import { AIDemoSection } from '@/app/components/AIDemoSection';
-import { HeroGeneratorDemo } from '@/app/components/HeroGeneratorDemo';
+import { PublicNavbar } from '@/app/components/public/PublicNavbar';
+import { PublicFooter } from '@/app/components/public/PublicFooter';
+import { AIDemoSection } from '@/app/components/public/AIDemoSection';
+import { HeroGeneratorDemo } from '@/app/components/public/HeroGeneratorDemo';
 import { Badge } from '@/app/components/ui/badge';
 import {
   Sparkles, Wand2, FileText, ShoppingBag, Home,

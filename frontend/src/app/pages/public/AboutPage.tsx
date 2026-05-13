@@ -1,5 +1,5 @@
-import { PublicNavbar } from '@/app/components/PublicNavbar';
-import { PublicFooter } from '@/app/components/PublicFooter';
+import { PublicNavbar } from '@/app/components/public/PublicNavbar';
+import { PublicFooter } from '@/app/components/public/PublicFooter';
 import { Badge } from '@/app/components/ui/badge';
 import { ImageWithFallback } from '@/app/components/figma/ImageWithFallback';
 import { Link } from 'react-router-dom';

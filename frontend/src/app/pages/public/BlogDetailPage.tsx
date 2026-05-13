@@ -1,6 +1,6 @@
 import { Link, Navigate, useParams } from 'react-router-dom';
-import { PublicNavbar } from '@/app/components/PublicNavbar';
-import { PublicFooter } from '@/app/components/PublicFooter';
+import { PublicNavbar } from '@/app/components/public/PublicNavbar';
+import { PublicFooter } from '@/app/components/public/PublicFooter';
 import { Badge } from '@/app/components/ui/badge';
 import { ImageWithFallback } from '@/app/components/figma/ImageWithFallback';
 import { BLOG_POSTS } from '@/mocks/blog';
