@@ -50,29 +50,26 @@ ai-copywriter/
 frontend/
 ├── public/                     # Tài nguyên tĩnh (favicon, images, fonts)
 ├── src/
-│   ├── app/                    # App Router – chứa tất cả các trang (routes)
-│   │   ├── (auth)/             # Nhóm trang xác thực (login, register, forgot-password)
-│   │   ├── (public)/           # Nhóm trang công khai (landing page, contact)
-│   │   ├── (user)/             # Nhóm trang người dùng (dashboard, generate, contents, ...)
-│   │   ├── (admin)/            # Nhóm trang quản trị admin
-│   │   ├── layout.tsx          # Layout gốc của ứng dụng
-│   │   └── globals.css         # CSS toàn cục (Tailwind imports)
-│   ├── components/             # React components tái sử dụng
-│   │   ├── ui/                 # Component UI cơ bản (Button, Input, Modal, Table, Card, ...)
-│   │   ├── layout/             # Component layout (Header, Sidebar, Footer, AdminSidebar)
-│   │   ├── forms/              # Component form (LoginForm, RegisterForm, GenerateForm, ...)
-│   │   └── charts/             # Component biểu đồ thống kê
-│   ├── hooks/                  # Custom React hooks (useAuth, useContent, useDebounce, ...)
-│   ├── lib/                    # Thư viện tiện ích
-│   │   ├── api.ts              # Cấu hình Axios instance, interceptors
-│   │   ├── auth.ts             # Hàm xử lý xác thực (getToken, refreshToken, ...)
-│   │   └── utils.ts            # Hàm tiện ích dùng chung (formatDate, truncate, ...)
-│   ├── services/               # Lớp gọi API backend (authService, contentService, adminService, ...)
-│   ├── stores/                 # Zustand stores (authStore, uiStore, ...)
-│   ├── types/                  # TypeScript type definitions (User, Content, Template, ...)
-│   └── constants/              # Hằng số (content types, tones, languages, routes, ...)
-├── tailwind.config.ts          # Cấu hình Tailwind CSS
-├── next.config.js              # Cấu hình Next.js
+│   ├── app/                    # Next.js App Router
+│   │   ├── layout.tsx          # Root layout
+│   │   ├── providers.tsx       # React Query, AuthProvider, Toast provider
+│   │   ├── route-guards.tsx    # Guard khách hàng/admin ở phía client
+│   │   ├── page.tsx            # Route `/`
+│   │   ├── about/, blog/, ...  # Các route công khai
+│   │   ├── dashboard/, ...     # Các route khách hàng
+│   │   ├── admin/              # Các route quản trị
+│   │   ├── pages/              # Component màn hình, gom theo auth/public/customer/admin
+│   │   ├── components/         # Component UI, common, public, admin, generator, charts
+│   │   └── contexts/           # Context tương thích cho auth hiện tại
+│   ├── hooks/queries/          # React Query hooks
+│   ├── lib/                    # Axios, auth helper, permission, router compatibility
+│   ├── services/               # Service layer dùng mock/API
+│   ├── stores/                 # Zustand stores
+│   ├── mocks/                  # Dữ liệu mock cho giao diện/demo
+│   ├── styles/                 # CSS toàn cục, theme, font, Tailwind import
+│   └── types/                  # TypeScript type definitions
+├── next.config.mjs             # Cấu hình Next.js, redirect legacy, alias compatibility
+├── postcss.config.mjs          # Cấu hình Tailwind CSS v4 cho Next.js
 ├── tsconfig.json               # Cấu hình TypeScript
 ├── package.json                # Dependencies & scripts
 └── yarn.lock                   # Lock file (yarn)
@@ -127,6 +124,10 @@ backend/
 | Route | Trang |
 |-------|-------|
 | `/` | Landing page (giới thiệu, tính năng, bảng giá) |
+| `/pricing` | Bảng giá |
+| `/about` | Giới thiệu |
+| `/blog` | Danh sách bài viết |
+| `/blog/:slug` | Chi tiết bài viết |
 | `/login` | Đăng nhập |
 | `/register` | Đăng ký |
 | `/forgot-password` | Quên mật khẩu |
@@ -155,6 +156,8 @@ backend/
 | Route | Trang |
 |-------|-------|
 | `/admin` | Dashboard admin |
+| `/admin/login` | Đăng nhập admin |
+| `/admin/register` | Đăng ký admin bằng mã mời |
 | `/admin/users` | Quản lý user |
 | `/admin/contents` | Quản lý nội dung |
 | `/admin/templates` | Quản lý template hệ thống |
@@ -164,6 +167,7 @@ backend/
 | `/admin/models` | Quản lý model AI |
 | `/admin/settings` | Cài đặt hệ thống |
 | `/admin/audit-logs` | Nhật ký hệ thống |
+| `/admin/permissions` | Quản lý vai trò và quyền admin |
 
 ---
 
@@ -289,28 +293,26 @@ Các tính năng dưới đây là những thành phần **kỹ thuật khó**, 
 
 ### 8.1. Công việc đã thực hiện
 
-+ Đã chuyển frontend CopyPro sang Next.js/App Router + React + TypeScript, có Tailwind CSS, React Query, Zustand, Axios, Chart.js và hệ component UI.
-+ Đã thay cấu hình Vite bằng `next.config.mjs`, `tsconfig.json`, `postcss.config.mjs`, root layout và client providers của Next.js.
-+ Đã có các route công khai: trang chủ, bảng giá, giới thiệu, blog, chi tiết blog, liên hệ, đăng nhập, đăng ký, quên mật khẩu, đặt lại mật khẩu.
-+ Đã có luồng khách hàng: dashboard, sinh nội dung AI, quản lý nội dung, dự án, template, fine-tuning, kiểm tra đạo văn, hồ sơ, billing, thông báo.
-+ Đã có luồng admin: dashboard, quản lý user, nội dung, template, danh mục, gói dịch vụ, thanh toán, model AI, cài đặt, audit log, phân quyền.
++ Đã chuyển frontend từ Vite sang **Next.js/App Router**; script chạy hiện tại là `next dev`, `next build`, `next start`.
++ Đã bổ sung cấu hình Next.js gồm `next.config.mjs`, `tsconfig.json`, `postcss.config.mjs`, root `layout.tsx`, `providers.tsx` và guard route cho khách hàng/admin.
++ Đã map các route chính sang App Router: public, auth, customer và admin; các route legacy như `/generator`, `/history`, `/subscription` được redirect về route mới.
++ Đã gom lại một phần cấu trúc frontend cho dễ quản lý: `pages/auth`, `pages/public`, `pages/customer`, `pages/admin`, `components/public`, `components/common`, `components/admin`.
++ Đã có giao diện public: trang chủ, bảng giá, giới thiệu, blog, chi tiết blog, liên hệ, đăng nhập, đăng ký, quên mật khẩu, đặt lại mật khẩu.
++ Đã có giao diện khách hàng: dashboard, sinh nội dung AI, quản lý nội dung, dự án, template, fine-tuning, kiểm tra đạo văn, hồ sơ, billing, thông báo.
++ Đã có giao diện admin: dashboard, quản lý user, nội dung, template, danh mục, gói dịch vụ, thanh toán, model AI, cài đặt, audit log, phân quyền.
 + Đã có auth mock bằng `localStorage`, mã mời admin, trạng thái admin chờ duyệt/từ chối/hoạt động, route guard theo customer/admin và phân quyền admin chi tiết.
 + Đã có service layer, hook React Query và mock data cho các module nội dung, dự án, fine-tuning, thanh toán, thông báo, audit log, API key, plagiarism.
++ Đã kiểm tra build frontend bằng `yarn build` và build Next.js đã chạy thành công.
 + Đã có tài liệu use case dạng Markdown và PlantUML cho tổng quan, khách hàng và admin.
 
-### 8.2. Chưa hoàn thành so với README
+### 8.2. Công việc cần thực hiện trong tương lai
 
-+ Frontend đã chuyển sang Next.js/App Router nhưng auth/permission vẫn đang chạy bằng mock `localStorage`, chưa phải NextAuth/JWT thật.
-+ Backend Express chưa được triển khai thực tế; `backend/package.json`, `backend/src/app.js`, `docker-compose.yml`, `.env.example` hiện chưa có cấu hình/nội dung đáng kể.
-+ Chưa có MongoDB/Mongoose models, REST API, JWT thật, middleware bảo mật, upload Cloudinary, Stripe webhook, OpenAI/Ollama integration, SSE streaming, fine-tuning thật và plagiarism detection backend.
-+ Các chức năng AI, thanh toán, thống kê và quản trị hiện chủ yếu là giao diện/mock data, chưa nối backend/database thật.
-
-### 8.3. Kế hoạch thực hiện công việc tiếp theo dự kiến
-
-+ Tiếp tục chuẩn hóa cấu trúc frontend theo route group `(auth)`, `(public)`, `(user)`, `(admin)` nếu cần tách layout sâu hơn.
-+ Hoàn thiện backend Express: cấu hình app, middleware, error handler, route structure, validation, auth JWT và phân quyền.
++ Hoàn thiện backend Express: cấu hình app, middleware, error handler, route structure, validation, auth JWT và phân quyền thật.
 + Thiết kế MongoDB/Mongoose models cho các collection trong README: Users, Contents, Templates, Categories, Projects, Plans, Subscriptions, Payments, FineTuneJobs, Notifications, UsageLogs, AuditLogs, SystemSettings, PlagiarismReports.
 + Thay mock service frontend bằng API thật theo từng module, ưu tiên Auth, Content, Project, Template, Billing, Notification, Admin.
++ Chuyển auth/permission từ mock `localStorage` sang JWT/refresh token hoặc NextAuth/session thật.
++ Thay compatibility layer `react-router-dom` bằng `next/link`, `next/navigation` trực tiếp khi có thời gian refactor.
 + Tích hợp AI generation với OpenAI/Ollama, sau đó bổ sung SSE streaming, lưu nội dung, usage log và lựa chọn model.
-+ Triển khai fine-tuning, kiểm tra đạo văn, thanh toán và audit log theo mức độ ưu tiên đồ án.
-+ Bổ sung test/build smoke check cho frontend và test API thủ công/Postman cho backend trước khi demo.
++ Triển khai fine-tuning thật, kiểm tra đạo văn backend, thanh toán, webhook và audit log theo mức độ ưu tiên đồ án.
++ Bổ sung test/build smoke check định kỳ cho frontend và test API thủ công/Postman cho backend trước khi demo.
++ Chuẩn bị môi trường deploy, biến môi trường production, tài khoản demo và kịch bản demo nghiệm thu.
