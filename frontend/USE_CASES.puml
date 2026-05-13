@@ -35,13 +35,13 @@ actor "Admin" as Admin
 actor "Super Admin" as SuperAdmin
 
 Guest --|> User
-Customer --|> User
+Customer --|> Guest
 AdminCandidate --|> User
 Admin --|> User
 SuperAdmin --|> Admin
 
 rectangle "Hệ thống CopyPro" {
-  package "Công khai và xác thực" {
+  package "Công khai và tài khoản" {
     usecase "Xem thông tin công khai" as O_PublicInfo
     usecase "Đọc blog" as O_ReadBlog
     usecase "Gửi yêu cầu liên hệ" as O_Contact
@@ -49,7 +49,6 @@ rectangle "Hệ thống CopyPro" {
     usecase "Đăng nhập khách hàng" as O_CustomerLogin
     usecase "Khôi phục mật khẩu" as O_RecoverPassword
     usecase "Đăng ký tài khoản Admin" as O_AdminRegister
-    usecase "Xác thực mã mời Admin" as O_ValidateAdminInvite
     usecase "Đăng nhập Admin" as O_AdminLogin
   }
 
@@ -78,7 +77,6 @@ rectangle "Hệ thống CopyPro" {
     usecase "Quản lý gói dịch vụ" as O_AdminPlans
     usecase "Quản lý giao dịch thanh toán" as O_AdminPayments
     usecase "Quản lý mô hình AI" as O_AdminModels
-    usecase "Quản lý job fine-tuning" as O_AdminFineTuning
     usecase "Cấu hình hệ thống" as O_AdminSettings
     usecase "Xem nhật ký quản trị" as O_AdminAuditLogs
     usecase "Quản lý vai trò và quyền" as O_AdminPermissions
@@ -92,12 +90,10 @@ User -- O_RecoverPassword
 
 Guest -- O_CustomerRegister
 Guest -- O_CustomerLogin
-Guest -- O_AdminLogin
 
 AdminCandidate -- O_AdminRegister
 AdminCandidate -- O_AdminLogin
 
-Customer -- O_CustomerLogin
 Customer -- O_CustomerDashboard
 Customer -- O_GenerateContent
 Customer -- O_ManageContents
@@ -120,14 +116,12 @@ Admin -- O_AdminCategories
 Admin -- O_AdminPlans
 Admin -- O_AdminPayments
 Admin -- O_AdminModels
-Admin -- O_AdminFineTuning
 Admin -- O_AdminSettings
 Admin -- O_AdminAuditLogs
 
 SuperAdmin -- O_ApproveAdmin
 SuperAdmin -- O_AdminPermissions
 
-O_AdminRegister ..> O_ValidateAdminInvite : <<include>>
 O_PaySubscription ..> O_ManageSubscription : <<extend>>
 
 @enduml
@@ -217,6 +211,7 @@ Customer -- C_ExportContent
 Customer -- C_Projects
 Customer -- C_Templates
 Customer -- C_FineTune
+Customer -- C_ProvideTrainingData
 Customer -- C_TrainingProgress
 Customer -- C_Plagiarism
 Customer -- C_PlagiarismSources
@@ -235,6 +230,7 @@ C_EditContent ..> C_Contents : <<extend>>
 C_ExportContent ..> C_Contents : <<extend>>
 C_ChangePassword ..> C_Profile : <<extend>>
 C_NotificationSettings ..> C_Profile : <<extend>>
+C_TrainingProgress ..> C_FineTune : <<extend>>
 C_PaySubscription ..> C_Subscription : <<extend>>
 C_DownloadInvoice ..> C_Invoices : <<extend>>
 C_MarkNotificationRead ..> C_Notifications : <<extend>>
@@ -278,9 +274,8 @@ Admin --|> User
 SuperAdmin --|> Admin
 
 rectangle "Cổng quản trị CopyPro" {
-  package "Xác thực quản trị" {
+  package "Tài khoản quản trị" {
     usecase "Đăng ký tài khoản Admin" as A_Register
-    usecase "Xác thực mã mời Admin" as A_ValidateInvite
     usecase "Đăng nhập Admin" as A_Login
     usecase "Xem dashboard quản trị" as A_Dashboard
     usecase "Đăng xuất Admin" as A_Logout
@@ -321,7 +316,6 @@ rectangle "Cổng quản trị CopyPro" {
     usecase "Cập nhật gói dịch vụ" as A_UpdatePlan
     usecase "Xóa hoặc khôi phục gói" as A_DeleteRestorePlan
     usecase "Quản lý giao dịch thanh toán" as A_Payments
-    usecase "Đối soát giao dịch" as A_ReconcilePayments
     usecase "Theo dõi doanh thu" as A_Revenue
     usecase "Cấu hình hệ thống" as A_Settings
     usecase "Cập nhật cấu hình API/AI" as A_ApiSettings
@@ -332,13 +326,9 @@ rectangle "Cổng quản trị CopyPro" {
 
   package "Mô hình AI" {
     usecase "Quản lý mô hình AI" as A_Models
-    usecase "Tạo mô hình AI" as A_CreateModel
-    usecase "Cập nhật mô hình AI" as A_UpdateModel
+    usecase "Cấu hình mô hình AI" as A_UpdateModel
     usecase "Bật hoặc tắt mô hình AI" as A_ToggleModel
     usecase "Xóa hoặc khôi phục mô hình" as A_DeleteRestoreModel
-    usecase "Quản lý job fine-tuning" as A_FineTuning
-    usecase "Theo dõi job huấn luyện" as A_TrainingJobs
-    usecase "Triển khai mô hình đã huấn luyện" as A_DeployModel
   }
 }
 
@@ -369,7 +359,6 @@ Admin -- A_CreatePlan
 Admin -- A_UpdatePlan
 Admin -- A_DeleteRestorePlan
 Admin -- A_Payments
-Admin -- A_ReconcilePayments
 Admin -- A_Revenue
 Admin -- A_Settings
 Admin -- A_ApiSettings
@@ -377,13 +366,9 @@ Admin -- A_SecuritySettings
 Admin -- A_SystemNotifications
 Admin -- A_AuditLogs
 Admin -- A_Models
-Admin -- A_CreateModel
 Admin -- A_UpdateModel
 Admin -- A_ToggleModel
 Admin -- A_DeleteRestoreModel
-Admin -- A_FineTuning
-Admin -- A_TrainingJobs
-Admin -- A_DeployModel
 
 SuperAdmin -- A_DeleteUser
 SuperAdmin -- A_ApproveAdmin
@@ -393,10 +378,41 @@ SuperAdmin -- A_CreateAdminRole
 SuperAdmin -- A_AssignPermission
 SuperAdmin -- A_ResetPermissions
 
-A_Register ..> A_ValidateInvite : <<include>>
-
+A_CreateUser ..> A_Users : <<extend>>
+A_UpdateUser ..> A_Users : <<extend>>
+A_DeactivateUser ..> A_Users : <<extend>>
+A_RestoreUser ..> A_Users : <<extend>>
+A_DeleteUser ..> A_Users : <<extend>>
 A_ApproveAdmin ..> A_Users : <<extend>>
 A_RejectAdmin ..> A_Users : <<extend>>
-A_DeployModel ..> A_FineTuning : <<extend>>
+
+A_CreateAdminRole ..> A_Permissions : <<extend>>
+A_AssignPermission ..> A_Permissions : <<extend>>
+A_ResetPermissions ..> A_Permissions : <<extend>>
+
+A_UpdateContent ..> A_Contents : <<extend>>
+A_DeleteRestoreContent ..> A_Contents : <<extend>>
+
+A_CreateTemplate ..> A_Templates : <<extend>>
+A_UpdateTemplate ..> A_Templates : <<extend>>
+A_DeleteRestoreTemplate ..> A_Templates : <<extend>>
+
+A_CreateCategory ..> A_Categories : <<extend>>
+A_UpdateCategory ..> A_Categories : <<extend>>
+A_DeleteRestoreCategory ..> A_Categories : <<extend>>
+
+A_CreatePlan ..> A_Plans : <<extend>>
+A_UpdatePlan ..> A_Plans : <<extend>>
+A_DeleteRestorePlan ..> A_Plans : <<extend>>
+
+A_Revenue ..> A_Payments : <<extend>>
+
+A_ApiSettings ..> A_Settings : <<extend>>
+A_SecuritySettings ..> A_Settings : <<extend>>
+A_SystemNotifications ..> A_Settings : <<extend>>
+
+A_UpdateModel ..> A_Models : <<extend>>
+A_ToggleModel ..> A_Models : <<extend>>
+A_DeleteRestoreModel ..> A_Models : <<extend>>
 
 @enduml

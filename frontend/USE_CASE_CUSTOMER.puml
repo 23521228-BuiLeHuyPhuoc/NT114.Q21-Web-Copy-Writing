@@ -7,7 +7,6 @@ actor "Khách hàng" as Customer
 
 rectangle "Cổng khách hàng CopyPro" {
   usecase "Đăng nhập khách hàng" as UC_Login
-  usecase "Xác thực tài khoản" as UC_Authenticate
   usecase "Xem dashboard" as UC_Dashboard
   usecase "Quản lý hồ sơ" as UC_Profile
   usecase "Đổi mật khẩu" as UC_ChangePassword
@@ -38,24 +37,34 @@ rectangle "Cổng khách hàng CopyPro" {
   usecase "Đánh dấu thông báo đã đọc" as UC_MarkNotificationRead
 }
 
-Customer --> UC_Login
-Customer --> UC_Dashboard
-Customer --> UC_Profile
-Customer --> UC_Logout
+Customer -- UC_Login
+Customer -- UC_Dashboard
+Customer -- UC_Profile
+Customer -- UC_ChangePassword
+Customer -- UC_NotificationSettings
+Customer -- UC_Logout
 
-Customer --> UC_Generate
-Customer --> UC_Contents
-Customer --> UC_Projects
-Customer --> UC_Templates
+Customer -- UC_Generate
+Customer -- UC_ApplyTemplate
+Customer -- UC_SaveGeneratedContent
+Customer -- UC_Contents
+Customer -- UC_EditContent
+Customer -- UC_ExportContent
+Customer -- UC_Projects
+Customer -- UC_Templates
 
-Customer --> UC_FineTune
-Customer --> UC_Plagiarism
+Customer -- UC_FineTune
+Customer -- UC_ProvideTrainingData
+Customer -- UC_TrainingProgress
+Customer -- UC_Plagiarism
+Customer -- UC_PlagiarismSources
 
-Customer --> UC_Subscription
-Customer --> UC_Invoices
-Customer --> UC_Notifications
-
-UC_Login ..> UC_Authenticate : <<include>>
+Customer -- UC_Subscription
+Customer -- UC_PaySubscription
+Customer -- UC_Invoices
+Customer -- UC_DownloadInvoice
+Customer -- UC_Notifications
+Customer -- UC_MarkNotificationRead
 
 UC_ChangePassword ..> UC_Profile : <<extend>>
 UC_NotificationSettings ..> UC_Profile : <<extend>>

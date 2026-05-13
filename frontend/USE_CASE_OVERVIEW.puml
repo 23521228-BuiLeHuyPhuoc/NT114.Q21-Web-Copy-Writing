@@ -9,6 +9,7 @@ actor "Ứng viên Admin" as AdminCandidate
 actor "Admin" as Admin
 actor "Super Admin" as SuperAdmin
 
+Customer --|> Guest
 SuperAdmin --|> Admin
 
 rectangle "Hệ thống CopyPro" {
@@ -21,9 +22,7 @@ rectangle "Hệ thống CopyPro" {
   usecase "Khôi phục mật khẩu" as UC_RecoverPassword
 
   usecase "Đăng ký tài khoản Admin" as UC_AdminRegister
-  usecase "Xác thực mã mời Admin" as UC_ValidateAdminInvite
   usecase "Đăng nhập Admin" as UC_AdminLogin
-  usecase "Kiểm tra quyền truy cập" as UC_CheckPermission
 
   usecase "Xem dashboard khách hàng" as UC_CustomerDashboard
   usecase "Tạo nội dung AI" as UC_GenerateContent
@@ -47,53 +46,48 @@ rectangle "Hệ thống CopyPro" {
   usecase "Quản lý gói dịch vụ" as UC_AdminPlans
   usecase "Quản lý giao dịch thanh toán" as UC_AdminPayments
   usecase "Quản lý mô hình AI" as UC_AdminModels
-  usecase "Quản lý job fine-tuning" as UC_AdminFineTuning
   usecase "Cấu hình hệ thống" as UC_AdminSettings
   usecase "Xem nhật ký quản trị" as UC_AdminAuditLogs
   usecase "Quản lý vai trò và quyền" as UC_AdminPermissions
 }
 
-Guest --> UC_PublicInfo
-Guest --> UC_ReadBlog
-Guest --> UC_Contact
-Guest --> UC_CustomerRegister
-Guest --> UC_CustomerLogin
-Guest --> UC_RecoverPassword
+Guest -- UC_PublicInfo
+Guest -- UC_ReadBlog
+Guest -- UC_Contact
+Guest -- UC_CustomerRegister
+Guest -- UC_CustomerLogin
+Guest -- UC_RecoverPassword
 
-AdminCandidate --> UC_AdminRegister
-AdminCandidate --> UC_AdminLogin
+AdminCandidate -- UC_AdminRegister
+AdminCandidate -- UC_AdminLogin
 
-Customer --> UC_CustomerLogin
-Customer --> UC_CustomerDashboard
-Customer --> UC_GenerateContent
-Customer --> UC_ManageContents
-Customer --> UC_ManageProjects
-Customer --> UC_TemplateLibrary
-Customer --> UC_FineTune
-Customer --> UC_Plagiarism
-Customer --> UC_Profile
-Customer --> UC_ManageSubscription
-Customer --> UC_Invoices
-Customer --> UC_Notifications
+Customer -- UC_CustomerDashboard
+Customer -- UC_GenerateContent
+Customer -- UC_ManageContents
+Customer -- UC_ManageProjects
+Customer -- UC_TemplateLibrary
+Customer -- UC_FineTune
+Customer -- UC_Plagiarism
+Customer -- UC_Profile
+Customer -- UC_ManageSubscription
+Customer -- UC_PaySubscription
+Customer -- UC_Invoices
+Customer -- UC_Notifications
 
-Admin --> UC_AdminLogin
-Admin --> UC_AdminDashboard
-Admin --> UC_AdminUsers
-Admin --> UC_AdminContents
-Admin --> UC_AdminTemplates
-Admin --> UC_AdminCategories
-Admin --> UC_AdminPlans
-Admin --> UC_AdminPayments
-Admin --> UC_AdminModels
-Admin --> UC_AdminFineTuning
-Admin --> UC_AdminSettings
-Admin --> UC_AdminAuditLogs
+Admin -- UC_AdminLogin
+Admin -- UC_AdminDashboard
+Admin -- UC_AdminUsers
+Admin -- UC_AdminContents
+Admin -- UC_AdminTemplates
+Admin -- UC_AdminCategories
+Admin -- UC_AdminPlans
+Admin -- UC_AdminPayments
+Admin -- UC_AdminModels
+Admin -- UC_AdminSettings
+Admin -- UC_AdminAuditLogs
 
-SuperAdmin --> UC_ApproveAdmin
-SuperAdmin --> UC_AdminPermissions
-
-UC_AdminRegister ..> UC_ValidateAdminInvite : <<include>>
-UC_AdminLogin ..> UC_CheckPermission : <<include>>
+SuperAdmin -- UC_ApproveAdmin
+SuperAdmin -- UC_AdminPermissions
 
 UC_PaySubscription ..> UC_ManageSubscription : <<extend>>
 
