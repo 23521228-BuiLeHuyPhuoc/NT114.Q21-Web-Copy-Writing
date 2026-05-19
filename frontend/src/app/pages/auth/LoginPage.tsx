@@ -4,9 +4,10 @@ import { useForm } from 'react-hook-form';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
+import { BrandLogo } from '@/app/components/BrandLogo';
 import {
-  Sparkles, Eye, EyeOff, Mail, Lock,
-  ArrowLeft, CheckCircle2, Shield,
+  Eye, EyeOff, Mail, Lock,
+  ArrowLeft, CheckCircle2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -61,8 +62,8 @@ export function LoginPage() {
 
       {/* ── LEFT PANEL ── */}
       <div className="hidden lg:flex lg:w-1/2 xl:w-[55%] flex-col relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-950 via-green-950 to-emerald-950" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_70%_at_30%_40%,rgba(34,197,94,0.18),transparent)]" />
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-emerald-950 to-cyan-950" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_70%_at_30%_40%,rgba(20,184,166,0.18),transparent)]" />
         <div
           className="absolute inset-0 opacity-[0.035]"
           style={{
@@ -74,22 +75,19 @@ export function LoginPage() {
 
         {/* Logo */}
         <div className="relative p-10">
-          <Link to="/" className="inline-flex items-center gap-2.5 hover:opacity-80 transition-opacity">
-            <div className="bg-gradient-to-br from-green-400 to-emerald-500 p-2 rounded-xl shadow-lg">
-              <Sparkles className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-white text-xl font-bold tracking-tight">CopyPro</span>
+          <Link to="/" className="inline-flex items-center hover:opacity-90 transition-opacity">
+            <BrandLogo size="lg" tone="light" surface="light" />
           </Link>
         </div>
 
         {/* Main content */}
         <div className="relative flex-1 flex flex-col justify-center px-12 xl:px-16 pb-16">
-          <p className="text-green-400 text-sm font-semibold uppercase tracking-widest mb-4">
+          <p className="text-teal-300 text-sm font-semibold uppercase tracking-widest mb-4">
             AI Copywriting Platform
           </p>
           <h1 className="text-white mb-6 leading-tight">
             Copy chuyên nghiệp<br />
-            <span className="bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-emerald-300 via-teal-300 to-cyan-300 bg-clip-text text-transparent">
               trong vài giây
             </span>
           </h1>
@@ -100,8 +98,8 @@ export function LoginPage() {
           <ul className="space-y-4 mb-12">
             {BENEFITS.map(b => (
               <li key={b} className="flex items-center gap-3 text-gray-300">
-                <div className="w-6 h-6 rounded-full bg-green-500/20 border border-green-500/30 flex items-center justify-center flex-shrink-0">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-green-400" />
+                <div className="w-6 h-6 rounded-full bg-teal-400/15 border border-teal-300/30 flex items-center justify-center flex-shrink-0">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-teal-300" />
                 </div>
                 <span className="text-sm">{b}</span>
               </li>
@@ -111,9 +109,9 @@ export function LoginPage() {
           {/* Mock copy card */}
           <div className="bg-white/6 border border-white/10 rounded-2xl p-5 backdrop-blur">
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-              <span className="text-green-400 text-xs font-semibold">AI đang tạo...</span>
-              <span className="ml-auto bg-green-900/40 text-green-300 border border-green-700/30 rounded-md px-2 py-0.5 text-xs">
+              <div className="w-2 h-2 bg-cyan-300 rounded-full animate-pulse" />
+              <span className="text-cyan-300 text-xs font-semibold">AI đang tạo...</span>
+              <span className="ml-auto bg-cyan-950/50 text-cyan-200 border border-cyan-700/30 rounded-md px-2 py-0.5 text-xs">
                 GPT-4o
               </span>
             </div>
@@ -121,7 +119,7 @@ export function LoginPage() {
               "🔥 FLASH SALE 48H! Giảm đến 70% toàn bộ sản phẩm — Đặt ngay kẻo lỡ. Freeship mọi đơn hàng trong hôm nay!"
             </p>
             <div className="flex items-center gap-2 mt-3">
-              <span className="bg-emerald-900/40 text-emerald-300 border border-emerald-700/30 text-xs rounded-md px-2 py-0.5">
+              <span className="bg-amber-950/45 text-amber-200 border border-amber-700/30 text-xs rounded-md px-2 py-0.5">
                 ⭐ 94% chất lượng
               </span>
               <span className="text-gray-500 text-xs">· 1.8 giây</span>
@@ -136,8 +134,8 @@ export function LoginPage() {
               {['TK', 'LH', 'PA', 'MK'].map((av, i) => (
                 <div
                   key={i}
-                  className={`w-8 h-8 rounded-full border-2 border-green-950 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 ${
-                    ['bg-green-600', 'bg-emerald-700', 'bg-teal-600', 'bg-green-700'][i]
+                  className={`w-8 h-8 rounded-full border-2 border-slate-950 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 ${
+                    ['bg-emerald-600', 'bg-teal-600', 'bg-cyan-600', 'bg-amber-500'][i]
                   }`}
                 >
                   {av}
@@ -152,19 +150,16 @@ export function LoginPage() {
       </div>
 
       {/* ── RIGHT PANEL: Form ── */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 bg-white">
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 bg-gradient-to-br from-white via-emerald-50/35 to-cyan-50/60">
         {/* Mobile logo */}
-        <div className="lg:hidden mb-10 flex items-center gap-2.5">
-          <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-2 rounded-xl shadow-md">
-            <Sparkles className="w-5 h-5 text-white" />
-          </div>
-          <span className="text-gray-900 text-xl font-bold">CopyPro</span>
-        </div>
+        <Link to="/" className="lg:hidden mb-10 inline-flex items-center hover:opacity-80 transition-opacity">
+          <BrandLogo size="xl" />
+        </Link>
 
         <div className="w-full max-w-[400px]">
           <Link
             to="/"
-            className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-green-700 mb-8 transition-colors"
+            className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-teal-700 mb-8 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" /> Về trang chủ
           </Link>
@@ -186,7 +181,7 @@ export function LoginPage() {
                     required: 'Email là bắt buộc',
                     pattern: { value: /^\S+@\S+$/, message: 'Email không hợp lệ' },
                   })}
-                  className="pl-10 h-12 rounded-xl border-gray-200 focus:border-green-500 focus:ring-green-500/20"
+                  className="pl-10 h-12 rounded-xl border-gray-200 focus:border-teal-500 focus:ring-teal-500/20"
                 />
               </div>
               {errors.email && <p className="text-xs text-red-600 mt-1">{errors.email.message}</p>}
@@ -197,7 +192,7 @@ export function LoginPage() {
                 <Label className="text-gray-700">Mật khẩu</Label>
                 <Link
                   to="/forgot-password"
-                  className="text-xs text-green-700 hover:underline font-medium"
+                  className="text-xs text-teal-700 hover:underline font-medium"
                 >
                   Quên mật khẩu?
                 </Link>
@@ -208,7 +203,7 @@ export function LoginPage() {
                   type={showPass ? 'text' : 'password'}
                   placeholder="••••••••"
                   {...register('password', { required: 'Mật khẩu là bắt buộc' })}
-                  className="pl-10 pr-10 h-12 rounded-xl border-gray-200 focus:border-green-500"
+                  className="pl-10 pr-10 h-12 rounded-xl border-gray-200 focus:border-teal-500"
                 />
                 <button
                   type="button"
@@ -224,7 +219,7 @@ export function LoginPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full h-12 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 disabled:opacity-60 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-green-200"
+              className="w-full h-12 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:via-teal-500 hover:to-cyan-500 disabled:opacity-60 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-teal-200"
             >
               {isSubmitting ? (
                 <span className="flex items-center justify-center gap-2">
@@ -247,10 +242,10 @@ export function LoginPage() {
 
           <button
             onClick={fillDemo}
-            className="w-full flex items-center justify-between gap-2 p-4 border border-gray-200 rounded-xl hover:border-green-300 hover:bg-green-50/50 transition-all group"
+            className="w-full flex items-center justify-between gap-2 p-4 border border-gray-200 rounded-xl bg-white/80 hover:border-cyan-300 hover:bg-cyan-50/60 transition-all group"
           >
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-green-100 group-hover:bg-green-200 flex items-center justify-center transition-colors flex-shrink-0">
+              <div className="w-9 h-9 rounded-xl bg-teal-100 group-hover:bg-cyan-100 flex items-center justify-center transition-colors flex-shrink-0">
                 <span className="text-base">👤</span>
               </div>
               <div className="text-left">
@@ -258,26 +253,15 @@ export function LoginPage() {
                 <p className="text-xs text-gray-400">customer@copypro.vn · customer123</p>
               </div>
             </div>
-            <span className="text-xs text-green-600 font-semibold opacity-0 group-hover:opacity-100 transition-opacity">Điền →</span>
+            <span className="text-xs text-teal-700 font-semibold opacity-0 group-hover:opacity-100 transition-opacity">Điền →</span>
           </button>
 
           <p className="text-center text-sm text-gray-500 mt-7">
             Chưa có tài khoản?{' '}
-            <Link to="/register" className="text-green-700 hover:underline font-semibold">
+            <Link to="/register" className="text-teal-700 hover:underline font-semibold">
               Đăng ký miễn phí
             </Link>
           </p>
-
-          {/* Admin link — subtle */}
-          <div className="mt-8 pt-6 border-t border-gray-100 text-center">
-            <Link
-              to="/admin/login"
-              className="inline-flex items-center gap-2 text-xs text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              <Shield className="w-3.5 h-3.5" />
-              Đăng nhập dành cho Admin
-            </Link>
-          </div>
         </div>
       </div>
     </div>

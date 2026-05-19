@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
+import { BrandLogo } from '@/app/components/BrandLogo';
 import {
-  Sparkles, LifeBuoy, FileText, Wand2, Brain,
+  LifeBuoy, FileText, Wand2, Brain,
   CreditCard, Key, BookOpen, MessageCircle,
   ExternalLink, Zap,
 } from 'lucide-react';
@@ -51,11 +52,8 @@ export function CustomerFooter() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           {/* Brand + status */}
           <div className="col-span-2 md:col-span-1">
-            <Link to="/" className="flex items-center gap-2 mb-3 group">
-              <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-1.5 rounded-lg shadow-sm group-hover:shadow-md transition-shadow">
-                <Sparkles className="w-3.5 h-3.5 text-white" />
-              </div>
-              <span className="font-bold text-gray-900" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>CopyPro</span>
+            <Link to="/" className="inline-flex items-center mb-3 hover:opacity-80 transition-opacity">
+              <BrandLogo size="md" />
             </Link>
             <p className="text-xs text-gray-500 leading-relaxed mb-4">
               Nền tảng AI Copywriting hàng đầu Việt Nam, tích hợp GPT-4o, Llama 3.1 & Fine-tuning.

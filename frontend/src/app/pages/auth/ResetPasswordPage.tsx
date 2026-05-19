@@ -3,7 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
-import { Sparkles, Lock, CheckCircle2, Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import { BrandLogo } from '@/app/components/BrandLogo';
+import { Lock, CheckCircle2, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface ResetPwFormData { password: string; confirm: string }
@@ -39,16 +40,16 @@ export function ResetPasswordPage() {
 
   if (done) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 flex items-center justify-center p-5">
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 flex items-center justify-center p-5">
         <div className="bg-white rounded-3xl shadow-xl p-8 max-w-md w-full text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CheckCircle2 className="w-8 h-8 text-green-600" />
+          <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CheckCircle2 className="w-8 h-8 text-teal-600" />
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Đặt lại thành công!</h2>
           <p className="text-gray-600 mb-6">Mật khẩu đã được cập nhật. Bạn có thể đăng nhập ngay.</p>
           <button
             onClick={() => navigate('/login')}
-            className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl py-3 font-semibold hover:from-green-500 hover:to-emerald-500 transition-all"
+            className="w-full bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 text-white rounded-xl py-3 font-semibold hover:from-emerald-500 hover:via-teal-500 hover:to-cyan-500 transition-all"
           >
             Đăng nhập ngay
           </button>
@@ -58,18 +59,15 @@ export function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 flex items-center justify-center p-5">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 flex items-center justify-center p-5">
       <div className="bg-white rounded-3xl shadow-xl p-8 max-w-md w-full">
-        <Link to="/login" className="flex items-center gap-1 text-sm text-gray-500 hover:text-green-600 mb-6">
+        <Link to="/login" className="flex items-center gap-1 text-sm text-gray-500 hover:text-teal-600 mb-6">
           <ArrowLeft className="w-4 h-4" /> Quay lại đăng nhập
         </Link>
 
-        <div className="flex items-center gap-2 mb-6">
-          <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-2 rounded-xl">
-            <Sparkles className="w-5 h-5 text-white" />
-          </div>
-          <span className="text-xl font-bold text-gray-900">CopyPro</span>
-        </div>
+        <Link to="/" className="inline-flex items-center mb-6 hover:opacity-80 transition-opacity">
+          <BrandLogo size="lg" />
+        </Link>
 
         <h1 className="text-2xl font-bold text-gray-900 mb-1">Đặt lại mật khẩu</h1>
         <p className="text-gray-600 mb-6">Nhập mật khẩu mới cho tài khoản của bạn</p>
@@ -89,7 +87,7 @@ export function ResetPasswordPage() {
 
           <div className="space-y-1">
             {checks.map((c, i) => (
-              <div key={i} className={`flex items-center gap-2 text-xs ${c.ok ? 'text-green-600' : 'text-gray-400'}`}>
+              <div key={i} className={`flex items-center gap-2 text-xs ${c.ok ? 'text-teal-600' : 'text-gray-400'}`}>
                 <CheckCircle2 className="w-3.5 h-3.5" /> {c.label}
               </div>
             ))}
@@ -107,7 +105,7 @@ export function ResetPasswordPage() {
           <button
             type="submit"
             disabled={!allValid || isSubmitting}
-            className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl py-3 font-semibold hover:from-green-500 hover:to-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            className="w-full bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 text-white rounded-xl py-3 font-semibold hover:from-emerald-500 hover:via-teal-500 hover:to-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
             {isSubmitting ? 'Đang xử lý...' : 'Đặt lại mật khẩu'}
           </button>

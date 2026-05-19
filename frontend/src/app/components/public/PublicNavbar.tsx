@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/app/components/ui/button';
 import { Badge } from '@/app/components/ui/badge';
+import { BrandLogo } from '@/app/components/BrandLogo';
 import {
   Sparkles, Menu, X, ChevronDown,
-  Wand2, Brain, FileText, Key, Shield,
+  Wand2, Brain, FileText, Key,
 } from 'lucide-react';
 
 const PRODUCTS = [
@@ -102,17 +103,9 @@ export function PublicNavbar() {
     >
       <div className="mx-auto max-w-7xl px-5 lg:px-8">
         <div className="flex h-[70px] items-center justify-between">
-          <Link to="/" className="flex flex-shrink-0 items-center gap-2.5">
-            <div className="rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 p-2 shadow-md shadow-green-200">
-              <Sparkles className="h-5 w-5 text-white" />
-            </div>
-            <div className="flex items-baseline gap-2">
-              <span
-                className={`text-[1.35rem] font-bold tracking-tight transition-colors ${scrolled ? 'text-gray-900' : 'text-white'}`}
-                style={{ fontFamily: 'Space Grotesk, sans-serif' }}
-              >
-                CopyPro
-              </span>
+          <Link to="/" className="flex flex-shrink-0 items-center gap-2">
+            <BrandLogo size="lg" tone={scrolled ? 'dark' : 'light'} surface="light" className="p-1" />
+            <div className="flex items-center">
               <Badge className="h-4 border-0 bg-green-100 px-1.5 py-0 text-[10px] text-green-700">AI</Badge>
             </div>
           </Link>
@@ -155,15 +148,6 @@ export function PublicNavbar() {
               <Sparkles className="mr-1.5 h-4 w-4" />
               Dùng thử miễn phí
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className={`h-9 w-9 rounded-lg transition-colors ${scrolled ? 'text-gray-400 hover:bg-gray-100 hover:text-gray-600' : 'text-white/60 hover:bg-white/15 hover:text-white'}`}
-              onClick={() => navigate('/admin/login')}
-              title="Admin Login"
-            >
-              <Shield className="h-4 w-4" />
-            </Button>
           </div>
 
           <button
@@ -199,11 +183,6 @@ export function PublicNavbar() {
             <div className="mt-3 grid grid-cols-2 gap-2 border-t border-gray-100 pt-4">
               <Button variant="outline" className="w-full rounded-lg text-sm" onClick={() => navigate('/login')}>Đăng nhập</Button>
               <Button className="w-full rounded-lg bg-gradient-to-r from-green-600 to-emerald-600 text-sm text-white" onClick={() => navigate('/register')}>Đăng ký</Button>
-            </div>
-            <div className="mt-2">
-              <Button variant="ghost" className="w-full rounded-lg text-xs text-gray-400 hover:text-gray-600" onClick={() => navigate('/admin/login')}>
-                <Shield className="mr-1.5 h-3.5 w-3.5" /> Đăng nhập Admin
-              </Button>
             </div>
           </div>
         </div>

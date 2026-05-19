@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth, ADMIN_INVITE_CODE } from '@/app/contexts/AuthContext';
 import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
+import { BrandLogo } from '@/app/components/BrandLogo';
 import {
   Shield, Eye, EyeOff, Mail, Lock, User, Key,
   CheckCircle2, AlertTriangle, ChevronDown,
@@ -103,7 +104,7 @@ export function AdminRegisterPage() {
 
           <p className="text-gray-400 text-sm leading-relaxed mb-6">
             Tài khoản <span className="text-white font-semibold">{name}</span> với email{' '}
-            <span className="text-green-400 font-semibold">{email}</span> đã được tạo và đang chờ Super Admin xem xét và phê duyệt.
+            <span className="text-cyan-300 font-semibold">{email}</span> đã được tạo và đang chờ Super Admin xem xét và phê duyệt.
           </p>
 
           {/* Role badge */}
@@ -117,7 +118,7 @@ export function AdminRegisterPage() {
             <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Tiến trình xét duyệt</p>
 
             <div className="flex items-center gap-3">
-              <div className="w-7 h-7 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+              <div className="w-7 h-7 bg-teal-500 rounded-full flex items-center justify-center flex-shrink-0">
                 <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
               </div>
               <div>
@@ -181,26 +182,23 @@ export function AdminRegisterPage() {
 
       {/* ── LEFT: Role Selector Panel ── */}
       <div className="hidden lg:flex lg:w-[52%] flex-col relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-950 via-gray-900 to-green-950" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_60%_at_20%_50%,rgba(34,197,94,0.08),transparent)]" />
-        <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'linear-gradient(rgba(34,197,94,0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(34,197,94,0.6) 1px, transparent 1px)', backgroundSize: '48px 48px' }} />
-        <div className="absolute top-0 right-0 w-80 h-80 bg-green-500/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-60 h-60 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-950 via-slate-900 to-cyan-950" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_60%_at_20%_50%,rgba(20,184,166,0.1),transparent)]" />
+        <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'linear-gradient(rgba(20,184,166,0.45) 1px, transparent 1px), linear-gradient(90deg, rgba(20,184,166,0.45) 1px, transparent 1px)', backgroundSize: '48px 48px' }} />
+        <div className="absolute top-0 right-0 w-80 h-80 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-60 h-60 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
 
         {/* Logo */}
         <div className="relative p-10 flex items-center gap-3 border-b border-white/5">
-          <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-emerald-500 rounded-lg flex items-center justify-center shadow-lg shadow-green-900/40">
-            <Shield className="w-4 h-4 text-white" />
-          </div>
-          <div>
-            <span className="text-white font-bold text-lg tracking-tight">CopyPro</span>
-            <span className="ml-2 text-xs bg-green-900/60 text-green-300 border border-green-700/40 rounded px-2 py-0.5">Admin Console</span>
-          </div>
+          <Link to="/" className="inline-flex items-center hover:opacity-90 transition-opacity">
+            <BrandLogo size="lg" tone="light" surface="light" />
+          </Link>
+          <span className="text-xs bg-amber-950/60 text-amber-300 border border-amber-700/40 rounded px-2 py-0.5">Admin Console</span>
         </div>
 
         {/* Role cards */}
         <div className="relative flex-1 flex flex-col justify-center px-12 xl:px-16">
-          <p className="text-green-500 text-xs font-bold uppercase tracking-[0.2em] mb-3">Phân quyền Admin</p>
+          <p className="text-teal-400 text-xs font-bold uppercase tracking-[0.2em] mb-3">Phân quyền Admin</p>
           <h2 className="text-white mb-2 leading-tight">Chọn loại tài khoản</h2>
           <p className="text-gray-500 text-sm leading-relaxed mb-8">
             Mỗi loại Admin có phạm vi quyền truy cập riêng. Phù hợp với vai trò trong tổ chức của bạn.
@@ -216,7 +214,7 @@ export function AdminRegisterPage() {
                   onClick={() => setAdminRole(role.value)}
                   className={`w-full text-left p-4 rounded-2xl border transition-all ${
                     isSelected
-                      ? 'bg-white/8 border-green-600/50 ring-1 ring-green-600/30'
+                      ? 'bg-white/8 border-cyan-500/50 ring-1 ring-cyan-500/30'
                       : 'bg-white/3 border-white/8 hover:bg-white/6 hover:border-white/15'
                   }`}
                 >
@@ -225,7 +223,7 @@ export function AdminRegisterPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <p className={`text-sm font-semibold ${isSelected ? 'text-white' : 'text-gray-300'}`}>{role.label}</p>
-                        {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-green-400 flex-shrink-0" />}
+                        {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-cyan-300 flex-shrink-0" />}
                       </div>
                       <p className="text-xs text-gray-600 mt-0.5 truncate">{role.description}</p>
                     </div>
@@ -257,13 +255,10 @@ export function AdminRegisterPage() {
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-10 bg-gray-950 overflow-y-auto">
         {/* Mobile logo */}
         <div className="lg:hidden mb-8 flex items-center gap-2.5">
-          <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-2 rounded-xl">
-            <Shield className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <span className="text-white font-bold text-lg">CopyPro</span>
-            <span className="ml-2 text-xs bg-green-900/60 text-green-300 border border-green-700/40 rounded px-2 py-0.5">Admin</span>
-          </div>
+          <Link to="/" className="inline-flex items-center hover:opacity-90 transition-opacity">
+            <BrandLogo size="lg" tone="light" surface="light" />
+          </Link>
+          <span className="text-xs bg-amber-950/60 text-amber-300 border border-amber-700/40 rounded px-2 py-0.5">Admin</span>
         </div>
 
         <div className="w-full max-w-[400px]">
@@ -283,7 +278,7 @@ export function AdminRegisterPage() {
               <div className="relative">
                 <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" />
                 <Input type="text" placeholder="Nguyễn Văn Admin" value={name} onChange={e => setName(e.target.value)}
-                  className="pl-10 h-12 rounded-xl bg-gray-900 border-gray-700 text-white placeholder:text-gray-600 focus:border-green-500 focus:bg-gray-800" required />
+                  className="pl-10 h-12 rounded-xl bg-gray-900 border-gray-700 text-white placeholder:text-gray-600 focus:border-cyan-500 focus:bg-gray-800" required />
               </div>
             </div>
 
@@ -293,7 +288,7 @@ export function AdminRegisterPage() {
               <div className="relative">
                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" />
                 <Input type="email" placeholder="admin@copypro.vn" value={email} onChange={e => setEmail(e.target.value)}
-                  className="pl-10 h-12 rounded-xl bg-gray-900 border-gray-700 text-white placeholder:text-gray-600 focus:border-green-500 focus:bg-gray-800" required />
+                  className="pl-10 h-12 rounded-xl bg-gray-900 border-gray-700 text-white placeholder:text-gray-600 focus:border-cyan-500 focus:bg-gray-800" required />
               </div>
             </div>
 
@@ -304,7 +299,7 @@ export function AdminRegisterPage() {
                 <button
                   type="button"
                   onClick={() => setShowRoleDropdown(!showRoleDropdown)}
-                  className="w-full h-12 bg-gray-900 border border-gray-700 rounded-xl px-4 flex items-center justify-between text-white hover:border-green-500 transition-colors"
+                  className="w-full h-12 bg-gray-900 border border-gray-700 rounded-xl px-4 flex items-center justify-between text-white hover:border-cyan-500 transition-colors"
                 >
                   <div className="flex items-center gap-2.5">
                     <div className={`w-2 h-2 rounded-full ${selectedRole.dotColor}`} />
@@ -319,14 +314,14 @@ export function AdminRegisterPage() {
                         key={role.value}
                         type="button"
                         onClick={() => { setAdminRole(role.value); setShowRoleDropdown(false); }}
-                        className={`w-full px-4 py-3 flex items-center gap-3 text-left hover:bg-gray-800 transition-colors ${adminRole === role.value ? 'bg-green-950/40' : ''}`}
+                        className={`w-full px-4 py-3 flex items-center gap-3 text-left hover:bg-gray-800 transition-colors ${adminRole === role.value ? 'bg-cyan-950/30' : ''}`}
                       >
                         <div className={`w-2 h-2 rounded-full flex-shrink-0 ${role.dotColor}`} />
                         <div>
                           <p className="text-sm font-medium text-white">{role.label}</p>
                           <p className="text-xs text-gray-600">{role.description}</p>
                         </div>
-                        {adminRole === role.value && <CheckCircle2 className="w-4 h-4 text-green-400 ml-auto flex-shrink-0" />}
+                        {adminRole === role.value && <CheckCircle2 className="w-4 h-4 text-cyan-300 ml-auto flex-shrink-0" />}
                       </button>
                     ))}
                   </div>
@@ -340,7 +335,7 @@ export function AdminRegisterPage() {
               <div className="relative">
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" />
                 <Input type={showPass ? 'text' : 'password'} placeholder="Tối thiểu 8 ký tự" value={password} onChange={e => setPassword(e.target.value)}
-                  className="pl-10 pr-10 h-12 rounded-xl bg-gray-900 border-gray-700 text-white placeholder:text-gray-600 focus:border-green-500 focus:bg-gray-800" required />
+                  className="pl-10 pr-10 h-12 rounded-xl bg-gray-900 border-gray-700 text-white placeholder:text-gray-600 focus:border-cyan-500 focus:bg-gray-800" required />
                 <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-400 transition-colors">
                   {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -364,13 +359,13 @@ export function AdminRegisterPage() {
               <div className="relative">
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" />
                 <Input type={showConfirm ? 'text' : 'password'} placeholder="Nhập lại mật khẩu" value={confirmPass} onChange={e => setConfirmPass(e.target.value)}
-                  className={`pl-10 pr-10 h-12 rounded-xl bg-gray-900 text-white placeholder:text-gray-600 focus:bg-gray-800 transition-colors ${passMismatch ? 'border-red-600' : passMatch ? 'border-green-600' : 'border-gray-700 focus:border-green-500'}`} required />
+                  className={`pl-10 pr-10 h-12 rounded-xl bg-gray-900 text-white placeholder:text-gray-600 focus:bg-gray-800 transition-colors ${passMismatch ? 'border-red-600' : passMatch ? 'border-teal-500' : 'border-gray-700 focus:border-cyan-500'}`} required />
                 <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-400 transition-colors">
                   {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
               {passMismatch && <p className="text-red-400 text-xs mt-1.5 flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> Mật khẩu không khớp</p>}
-              {passMatch   && <p className="text-green-400 text-xs mt-1.5 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Mật khẩu khớp</p>}
+              {passMatch   && <p className="text-teal-300 text-xs mt-1.5 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Mật khẩu khớp</p>}
             </div>
 
             {/* Invite code */}
@@ -400,7 +395,7 @@ export function AdminRegisterPage() {
 
             {/* Submit */}
             <button type="submit" disabled={isLoading || passMismatch}
-              className="w-full h-12 bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-500 hover:to-emerald-600 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl font-bold text-sm transition-all shadow-xl shadow-green-900/40 mt-1 flex items-center justify-center gap-2">
+              className="w-full h-12 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:via-teal-500 hover:to-cyan-500 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl font-bold text-sm transition-all shadow-xl shadow-cyan-900/30 mt-1 flex items-center justify-center gap-2">
               {isLoading ? (
                 <><div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Đang tạo tài khoản...</>
               ) : (

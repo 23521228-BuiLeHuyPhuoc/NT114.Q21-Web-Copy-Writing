@@ -6,7 +6,7 @@ import { Badge } from '@/app/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/app/components/ui/avatar';
 import { Sheet, SheetContent, SheetTrigger } from '@/app/components/ui/sheet';
 import {
-  Sparkles, LayoutDashboard, Wand2, FileText, User, Users,
+  LayoutDashboard, Wand2, FileText, User, Users,
   LogOut, Menu, CreditCard, Brain, Key, Settings,
   FolderOpen, Bell, Shield, Tag, DollarSign, ScrollText,
   FileCheck, Crown,
@@ -16,6 +16,7 @@ import {
 } from '@/lib/permissions';
 import { CustomerHeader } from '@/app/components/CustomerHeader';
 import { CustomerFooter } from '@/app/components/CustomerFooter';
+import { BrandLogo } from '@/app/components/BrandLogo';
 
 interface LayoutProps { children: ReactNode; }
 interface MenuItem { label: string; icon: any; path: string; badge?: string; }
@@ -53,12 +54,9 @@ export function Layout({ children }: LayoutProps) {
     <div className="h-full flex flex-col overflow-y-auto">
       {/* Logo */}
       <div className="p-5 border-b flex-shrink-0">
-        <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-          <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-1.5 rounded-lg shadow-sm">
-            <Sparkles className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h2 className="text-lg font-bold text-gray-900">CopyPro</h2>
+        <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+          <BrandLogo size="md" />
+          <div className="min-w-0">
             <p className="text-xs text-gray-500">{user?.role === 'admin' ? 'Admin Panel' : 'Customer Portal'}</p>
           </div>
         </Link>
@@ -131,11 +129,8 @@ export function Layout({ children }: LayoutProps) {
         <div className="flex-1 flex flex-col min-w-0">
           {/* Mobile Header for admin */}
           <header className="md:hidden bg-white border-b p-4 flex items-center justify-between flex-shrink-0">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-1.5 rounded-lg shadow-sm">
-                <Sparkles className="w-4 h-4 text-white" />
-              </div>
-              <span className="font-bold text-gray-900">CopyPro</span>
+            <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
+              <BrandLogo size="md" />
             </Link>
             <Sheet>
               <SheetTrigger asChild>
@@ -166,11 +161,8 @@ export function Layout({ children }: LayoutProps) {
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile top bar */}
         <header className="md:hidden bg-white border-b p-4 flex items-center justify-between flex-shrink-0">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-1.5 rounded-lg shadow-sm">
-              <Sparkles className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-bold text-gray-900">CopyPro</span>
+          <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
+            <BrandLogo size="md" />
           </Link>
           <Sheet>
             <SheetTrigger asChild>

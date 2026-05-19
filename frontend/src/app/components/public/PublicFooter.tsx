@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { BrandLogo } from '@/app/components/BrandLogo';
 import { Sparkles, Mail, Phone, MapPin, Facebook, Youtube, Linkedin, Twitter, ArrowUpRight } from 'lucide-react';
 
 const FOOTER_LINKS = {
@@ -91,16 +92,8 @@ export function PublicFooter() {
         <div className="grid grid-cols-2 lg:grid-cols-6 gap-8 lg:gap-12">
           {/* Brand */}
           <div className="col-span-2">
-            <Link to="/" className="flex items-center gap-2.5 mb-5">
-              <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-2 rounded-xl">
-                <Sparkles className="w-5 h-5 text-white" />
-              </div>
-              <span
-                className="text-xl font-bold text-white"
-                style={{ fontFamily: 'Space Grotesk, sans-serif' }}
-              >
-                CopyPro
-              </span>
+            <Link to="/" className="inline-flex items-center mb-5 hover:opacity-90 transition-opacity">
+              <BrandLogo size="lg" tone="light" surface="light" />
             </Link>
             <p className="text-sm leading-relaxed mb-6 text-gray-500">
               Nền tảng AI Copywriting hàng đầu Việt Nam — tích hợp GPT-4o, Llama 3.1 và Fine-tuning, giúp doanh nghiệp tạo nội dung marketing chuyên nghiệp trong vài giây.

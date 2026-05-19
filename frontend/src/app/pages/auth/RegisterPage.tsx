@@ -4,13 +4,14 @@ import { useForm } from 'react-hook-form';
 import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
 import { Badge } from '@/app/components/ui/badge';
-import { Sparkles, Eye, EyeOff, User, Mail, Lock, ArrowLeft, CheckCircle2, ArrowRight, Crown, Zap, Building2 } from 'lucide-react';
+import { BrandLogo } from '@/app/components/BrandLogo';
+import { Eye, EyeOff, User, Mail, Lock, ArrowLeft, CheckCircle2, ArrowRight, Crown, Zap, Building2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const PLANS = [
   { id: 'free',  name: 'Miễn Phí', price: '0₫',     icon: Zap,      desc: '30 copy/tháng',         color: 'border-gray-200 bg-white',      check: 'bg-gray-100 text-gray-500',   badge: '' },
-  { id: 'pro',   name: 'Pro',       price: '299K₫',  icon: Crown,    desc: '500 copy · Fine-tuning', color: 'border-green-500 bg-green-50',  check: 'bg-green-100 text-green-700', badge: 'Phổ biến' },
-  { id: 'biz',   name: 'Business',  price: '799K₫',  icon: Building2, desc: 'Unlimited · API 50K',  color: 'border-gray-200 bg-white',      check: 'bg-gray-100 text-gray-500',   badge: '' },
+  { id: 'pro',   name: 'Pro',       price: '299K₫',  icon: Crown,    desc: '500 copy · Fine-tuning', color: 'border-teal-500 bg-teal-50',  check: 'bg-teal-100 text-teal-700', badge: 'Phổ biến' },
+  { id: 'biz',   name: 'Business',  price: '799K₫',  icon: Building2, desc: 'Unlimited · API 50K',  color: 'border-cyan-400 bg-cyan-50', check: 'bg-cyan-100 text-cyan-700', badge: '' },
 ];
 
 const PW_CHECKS = [
@@ -52,22 +53,19 @@ export function RegisterPage() {
   return (
     <div className="min-h-screen flex">
       {/* ─── LEFT PANEL ─── */}
-      <div className="hidden lg:flex lg:w-[42%] flex-col relative overflow-hidden bg-gradient-to-br from-gray-950 via-green-950 to-emerald-950">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_70%_at_20%_50%,rgba(34,197,94,0.15),transparent)]" />
+      <div className="hidden lg:flex lg:w-[42%] flex-col relative overflow-hidden bg-gradient-to-br from-slate-950 via-emerald-950 to-cyan-950">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_70%_at_20%_50%,rgba(20,184,166,0.15),transparent)]" />
 
         <div className="relative p-10">
-          <Link to="/" className="inline-flex items-center gap-2.5 hover:opacity-80 transition-opacity">
-            <div className="bg-gradient-to-br from-green-400 to-emerald-500 p-2 rounded-xl shadow-lg">
-              <Sparkles className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-white text-xl font-bold">CopyPro</span>
+          <Link to="/" className="inline-flex items-center hover:opacity-90 transition-opacity">
+            <BrandLogo size="lg" tone="light" surface="light" />
           </Link>
         </div>
 
         <div className="relative flex-1 flex flex-col justify-center px-12 pb-16">
           <h2 className="text-white mb-4 leading-tight">
             Tham gia 2,000+<br />
-            <span className="text-green-400">doanh nghiệp Việt</span>
+            <span className="bg-gradient-to-r from-emerald-300 via-teal-300 to-cyan-300 bg-clip-text text-transparent">doanh nghiệp Việt</span>
           </h2>
           <p className="text-gray-400 text-base leading-relaxed mb-10">
             Dùng thử 14 ngày với đầy đủ tính năng Pro. Không cần thẻ tín dụng.
@@ -81,7 +79,7 @@ export function RegisterPage() {
               { n: '03', label: 'Bắt đầu tạo copy', desc: 'AI Generator sẵn sàng ngay lập tức', done: false },
             ].map((s) => (
               <div key={s.n} className="flex items-start gap-4">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5 transition-all ${s.done ? 'bg-green-500 text-white' : 'bg-white/10 border border-white/20 text-gray-500'}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5 transition-all ${s.done ? 'bg-teal-500 text-white' : 'bg-white/10 border border-white/20 text-gray-500'}`}>
                   {s.done ? <CheckCircle2 className="w-4 h-4" /> : s.n}
                 </div>
                 <div>
@@ -95,17 +93,14 @@ export function RegisterPage() {
       </div>
 
       {/* ─── RIGHT PANEL ─── */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 bg-white">
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 bg-gradient-to-br from-white via-teal-50/30 to-cyan-50/60">
         {/* Mobile logo */}
-        <div className="lg:hidden mb-8 flex items-center gap-2.5">
-          <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-2 rounded-xl shadow-md">
-            <Sparkles className="w-5 h-5 text-white" />
-          </div>
-          <span className="text-gray-900 text-xl font-bold">CopyPro</span>
-        </div>
+        <Link to="/" className="lg:hidden mb-8 inline-flex items-center hover:opacity-80 transition-opacity">
+          <BrandLogo size="xl" />
+        </Link>
 
         <div className="w-full max-w-[420px]">
-          <Link to="/login" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-green-700 mb-8 transition-colors">
+          <Link to="/login" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-teal-700 mb-8 transition-colors">
             <ArrowLeft className="w-4 h-4" /> Đã có tài khoản? Đăng nhập
           </Link>
 
@@ -113,13 +108,13 @@ export function RegisterPage() {
           <div className="flex items-center gap-3 mb-8">
             {[1, 2].map(s => (
               <div key={s} className="flex items-center gap-2 flex-1">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${step >= s ? 'bg-green-600 text-white shadow-md shadow-green-200' : 'bg-gray-100 text-gray-400'}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${step >= s ? 'bg-teal-600 text-white shadow-md shadow-teal-200' : 'bg-gray-100 text-gray-400'}`}>
                   {step > s ? <CheckCircle2 className="w-4 h-4" /> : s}
                 </div>
-                <span className={`text-xs font-semibold ${step >= s ? 'text-green-700' : 'text-gray-400'}`}>
+                <span className={`text-xs font-semibold ${step >= s ? 'text-teal-700' : 'text-gray-400'}`}>
                   {s === 1 ? 'Thông tin' : 'Chọn gói'}
                 </span>
-                {s < 2 && <div className={`flex-1 h-px ${step > s ? 'bg-green-400' : 'bg-gray-200'}`} />}
+                {s < 2 && <div className={`flex-1 h-px ${step > s ? 'bg-cyan-400' : 'bg-gray-200'}`} />}
               </div>
             ))}
           </div>
@@ -136,7 +131,7 @@ export function RegisterPage() {
                   <Label className="text-gray-700 mb-2 block">Họ và tên</Label>
                   <div className="relative">
                     <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <Input placeholder="Nguyễn Văn A" {...register('name', { required: 'Họ và tên là bắt buộc' })} className="pl-10 h-12 rounded-xl border-gray-200 focus:border-green-500" />
+                    <Input placeholder="Nguyễn Văn A" {...register('name', { required: 'Họ và tên là bắt buộc' })} className="pl-10 h-12 rounded-xl border-gray-200 focus:border-teal-500" />
                   </div>
                   {errors.name && <p className="text-xs text-red-600 mt-1">{errors.name.message}</p>}
                 </div>
@@ -144,7 +139,7 @@ export function RegisterPage() {
                   <Label className="text-gray-700 mb-2 block">Email công ty / cá nhân</Label>
                   <div className="relative">
                     <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <Input type="email" placeholder="your@email.com" {...register('email', { required: 'Email là bắt buộc', pattern: { value: /^\S+@\S+$/, message: 'Email không hợp lệ' } })} className="pl-10 h-12 rounded-xl border-gray-200 focus:border-green-500" />
+                    <Input type="email" placeholder="your@email.com" {...register('email', { required: 'Email là bắt buộc', pattern: { value: /^\S+@\S+$/, message: 'Email không hợp lệ' } })} className="pl-10 h-12 rounded-xl border-gray-200 focus:border-teal-500" />
                   </div>
                   {errors.email && <p className="text-xs text-red-600 mt-1">{errors.email.message}</p>}
                 </div>
@@ -152,7 +147,7 @@ export function RegisterPage() {
                   <Label className="text-gray-700 mb-2 block">Mật khẩu</Label>
                   <div className="relative">
                     <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <Input type={showPass ? 'text' : 'password'} placeholder="Ít nhất 8 ký tự" {...register('password', { required: 'Mật khẩu là bắt buộc', minLength: { value: 8, message: 'Mật khẩu ít nhất 8 ký tự' } })} className="pl-10 pr-10 h-12 rounded-xl border-gray-200 focus:border-green-500" />
+                    <Input type={showPass ? 'text' : 'password'} placeholder="Ít nhất 8 ký tự" {...register('password', { required: 'Mật khẩu là bắt buộc', minLength: { value: 8, message: 'Mật khẩu ít nhất 8 ký tự' } })} className="pl-10 pr-10 h-12 rounded-xl border-gray-200 focus:border-teal-500" />
                     <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                       {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -161,8 +156,8 @@ export function RegisterPage() {
                   {passwordValue && (
                     <div className="flex gap-3 mt-2.5">
                       {PW_CHECKS.map(c => (
-                        <div key={c.label} className={`flex items-center gap-1 text-xs ${c.test(passwordValue) ? 'text-green-600' : 'text-gray-400'}`}>
-                          <CheckCircle2 className={`w-3 h-3 ${c.test(passwordValue) ? 'text-green-500' : 'text-gray-300'}`} />
+                        <div key={c.label} className={`flex items-center gap-1 text-xs ${c.test(passwordValue) ? 'text-teal-600' : 'text-gray-400'}`}>
+                          <CheckCircle2 className={`w-3 h-3 ${c.test(passwordValue) ? 'text-teal-500' : 'text-gray-300'}`} />
                           {c.label}
                         </div>
                       ))}
@@ -173,11 +168,11 @@ export function RegisterPage() {
                   <Label className="text-gray-700 mb-2 block">Xác nhận mật khẩu</Label>
                   <div className="relative">
                     <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <Input type="password" placeholder="Nhập lại mật khẩu" {...register('confirm', { required: 'Xác nhận mật khẩu là bắt buộc', validate: (v) => v === watch('password') || 'Mật khẩu không khớp' })} className="pl-10 h-12 rounded-xl border-gray-200 focus:border-green-500" />
+                    <Input type="password" placeholder="Nhập lại mật khẩu" {...register('confirm', { required: 'Xác nhận mật khẩu là bắt buộc', validate: (v) => v === watch('password') || 'Mật khẩu không khớp' })} className="pl-10 h-12 rounded-xl border-gray-200 focus:border-teal-500" />
                   </div>
                   {errors.confirm && <p className="text-xs text-red-600 mt-1">{errors.confirm.message}</p>}
                 </div>
-                <button type="submit" className="w-full h-12 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-green-200 flex items-center justify-center gap-2 mt-2">
+                <button type="submit" className="w-full h-12 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:via-teal-500 hover:to-cyan-500 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-teal-200 flex items-center justify-center gap-2 mt-2">
                   Tiếp theo <ArrowRight className="w-4 h-4" />
                 </button>
               </form>
@@ -207,7 +202,7 @@ export function RegisterPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="font-bold text-sm text-gray-900">{p.name}</span>
-                          {p.badge && <Badge className="bg-green-100 text-green-700 border-0 text-xs px-2 py-0">{p.badge}</Badge>}
+                          {p.badge && <Badge className="bg-amber-100 text-amber-700 border-0 text-xs px-2 py-0">{p.badge}</Badge>}
                         </div>
                         <p className="text-xs text-gray-500 mt-0.5">{p.desc}</p>
                       </div>
@@ -215,7 +210,7 @@ export function RegisterPage() {
                         <span className="font-bold text-sm text-gray-900">{p.price}</span>
                         {p.id !== 'free' && <p className="text-xs text-gray-400">/ tháng</p>}
                       </div>
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${isSelected ? 'border-green-500 bg-green-500' : 'border-gray-300'}`}>
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${isSelected ? 'border-teal-500 bg-teal-500' : 'border-gray-300'}`}>
                         {isSelected && <div className="w-2 h-2 bg-white rounded-full" />}
                       </div>
                     </button>
@@ -230,7 +225,7 @@ export function RegisterPage() {
                 <button
                   onClick={handleFinalSubmit}
                   disabled={isLoading}
-                  className="flex-1 h-12 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 disabled:opacity-60 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-green-200"
+                  className="flex-1 h-12 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:via-teal-500 hover:to-cyan-500 disabled:opacity-60 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-teal-200"
                 >
                   {isLoading ? 'Đang tạo tài khoản...' : 'Tạo tài khoản →'}
                 </button>
@@ -238,8 +233,8 @@ export function RegisterPage() {
 
               <p className="text-center text-xs text-gray-400 mt-5">
                 Bằng cách đăng ký, bạn đồng ý với{' '}
-                <a href="#" className="text-green-700 hover:underline">Điều khoản sử dụng</a>{' '}và{' '}
-                <a href="#" className="text-green-700 hover:underline">Chính sách bảo mật</a>.
+                <a href="#" className="text-teal-700 hover:underline">Điều khoản sử dụng</a>{' '}và{' '}
+                <a href="#" className="text-teal-700 hover:underline">Chính sách bảo mật</a>.
               </p>
             </>
           )}

@@ -5,6 +5,11 @@ import '@/styles/index.css';
 export const metadata: Metadata = {
   title: 'CopyPro',
   description: 'AI Copywriter platform',
+  icons: {
+    icon: '/images/logo.svg',
+    shortcut: '/images/logo.svg',
+    apple: '/images/logo.svg',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
