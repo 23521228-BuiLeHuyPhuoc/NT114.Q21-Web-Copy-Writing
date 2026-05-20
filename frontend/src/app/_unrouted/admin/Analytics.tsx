@@ -15,9 +15,9 @@ export function AdminAnalytics() {
   ];
 
   const industryPieData = [
-    { name: 'E-commerce', value: 450, color: '#22c55e' },
+    { name: 'E-commerce', value: 450, color: '#78716c' },
     { name: 'Bất động sản', value: 380, color: '#059669' },
-    { name: 'Công nghệ', value: 320, color: '#14b8a6' },
+    { name: 'Công nghệ', value: 320, color: '#f59e0b' },
     { name: 'Ẩm thực', value: 280, color: '#10b981' },
     { name: 'Khác', value: 270, color: '#6b7280' },
   ];
@@ -44,7 +44,7 @@ export function AdminAnalytics() {
             return (
               <Card key={index} className="p-6">
                 <div className="flex items-center justify-between mb-2">
-                  <Icon className="w-5 h-5 text-purple-600" />
+                  <Icon className="w-5 h-5 text-stone-600" />
                   <span className="text-sm font-semibold text-green-600">{stat.change}</span>
                 </div>
                 <p className="text-2xl font-bold text-gray-900 mb-1">{stat.value}</p>
@@ -62,7 +62,7 @@ export function AdminAnalytics() {
               data={dailyData}
               xKey="date"
               height={300}
-              series={[{ key: 'views', label: 'Views', color: '#22c55e', fill: true }]}
+              series={[{ key: 'views', label: 'Views', color: '#78716c', fill: true }]}
             />
           </Card>
 

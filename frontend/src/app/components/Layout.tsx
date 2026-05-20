@@ -70,7 +70,7 @@ export function Layout({ children }: LayoutProps) {
             <span className={`text-xs font-semibold ${adminRoleDef.textColor} truncate`}>{adminRoleDef.label}</span>
           </div>
         ) : (
-          <Badge className="bg-green-100 text-green-700 border-0">👤 Customer · Pro</Badge>
+          <Badge className="bg-amber-100 text-amber-700 border-0">👤 Customer · Pro</Badge>
         )}
       </div>
 
@@ -83,15 +83,15 @@ export function Layout({ children }: LayoutProps) {
             <Link key={item.path} to={item.path}>
               <div className={`flex items-center justify-between px-3 py-2.5 rounded-xl transition-colors ${
                 isActive
-                  ? 'bg-green-100 text-green-700'
+                  ? 'bg-stone-100 text-stone-700'
                   : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
               }`}>
                 <div className="flex items-center gap-3">
-                  <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-green-600' : ''}`} />
+                  <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-stone-600' : ''}`} />
                   <span className="text-sm font-medium">{item.label}</span>
                 </div>
                 {'badge' in item && item.badge && (
-                  <Badge className="bg-green-100 text-green-700 border-0 text-xs px-1.5 py-0">{item.badge}</Badge>
+                  <Badge className="bg-amber-100 text-amber-700 border-0 text-xs px-1.5 py-0">{item.badge}</Badge>
                 )}
               </div>
             </Link>
@@ -103,7 +103,7 @@ export function Layout({ children }: LayoutProps) {
       <div className="p-4 border-t flex-shrink-0">
         <div className="flex items-center gap-3 mb-3">
           <Avatar className="w-9 h-9 flex-shrink-0">
-            <AvatarFallback className="bg-gradient-to-br from-green-600 to-emerald-700 text-white text-sm">
+            <AvatarFallback className="bg-gradient-to-br from-emerald-600 to-stone-700 text-white text-sm">
               {user?.name.charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>

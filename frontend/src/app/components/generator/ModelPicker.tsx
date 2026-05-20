@@ -13,7 +13,7 @@ export function ModelPicker({ value, onChange }: Props) {
   return (
     <Card className="p-4">
       <Label className="text-sm font-semibold text-gray-700 mb-3 block flex items-center gap-2">
-        <Cpu className="w-4 h-4 text-purple-600" /> Model AI
+        <Cpu className="w-4 h-4 text-stone-600" /> Model AI
       </Label>
       <div className="space-y-2">
         {MODELS.map(m => (

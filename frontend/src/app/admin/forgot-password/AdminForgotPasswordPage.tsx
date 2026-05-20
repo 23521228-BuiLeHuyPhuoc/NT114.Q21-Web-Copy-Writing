@@ -164,20 +164,20 @@ export function AdminForgotPasswordPage() {
       <div className="w-full max-w-[430px] relative">
         <Link
           to="/admin/login"
-          className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-cyan-300 mb-6 transition-colors"
+          className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-stone-300 mb-6 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" /> Quay lại đăng nhập Admin
         </Link>
 
-        <div className="bg-gray-900/90 border border-gray-800 rounded-3xl shadow-2xl shadow-cyan-950/20 p-8">
+        <div className="bg-gray-900/90 border border-gray-800 rounded-3xl shadow-2xl shadow-stone-950/20 p-8">
           <div className="flex justify-center mb-8">
             <Link to="/" className="inline-flex items-center hover:opacity-90 transition-opacity">
               <BrandLogo size="lg" tone="light" surface="light" />
             </Link>
           </div>
 
-          <div className="w-16 h-16 rounded-2xl bg-cyan-950/70 border border-cyan-800/50 flex items-center justify-center mx-auto mb-5">
-            <Icon className="w-8 h-8 text-cyan-300" />
+          <div className="w-16 h-16 rounded-2xl bg-stone-950/70 border border-stone-800/50 flex items-center justify-center mx-auto mb-5">
+            <Icon className="w-8 h-8 text-stone-300" />
           </div>
 
           <div className="text-center mb-8">
@@ -202,7 +202,7 @@ export function AdminForgotPasswordPage() {
                     required: 'Email là bắt buộc',
                     pattern: { value: /^\S+@\S+$/, message: 'Email không hợp lệ' },
                   })}
-                  className="h-12 rounded-xl bg-gray-950 border-gray-700 text-white placeholder:text-gray-600 focus:border-cyan-500"
+                  className="h-12 rounded-xl bg-gray-950 border-gray-700 text-white placeholder:text-gray-600 focus:border-stone-500"
                 />
                 {emailForm.formState.errors.email && (
                   <p className="text-xs text-red-400 mt-1">{emailForm.formState.errors.email.message}</p>
@@ -212,7 +212,7 @@ export function AdminForgotPasswordPage() {
               <button
                 type="submit"
                 disabled={isLoading || emailForm.formState.isSubmitting}
-                className="w-full h-12 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:via-teal-500 hover:to-cyan-500 disabled:opacity-60 text-white rounded-xl font-bold text-sm transition-all shadow-xl shadow-cyan-900/30"
+                className="w-full h-12 bg-gradient-to-r from-emerald-600 via-stone-600 to-stone-600 hover:from-emerald-500 hover:via-stone-500 hover:to-stone-500 disabled:opacity-60 text-white rounded-xl font-bold text-sm transition-all shadow-xl shadow-stone-900/30"
               >
                 {isLoading ? 'Đang gửi OTP...' : 'Gửi mã OTP admin'}
               </button>
@@ -223,7 +223,7 @@ export function AdminForgotPasswordPage() {
           {step === 'otp' && (
             <div className="space-y-5">
               <div className="text-center text-xs text-gray-500">
-                Mã xác nhận đã gửi đến <span className="text-cyan-300 font-semibold">{email}</span>
+                Mã xác nhận đã gửi đến <span className="text-stone-300 font-semibold">{email}</span>
               </div>
 
               <div className="flex gap-2.5 justify-center">
@@ -241,7 +241,7 @@ export function AdminForgotPasswordPage() {
                         document.getElementById(`admin-otp-${index - 1}`)?.focus();
                       }
                     }}
-                    className="w-11 h-12 rounded-xl bg-gray-950 border border-gray-700 text-center text-xl font-bold text-white focus:border-cyan-500 focus:outline-none transition-colors"
+                    className="w-11 h-12 rounded-xl bg-gray-950 border border-gray-700 text-center text-xl font-bold text-white focus:border-stone-500 focus:outline-none transition-colors"
                   />
                 ))}
               </div>
@@ -250,7 +250,7 @@ export function AdminForgotPasswordPage() {
                 type="button"
                 onClick={handleVerifyOtp}
                 disabled={isLoading}
-                className="w-full h-12 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:via-teal-500 hover:to-cyan-500 disabled:opacity-60 text-white rounded-xl font-bold text-sm transition-all shadow-xl shadow-cyan-900/30"
+                className="w-full h-12 bg-gradient-to-r from-emerald-600 via-stone-600 to-stone-600 hover:from-emerald-500 hover:via-stone-500 hover:to-stone-500 disabled:opacity-60 text-white rounded-xl font-bold text-sm transition-all shadow-xl shadow-stone-900/30"
               >
                 {isLoading ? 'Đang xác nhận...' : 'Xác nhận OTP'}
               </button>
@@ -259,7 +259,7 @@ export function AdminForgotPasswordPage() {
                 type="button"
                 onClick={resendOtp}
                 disabled={isLoading || resendSeconds > 0}
-                className="w-full h-10 text-sm text-cyan-300 hover:text-cyan-200 disabled:text-gray-600 transition-colors inline-flex items-center justify-center gap-2"
+                className="w-full h-10 text-sm text-stone-300 hover:text-stone-200 disabled:text-gray-600 transition-colors inline-flex items-center justify-center gap-2"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
                 {resendSeconds > 0 ? `Gửi lại mã sau ${formatCountdown(resendSeconds)}` : 'Gửi lại mã OTP'}
@@ -280,7 +280,7 @@ export function AdminForgotPasswordPage() {
                     required: 'Mật khẩu là bắt buộc',
                     minLength: { value: 8, message: 'Mật khẩu tối thiểu 8 ký tự' },
                   })}
-                  className="h-12 rounded-xl bg-gray-950 border-gray-700 text-white placeholder:text-gray-600 focus:border-cyan-500"
+                  className="h-12 rounded-xl bg-gray-950 border-gray-700 text-white placeholder:text-gray-600 focus:border-stone-500"
                 />
                 {resetForm.formState.errors.newPass && (
                   <p className="text-xs text-red-400 mt-1">{resetForm.formState.errors.newPass.message}</p>
@@ -298,7 +298,7 @@ export function AdminForgotPasswordPage() {
                     required: 'Xác nhận mật khẩu là bắt buộc',
                     validate: (value) => value === resetForm.watch('newPass') || 'Mật khẩu không khớp',
                   })}
-                  className="h-12 rounded-xl bg-gray-950 border-gray-700 text-white placeholder:text-gray-600 focus:border-cyan-500"
+                  className="h-12 rounded-xl bg-gray-950 border-gray-700 text-white placeholder:text-gray-600 focus:border-stone-500"
                 />
                 {resetForm.formState.errors.confirmPass && (
                   <p className="text-xs text-red-400 mt-1">{resetForm.formState.errors.confirmPass.message}</p>
@@ -308,7 +308,7 @@ export function AdminForgotPasswordPage() {
               <button
                 type="submit"
                 disabled={isLoading || resetForm.formState.isSubmitting}
-                className="w-full h-12 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:via-teal-500 hover:to-cyan-500 disabled:opacity-60 text-white rounded-xl font-bold text-sm transition-all shadow-xl shadow-cyan-900/30"
+                className="w-full h-12 bg-gradient-to-r from-emerald-600 via-stone-600 to-stone-600 hover:from-emerald-500 hover:via-stone-500 hover:to-stone-500 disabled:opacity-60 text-white rounded-xl font-bold text-sm transition-all shadow-xl shadow-stone-900/30"
               >
                 {isLoading ? 'Đang đặt lại...' : 'Đặt lại mật khẩu admin'}
               </button>
@@ -323,7 +323,7 @@ export function AdminForgotPasswordPage() {
               <button
                 type="button"
                 onClick={() => navigate('/admin/login')}
-                className="w-full h-12 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:via-teal-500 hover:to-cyan-500 text-white rounded-xl font-bold text-sm transition-all shadow-xl shadow-cyan-900/30"
+                className="w-full h-12 bg-gradient-to-r from-emerald-600 via-stone-600 to-stone-600 hover:from-emerald-500 hover:via-stone-500 hover:to-stone-500 text-white rounded-xl font-bold text-sm transition-all shadow-xl shadow-stone-900/30"
               >
                 Về trang đăng nhập Admin
               </button>

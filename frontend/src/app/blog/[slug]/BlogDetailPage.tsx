@@ -7,11 +7,11 @@ import { BLOG_POSTS } from '@/mocks/blog';
 import { ArrowLeft, ArrowRight, Calendar, Clock, User } from 'lucide-react';
 
 const catColor: Record<string, string> = {
-  ai: 'bg-blue-100 text-blue-700',
+  ai: 'bg-stone-100 text-stone-700',
   copy: 'bg-green-100 text-green-700',
-  marketing: 'bg-orange-100 text-orange-700',
+  marketing: 'bg-amber-100 text-amber-700',
   case: 'bg-emerald-100 text-emerald-700',
-  news: 'bg-purple-100 text-purple-700',
+  news: 'bg-stone-100 text-stone-700',
 };
 
 export function BlogDetailPage() {

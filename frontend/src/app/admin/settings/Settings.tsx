@@ -339,7 +339,7 @@ export function AdminSettings() {
             <Card className="p-6">
               <h3 className="font-semibold text-gray-900 mb-4">Thao tác nguy hiểm</h3>
               <div className="space-y-3">
-                <Button variant="outline" className="w-full justify-start border-orange-300 text-orange-700 hover:bg-orange-50" onClick={() => toast('Đang xóa cache...')}>
+                <Button variant="outline" className="w-full justify-start border-amber-300 text-amber-700 hover:bg-amber-50" onClick={() => toast('Đang xóa cache...')}>
                   <RefreshCw className="w-4 h-4 mr-2" /> Xóa cache toàn bộ
                 </Button>
                 <Button variant="outline" className="w-full justify-start border-red-300 text-red-700 hover:bg-red-50" onClick={() => toast.error('Thao tác này cần xác nhận!')}>
@@ -352,7 +352,7 @@ export function AdminSettings() {
 
         {/* Save button */}
         <div className="flex justify-end mt-6">
-          <Button size="lg" className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-10" onClick={save}>
+          <Button size="lg" className="bg-gradient-to-r from-stone-600 to-stone-600 text-white px-10" onClick={save}>
             <Save className="w-5 h-5 mr-2" /> Lưu tất cả cài đặt
           </Button>
         </div>

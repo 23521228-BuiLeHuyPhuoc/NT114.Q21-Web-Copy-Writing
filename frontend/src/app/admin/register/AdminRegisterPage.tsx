@@ -48,8 +48,8 @@ export function AdminRegisterPage() {
     if (/[0-9]/.test(password))        score++;
     if (/[^A-Za-z0-9]/.test(password)) score++;
     if (score <= 1) return { level: 'Yếu',      color: 'bg-red-500',    width: '25%'  };
-    if (score === 2) return { level: 'Trung bình', color: 'bg-yellow-500', width: '50%'  };
-    if (score === 3) return { level: 'Mạnh',     color: 'bg-blue-500',   width: '75%'  };
+    if (score === 2) return { level: 'Trung bình', color: 'bg-amber-500', width: '50%'  };
+    if (score === 3) return { level: 'Mạnh',     color: 'bg-stone-500',   width: '75%'  };
     return               { level: 'Rất mạnh',   color: 'bg-green-500',  width: '100%' };
   })();
 
@@ -104,7 +104,7 @@ export function AdminRegisterPage() {
 
           <p className="text-gray-400 text-sm leading-relaxed mb-6">
             Tài khoản <span className="text-white font-semibold">{name}</span> với email{' '}
-            <span className="text-cyan-300 font-semibold">{email}</span> đã được tạo và đang chờ Super Admin xem xét và phê duyệt.
+            <span className="text-stone-300 font-semibold">{email}</span> đã được tạo và đang chờ Super Admin xem xét và phê duyệt.
           </p>
 
           {/* Role badge */}
@@ -118,7 +118,7 @@ export function AdminRegisterPage() {
             <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Tiến trình xét duyệt</p>
 
             <div className="flex items-center gap-3">
-              <div className="w-7 h-7 bg-teal-500 rounded-full flex items-center justify-center flex-shrink-0">
+              <div className="w-7 h-7 bg-stone-500 rounded-full flex items-center justify-center flex-shrink-0">
                 <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
               </div>
               <div>
@@ -153,8 +153,8 @@ export function AdminRegisterPage() {
           </div>
 
           {/* Note box */}
-          <div className="bg-blue-950/30 border border-blue-800/30 rounded-xl p-4 mb-8 text-left flex gap-3">
-            <svg className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <div className="bg-stone-950/30 border border-stone-800/30 rounded-xl p-4 mb-8 text-left flex gap-3">
+            <svg className="w-5 h-5 text-stone-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <p className="text-gray-400 text-xs leading-relaxed">
@@ -182,10 +182,10 @@ export function AdminRegisterPage() {
 
       {/* ── LEFT: Role Selector Panel ── */}
       <div className="hidden lg:flex lg:w-[52%] flex-col relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-950 via-slate-900 to-cyan-950" />
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-950 via-slate-900 to-stone-950" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_60%_at_20%_50%,rgba(20,184,166,0.1),transparent)]" />
         <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'linear-gradient(rgba(20,184,166,0.45) 1px, transparent 1px), linear-gradient(90deg, rgba(20,184,166,0.45) 1px, transparent 1px)', backgroundSize: '48px 48px' }} />
-        <div className="absolute top-0 right-0 w-80 h-80 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 right-0 w-80 h-80 bg-stone-500/5 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-60 h-60 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
 
         {/* Logo */}
@@ -198,7 +198,7 @@ export function AdminRegisterPage() {
 
         {/* Role cards */}
         <div className="relative flex-1 flex flex-col justify-center px-12 xl:px-16">
-          <p className="text-teal-400 text-xs font-bold uppercase tracking-[0.2em] mb-3">Phân quyền Admin</p>
+          <p className="text-stone-400 text-xs font-bold uppercase tracking-[0.2em] mb-3">Phân quyền Admin</p>
           <h2 className="text-white mb-2 leading-tight">Chọn loại tài khoản</h2>
           <p className="text-gray-500 text-sm leading-relaxed mb-8">
             Mỗi loại Admin có phạm vi quyền truy cập riêng. Phù hợp với vai trò trong tổ chức của bạn.
@@ -214,7 +214,7 @@ export function AdminRegisterPage() {
                   onClick={() => setAdminRole(role.value)}
                   className={`w-full text-left p-4 rounded-2xl border transition-all ${
                     isSelected
-                      ? 'bg-white/8 border-cyan-500/50 ring-1 ring-cyan-500/30'
+                      ? 'bg-white/8 border-stone-500/50 ring-1 ring-stone-500/30'
                       : 'bg-white/3 border-white/8 hover:bg-white/6 hover:border-white/15'
                   }`}
                 >
@@ -223,7 +223,7 @@ export function AdminRegisterPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <p className={`text-sm font-semibold ${isSelected ? 'text-white' : 'text-gray-300'}`}>{role.label}</p>
-                        {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-cyan-300 flex-shrink-0" />}
+                        {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-stone-300 flex-shrink-0" />}
                       </div>
                       <p className="text-xs text-gray-600 mt-0.5 truncate">{role.description}</p>
                     </div>
@@ -278,7 +278,7 @@ export function AdminRegisterPage() {
               <div className="relative">
                 <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" />
                 <Input type="text" placeholder="Nguyễn Văn Admin" value={name} onChange={e => setName(e.target.value)}
-                  className="pl-10 h-12 rounded-xl bg-gray-900 border-gray-700 text-white placeholder:text-gray-600 focus:border-cyan-500 focus:bg-gray-800" required />
+                  className="pl-10 h-12 rounded-xl bg-gray-900 border-gray-700 text-white placeholder:text-gray-600 focus:border-stone-500 focus:bg-gray-800" required />
               </div>
             </div>
 
@@ -288,7 +288,7 @@ export function AdminRegisterPage() {
               <div className="relative">
                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" />
                 <Input type="email" placeholder="admin@copypro.vn" value={email} onChange={e => setEmail(e.target.value)}
-                  className="pl-10 h-12 rounded-xl bg-gray-900 border-gray-700 text-white placeholder:text-gray-600 focus:border-cyan-500 focus:bg-gray-800" required />
+                  className="pl-10 h-12 rounded-xl bg-gray-900 border-gray-700 text-white placeholder:text-gray-600 focus:border-stone-500 focus:bg-gray-800" required />
               </div>
             </div>
 
@@ -299,7 +299,7 @@ export function AdminRegisterPage() {
                 <button
                   type="button"
                   onClick={() => setShowRoleDropdown(!showRoleDropdown)}
-                  className="w-full h-12 bg-gray-900 border border-gray-700 rounded-xl px-4 flex items-center justify-between text-white hover:border-cyan-500 transition-colors"
+                  className="w-full h-12 bg-gray-900 border border-gray-700 rounded-xl px-4 flex items-center justify-between text-white hover:border-stone-500 transition-colors"
                 >
                   <div className="flex items-center gap-2.5">
                     <div className={`w-2 h-2 rounded-full ${selectedRole.dotColor}`} />
@@ -314,14 +314,14 @@ export function AdminRegisterPage() {
                         key={role.value}
                         type="button"
                         onClick={() => { setAdminRole(role.value); setShowRoleDropdown(false); }}
-                        className={`w-full px-4 py-3 flex items-center gap-3 text-left hover:bg-gray-800 transition-colors ${adminRole === role.value ? 'bg-cyan-950/30' : ''}`}
+                        className={`w-full px-4 py-3 flex items-center gap-3 text-left hover:bg-gray-800 transition-colors ${adminRole === role.value ? 'bg-stone-950/30' : ''}`}
                       >
                         <div className={`w-2 h-2 rounded-full flex-shrink-0 ${role.dotColor}`} />
                         <div>
                           <p className="text-sm font-medium text-white">{role.label}</p>
                           <p className="text-xs text-gray-600">{role.description}</p>
                         </div>
-                        {adminRole === role.value && <CheckCircle2 className="w-4 h-4 text-cyan-300 ml-auto flex-shrink-0" />}
+                        {adminRole === role.value && <CheckCircle2 className="w-4 h-4 text-stone-300 ml-auto flex-shrink-0" />}
                       </button>
                     ))}
                   </div>
@@ -335,7 +335,7 @@ export function AdminRegisterPage() {
               <div className="relative">
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" />
                 <Input type={showPass ? 'text' : 'password'} placeholder="Tối thiểu 8 ký tự" value={password} onChange={e => setPassword(e.target.value)}
-                  className="pl-10 pr-10 h-12 rounded-xl bg-gray-900 border-gray-700 text-white placeholder:text-gray-600 focus:border-cyan-500 focus:bg-gray-800" required />
+                  className="pl-10 pr-10 h-12 rounded-xl bg-gray-900 border-gray-700 text-white placeholder:text-gray-600 focus:border-stone-500 focus:bg-gray-800" required />
                 <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-400 transition-colors">
                   {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -344,7 +344,7 @@ export function AdminRegisterPage() {
                 <div className="mt-2">
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-[11px] text-gray-600">Độ mạnh</span>
-                    <span className={`text-[11px] font-semibold ${passwordStrength.level === 'Yếu' ? 'text-red-400' : passwordStrength.level === 'Trung bình' ? 'text-yellow-400' : passwordStrength.level === 'Mạnh' ? 'text-blue-400' : 'text-green-400'}`}>{passwordStrength.level}</span>
+                    <span className={`text-[11px] font-semibold ${passwordStrength.level === 'Yếu' ? 'text-red-400' : passwordStrength.level === 'Trung bình' ? 'text-amber-400' : passwordStrength.level === 'Mạnh' ? 'text-stone-400' : 'text-green-400'}`}>{passwordStrength.level}</span>
                   </div>
                   <div className="h-1 bg-gray-800 rounded-full overflow-hidden">
                     <div className={`h-full rounded-full transition-all duration-300 ${passwordStrength.color}`} style={{ width: passwordStrength.width }} />
@@ -359,13 +359,13 @@ export function AdminRegisterPage() {
               <div className="relative">
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" />
                 <Input type={showConfirm ? 'text' : 'password'} placeholder="Nhập lại mật khẩu" value={confirmPass} onChange={e => setConfirmPass(e.target.value)}
-                  className={`pl-10 pr-10 h-12 rounded-xl bg-gray-900 text-white placeholder:text-gray-600 focus:bg-gray-800 transition-colors ${passMismatch ? 'border-red-600' : passMatch ? 'border-teal-500' : 'border-gray-700 focus:border-cyan-500'}`} required />
+                  className={`pl-10 pr-10 h-12 rounded-xl bg-gray-900 text-white placeholder:text-gray-600 focus:bg-gray-800 transition-colors ${passMismatch ? 'border-red-600' : passMatch ? 'border-stone-500' : 'border-gray-700 focus:border-stone-500'}`} required />
                 <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-400 transition-colors">
                   {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
               {passMismatch && <p className="text-red-400 text-xs mt-1.5 flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> Mật khẩu không khớp</p>}
-              {passMatch   && <p className="text-teal-300 text-xs mt-1.5 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Mật khẩu khớp</p>}
+              {passMatch   && <p className="text-stone-300 text-xs mt-1.5 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Mật khẩu khớp</p>}
             </div>
 
             {/* Invite code */}
@@ -395,7 +395,7 @@ export function AdminRegisterPage() {
 
             {/* Submit */}
             <button type="submit" disabled={isLoading || passMismatch}
-              className="w-full h-12 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:via-teal-500 hover:to-cyan-500 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl font-bold text-sm transition-all shadow-xl shadow-cyan-900/30 mt-1 flex items-center justify-center gap-2">
+              className="w-full h-12 bg-gradient-to-r from-emerald-600 via-stone-600 to-stone-600 hover:from-emerald-500 hover:via-stone-500 hover:to-stone-500 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl font-bold text-sm transition-all shadow-xl shadow-stone-900/30 mt-1 flex items-center justify-center gap-2">
               {isLoading ? (
                 <><div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Đang tạo tài khoản...</>
               ) : (

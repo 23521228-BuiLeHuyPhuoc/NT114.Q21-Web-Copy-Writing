@@ -178,12 +178,12 @@ export function CustomerGenerator() {
               <span className="text-sm font-medium text-gray-700">{selectedIndustry?.name}</span>
               <span className="text-gray-300">·</span>
               <Badge className="bg-gray-100 text-gray-700 border-0">{selectedType?.name}</Badge>
-              <Badge className={`border-0 ${MODELS.find(m => m.id === model)?.color === 'text-green-600' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+              <Badge className={`border-0 ${MODELS.find(m => m.id === model)?.color === 'text-green-600' ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-700'}`}>
                 {selectedModel?.name}
               </Badge>
               {results.length > 0 && (
                 <>
-                  <Badge className="bg-purple-100 text-purple-700 border-0">{tokensUsed} tokens</Badge>
+                  <Badge className="bg-stone-100 text-stone-700 border-0">{tokensUsed} tokens</Badge>
                   <Badge className="bg-gray-100 text-gray-600 border-0">{latency}s</Badge>
                 </>
               )}
@@ -224,13 +224,13 @@ export function CustomerGenerator() {
             {savedItems.length > 0 && (
               <Card className="p-4">
                 <h3 className="font-semibold text-sm text-gray-900 mb-3 flex items-center gap-2">
-                  <History className="w-4 h-4 text-purple-600" /> Đã lưu trong phiên này ({savedItems.length})
+                  <History className="w-4 h-4 text-stone-600" /> Đã lưu trong phiên này ({savedItems.length})
                 </h3>
                 <div className="space-y-2 max-h-40 overflow-y-auto">
                   {savedItems.map((item, i) => (
                     <div key={i} className="flex items-start gap-2 p-2 bg-gray-50 rounded text-xs text-gray-700">
                       <span className="flex-1 line-clamp-2">{item}</span>
-                      <button onClick={() => handleCopy(item)} className="text-purple-600 hover:text-purple-700 flex-shrink-0">
+                      <button onClick={() => handleCopy(item)} className="text-stone-600 hover:text-stone-700 flex-shrink-0">
                         <Copy className="w-3.5 h-3.5" />
                       </button>
                     </div>

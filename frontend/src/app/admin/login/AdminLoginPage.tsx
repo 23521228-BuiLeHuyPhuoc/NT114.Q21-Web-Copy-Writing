@@ -72,12 +72,12 @@ export function AdminLoginPage() {
 
           <h2 className="text-white mb-3">Chưa được phê duyệt</h2>
           <p className="text-gray-400 text-sm leading-relaxed mb-6">
-            Tài khoản <span className="text-cyan-300 font-semibold">{pendingEmail}</span> đã đăng ký thành công nhưng chưa được Super Admin phê duyệt.
+            Tài khoản <span className="text-stone-300 font-semibold">{pendingEmail}</span> đã đăng ký thành công nhưng chưa được Super Admin phê duyệt.
           </p>
 
           <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4 mb-6 text-left space-y-3">
             <div className="flex items-center gap-3">
-              <div className="w-6 h-6 bg-teal-500 rounded-full flex items-center justify-center flex-shrink-0">
+              <div className="w-6 h-6 bg-stone-500 rounded-full flex items-center justify-center flex-shrink-0">
                 <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
               </div>
               <p className="text-sm text-white">Đăng ký thành công</p>
@@ -121,7 +121,7 @@ export function AdminLoginPage() {
 
       {/* ── LEFT: System Panel ── */}
       <div className="hidden lg:flex lg:w-[52%] flex-col relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-950 via-slate-900 to-cyan-950" />
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-950 via-slate-900 to-stone-950" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_60%_at_20%_50%,rgba(20,184,166,0.1),transparent)]" />
         <div
           className="absolute inset-0 opacity-[0.04]"
@@ -131,7 +131,7 @@ export function AdminLoginPage() {
             backgroundSize: '48px 48px',
           }}
         />
-        <div className="absolute top-0 right-0 w-80 h-80 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 right-0 w-80 h-80 bg-stone-500/5 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-60 h-60 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
 
         {/* Logo bar */}
@@ -144,11 +144,11 @@ export function AdminLoginPage() {
 
         {/* Main */}
         <div className="relative flex-1 flex flex-col justify-center px-12 xl:px-16">
-          <p className="text-teal-400 text-xs font-bold uppercase tracking-[0.2em] mb-4">Hệ thống quản trị</p>
+          <p className="text-stone-400 text-xs font-bold uppercase tracking-[0.2em] mb-4">Hệ thống quản trị</p>
           <h2 className="text-white mb-4 leading-tight">
             Trung tâm điều hành
             <br />
-            <span className="text-cyan-300">CopyPro Platform</span>
+            <span className="text-stone-300">CopyPro Platform</span>
           </h2>
           <p className="text-gray-500 text-sm leading-relaxed mb-10">
             Quản lý toàn bộ người dùng, mô hình AI, templates, analytics và cấu hình hệ thống từ một nơi duy nhất.
@@ -161,7 +161,7 @@ export function AdminLoginPage() {
               return (
                 <div key={s.label} className="bg-white/4 border border-white/8 rounded-2xl p-4 hover:bg-white/6 transition-colors">
                   <div className="flex items-center gap-2 mb-2">
-                    <Icon className="w-3.5 h-3.5 text-cyan-400" />
+                    <Icon className="w-3.5 h-3.5 text-stone-400" />
                     <span className="text-gray-500 text-xs">{s.label}</span>
                   </div>
                   <p className="text-white text-xl font-bold tracking-tight">{s.value}</p>
@@ -171,16 +171,16 @@ export function AdminLoginPage() {
           </div>
 
           {/* System status */}
-          <div className="bg-cyan-950/35 border border-cyan-800/35 rounded-2xl p-4">
+          <div className="bg-stone-950/35 border border-stone-800/35 rounded-2xl p-4">
             <div className="flex items-center gap-2 mb-3">
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-              <span className="text-cyan-300 text-xs font-bold uppercase tracking-wider">Trạng thái hệ thống</span>
+              <span className="text-stone-300 text-xs font-bold uppercase tracking-wider">Trạng thái hệ thống</span>
             </div>
             <div className="space-y-2">
               {[
                 { name: 'GPT-4o API', status: 'Online', dot: 'bg-green-400' },
                 { name: 'Llama 3.1 Server', status: 'Online', dot: 'bg-green-400' },
-                { name: 'Fine-tuning Engine', status: 'Đang xử lý 2 jobs', dot: 'bg-yellow-400' },
+                { name: 'Fine-tuning Engine', status: 'Đang xử lý 2 jobs', dot: 'bg-amber-400' },
               ].map(item => (
                 <div key={item.name} className="flex items-center justify-between">
                   <span className="text-gray-400 text-xs">{item.name}</span>
@@ -238,21 +238,15 @@ export function AdminLoginPage() {
                     required: 'Email là bắt buộc',
                     pattern: { value: /^\S+@\S+$/, message: 'Email không hợp lệ' },
                   })}
-                  className="pl-10 h-12 rounded-xl bg-gray-900 border-gray-700 text-white placeholder:text-gray-600 focus:border-cyan-500 focus:bg-gray-800"
+                  className="pl-10 h-12 rounded-xl bg-gray-900 border-gray-700 text-white placeholder:text-gray-600 focus:border-stone-500 focus:bg-gray-800"
                 />
               </div>
               {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>}
             </div>
 
             <div>
-              <div className="flex items-center justify-between mb-2">
+              <div className="mb-2">
                 <Label className="text-gray-400 block text-xs uppercase tracking-wider">Mật khẩu</Label>
-                <Link
-                  to="/admin/forgot-password"
-                  className="text-xs text-cyan-300 hover:text-cyan-200 hover:underline font-semibold transition-colors"
-                >
-                  Quên mật khẩu?
-                </Link>
               </div>
               <div className="relative">
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" />
@@ -260,7 +254,7 @@ export function AdminLoginPage() {
                   type={showPass ? 'text' : 'password'}
                   placeholder="••••••••"
                   {...register('password', { required: 'Mật khẩu là bắt buộc' })}
-                  className="pl-10 pr-10 h-12 rounded-xl bg-gray-900 border-gray-700 text-white placeholder:text-gray-600 focus:border-cyan-500 focus:bg-gray-800"
+                  className="pl-10 pr-10 h-12 rounded-xl bg-gray-900 border-gray-700 text-white placeholder:text-gray-600 focus:border-stone-500 focus:bg-gray-800"
                 />
                 <button
                   type="button"
@@ -271,12 +265,20 @@ export function AdminLoginPage() {
                 </button>
               </div>
               {errors.password && <p className="text-xs text-red-500 mt-1">{errors.password.message}</p>}
+              <div className="mt-2 text-right">
+                <Link
+                  to="/admin/forgot-password"
+                  className="text-xs text-stone-300 hover:text-stone-200 hover:underline font-semibold transition-colors"
+                >
+                  Quên mật khẩu?
+                </Link>
+              </div>
             </div>
 
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full h-12 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:via-teal-500 hover:to-cyan-500 disabled:opacity-50 text-white rounded-xl font-bold text-sm transition-all shadow-xl shadow-cyan-900/30 mt-2 flex items-center justify-center gap-2"
+              className="w-full h-12 bg-gradient-to-r from-emerald-600 via-stone-600 to-stone-600 hover:from-emerald-500 hover:via-stone-500 hover:to-stone-500 disabled:opacity-50 text-white rounded-xl font-bold text-sm transition-all shadow-xl shadow-stone-900/30 mt-2 flex items-center justify-center gap-2"
             >
               {isSubmitting ? (
                 <>
@@ -293,8 +295,8 @@ export function AdminLoginPage() {
           </form>
 
           {/* Demo hint */}
-          <div className="mt-6 bg-cyan-950/30 border border-cyan-800/35 rounded-xl p-4">
-            <p className="text-cyan-300 text-xs font-bold mb-2 flex items-center gap-1.5">
+          <div className="mt-6 bg-stone-950/30 border border-stone-800/35 rounded-xl p-4">
+            <p className="text-stone-300 text-xs font-bold mb-2 flex items-center gap-1.5">
               <Shield className="w-3.5 h-3.5" /> Demo credentials
             </p>
             <p className="text-gray-500 text-xs font-mono">admin@copypro.vn / admin123</p>

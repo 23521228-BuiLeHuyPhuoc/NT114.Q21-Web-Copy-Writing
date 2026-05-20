@@ -93,9 +93,9 @@ export function AdminContents() {
   };
 
   const typeBadgeColor: Record<string, string> = {
-    headline: 'bg-blue-100 text-blue-700', landing: 'bg-purple-100 text-purple-700',
-    email: 'bg-amber-100 text-amber-700', social: 'bg-pink-100 text-pink-700',
-    description: 'bg-teal-100 text-teal-700',
+    headline: 'bg-stone-100 text-stone-700', landing: 'bg-stone-100 text-stone-700',
+    email: 'bg-amber-100 text-amber-700', social: 'bg-amber-100 text-amber-700',
+    description: 'bg-stone-100 text-stone-700',
   };
 
   return (
@@ -123,9 +123,9 @@ export function AdminContents() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {[
             { label: 'Tổng nội dung', value: visible.length.toString(), icon: FileText, color: 'text-green-600 bg-green-50' },
-            { label: 'Hôm nay', value: '124', icon: Calendar, color: 'text-blue-600 bg-blue-50' },
+            { label: 'Hôm nay', value: '124', icon: Calendar, color: 'text-stone-600 bg-stone-50' },
             { label: 'Đã flag', value: visible.filter(c => c.flagged).length.toString(), icon: Flag, color: 'text-red-600 bg-red-50' },
-            { label: 'Người dùng hoạt động', value: '342', icon: Users, color: 'text-purple-600 bg-purple-50' },
+            { label: 'Người dùng hoạt động', value: '342', icon: Users, color: 'text-stone-600 bg-stone-50' },
           ].map((s, i) => (
             <StatTile key={i} icon={s.icon} label={s.label} value={s.value} color={s.color} />
           ))}
@@ -193,7 +193,7 @@ export function AdminContents() {
                       <button onClick={() => setViewItem(item)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors" title="Xem">
                         <Eye className="w-3.5 h-3.5" />
                       </button>
-                      <button onClick={() => openEdit(item)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors" title="Chỉnh sửa">
+                      <button onClick={() => openEdit(item)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-stone-50 text-gray-400 hover:text-stone-600 transition-colors" title="Chỉnh sửa">
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
                       <button onClick={() => setConfirmDelete(item)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors" title="Xoá">
@@ -235,7 +235,7 @@ export function AdminContents() {
                 <span>{viewItem.words} từ · {viewItem.quality}% chất lượng · {viewItem.date}</span>
               </div>
               <div className="flex gap-2 pt-1">
-                <button onClick={() => { setViewItem(null); openEdit(viewItem); }} className="flex-1 h-9 border border-blue-200 text-blue-600 hover:bg-blue-50 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-1.5">
+                <button onClick={() => { setViewItem(null); openEdit(viewItem); }} className="flex-1 h-9 border border-stone-200 text-stone-600 hover:bg-stone-50 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-1.5">
                   <Edit2 className="w-3.5 h-3.5" /> Chỉnh sửa
                 </button>
                 <button onClick={() => setViewItem(null)} className="flex-1 h-9 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-sm font-semibold transition-colors">Đóng</button>
@@ -250,8 +250,8 @@ export function AdminContents() {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Edit2 className="w-4 h-4 text-blue-600" />
+              <div className="w-8 h-8 bg-stone-100 rounded-lg flex items-center justify-center">
+                <Edit2 className="w-4 h-4 text-stone-600" />
               </div>
               Chỉnh sửa nội dung
             </DialogTitle>
@@ -290,7 +290,7 @@ export function AdminContents() {
               </div>
               <div className="flex gap-2 pt-2">
                 <button onClick={() => setEditItem(null)} className="flex-1 h-10 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">Huỷ</button>
-                <button onClick={handleSaveEdit} disabled={editSaving} className="flex-1 h-10 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+                <button onClick={handleSaveEdit} disabled={editSaving} className="flex-1 h-10 bg-gradient-to-r from-stone-600 to-stone-700 hover:from-stone-700 hover:to-stone-800 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-2">
                   {editSaving ? <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : 'Lưu thay đổi'}
                 </button>
               </div>

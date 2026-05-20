@@ -254,7 +254,7 @@ export function PricingPage() {
             {TESTIMONIALS.map((t, i) => (
               <div key={i} className="bg-white rounded-3xl p-6 border border-gray-100 hover:shadow-lg transition-shadow">
                 <div className="flex items-center gap-1 mb-4">
-                  {[...Array(t.rating)].map((_, j) => <Star key={j} className="w-4 h-4 text-yellow-400 fill-yellow-400" />)}
+                  {[...Array(t.rating)].map((_, j) => <Star key={j} className="w-4 h-4 text-amber-400 fill-amber-400" />)}
                 </div>
                 <p className="text-gray-700 text-sm leading-relaxed mb-5 italic">"{t.text}"</p>
                 <div className="flex items-center gap-3">

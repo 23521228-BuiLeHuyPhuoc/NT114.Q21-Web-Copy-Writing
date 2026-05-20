@@ -21,11 +21,11 @@ import {
 } from '@/lib/permissions';
 
 const COLOR_PRESETS = [
-  { name: 'Purple', color: 'bg-purple-100', textColor: 'text-purple-700', borderColor: 'border-purple-200', dotColor: 'bg-purple-500' },
-  { name: 'Blue', color: 'bg-blue-100', textColor: 'text-blue-700', borderColor: 'border-blue-200', dotColor: 'bg-blue-500' },
+  { name: 'Purple', color: 'bg-stone-100', textColor: 'text-stone-700', borderColor: 'border-stone-200', dotColor: 'bg-stone-500' },
+  { name: 'Blue', color: 'bg-stone-100', textColor: 'text-stone-700', borderColor: 'border-stone-200', dotColor: 'bg-stone-500' },
   { name: 'Green', color: 'bg-green-100', textColor: 'text-green-700', borderColor: 'border-green-200', dotColor: 'bg-green-500' },
   { name: 'Amber', color: 'bg-amber-100', textColor: 'text-amber-700', borderColor: 'border-amber-200', dotColor: 'bg-amber-500' },
-  { name: 'Cyan', color: 'bg-cyan-100', textColor: 'text-cyan-700', borderColor: 'border-cyan-200', dotColor: 'bg-cyan-500' },
+  { name: 'Cyan', color: 'bg-stone-100', textColor: 'text-stone-700', borderColor: 'border-stone-200', dotColor: 'bg-stone-500' },
   { name: 'Rose', color: 'bg-rose-100', textColor: 'text-rose-700', borderColor: 'border-rose-200', dotColor: 'bg-rose-500' },
 ];
 
@@ -286,7 +286,7 @@ export function AdminPermissions() {
                   </div>
 
                   {selectedRole === 'super_admin' && (
-                    <div className="mb-4 flex items-start gap-2 rounded-xl border border-purple-200 bg-purple-50 p-3 text-sm text-purple-700">
+                    <div className="mb-4 flex items-start gap-2 rounded-xl border border-stone-200 bg-stone-50 p-3 text-sm text-stone-700">
                       <CheckCircle2 className="w-4 h-4 mt-0.5" />
                       Super Admin luôn có toàn bộ quyền, bao gồm quyền tuỳ chỉnh được tạo sau này.
                     </div>

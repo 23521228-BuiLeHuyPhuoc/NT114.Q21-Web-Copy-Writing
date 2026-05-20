@@ -5,10 +5,10 @@ import { BarChart, LineChart } from '@/app/components/charts';
 
 export function AdminDashboard() {
   const stats = [
-    { label: 'Tổng Users', value: '1,234', change: '+12%', icon: Users, color: 'bg-blue-500' },
+    { label: 'Tổng Users', value: '1,234', change: '+12%', icon: Users, color: 'bg-stone-500' },
     { label: 'Copy đã tạo', value: '5,678', change: '+8%', icon: FileText, color: 'bg-green-500' },
-    { label: 'Lượt truy cập', value: '12,345', change: '+15%', icon: TrendingUp, color: 'bg-purple-500' },
-    { label: 'Doanh thu', value: '45.2M', change: '+23%', icon: DollarSign, color: 'bg-orange-500' },
+    { label: 'Lượt truy cập', value: '12,345', change: '+15%', icon: TrendingUp, color: 'bg-stone-500' },
+    { label: 'Doanh thu', value: '45.2M', change: '+23%', icon: DollarSign, color: 'bg-amber-500' },
   ];
 
   const monthlyData = [
@@ -46,7 +46,7 @@ export function AdminDashboard() {
                   <div className={`${stat.color} p-3 rounded-lg`}>
                     <Icon className="w-6 h-6 text-white" />
                   </div>
-                  <span className="text-sm font-semibold text-green-600">{stat.change}</span>
+                  <span className="text-sm font-semibold text-emerald-600">{stat.change}</span>
                 </div>
                 <p className="text-sm text-gray-600 mb-1">{stat.label}</p>
                 <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
@@ -64,7 +64,7 @@ export function AdminDashboard() {
               xKey="name"
               height={300}
               series={[
-                { key: 'users', label: 'Users', color: '#22c55e' },
+                { key: 'users', label: 'Users', color: '#78716c' },
                 { key: 'copies', label: 'Copies', color: '#059669' },
               ]}
             />
@@ -76,7 +76,7 @@ export function AdminDashboard() {
               data={industryData}
               xKey="name"
               height={300}
-              series={[{ key: 'value', label: 'Copies', color: '#22c55e' }]}
+              series={[{ key: 'value', label: 'Copies', color: '#f59e0b' }]}
             />
           </Card>
         </div>

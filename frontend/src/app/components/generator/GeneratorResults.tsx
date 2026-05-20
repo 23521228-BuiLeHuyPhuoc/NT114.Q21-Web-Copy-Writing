@@ -77,7 +77,7 @@ export function GeneratorResults({
                 {/* Quality score */}
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <div className={`px-3 py-1 rounded-full text-sm font-bold ${qualityScores[selectedResult] >= 90 ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+                    <div className={`px-3 py-1 rounded-full text-sm font-bold ${qualityScores[selectedResult] >= 90 ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-700'}`}>
                       ⭐ Chất lượng: {qualityScores[selectedResult]}%
                     </div>
                     <span className="text-xs text-gray-500">{results[selectedResult].split(' ').length} từ</span>
@@ -142,8 +142,8 @@ export function GeneratorResults({
   /* Empty state */
   return (
     <Card className="p-12 text-center border-2 border-dashed border-gray-200">
-      <div className="bg-gradient-to-r from-purple-100 to-blue-100 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-        <Sparkles className="w-10 h-10 text-purple-600" />
+      <div className="bg-gradient-to-r from-stone-100 to-stone-100 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+        <Sparkles className="w-10 h-10 text-stone-600" />
       </div>
       <h3 className="font-bold text-gray-800 mb-2">Sẵn sàng tạo copy?</h3>
       <p className="text-sm text-gray-500 mb-6 max-w-xs mx-auto">
@@ -151,9 +151,9 @@ export function GeneratorResults({
       </p>
       <div className="grid grid-cols-2 gap-3 max-w-sm mx-auto text-left">
         {[
-          { icon: Zap, label: 'Tạo trong 2 giây', color: 'text-yellow-600 bg-yellow-50' },
-          { icon: Star, label: 'Chất lượng 90%+', color: 'text-purple-600 bg-purple-50' },
-          { icon: History, label: 'Lưu tự động', color: 'text-blue-600 bg-blue-50' },
+          { icon: Zap, label: 'Tạo trong 2 giây', color: 'text-amber-600 bg-amber-50' },
+          { icon: Star, label: 'Chất lượng 90%+', color: 'text-stone-600 bg-stone-50' },
+          { icon: History, label: 'Lưu tự động', color: 'text-stone-600 bg-stone-50' },
           { icon: CheckCircle2, label: 'Đa phiên bản', color: 'text-green-600 bg-green-50' },
         ].map(f => {
           const Icon = f.icon;

@@ -21,29 +21,29 @@ const FEATURES = [
     icon: Brain,
     title: 'Fine-tuning Studio',
     desc: 'Huấn luyện AI theo giọng thương hiệu để nội dung nhất quán hơn giữa các chiến dịch.',
-    accent: 'bg-teal-100 text-teal-700',
+    accent: 'bg-stone-100 text-stone-700',
   },
   {
     icon: FileText,
     title: 'Template Library',
     desc: 'Bộ mẫu copy theo ngành, phù hợp cho quảng cáo, email, landing page và thương mại điện tử.',
-    accent: 'bg-emerald-100 text-emerald-700',
+    accent: 'bg-amber-100 text-amber-700',
   },
   {
     icon: Key,
     title: 'RESTful API',
     desc: 'Kết nối CopyPro vào CMS, website hoặc workflow tự động hóa của đội marketing.',
-    accent: 'bg-blue-100 text-blue-700',
+    accent: 'bg-stone-100 text-stone-700',
   },
 ];
 
 const INDUSTRIES = [
   { icon: ShoppingBag, name: 'E-commerce', tone: 'bg-green-50 text-green-700' },
-  { icon: Home, name: 'Bất động sản', tone: 'bg-emerald-50 text-emerald-700' },
-  { icon: Cpu, name: 'Công nghệ', tone: 'bg-teal-50 text-teal-700' },
-  { icon: Utensils, name: 'F&B', tone: 'bg-orange-50 text-orange-700' },
+  { icon: Home, name: 'Bất động sản', tone: 'bg-amber-50 text-amber-700' },
+  { icon: Cpu, name: 'Công nghệ', tone: 'bg-stone-50 text-stone-700' },
+  { icon: Utensils, name: 'F&B', tone: 'bg-amber-50 text-amber-700' },
   { icon: Stethoscope, name: 'Y tế', tone: 'bg-red-50 text-red-700' },
-  { icon: GraduationCap, name: 'Giáo dục', tone: 'bg-blue-50 text-blue-700' },
+  { icon: GraduationCap, name: 'Giáo dục', tone: 'bg-stone-50 text-stone-700' },
 ];
 
 const HOW_IT_WORKS = [
@@ -75,10 +75,10 @@ const TESTIMONIALS = [
 ];
 
 const STATS = [
-  { value: '2,000+', label: 'doanh nghiệp tin dùng', icon: Users },
-  { value: '500K+', label: 'copy đã tạo', icon: BarChart3 },
-  { value: '15+', label: 'ngành nghề hỗ trợ', icon: Globe },
-  { value: '< 2s', label: 'thời gian phản hồi', icon: Zap },
+  { value: '2,000+', label: 'doanh nghiệp tin dùng', icon: Users, tone: 'text-green-600' },
+  { value: '500K+', label: 'copy đã tạo', icon: BarChart3, tone: 'text-stone-600' },
+  { value: '15+', label: 'ngành nghề hỗ trợ', icon: Globe, tone: 'text-amber-600' },
+  { value: '< 2s', label: 'thời gian phản hồi', icon: Zap, tone: 'text-stone-600' },
 ];
 
 export function LandingPage() {
@@ -90,14 +90,14 @@ export function LandingPage() {
 
       <section className="relative pt-28 pb-16 md:pt-32 md:pb-20">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute inset-0 bg-gradient-to-br from-gray-950 via-green-950 to-gray-950" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_60%_at_50%_-10%,rgba(34,197,94,0.16),transparent)]" />
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-emerald-950 to-stone-950" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_60%_at_50%_-10%,rgba(79,70,229,0.18),transparent)]" />
         </div>
 
         <div className="relative mx-auto max-w-7xl px-5 lg:px-8">
           <div className="grid items-center gap-10 lg:grid-cols-12 lg:gap-12">
             <div className="text-center lg:col-span-5 lg:text-left">
-              <Badge className="mb-5 border border-green-700/40 bg-green-900/45 px-4 py-1.5 text-sm text-green-300">
+              <Badge className="mb-5 border border-stone-700/40 bg-stone-950/45 px-4 py-1.5 text-sm text-stone-200">
                 AI Copywriting cho doanh nghiệp Việt
               </Badge>
               <h1 className="mb-6 text-white leading-[1.08]">
@@ -127,7 +127,7 @@ export function LandingPage() {
 
               <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-gray-400 lg:justify-start">
                 <span className="flex items-center gap-1.5">
-                  {[...Array(5)].map((_, i) => <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />)}
+                  {[...Array(5)].map((_, i) => <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />)}
                   4.9/5
                 </span>
                 <span className="hidden text-gray-700 sm:inline">|</span>
@@ -151,7 +151,7 @@ export function LandingPage() {
               const Icon = stat.icon;
               return (
                 <div key={stat.label} className="rounded-lg border border-gray-100 bg-white p-5 text-center">
-                  <Icon className="mx-auto mb-3 h-5 w-5 text-green-600" />
+                  <Icon className={`mx-auto mb-3 h-5 w-5 ${stat.tone}`} />
                   <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
                   <p className="mt-1 text-xs font-medium text-gray-500">{stat.label}</p>
                 </div>
@@ -166,7 +166,7 @@ export function LandingPage() {
       <section className="bg-white py-16 md:py-20">
         <div className="mx-auto max-w-7xl px-5 lg:px-8">
           <div className="mx-auto mb-10 max-w-2xl text-center">
-            <Badge className="mb-4 border-0 bg-green-100 px-4 py-1.5 text-sm text-green-700">Tính năng</Badge>
+            <Badge className="mb-4 border-0 bg-stone-100 px-4 py-1.5 text-sm text-stone-700">Tính năng</Badge>
             <h2 className="mb-4 text-gray-900">Những công cụ cần thiết để sản xuất copy nhanh hơn</h2>
             <p className="text-base leading-relaxed text-gray-500">
               Tập trung vào các năng lực chính, dễ hiểu và sát nhu cầu vận hành nội dung hằng ngày.
@@ -177,7 +177,7 @@ export function LandingPage() {
             {FEATURES.map((feature) => {
               const Icon = feature.icon;
               return (
-                <div key={feature.title} className="rounded-lg border border-gray-100 bg-white p-6 shadow-sm transition-colors hover:border-green-200">
+                <div key={feature.title} className="rounded-lg border border-gray-100 bg-white p-6 shadow-sm transition-colors hover:border-stone-200">
                   <div className={`mb-5 inline-flex rounded-lg p-3 ${feature.accent}`}>
                     <Icon className="h-5 w-5" />
                   </div>
@@ -194,7 +194,7 @@ export function LandingPage() {
         <div className="mx-auto max-w-7xl px-5 lg:px-8">
           <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
             <div>
-              <Badge className="mb-4 border-0 bg-green-100 px-4 py-1.5 text-sm text-green-700">Quy trình</Badge>
+            <Badge className="mb-4 border-0 bg-green-100 px-4 py-1.5 text-sm text-green-700">Quy trình</Badge>
               <h2 className="mb-4 text-gray-900">Từ ý tưởng đến copy hoàn chỉnh trong 4 bước</h2>
               <p className="text-base leading-relaxed text-gray-500">
                 Luồng làm việc ngắn gọn để người không chuyên copywriting vẫn có thể tạo nội dung dùng được ngay.
@@ -210,7 +210,7 @@ export function LandingPage() {
                       <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-600 text-sm font-bold text-white">
                         {step.step}
                       </div>
-                      <Icon className="h-5 w-5 text-green-600" />
+                      <Icon className="h-5 w-5 text-stone-600" />
                     </div>
                     <h3 className="mb-2 text-base text-gray-900">{step.title}</h3>
                     <p className="text-sm leading-relaxed text-gray-500">{step.desc}</p>
@@ -225,7 +225,7 @@ export function LandingPage() {
       <section className="bg-white py-16 md:py-20">
         <div className="mx-auto max-w-7xl px-5 lg:px-8">
           <div className="mx-auto mb-10 max-w-2xl text-center">
-            <Badge className="mb-4 border-0 bg-green-100 px-4 py-1.5 text-sm text-green-700">Ngành nghề</Badge>
+            <Badge className="mb-4 border-0 bg-amber-100 px-4 py-1.5 text-sm text-amber-700">Ngành nghề</Badge>
             <h2 className="mb-4 text-gray-900">Tối ưu cho các lĩnh vực dùng copy thường xuyên</h2>
             <p className="text-base leading-relaxed text-gray-500">
               Mỗi ngành có cách nói, điểm đau và lời kêu gọi hành động khác nhau. CopyPro giúp bạn bắt đầu đúng hướng nhanh hơn.
@@ -251,7 +251,7 @@ export function LandingPage() {
       <section className="bg-gray-50 py-16 md:py-20">
         <div className="mx-auto max-w-7xl px-5 lg:px-8">
           <div className="mx-auto mb-10 max-w-2xl text-center">
-            <Badge className="mb-4 border-0 bg-yellow-100 px-4 py-1.5 text-sm text-yellow-700">Phản hồi</Badge>
+            <Badge className="mb-4 border-0 bg-amber-100 px-4 py-1.5 text-sm text-amber-700">Phản hồi</Badge>
             <h2 className="mb-4 text-gray-900">Đội marketing dùng CopyPro để giảm việc lặp lại</h2>
           </div>
 
@@ -259,11 +259,11 @@ export function LandingPage() {
             {TESTIMONIALS.map((item) => (
               <div key={item.name} className="flex h-full flex-col rounded-lg border border-gray-100 bg-white p-6 shadow-sm">
                 <div className="mb-5 flex items-center gap-1">
-                  {[...Array(5)].map((_, i) => <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />)}
+                  {[...Array(5)].map((_, i) => <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />)}
                 </div>
                 <p className="mb-6 flex-1 text-sm leading-relaxed text-gray-600">"{item.content}"</p>
                 <div className="flex items-center gap-3 border-t border-gray-100 pt-5">
-                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-green-600 to-emerald-700 text-sm font-bold text-white">
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-stone-600 to-amber-500 text-sm font-bold text-white">
                     {item.avatar}
                   </div>
                   <div>
@@ -278,11 +278,11 @@ export function LandingPage() {
       </section>
 
       <section className="relative overflow-hidden py-20 md:py-24">
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-950 via-green-950 to-gray-950" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_100%,rgba(34,197,94,0.14),transparent)]" />
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-emerald-950 to-stone-950" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_100%,rgba(245,158,11,0.14),transparent)]" />
 
         <div className="relative mx-auto max-w-3xl px-5 text-center lg:px-8">
-          <Badge className="mb-5 border border-green-700/40 bg-green-900/50 px-4 py-1.5 text-sm text-green-300">
+          <Badge className="mb-5 border border-amber-700/40 bg-amber-950/40 px-4 py-1.5 text-sm text-amber-200">
             Sẵn sàng bắt đầu?
           </Badge>
           <h2 className="mb-5 text-white">Tạo copy chuyên nghiệp nhanh hơn, gọn hơn</h2>

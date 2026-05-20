@@ -6,7 +6,7 @@ export interface PieChartProps {
   height?: number;
 }
 
-const DEFAULT_PALETTE = ['#22c55e', '#059669', '#14b8a6', '#10b981', '#84cc16', '#6b7280'];
+const DEFAULT_PALETTE = ['#059669', '#78716c', '#f59e0b', '#10b981', '#d6d3d1', '#64748b'];
 
 export function PieChart({ data, height = 280 }: PieChartProps) {
   const chartData = {

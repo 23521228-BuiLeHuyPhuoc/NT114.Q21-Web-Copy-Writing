@@ -46,8 +46,8 @@ export function CustomerContents() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {[
             { label: 'Tổng nội dung', value: contents.length, icon: FileText, color: 'text-green-600 bg-green-50' },
-            { label: 'Đã xuất bản', value: contents.filter(c => c.status === 'published').length, icon: Star, color: 'text-blue-600 bg-blue-50' },
-            { label: 'Bản nháp', value: contents.filter(c => c.status === 'draft').length, icon: Clock, color: 'text-yellow-600 bg-yellow-50' },
+            { label: 'Đã xuất bản', value: contents.filter(c => c.status === 'published').length, icon: Star, color: 'text-stone-600 bg-stone-50' },
+            { label: 'Bản nháp', value: contents.filter(c => c.status === 'draft').length, icon: Clock, color: 'text-amber-600 bg-amber-50' },
             { label: 'Chất lượng TB', value: (contents.length ? Math.round(contents.reduce((a, c) => a + c.quality, 0) / contents.length) : 0) + '%', icon: Sparkles, color: 'text-emerald-600 bg-emerald-50' },
           ].map((s, i) => {
             const Icon = s.icon;

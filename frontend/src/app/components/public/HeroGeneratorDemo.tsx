@@ -25,9 +25,9 @@ const SCENARIOS: Scenario[] = [
   {
     type: 'Facebook Ad',
     typeIcon: Megaphone,
-    typeColor: 'bg-orange-100 text-orange-700',
+    typeColor: 'bg-amber-100 text-amber-700',
     model: 'GPT-4o',
-    modelBg: 'bg-green-100 text-green-700',
+    modelBg: 'bg-stone-100 text-stone-700',
     industry: 'E-commerce',
     inputText: 'Khóa học lập trình Python',
     tone: 'Hấp dẫn, thúc đẩy hành động',
@@ -47,9 +47,9 @@ const SCENARIOS: Scenario[] = [
   {
     type: 'Email Marketing',
     typeIcon: Mail,
-    typeColor: 'bg-blue-100 text-blue-700',
+    typeColor: 'bg-stone-100 text-stone-700',
     model: 'GPT-4o',
-    modelBg: 'bg-green-100 text-green-700',
+    modelBg: 'bg-amber-100 text-amber-700',
     industry: 'Retail',
     inputText: 'Flash sale cuối năm giảm 70%',
     tone: 'Khẩn cấp, cá nhân hóa',
@@ -69,9 +69,9 @@ const SCENARIOS: Scenario[] = [
   {
     type: 'Mô tả sản phẩm',
     typeIcon: ShoppingCart,
-    typeColor: 'bg-emerald-100 text-emerald-700',
+    typeColor: 'bg-green-100 text-green-700',
     model: 'Llama 3.1',
-    modelBg: 'bg-teal-100 text-teal-700',
+    modelBg: 'bg-stone-100 text-stone-700',
     industry: 'Bất động sản',
     inputText: 'Căn hộ cao cấp view sông Q.7',
     tone: 'Sang trọng, thu hút nhà đầu tư',
@@ -92,9 +92,9 @@ const SCENARIOS: Scenario[] = [
   {
     type: 'Landing Page',
     typeIcon: FileText,
-    typeColor: 'bg-violet-100 text-violet-700',
+    typeColor: 'bg-stone-100 text-stone-700',
     model: 'GPT-4o',
-    modelBg: 'bg-green-100 text-green-700',
+    modelBg: 'bg-amber-100 text-amber-700',
     industry: 'SaaS / Công nghệ',
     inputText: 'Phần mềm quản lý nhà hàng',
     tone: 'Chuyên nghiệp, thuyết phục',
@@ -285,7 +285,7 @@ export function HeroGeneratorDemo() {
           </div>
           <div className="flex-1 flex justify-center">
             <div className="bg-[#0f1117] rounded-lg px-4 py-1 flex items-center gap-2 border border-white/8">
-              <div className="w-3 h-3 rounded-full bg-green-500/80" />
+              <div className="w-3 h-3 rounded-full bg-stone-500/80" />
               <span className="text-[11px] text-gray-500 font-mono truncate">app.copypro.vn/generator</span>
             </div>
           </div>
@@ -314,7 +314,7 @@ export function HeroGeneratorDemo() {
             {/* Progress bar */}
             <div className="h-0.5 bg-gray-800 relative flex-shrink-0">
               <div
-                className="absolute inset-y-0 left-0 bg-gradient-to-r from-green-500 to-emerald-500 transition-all duration-700 ease-out"
+                className="absolute inset-y-0 left-0 bg-gradient-to-r from-emerald-500 to-stone-500 transition-all duration-700 ease-out"
                 style={{ width: `${progressPct}%` }}
               />
             </div>
@@ -331,7 +331,7 @@ export function HeroGeneratorDemo() {
                   <div
                     className={`flex items-center gap-2 p-2.5 rounded-xl border ${
                       isInputVisible
-                        ? 'border-green-500/50 bg-green-500/8'
+                        ? 'border-stone-500/50 bg-stone-500/8'
                         : 'border-white/8 bg-white/4'
                     } transition-all`}
                   >
@@ -348,7 +348,7 @@ export function HeroGeneratorDemo() {
                   <p className="text-gray-600 text-[10px] font-bold uppercase tracking-widest mb-2">Sản phẩm / Chủ đề</p>
                   <div className={`relative rounded-xl border px-3 py-2.5 bg-white/4 min-h-[38px] transition-all ${
                     phase === 'typing_input'
-                      ? 'border-green-500/60 shadow-[0_0_0_2px_rgba(34,197,94,0.12)]'
+                      ? 'border-stone-500/60 shadow-[0_0_0_2px_rgba(79,70,229,0.14)]'
                       : isInputVisible
                       ? 'border-white/15'
                       : 'border-white/6'
@@ -382,7 +382,7 @@ export function HeroGeneratorDemo() {
                         key={n}
                         className={`flex-1 text-center py-1.5 rounded-lg text-[11px] font-bold border transition-all cursor-default ${
                           n === 1
-                            ? 'bg-green-600/20 border-green-500/40 text-green-400'
+                            ? 'bg-stone-600/20 border-stone-500/40 text-stone-300'
                             : 'bg-white/4 border-white/8 text-gray-600'
                         }`}
                       >
@@ -400,8 +400,8 @@ export function HeroGeneratorDemo() {
                       : btnPressed
                       ? 'bg-green-400 text-white scale-95 shadow-none'
                       : phase === 'pre_gen'
-                      ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-900/40 scale-100'
-                      : 'bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-md shadow-green-900/30'
+                      ? 'bg-gradient-to-r from-emerald-500 to-stone-500 text-white shadow-lg shadow-stone-900/40 scale-100'
+                      : 'bg-gradient-to-r from-emerald-600 to-stone-600 text-white shadow-md shadow-stone-900/30'
                   }`}
                 >
                   {phase === 'generating' ? (
@@ -425,7 +425,7 @@ export function HeroGeneratorDemo() {
                 <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 border-b border-white/5 flex-shrink-0">
                   <div className="flex items-center gap-2">
                     <div className={`w-1.5 h-1.5 rounded-full transition-colors flex-shrink-0 ${
-                      phase === 'generating' ? 'bg-yellow-400 animate-pulse'
+                      phase === 'generating' ? 'bg-amber-400 animate-pulse'
                       : isDone ? 'bg-green-500'
                       : phase === 'streaming' ? 'bg-green-400 animate-pulse'
                       : 'bg-gray-700'
@@ -444,7 +444,7 @@ export function HeroGeneratorDemo() {
                       <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-900/40 text-emerald-400 border border-emerald-700/30 font-medium hidden sm:block">
                         ⭐ {scenario.quality}%
                       </span>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-900/30 text-blue-400 border border-blue-700/30 font-medium">
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-stone-900/30 text-stone-400 border border-stone-700/30 font-medium">
                         ⚡ {scenario.seconds}s
                       </span>
                     </div>

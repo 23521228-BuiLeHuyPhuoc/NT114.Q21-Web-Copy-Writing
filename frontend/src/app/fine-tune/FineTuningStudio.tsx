@@ -49,7 +49,7 @@ export function CustomerFineTuningStudio() {
     toast.success('Đã bắt đầu training! Quá trình mất khoảng 30-60 phút.');
   };
 
-  const statusColor = (s: string) => ({ ready: 'bg-green-100 text-green-700', training: 'bg-blue-100 text-blue-700', failed: 'bg-red-100 text-red-700', pending: 'bg-gray-100 text-gray-600' }[s] ?? 'bg-gray-100 text-gray-600');
+  const statusColor = (s: string) => ({ ready: 'bg-green-100 text-green-700', training: 'bg-stone-100 text-stone-700', failed: 'bg-red-100 text-red-700', pending: 'bg-gray-100 text-gray-600' }[s] ?? 'bg-gray-100 text-gray-600');
   const statusLabel = (s: string) => ({ ready: 'Sẵn sàng', training: 'Đang training', failed: 'Thất bại', pending: 'Chờ xử lý' }[s] ?? s);
 
   return (
@@ -61,15 +61,15 @@ export function CustomerFineTuningStudio() {
         </div>
 
         {/* Info banner */}
-        <Card className="p-4 mb-6 bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
+        <Card className="p-4 mb-6 bg-gradient-to-r from-stone-50 to-stone-50 border-stone-200">
           <div className="flex gap-3">
             <ImageWithFallback
               src="https://images.unsplash.com/photo-1591453089816-0fbb971b454c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=80"
               alt="Fine-tuning" className="w-16 h-16 rounded-lg object-cover flex-shrink-0 hidden sm:block"
             />
             <div>
-              <h3 className="font-semibold text-purple-900 mb-1">Fine-tuning là gì?</h3>
-              <p className="text-sm text-purple-800">
+              <h3 className="font-semibold text-stone-900 mb-1">Fine-tuning là gì?</h3>
+              <p className="text-sm text-stone-800">
                 Fine-tuning cho phép bạn tinh chỉnh model AI (GPT-4o hoặc Llama 3.1) để viết copy đúng phong cách, tone giọng 
                 và đặc thù ngành nghề của thương hiệu bạn. Cung cấp càng nhiều ví dụ tốt, model càng chính xác.
               </p>
@@ -93,13 +93,13 @@ export function CustomerFineTuningStudio() {
                     <div className="flex flex-wrap items-center gap-2 mb-2">
                       <h3 className="font-bold text-gray-900">{m.name}</h3>
                       <Badge className={`${statusColor(m.status)} border-0`}>{statusLabel(m.status)}</Badge>
-                      <Badge className="bg-purple-100 text-purple-700 border-0 text-xs">{m.baseModel}</Badge>
+                      <Badge className="bg-stone-100 text-stone-700 border-0 text-xs">{m.baseModel}</Badge>
                     </div>
                     <p className="text-sm text-gray-600 mb-3">{m.desc}</p>
                     <div className="flex flex-wrap gap-4 text-xs text-gray-500">
                       <span><FileText className="w-3 h-3 inline mr-1" />{m.trainedOn} ví dụ training</span>
                       <span><Clock className="w-3 h-3 inline mr-1" />Tạo: {m.createdAt}</span>
-                      {m.status === 'ready' && <span><Star className="w-3 h-3 inline mr-1 text-yellow-500" />Độ chính xác: {m.accuracy}%</span>}
+                      {m.status === 'ready' && <span><Star className="w-3 h-3 inline mr-1 text-amber-500" />Độ chính xác: {m.accuracy}%</span>}
                     </div>
                     {m.status === 'training' && (
                       <div className="mt-3">
@@ -113,7 +113,7 @@ export function CustomerFineTuningStudio() {
                   </div>
                   <div className="flex flex-col gap-2 flex-shrink-0">
                     {m.status === 'ready' && (
-                      <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white" onClick={() => toast.success(`Đang áp dụng ${m.name}!`)}>
+                      <Button size="sm" className="bg-stone-600 hover:bg-stone-700 text-white" onClick={() => toast.success(`Đang áp dụng ${m.name}!`)}>
                         <Zap className="w-4 h-4 mr-1" /> Áp dụng
                       </Button>
                     )}
@@ -175,11 +175,11 @@ export function CustomerFineTuningStudio() {
                 </div>
 
                 {/* Training tips */}
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                  <p className="text-sm font-semibold text-yellow-800 flex items-center gap-1 mb-2">
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                  <p className="text-sm font-semibold text-amber-800 flex items-center gap-1 mb-2">
                     <Lightbulb className="w-4 h-4" /> Mẹo training hiệu quả
                   </p>
-                  <ul className="text-xs text-yellow-800 space-y-1">
+                  <ul className="text-xs text-amber-800 space-y-1">
                     <li>• Tối thiểu 50–100 cặp ví dụ cho kết quả tốt</li>
                     <li>• Ví dụ đa dạng về loại sản phẩm và tone</li>
                     <li>• Output phải là copy tốt nhất của bạn</li>
@@ -192,15 +192,15 @@ export function CustomerFineTuningStudio() {
               <Card className="p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-bold text-gray-900">Dữ liệu training</h3>
-                  <Badge className={`border-0 ${examples.length >= 50 ? 'bg-green-100 text-green-700' : examples.length >= 10 ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>
+                  <Badge className={`border-0 ${examples.length >= 50 ? 'bg-green-100 text-green-700' : examples.length >= 10 ? 'bg-stone-100 text-stone-700' : 'bg-amber-100 text-amber-700'}`}>
                     {examples.length} ví dụ
                   </Badge>
                 </div>
 
                 {examples.length < 10 && (
-                  <div className="flex items-start gap-2 p-3 bg-orange-50 border border-orange-200 rounded-lg mb-4">
-                    <AlertCircle className="w-4 h-4 text-orange-500 flex-shrink-0 mt-0.5" />
-                    <p className="text-xs text-orange-800">Cần ít nhất <strong>10 cặp ví dụ</strong> để bắt đầu training. Hiện có {examples.length}.</p>
+                  <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg mb-4">
+                    <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                    <p className="text-xs text-amber-800">Cần ít nhất <strong>10 cặp ví dụ</strong> để bắt đầu training. Hiện có {examples.length}.</p>
                   </div>
                 )}
 
@@ -208,7 +208,7 @@ export function CustomerFineTuningStudio() {
                   {examples.map(ex => (
                     <div key={ex.id} className="border rounded-lg p-3 bg-gray-50">
                       <div className="flex justify-between items-start mb-1">
-                        <Badge className="bg-blue-100 text-blue-700 border-0 text-xs">Input</Badge>
+                        <Badge className="bg-stone-100 text-stone-700 border-0 text-xs">Input</Badge>
                         <button onClick={() => setExamples(prev => prev.filter(e => e.id !== ex.id))} className="text-gray-400 hover:text-red-500">
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -229,7 +229,7 @@ export function CustomerFineTuningStudio() {
                     <Button size="sm" variant="outline" className="flex-1" onClick={() => toast.success('Tính năng import file sẽ sớm có!')}>
                       <Upload className="w-4 h-4 mr-1" /> Import CSV
                     </Button>
-                    <Button size="sm" className="flex-1 bg-blue-600 hover:bg-blue-700 text-white" onClick={addExample}>
+                    <Button size="sm" className="flex-1 bg-stone-600 hover:bg-stone-700 text-white" onClick={addExample}>
                       <Plus className="w-4 h-4 mr-1" /> Thêm ví dụ
                     </Button>
                   </div>
@@ -251,13 +251,13 @@ export function CustomerFineTuningStudio() {
               <Card className="p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-bold text-gray-900">Luxury Real Estate Voice</h3>
-                  <Badge className="bg-blue-100 text-blue-700 border-0">Đang training</Badge>
+                  <Badge className="bg-stone-100 text-stone-700 border-0">Đang training</Badge>
                 </div>
 
                 <div className="mb-6">
                   <div className="flex justify-between text-sm mb-2">
                     <span className="text-gray-600">Tiến trình tổng thể</span>
-                    <span className="font-bold text-purple-600">{trainProgress}%</span>
+                    <span className="font-bold text-stone-600">{trainProgress}%</span>
                   </div>
                   <Progress value={trainProgress} className="h-3" />
                   <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
@@ -272,11 +272,11 @@ export function CustomerFineTuningStudio() {
                       {log.status === 'done' ? (
                         <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
                       ) : log.status === 'running' ? (
-                        <RefreshCw className="w-4 h-4 text-blue-500 animate-spin flex-shrink-0" />
+                        <RefreshCw className="w-4 h-4 text-stone-500 animate-spin flex-shrink-0" />
                       ) : (
                         <div className="w-4 h-4 rounded-full border-2 border-gray-200 flex-shrink-0" />
                       )}
-                      <span className={`flex-1 ${log.status === 'done' ? 'text-gray-700' : log.status === 'running' ? 'text-blue-700 font-medium' : 'text-gray-400'}`}>{log.step}</span>
+                      <span className={`flex-1 ${log.status === 'done' ? 'text-gray-700' : log.status === 'running' ? 'text-stone-700 font-medium' : 'text-gray-400'}`}>{log.step}</span>
                       <span className="text-xs text-gray-400 font-mono">{log.time}</span>
                     </div>
                   ))}
@@ -306,8 +306,8 @@ export function CustomerFineTuningStudio() {
                   ))}
                 </div>
 
-                <div className="mt-5 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="text-xs text-blue-800 flex items-start gap-1.5">
+                <div className="mt-5 p-3 bg-stone-50 border border-stone-200 rounded-lg">
+                  <p className="text-xs text-stone-800 flex items-start gap-1.5">
                     <Info className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
                     Loss thấp hơn và Accuracy cao hơn cho thấy model đang học tốt. BLEU Score đo mức độ tương đồng với output mẫu.
                   </p>

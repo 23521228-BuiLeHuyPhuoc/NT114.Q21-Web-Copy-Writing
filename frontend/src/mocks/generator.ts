@@ -41,7 +41,7 @@ export const INDUSTRIES = [
   { id: 'education', name: 'Giáo Dục', icon: GraduationCap, color: 'bg-green-500' },
   { id: 'finance', name: 'Tài Chính', icon: DollarSign, color: 'bg-emerald-500' },
   { id: 'fashion', name: 'Thời Trang', icon: Shirt, color: 'bg-pink-500' },
-  { id: 'business', name: 'Doanh Nghiệp', icon: Briefcase, color: 'bg-indigo-500' },
+  { id: 'business', name: 'Doanh Nghiệp', icon: Briefcase, color: 'bg-stone-500' },
   { id: 'travel', name: 'Du Lịch', icon: Plane, color: 'bg-sky-500' },
 ];
 

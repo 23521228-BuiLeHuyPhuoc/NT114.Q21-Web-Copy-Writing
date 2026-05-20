@@ -54,8 +54,8 @@ export function CustomerProjectDetail() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {[
             { label: 'Tổng nội dung', value: PROJECT.stats.total, icon: FileText, color: 'text-green-600 bg-green-50' },
-            { label: 'Đã xuất bản', value: PROJECT.stats.published, icon: Star, color: 'text-blue-600 bg-blue-50' },
-            { label: 'Bản nháp', value: PROJECT.stats.draft, icon: Clock, color: 'text-yellow-600 bg-yellow-50' },
+            { label: 'Đã xuất bản', value: PROJECT.stats.published, icon: Star, color: 'text-stone-600 bg-stone-50' },
+            { label: 'Bản nháp', value: PROJECT.stats.draft, icon: Clock, color: 'text-amber-600 bg-amber-50' },
             { label: 'Chất lượng TB', value: PROJECT.stats.avgQuality + '%', icon: BarChart3, color: 'text-emerald-600 bg-emerald-50' },
           ].map((s, i) => {
             const Icon = s.icon;
@@ -98,7 +98,7 @@ export function CustomerProjectDetail() {
                     <span className="text-xs text-gray-400">{item.date}</span>
                   </div>
                 </div>
-                <Badge className={`border-0 text-xs ${item.status === 'published' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                <Badge className={`border-0 text-xs ${item.status === 'published' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
                   {item.status === 'published' ? 'Xuất bản' : 'Nháp'}
                 </Badge>
                 <span className="text-sm font-semibold text-green-600">⭐ {item.quality}%</span>

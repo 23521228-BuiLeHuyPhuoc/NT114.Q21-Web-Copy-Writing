@@ -33,9 +33,9 @@ const INDUSTRY_OPTIONS = ['E-commerce', 'Công nghệ', 'Bất động sản', '
 const TYPE_OPTIONS = ['headline', 'email', 'landing', 'social', 'description', 'ads'];
 
 const typeBadgeColor: Record<string, string> = {
-  headline: 'bg-blue-100 text-blue-700', email: 'bg-amber-100 text-amber-700',
-  landing: 'bg-purple-100 text-purple-700', social: 'bg-pink-100 text-pink-700',
-  description: 'bg-teal-100 text-teal-700', ads: 'bg-orange-100 text-orange-700',
+  headline: 'bg-stone-100 text-stone-700', email: 'bg-amber-100 text-amber-700',
+  landing: 'bg-stone-100 text-stone-700', social: 'bg-amber-100 text-amber-700',
+  description: 'bg-stone-100 text-stone-700', ads: 'bg-amber-100 text-amber-700',
 };
 
 export function AdminTemplates() {
@@ -142,8 +142,8 @@ export function AdminTemplates() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {[
             { label: 'Tổng templates', value: visible.length, icon: ScrollText, color: 'text-green-600 bg-green-50' },
-            { label: 'Đang hoạt động', value: visible.filter(t => t.active).length, icon: Zap, color: 'text-blue-600 bg-blue-50' },
-            { label: 'Lượt sử dụng', value: visible.reduce((a, t) => a + t.uses, 0).toLocaleString(), icon: BarChart3, color: 'text-purple-600 bg-purple-50' },
+            { label: 'Đang hoạt động', value: visible.filter(t => t.active).length, icon: Zap, color: 'text-stone-600 bg-stone-50' },
+            { label: 'Lượt sử dụng', value: visible.reduce((a, t) => a + t.uses, 0).toLocaleString(), icon: BarChart3, color: 'text-stone-600 bg-stone-50' },
             { label: 'Rating TB', value: (visible.reduce((a, t) => a + t.rating, 0) / (visible.length || 1)).toFixed(1), icon: Star, color: 'text-amber-600 bg-amber-50' },
           ].map((s, i) => (
             <StatTile key={i} icon={s.icon} label={s.label} value={s.value} color={s.color} />
@@ -192,7 +192,7 @@ export function AdminTemplates() {
               <div className="flex gap-2">
                 <button
                   onClick={() => openEdit(t)}
-                  className="flex-1 flex items-center justify-center gap-1.5 h-8 border border-blue-200 text-blue-600 hover:bg-blue-50 rounded-lg text-xs font-semibold transition-colors"
+                  className="flex-1 flex items-center justify-center gap-1.5 h-8 border border-stone-200 text-stone-600 hover:bg-stone-50 rounded-lg text-xs font-semibold transition-colors"
                 >
                   <Edit2 className="w-3.5 h-3.5" /> Chỉnh sửa
                 </button>
@@ -265,8 +265,8 @@ export function AdminTemplates() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Edit2 className="w-4 h-4 text-blue-600" />
+              <div className="w-8 h-8 bg-stone-100 rounded-lg flex items-center justify-center">
+                <Edit2 className="w-4 h-4 text-stone-600" />
               </div>
               Chỉnh sửa Template
             </DialogTitle>
@@ -309,7 +309,7 @@ export function AdminTemplates() {
               </div>
               <div className="flex gap-2 pt-1">
                 <button onClick={() => setEditItem(null)} className="flex-1 h-10 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">Huỷ</button>
-                <button onClick={handleSaveEdit} disabled={editSaving} className="flex-1 h-10 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center">
+                <button onClick={handleSaveEdit} disabled={editSaving} className="flex-1 h-10 bg-gradient-to-r from-stone-600 to-stone-700 hover:from-stone-700 hover:to-stone-800 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center">
                   {editSaving ? <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : 'Lưu thay đổi'}
                 </button>
               </div>

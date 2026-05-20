@@ -40,8 +40,8 @@ const DATASETS = [
 
 const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
   completed: { label: 'Hoàn thành', color: 'bg-green-100 text-green-700', icon: CheckCircle2 },
-  running:   { label: 'Đang chạy',  color: 'bg-blue-100 text-blue-700',   icon: RefreshCw },
-  queued:    { label: 'Hàng chờ',   color: 'bg-yellow-100 text-yellow-700', icon: Clock },
+  running:   { label: 'Đang chạy',  color: 'bg-stone-100 text-stone-700',   icon: RefreshCw },
+  queued:    { label: 'Hàng chờ',   color: 'bg-amber-100 text-amber-700', icon: Clock },
   failed:    { label: 'Thất bại',   color: 'bg-red-100 text-red-700',     icon: AlertCircle },
 };
 
@@ -72,7 +72,7 @@ export function AdminFineTuning() {
             <h1 className="text-3xl font-bold text-gray-900 mb-1">Fine-tuning Manager</h1>
             <p className="text-gray-600">Quản lý tất cả jobs fine-tuning, dataset và model của hệ thống</p>
           </div>
-          <Button className="bg-purple-600 hover:bg-purple-700 text-white" onClick={() => toast.success('Mở form tạo job mới...')}>
+          <Button className="bg-stone-600 hover:bg-stone-700 text-white" onClick={() => toast.success('Mở form tạo job mới...')}>
             <Plus className="w-4 h-4 mr-2" /> Tạo Job Mới
           </Button>
         </div>
@@ -80,8 +80,8 @@ export function AdminFineTuning() {
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {[
-            { label: 'Tổng jobs', value: stats.total, color: 'bg-purple-50 text-purple-700', icon: Brain },
-            { label: 'Đang chạy', value: stats.running, color: 'bg-blue-50 text-blue-700', icon: RefreshCw },
+            { label: 'Tổng jobs', value: stats.total, color: 'bg-stone-50 text-stone-700', icon: Brain },
+            { label: 'Đang chạy', value: stats.running, color: 'bg-stone-50 text-stone-700', icon: RefreshCw },
             { label: 'Hoàn thành', value: stats.completed, color: 'bg-green-50 text-green-700', icon: CheckCircle2 },
             { label: 'Thất bại', value: stats.failed, color: 'bg-red-50 text-red-700', icon: AlertCircle },
           ].map(s => {
@@ -157,7 +157,7 @@ export function AdminFineTuning() {
                         {job.status === 'completed' && (
                           <div className="flex gap-4 mt-2 text-xs">
                             <span className="text-green-600">Accuracy: <strong>{job.accuracy}%</strong></span>
-                            <span className="text-blue-600">Val Loss: <strong>{job.loss}</strong></span>
+                            <span className="text-stone-600">Val Loss: <strong>{job.loss}</strong></span>
                           </div>
                         )}
                       </div>
@@ -201,7 +201,7 @@ export function AdminFineTuning() {
                     <button
                       key={job.id}
                       onClick={() => setSelectedJob(job)}
-                      className={`w-full text-left p-3 rounded-lg border transition-all text-sm ${selectedJob.id === job.id ? 'border-purple-500 bg-purple-50' : 'border-gray-200 hover:border-gray-300'}`}
+                      className={`w-full text-left p-3 rounded-lg border transition-all text-sm ${selectedJob.id === job.id ? 'border-stone-500 bg-stone-50' : 'border-gray-200 hover:border-gray-300'}`}
                     >
                       <p className="font-medium text-gray-900 truncate">{job.name}</p>
                       <p className="text-xs text-gray-500">{job.user} · {job.baseModel}</p>
@@ -218,18 +218,18 @@ export function AdminFineTuning() {
                     xKey="epoch"
                     height={280}
                     series={[
-                      { key: 'trainLoss', label: 'Train Loss', color: '#22c55e' },
+                      { key: 'trainLoss', label: 'Train Loss', color: '#78716c' },
                       { key: 'valLoss', label: 'Val Loss', color: '#059669', dashed: true },
-                      { key: 'accuracy', label: 'Accuracy %', color: '#14b8a6' },
+                      { key: 'accuracy', label: 'Accuracy %', color: '#f59e0b' },
                     ]}
                   />
                 </Card>
 
                 <div className="grid grid-cols-3 gap-3">
                   {[
-                    { label: 'Final Loss', value: selectedJob.loss || '—', color: 'bg-purple-50 text-purple-700' },
+                    { label: 'Final Loss', value: selectedJob.loss || '—', color: 'bg-stone-50 text-stone-700' },
                     { label: 'Accuracy', value: selectedJob.accuracy ? `${selectedJob.accuracy}%` : '—', color: 'bg-green-50 text-green-700' },
-                    { label: 'Samples', value: selectedJob.samples, color: 'bg-blue-50 text-blue-700' },
+                    { label: 'Samples', value: selectedJob.samples, color: 'bg-stone-50 text-stone-700' },
                   ].map(m => (
                     <Card key={m.label} className="p-4 text-center">
                       <div className={`text-xl font-bold ${m.color} rounded-lg py-2 mb-1`}>{m.value}</div>
@@ -245,7 +245,7 @@ export function AdminFineTuning() {
           <TabsContent value="datasets">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-gray-900">Dataset Library ({DATASETS.length})</h3>
-              <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white" onClick={() => toast.success('Upload dataset...')}>
+              <Button size="sm" className="bg-stone-600 hover:bg-stone-700 text-white" onClick={() => toast.success('Upload dataset...')}>
                 <Upload className="w-4 h-4 mr-2" /> Upload Dataset
               </Button>
             </div>
@@ -253,8 +253,8 @@ export function AdminFineTuning() {
               {DATASETS.map(ds => (
                 <Card key={ds.id} className="p-4 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-4">
-                    <div className="bg-blue-100 p-2.5 rounded-lg">
-                      <Database className="w-5 h-5 text-blue-600" />
+                    <div className="bg-stone-100 p-2.5 rounded-lg">
+                      <Database className="w-5 h-5 text-stone-600" />
                     </div>
                     <div>
                       <p className="font-semibold text-gray-900 text-sm">{ds.name}</p>
@@ -267,7 +267,7 @@ export function AdminFineTuning() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Badge className={ds.quality === 'high' ? 'bg-green-100 text-green-700 border-0' : 'bg-yellow-100 text-yellow-700 border-0'}>
+                    <Badge className={ds.quality === 'high' ? 'bg-green-100 text-green-700 border-0' : 'bg-amber-100 text-amber-700 border-0'}>
                       {ds.quality === 'high' ? '⭐ Cao' : '📊 Trung bình'}
                     </Badge>
                     <Button variant="ghost" size="sm" onClick={() => toast.success('Đang tải dataset...')}><Download className="w-4 h-4" /></Button>

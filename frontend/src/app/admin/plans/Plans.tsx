@@ -156,9 +156,9 @@ export function AdminPlans() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {[
             { label: 'Tổng gói', value: visible.length, icon: Crown, color: 'text-green-600 bg-green-50' },
-            { label: 'Tổng subscribers', value: visible.reduce((a, p) => a + p.users, 0).toLocaleString(), icon: Users, color: 'text-blue-600 bg-blue-50' },
+            { label: 'Tổng subscribers', value: visible.reduce((a, p) => a + p.users, 0).toLocaleString(), icon: Users, color: 'text-stone-600 bg-stone-50' },
             { label: 'Doanh thu ước tính', value: (totalRevenue / 1000000).toFixed(1) + 'M₫', icon: DollarSign, color: 'text-emerald-600 bg-emerald-50' },
-            { label: 'Paid users', value: visible.filter(p => p.price > 0).reduce((a, p) => a + p.users, 0).toLocaleString(), icon: Zap, color: 'text-purple-600 bg-purple-50' },
+            { label: 'Paid users', value: visible.filter(p => p.price > 0).reduce((a, p) => a + p.users, 0).toLocaleString(), icon: Zap, color: 'text-stone-600 bg-stone-50' },
           ].map((s, i) => (
             <StatTile key={i} icon={s.icon} label={s.label} value={s.value} color={s.color} />
           ))}
@@ -194,11 +194,11 @@ export function AdminPlans() {
                   <TableCell className="text-sm text-gray-600">{formatVal(plan.copyLimit)}</TableCell>
                   <TableCell className="text-sm text-gray-600">{formatVal(plan.apiLimit)}</TableCell>
                   <TableCell className="text-sm text-gray-600">{formatVal(plan.fineTune)}</TableCell>
-                  <TableCell><Badge className="bg-blue-100 text-blue-700 border-0">{plan.users}</Badge></TableCell>
+                  <TableCell><Badge className="bg-stone-100 text-stone-700 border-0">{plan.users}</Badge></TableCell>
                   <TableCell><Switch checked={plan.active} onCheckedChange={() => toggleActive(plan.id)} /></TableCell>
                   <TableCell>
                     <div className="flex gap-1 justify-end">
-                      <button onClick={() => openEdit(plan)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors">
+                      <button onClick={() => openEdit(plan)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-stone-50 text-gray-400 hover:text-stone-600 transition-colors">
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
                       <button onClick={() => setConfirmDelete(plan)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors">
@@ -265,8 +265,8 @@ export function AdminPlans() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Edit2 className="w-4 h-4 text-blue-600" />
+              <div className="w-8 h-8 bg-stone-100 rounded-lg flex items-center justify-center">
+                <Edit2 className="w-4 h-4 text-stone-600" />
               </div>
               Chỉnh sửa Gói: {editItem?.name}
             </DialogTitle>
@@ -305,7 +305,7 @@ export function AdminPlans() {
               </div>
               <div className="flex gap-2 pt-1">
                 <button onClick={() => setEditItem(null)} className="flex-1 h-10 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">Huỷ</button>
-                <button onClick={handleSaveEdit} disabled={editSaving} className="flex-1 h-10 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center">
+                <button onClick={handleSaveEdit} disabled={editSaving} className="flex-1 h-10 bg-gradient-to-r from-stone-600 to-stone-700 hover:from-stone-700 hover:to-stone-800 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center">
                   {editSaving ? <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : 'Lưu thay đổi'}
                 </button>
               </div>

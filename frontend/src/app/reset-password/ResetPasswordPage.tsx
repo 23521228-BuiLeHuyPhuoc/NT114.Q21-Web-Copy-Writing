@@ -40,16 +40,16 @@ export function ResetPasswordPage() {
 
   if (done) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 flex items-center justify-center p-5">
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-stone-50 to-stone-50 flex items-center justify-center p-5">
         <div className="bg-white rounded-3xl shadow-xl p-8 max-w-md w-full text-center">
-          <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CheckCircle2 className="w-8 h-8 text-teal-600" />
+          <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CheckCircle2 className="w-8 h-8 text-stone-600" />
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Đặt lại thành công!</h2>
           <p className="text-gray-600 mb-6">Mật khẩu đã được cập nhật. Bạn có thể đăng nhập ngay.</p>
           <button
             onClick={() => navigate('/login')}
-            className="w-full bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 text-white rounded-xl py-3 font-semibold hover:from-emerald-500 hover:via-teal-500 hover:to-cyan-500 transition-all"
+            className="w-full bg-gradient-to-r from-emerald-600 via-stone-600 to-stone-600 text-white rounded-xl py-3 font-semibold hover:from-emerald-500 hover:via-stone-500 hover:to-stone-500 transition-all"
           >
             Đăng nhập ngay
           </button>
@@ -59,9 +59,9 @@ export function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 flex items-center justify-center p-5">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-stone-50 to-stone-50 flex items-center justify-center p-5">
       <div className="bg-white rounded-3xl shadow-xl p-8 max-w-md w-full">
-        <Link to="/login" className="flex items-center gap-1 text-sm text-gray-500 hover:text-teal-600 mb-6">
+        <Link to="/login" className="flex items-center gap-1 text-sm text-gray-500 hover:text-stone-600 mb-6">
           <ArrowLeft className="w-4 h-4" /> Quay lại đăng nhập
         </Link>
 
@@ -87,7 +87,7 @@ export function ResetPasswordPage() {
 
           <div className="space-y-1">
             {checks.map((c, i) => (
-              <div key={i} className={`flex items-center gap-2 text-xs ${c.ok ? 'text-teal-600' : 'text-gray-400'}`}>
+              <div key={i} className={`flex items-center gap-2 text-xs ${c.ok ? 'text-stone-600' : 'text-gray-400'}`}>
                 <CheckCircle2 className="w-3.5 h-3.5" /> {c.label}
               </div>
             ))}
@@ -105,7 +105,7 @@ export function ResetPasswordPage() {
           <button
             type="submit"
             disabled={!allValid || isSubmitting}
-            className="w-full bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 text-white rounded-xl py-3 font-semibold hover:from-emerald-500 hover:via-teal-500 hover:to-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            className="w-full bg-gradient-to-r from-emerald-600 via-stone-600 to-stone-600 text-white rounded-xl py-3 font-semibold hover:from-emerald-500 hover:via-stone-500 hover:to-stone-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
             {isSubmitting ? 'Đang xử lý...' : 'Đặt lại mật khẩu'}
           </button>

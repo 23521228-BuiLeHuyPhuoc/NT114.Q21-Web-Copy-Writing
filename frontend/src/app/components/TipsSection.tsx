@@ -128,7 +128,7 @@ Theo dõi các chỉ số:
   return (
     <Card className="p-6">
       <div className="flex items-center gap-2 mb-6">
-        <Lightbulb className="w-6 h-6 text-yellow-600" />
+        <Lightbulb className="w-6 h-6 text-amber-600" />
         <h2 className="text-2xl font-bold">Tips & Chiến Lược Copywriting</h2>
       </div>
 
@@ -139,7 +139,7 @@ Theo dõi các chỉ số:
               <span className="font-semibold">{index + 1}. {tip.title}</span>
             </AccordionTrigger>
             <AccordionContent>
-              <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
+              <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
                 <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-gray-700">
                   {tip.content}
                 </pre>
@@ -149,7 +149,7 @@ Theo dõi các chỉ số:
         ))}
       </Accordion>
 
-      <div className="mt-6 p-4 bg-gradient-to-r from-purple-100 to-blue-100 rounded-lg">
+      <div className="mt-6 p-4 bg-gradient-to-r from-stone-100 to-stone-100 rounded-lg">
         <h3 className="font-semibold text-lg mb-2">💡 Lời khuyên cuối cùng:</h3>
         <p className="text-sm text-gray-700">
           Copy tốt nhất là copy được viết từ góc nhìn của khách hàng, giải quyết vấn đề của họ và mang lại giá trị thực sự. 

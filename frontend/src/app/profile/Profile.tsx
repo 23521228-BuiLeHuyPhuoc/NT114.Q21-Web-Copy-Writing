@@ -33,10 +33,10 @@ export function CustomerProfile() {
   };
 
   const stats = [
-    { label: 'Copy đã tạo', value: '312', icon: BarChart3, color: 'bg-purple-50 text-purple-700' },
-    { label: 'Model fine-tuned', value: '2', icon: Brain, color: 'bg-blue-50 text-blue-700' },
+    { label: 'Copy đã tạo', value: '312', icon: BarChart3, color: 'bg-stone-50 text-stone-700' },
+    { label: 'Model fine-tuned', value: '2', icon: Brain, color: 'bg-stone-50 text-stone-700' },
     { label: 'Template lưu', value: '18', icon: Key, color: 'bg-green-50 text-green-700' },
-    { label: 'Ngày thành viên', value: '68', icon: Calendar, color: 'bg-orange-50 text-orange-700' },
+    { label: 'Ngày thành viên', value: '68', icon: Calendar, color: 'bg-amber-50 text-amber-700' },
   ];
 
   return (
@@ -53,12 +53,12 @@ export function CustomerProfile() {
                   {user?.name.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <button className="absolute -bottom-1 -right-1 bg-purple-600 text-white rounded-full p-1.5 hover:bg-purple-700" onClick={() => toast.success('Tính năng upload ảnh sẽ sớm có!')}>
+              <button className="absolute -bottom-1 -right-1 bg-stone-600 text-white rounded-full p-1.5 hover:bg-stone-700" onClick={() => toast.success('Tính năng upload ảnh sẽ sớm có!')}>
                 <Edit2 className="w-3 h-3" />
               </button>
             </div>
             <h2 className="text-xl font-bold mb-1 text-gray-900">{user?.name}</h2>
-            <Badge className="bg-purple-100 text-purple-700 border-0 mb-3">
+            <Badge className="bg-stone-100 text-stone-700 border-0 mb-3">
               <Crown className="w-3 h-3 mr-1" /> Pro Member
             </Badge>
             <p className="text-sm text-gray-500">{user?.email}</p>
@@ -85,13 +85,13 @@ export function CustomerProfile() {
               })}
             </div>
 
-            <Card className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
+            <Card className="p-4 bg-gradient-to-r from-stone-50 to-stone-50 border-stone-200">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-semibold text-purple-900">Gói Pro đang hoạt động</p>
-                  <p className="text-sm text-purple-700">Gia hạn: 23/04/2026 · 299,000₫/tháng</p>
+                  <p className="font-semibold text-stone-900">Gói Pro đang hoạt động</p>
+                  <p className="text-sm text-stone-700">Gia hạn: 23/04/2026 · 299,000₫/tháng</p>
                 </div>
-                <Badge className="bg-purple-600 text-white border-0">Còn 31 ngày</Badge>
+                <Badge className="bg-stone-600 text-white border-0">Còn 31 ngày</Badge>
               </div>
             </Card>
           </div>
@@ -113,7 +113,7 @@ export function CustomerProfile() {
                 {editing ? (
                   <div className="flex gap-2">
                     <Button size="sm" variant="outline" onClick={() => setEditing(false)}>Hủy</Button>
-                    <Button size="sm" className="bg-purple-600 text-white" onClick={saveProfile}>
+                    <Button size="sm" className="bg-stone-600 text-white" onClick={saveProfile}>
                       <Save className="w-4 h-4 mr-1" /> Lưu
                     </Button>
                   </div>
@@ -198,7 +198,7 @@ export function CustomerProfile() {
                   </Select>
                 </div>
               </div>
-              <Button className="bg-purple-600 text-white" onClick={() => toast.success('Đã lưu tùy chọn!')}>
+              <Button className="bg-stone-600 text-white" onClick={() => toast.success('Đã lưu tùy chọn!')}>
                 <Save className="w-4 h-4 mr-2" /> Lưu tùy chọn
               </Button>
             </Card>
@@ -212,7 +212,7 @@ export function CustomerProfile() {
                 <div><Label>Mật khẩu hiện tại</Label><Input type="password" placeholder="••••••••" className="mt-2" /></div>
                 <div><Label>Mật khẩu mới</Label><Input type="password" placeholder="••••••••" className="mt-2" /></div>
                 <div><Label>Xác nhận mật khẩu mới</Label><Input type="password" placeholder="••••••••" className="mt-2" /></div>
-                <Button className="bg-purple-600 text-white" onClick={() => toast.success('Đã đổi mật khẩu!')}>
+                <Button className="bg-stone-600 text-white" onClick={() => toast.success('Đã đổi mật khẩu!')}>
                   <Lock className="w-4 h-4 mr-2" /> Cập nhật mật khẩu
                 </Button>
               </div>
@@ -252,7 +252,7 @@ export function CustomerProfile() {
                   <Switch defaultChecked={n.on} />
                 </div>
               ))}
-              <Button className="bg-purple-600 text-white mt-2" onClick={() => toast.success('Đã lưu cài đặt thông báo!')}>
+              <Button className="bg-stone-600 text-white mt-2" onClick={() => toast.success('Đã lưu cài đặt thông báo!')}>
                 <Save className="w-4 h-4 mr-2" /> Lưu cài đặt
               </Button>
             </Card>

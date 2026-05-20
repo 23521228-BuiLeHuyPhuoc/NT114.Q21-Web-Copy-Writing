@@ -264,7 +264,7 @@ export function CopywritingGenerator({ industry }: CopywritingGeneratorProps) {
   return (
     <Card className="p-6">
       <div className="flex items-center gap-2 mb-6">
-        <Wand2 className="w-6 h-6 text-purple-600" />
+        <Wand2 className="w-6 h-6 text-stone-600" />
         <h2 className="text-2xl font-bold">Tạo Nội dung Marketing</h2>
       </div>
 
@@ -322,16 +322,16 @@ export function CopywritingGenerator({ industry }: CopywritingGeneratorProps) {
       </div>
 
       <div className="flex gap-3 mb-6">
-        <Button onClick={generateCopy} className="flex-1 bg-purple-600 hover:bg-purple-700">
+        <Button onClick={generateCopy} className="flex-1 bg-stone-600 hover:bg-stone-700">
           <RefreshCw className="w-4 h-4 mr-2" />
           Tạo Nội Dung
         </Button>
       </div>
 
       {generatedCopy && (
-        <div className="bg-gray-50 rounded-lg p-4 border-2 border-purple-200">
+        <div className="bg-gray-50 rounded-lg p-4 border-2 border-stone-200">
           <div className="flex justify-between items-start mb-2">
-            <Label className="text-sm font-semibold text-purple-600">Kết quả:</Label>
+            <Label className="text-sm font-semibold text-stone-600">Kết quả:</Label>
             <Button 
               variant="ghost" 
               size="sm" 

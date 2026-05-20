@@ -419,7 +419,7 @@ export function AdminUsers() {
                   <TableRow key={item.id} className={item.status === 'pending' ? 'bg-amber-50/40' : item.status === 'rejected' ? 'bg-red-50/30' : ''}>
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0 ${item.role === 'admin' ? 'bg-gradient-to-br from-purple-500 to-purple-700' : 'bg-gradient-to-br from-green-500 to-emerald-700'}`}>
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0 ${item.role === 'admin' ? 'bg-gradient-to-br from-stone-500 to-stone-700' : 'bg-gradient-to-br from-green-500 to-emerald-700'}`}>
                           {item.name.charAt(0).toUpperCase()}
                         </div>
                         <div>
@@ -439,7 +439,7 @@ export function AdminUsers() {
                             <button onClick={() => handleApprove(item.id, item.name)} className="text-xs text-green-700 hover:text-green-800 font-semibold border border-green-200 hover:bg-green-50 rounded-lg px-2.5 py-1 transition-all">Duyet</button>
                           </>
                         )}
-                        <button onClick={() => openEdit(item)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors">
+                        <button onClick={() => openEdit(item)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-stone-50 text-gray-400 hover:text-stone-600 transition-colors">
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
                         {isSuperAdmin && (
@@ -535,8 +535,8 @@ export function AdminUsers() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Edit2 className="w-4 h-4 text-blue-600" />
+              <div className="w-8 h-8 bg-stone-100 rounded-lg flex items-center justify-center">
+                <Edit2 className="w-4 h-4 text-stone-600" />
               </div>
               Chinh sua tai khoan
             </DialogTitle>
@@ -582,7 +582,7 @@ export function AdminUsers() {
               </div>
               <div className="flex gap-2 pt-2">
                 <button onClick={() => setEditUser(null)} className="flex-1 h-10 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">Huy</button>
-                <button onClick={handleSaveEdit} disabled={editSaving} className="flex-1 h-10 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+                <button onClick={handleSaveEdit} disabled={editSaving} className="flex-1 h-10 bg-gradient-to-r from-stone-600 to-stone-700 hover:from-stone-700 hover:to-stone-800 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-2">
                   {editSaving ? <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : 'Luu thay doi'}
                 </button>
               </div>

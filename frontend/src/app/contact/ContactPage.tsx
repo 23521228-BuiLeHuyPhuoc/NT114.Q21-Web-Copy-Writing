@@ -14,9 +14,9 @@ import {
 
 const CONTACT_TYPES = [
   { icon: MessageSquare, label: 'Tư vấn sản phẩm', desc: 'Hỏi về tính năng, phù hợp với nhu cầu', color: 'bg-green-100 text-green-700' },
-  { icon: Headphones, label: 'Hỗ trợ kỹ thuật', desc: 'Lỗi, API, tích hợp hệ thống', color: 'bg-blue-100 text-blue-700' },
-  { icon: BookOpen, label: 'Đối tác & Hợp tác', desc: 'Agency, reseller, co-marketing', color: 'bg-purple-100 text-purple-700' },
-  { icon: Zap, label: 'Demo Enterprise', desc: 'Demo và báo giá cho doanh nghiệp lớn', color: 'bg-orange-100 text-orange-700' },
+  { icon: Headphones, label: 'Hỗ trợ kỹ thuật', desc: 'Lỗi, API, tích hợp hệ thống', color: 'bg-stone-100 text-stone-700' },
+  { icon: BookOpen, label: 'Đối tác & Hợp tác', desc: 'Agency, reseller, co-marketing', color: 'bg-stone-100 text-stone-700' },
+  { icon: Zap, label: 'Demo Enterprise', desc: 'Demo và báo giá cho doanh nghiệp lớn', color: 'bg-amber-100 text-amber-700' },
 ];
 
 const FAQ = [

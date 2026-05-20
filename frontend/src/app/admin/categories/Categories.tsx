@@ -169,7 +169,7 @@ export function AdminCategories() {
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-1 justify-end">
-                      <button onClick={() => openEdit(cat)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors">
+                      <button onClick={() => openEdit(cat)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-stone-50 text-gray-400 hover:text-stone-600 transition-colors">
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
                       <button onClick={() => setConfirmDelete(cat)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors">
@@ -231,8 +231,8 @@ export function AdminCategories() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Edit2 className="w-4 h-4 text-blue-600" />
+              <div className="w-8 h-8 bg-stone-100 rounded-lg flex items-center justify-center">
+                <Edit2 className="w-4 h-4 text-stone-600" />
               </div>
               Chỉnh sửa Danh Mục
             </DialogTitle>
@@ -252,7 +252,7 @@ export function AdminCategories() {
                 <div className="flex flex-wrap gap-2">
                   {ICON_OPTIONS.map(icon => (
                     <button key={icon} onClick={() => setEditIcon(icon)}
-                      className={`w-9 h-9 text-xl rounded-xl border-2 transition-all ${editIcon === icon ? 'border-blue-500 bg-blue-50 scale-110' : 'border-gray-200 hover:border-gray-300'}`}>
+                      className={`w-9 h-9 text-xl rounded-xl border-2 transition-all ${editIcon === icon ? 'border-stone-500 bg-stone-50 scale-110' : 'border-gray-200 hover:border-gray-300'}`}>
                       {icon}
                     </button>
                   ))}
@@ -260,7 +260,7 @@ export function AdminCategories() {
               </div>
               <div className="flex gap-2 pt-1">
                 <button onClick={() => setEditItem(null)} className="flex-1 h-10 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">Huỷ</button>
-                <button onClick={handleSaveEdit} disabled={editSaving} className="flex-1 h-10 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center">
+                <button onClick={handleSaveEdit} disabled={editSaving} className="flex-1 h-10 bg-gradient-to-r from-stone-600 to-stone-700 hover:from-stone-700 hover:to-stone-800 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center">
                   {editSaving ? <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : 'Lưu thay đổi'}
                 </button>
               </div>

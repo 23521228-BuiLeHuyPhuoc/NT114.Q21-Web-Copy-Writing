@@ -28,17 +28,17 @@ export function CustomerDashboard() {
   const { user } = useAuth();
 
   const stats = [
-    { label: 'Copy đã tạo', value: '312', icon: FileText, color: 'bg-purple-500', change: '+8 tuần này' },
-    { label: 'Quota còn lại', value: '188', icon: Zap, color: 'bg-blue-500', change: '/ 500 tháng này' },
-    { label: 'Model đang dùng', value: 'GPT-4o', icon: Brain, color: 'bg-green-500', change: 'Fine-tuned sẵn sàng' },
-    { label: 'Chất lượng TB', value: '91%', icon: Star, color: 'bg-orange-500', change: 'Top 15%' },
+    { label: 'Copy đã tạo', value: '312', icon: FileText, color: 'bg-green-500', change: '+8 tuần này' },
+    { label: 'Quota còn lại', value: '188', icon: Zap, color: 'bg-amber-500', change: '/ 500 tháng này' },
+    { label: 'Model đang dùng', value: 'GPT-4o', icon: Brain, color: 'bg-stone-500', change: 'Fine-tuned sẵn sàng' },
+    { label: 'Chất lượng TB', value: '91%', icon: Star, color: 'bg-amber-500', change: 'Top 15%' },
   ];
 
   const quickActions = [
     { title: 'AI Generator', desc: 'Tạo copy với GPT-4o, Llama 3.1 hoặc model fine-tuned của bạn', icon: Wand2, path: '/generate', color: 'from-green-500 to-emerald-600', cta: 'Tạo ngay' },
-    { title: 'Fine-tuning Studio', desc: 'Huấn luyện AI theo giọng văn thương hiệu riêng', icon: Brain, path: '/fine-tune', color: 'from-teal-500 to-cyan-600', cta: 'Khám phá' },
-    { title: 'Thư Viện Template', desc: '100+ mẫu copy được tối ưu theo từng ngành nghề', icon: FileText, path: '/templates', color: 'from-emerald-500 to-green-600', cta: 'Xem mẫu' },
-    { title: 'Kiểm Tra Đạo Văn', desc: 'Kiểm tra tính độc đáo nội dung AI trước khi xuất bản', icon: Key, path: '/plagiarism-check', color: 'from-blue-500 to-indigo-600', cta: 'Kiểm tra' },
+    { title: 'Fine-tuning Studio', desc: 'Huấn luyện AI theo giọng văn thương hiệu riêng', icon: Brain, path: '/fine-tune', color: 'from-stone-500 to-stone-600', cta: 'Khám phá' },
+    { title: 'Thư Viện Template', desc: '100+ mẫu copy được tối ưu theo từng ngành nghề', icon: FileText, path: '/templates', color: 'from-amber-500 to-amber-600', cta: 'Xem mẫu' },
+    { title: 'Kiểm Tra Đạo Văn', desc: 'Kiểm tra tính độc đáo nội dung AI trước khi xuất bản', icon: Key, path: '/plagiarism-check', color: 'from-stone-500 to-stone-600', cta: 'Kiểm tra' },
   ];
 
   return (
@@ -51,7 +51,7 @@ export function CustomerDashboard() {
             <p className="text-gray-600">Sẵn sàng tạo copy marketing đỉnh cao hôm nay?</p>
           </div>
           <div className="flex items-center gap-3">
-            <Badge className="bg-green-100 text-green-700 border-0 px-4 py-2">
+            <Badge className="bg-amber-100 text-amber-700 border-0 px-4 py-2">
               <Crown className="w-4 h-4 mr-1.5" /> Gói Pro
             </Badge>
             <Button className="bg-gradient-to-r from-green-600 to-emerald-600 text-white" onClick={() => navigate('/generate')}>
@@ -73,20 +73,20 @@ export function CustomerDashboard() {
                 </div>
                 <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
                 <p className="text-xs text-gray-500 mt-0.5">{stat.label}</p>
-                <p className="text-xs text-green-600 mt-1">{stat.change}</p>
+                <p className="text-xs text-slate-500 mt-1">{stat.change}</p>
               </Card>
             );
           })}
         </div>
 
         {/* Quota usage */}
-        <Card className="p-5 mb-8 bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
+        <Card className="p-5 mb-8 bg-gradient-to-r from-amber-50 to-stone-50 border-amber-200">
           <div className="flex items-center justify-between mb-3">
             <div>
               <p className="font-semibold text-gray-900">Quota tháng 3/2026</p>
               <p className="text-xs text-gray-600">312 / 500 copy đã dùng</p>
             </div>
-            <Badge className="bg-green-100 text-green-700 border-0">62.4%</Badge>
+            <Badge className="bg-amber-100 text-amber-700 border-0">62.4%</Badge>
           </div>
           <Progress value={62.4} className="h-2.5" />
           <div className="flex justify-between mt-2 text-xs text-gray-500">
@@ -106,7 +106,7 @@ export function CustomerDashboard() {
                 </div>
                 <h3 className="font-semibold text-gray-900 mb-1">{action.title}</h3>
                 <p className="text-xs text-gray-600 leading-relaxed mb-4">{action.desc}</p>
-                <Button variant="link" className="p-0 h-auto text-green-600 text-xs">
+                <Button variant="link" className="p-0 h-auto text-stone-600 text-xs">
                   {action.cta} <ArrowRight className="w-3 h-3 ml-1" />
                 </Button>
               </Card>
@@ -120,13 +120,13 @@ export function CustomerDashboard() {
           <Card className="p-5">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-gray-900">Copy tạo trong tuần</h3>
-              <Badge className="bg-green-100 text-green-700 border-0">+12% so với tuần trước</Badge>
+              <Badge className="bg-stone-100 text-stone-700 border-0">+12% so với tuần trước</Badge>
             </div>
             <AreaChart
               data={WEEKLY_DATA}
               xKey="day"
               height={180}
-              series={[{ key: 'copies', label: 'Copy tạo', color: '#16a34a', fill: true }]}
+              series={[{ key: 'copies', label: 'Copy tạo', color: '#78716c', fill: true }]}
             />
           </Card>
 
@@ -134,22 +134,22 @@ export function CustomerDashboard() {
           <Card className="p-5">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-gray-900">Copy gần đây</h3>
-              <Button variant="link" className="text-green-600 text-xs p-0" onClick={() => navigate('/contents')}>
+              <Button variant="link" className="text-stone-600 text-xs p-0" onClick={() => navigate('/contents')}>
                 Xem tất cả <ArrowRight className="w-3 h-3 ml-1" />
               </Button>
             </div>
             <div className="space-y-3">
               {RECENT_COPIES.map((copy, i) => (
                 <div key={i} className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
-                  <div className="bg-green-100 p-2 rounded-lg flex-shrink-0">
-                    <Sparkles className="w-4 h-4 text-green-600" />
+                  <div className="bg-stone-100 p-2 rounded-lg flex-shrink-0">
+                    <Sparkles className="w-4 h-4 text-stone-600" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm text-gray-900 truncate">{copy.title}</p>
                     <div className="flex flex-wrap items-center gap-2 mt-1">
                       <span className="text-xs text-gray-400">{copy.time}</span>
                       <Badge className="bg-gray-100 text-gray-600 border-0 text-xs">{copy.model}</Badge>
-                      <Badge className="bg-green-100 text-green-700 border-0 text-xs">⭐{copy.quality}%</Badge>
+                      <Badge className="bg-amber-100 text-amber-700 border-0 text-xs">⭐{copy.quality}%</Badge>
                     </div>
                   </div>
                 </div>
@@ -164,9 +164,9 @@ export function CustomerDashboard() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
               { name: 'GPT-4o', status: 'online', latency: '~2s', color: 'bg-green-500', badge: 'Mặc định' },
-              { name: 'GPT-3.5', status: 'online', latency: '~0.8s', color: 'bg-blue-500', badge: 'Nhanh' },
-              { name: 'Llama 3.1 70B', status: 'online', latency: '~3s', color: 'bg-orange-500', badge: 'Open-source' },
-              { name: 'Fine-tuned E-com', status: 'ready', latency: '~1.5s', color: 'bg-violet-500', badge: 'Custom' },
+              { name: 'GPT-3.5', status: 'online', latency: '~0.8s', color: 'bg-stone-500', badge: 'Nhanh' },
+              { name: 'Llama 3.1 70B', status: 'online', latency: '~3s', color: 'bg-amber-500', badge: 'Open-source' },
+              { name: 'Fine-tuned E-com', status: 'ready', latency: '~1.5s', color: 'bg-stone-500', badge: 'Custom' },
             ].map(m => (
               <div key={m.name} className="flex items-center gap-2.5 p-3 bg-gray-50 rounded-lg border">
                 <div className={`w-2 h-2 rounded-full ${m.color} flex-shrink-0`} />

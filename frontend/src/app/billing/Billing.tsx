@@ -37,7 +37,7 @@ const PLANS = [
     name: 'Pro',
     price: 299000,
     icon: Crown,
-    color: 'border-green-500 ring-2 ring-green-100',
+    color: 'border-amber-500 ring-2 ring-amber-100',
     features: ['500 copy/tháng', 'Tất cả model AI', '100+ templates', 'API 5,000 calls/tháng', 'Fine-tuning 3 models', 'Kiểm tra đạo văn 100 lần', 'Hỗ trợ ưu tiên'],
     limits: [],
     popular: true,
@@ -60,7 +60,7 @@ const PAYMENT_METHODS = [
     shortName: 'Tiền mặt',
     desc: 'Thanh toán tại văn phòng hoặc khi nhân viên hỗ trợ thu phí.',
     icon: Banknote,
-    color: 'bg-emerald-100 text-emerald-700',
+    color: 'bg-green-100 text-green-700',
     guide: 'CopyPro sẽ ghi nhận thanh toán sau khi thu tiền và kích hoạt gói trong giờ làm việc.',
   },
   {
@@ -69,7 +69,7 @@ const PAYMENT_METHODS = [
     shortName: 'Ngân hàng',
     desc: 'Chuyển khoản qua số tài khoản doanh nghiệp CopyPro.',
     icon: Landmark,
-    color: 'bg-blue-100 text-blue-700',
+    color: 'bg-stone-100 text-stone-700',
     guide: 'Ngân hàng: Vietcombank · STK: 0123456789 · Nội dung: COPYPRO + email tài khoản.',
   },
   {
@@ -78,7 +78,7 @@ const PAYMENT_METHODS = [
     shortName: 'ZaloPay',
     desc: 'Quét QR hoặc mở ứng dụng ZaloPay để thanh toán nhanh.',
     icon: Smartphone,
-    color: 'bg-sky-100 text-sky-700',
+    color: 'bg-stone-100 text-stone-700',
     guide: 'Sau khi bấm thanh toán, hệ thống sẽ tạo mã QR ZaloPay cho hóa đơn đang chọn.',
   },
   {
@@ -87,7 +87,7 @@ const PAYMENT_METHODS = [
     shortName: 'MoMo',
     desc: 'Thanh toán qua ví MoMo, hỗ trợ xác nhận gần như tức thì.',
     icon: Wallet,
-    color: 'bg-pink-100 text-pink-700',
+    color: 'bg-amber-100 text-amber-700',
     guide: 'Sau khi bấm thanh toán, hệ thống sẽ tạo mã QR MoMo và tự cập nhật trạng thái hóa đơn.',
   },
 ];
@@ -141,10 +141,10 @@ export function CustomerBilling() {
           </TabsList>
 
           <TabsContent value="plan">
-            <Card className="mb-6 border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 p-6">
+            <Card className="mb-6 border-amber-200 bg-gradient-to-r from-amber-50 to-stone-50 p-6">
               <div className="mb-4 flex items-start justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 p-3">
+                  <div className="rounded-lg bg-gradient-to-br from-amber-500 to-stone-600 p-3">
                     <Crown className="h-6 w-6 text-white" />
                   </div>
                   <div>
@@ -153,7 +153,7 @@ export function CustomerBilling() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-2xl font-bold text-green-700">{formatCurrency(CURRENT_PLAN.price)}</p>
+                  <p className="text-2xl font-bold text-amber-700">{formatCurrency(CURRENT_PLAN.price)}</p>
                   <p className="text-xs text-gray-500">/tháng</p>
                 </div>
               </div>
@@ -182,7 +182,7 @@ export function CustomerBilling() {
                   <h3 className="font-semibold text-gray-900">Phương thức thanh toán đang chọn</h3>
                   <p className="text-sm text-gray-500">Áp dụng cho lần gia hạn hoặc nâng cấp tiếp theo</p>
                 </div>
-                <Badge className="border-0 bg-green-100 text-green-700">{selectedMethod.name}</Badge>
+                <Badge className="border-0 bg-amber-100 text-amber-700">{selectedMethod.name}</Badge>
               </div>
               <PaymentMethodGrid selectedId={selectedMethod.id} onSelect={setSelectedMethod} />
             </Card>
@@ -232,8 +232,8 @@ export function CustomerBilling() {
           </TabsContent>
 
           <TabsContent value="plans">
-            <div className="mb-5 rounded-lg border border-green-100 bg-green-50 p-4">
-              <p className="text-sm text-green-800">
+            <div className="mb-5 rounded-lg border border-amber-100 bg-amber-50 p-4">
+              <p className="text-sm text-amber-800">
                 Phương thức thanh toán đang chọn: <strong>{selectedMethod.name}</strong>. Bạn có thể đổi trong tab Thanh toán trước khi nâng cấp.
               </p>
             </div>
@@ -244,11 +244,11 @@ export function CustomerBilling() {
                 return (
                   <Card key={plan.id} className={`relative p-6 ${plan.color}`}>
                     {plan.popular && (
-                      <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 border-0 bg-green-600 px-3 text-white">Đang dùng</Badge>
+                      <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 border-0 bg-amber-500 px-3 text-white">Đang dùng</Badge>
                     )}
                     <div className="mb-6 text-center">
-                      <div className="mb-3 inline-flex rounded-lg bg-green-100 p-3">
-                        <Icon className="h-6 w-6 text-green-700" />
+                      <div className="mb-3 inline-flex rounded-lg bg-amber-100 p-3">
+                        <Icon className="h-6 w-6 text-amber-700" />
                       </div>
                       <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
                       <p className="mt-2 text-3xl font-bold text-gray-900">
@@ -271,7 +271,7 @@ export function CustomerBilling() {
                       ))}
                     </div>
                     <Button
-                      className={`w-full ${plan.popular ? 'bg-green-600 text-white hover:bg-green-700' : ''}`}
+                      className={`w-full ${plan.popular ? 'bg-amber-500 text-white hover:bg-amber-600' : ''}`}
                       variant={plan.popular ? 'default' : 'outline'}
                       onClick={() => handlePlanAction(plan)}
                     >
@@ -289,7 +289,7 @@ export function CustomerBilling() {
               <div className="space-y-3">
                 {INVOICES.map(invoice => (
                   <div key={invoice.id} className="flex items-center gap-4 rounded-lg border bg-gray-50 p-3">
-                    <div className="rounded-lg bg-green-100 p-2"><FileText className="h-4 w-4 text-green-600" /></div>
+                    <div className="rounded-lg bg-stone-100 p-2"><FileText className="h-4 w-4 text-stone-600" /></div>
                     <div className="flex-1">
                       <p className="text-sm font-semibold text-gray-900">{invoice.id}</p>
                       <p className="text-xs text-gray-500">{invoice.date} · {invoice.plan} · {invoice.method}</p>
@@ -328,8 +328,8 @@ function PaymentMethodGrid({
             onClick={() => onSelect(method)}
             className={`flex items-start gap-3 rounded-lg border p-4 text-left transition-all ${
               active
-                ? 'border-green-500 bg-green-50 shadow-sm shadow-green-100'
-                : 'border-gray-200 bg-white hover:border-green-300 hover:bg-green-50/40'
+                ? 'border-stone-500 bg-stone-50 shadow-sm shadow-stone-100'
+                : 'border-gray-200 bg-white hover:border-stone-300 hover:bg-stone-50/40'
             }`}
           >
             <div className={`rounded-lg p-2 ${method.color}`}>

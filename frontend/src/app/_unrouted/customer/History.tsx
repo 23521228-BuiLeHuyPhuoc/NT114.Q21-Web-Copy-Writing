@@ -43,7 +43,7 @@ export function CustomerHistory() {
   };
 
   const qualityColor = (q: number) =>
-    q >= 90 ? 'text-green-600 bg-green-50' : q >= 80 ? 'text-blue-600 bg-blue-50' : 'text-orange-600 bg-orange-50';
+    q >= 90 ? 'text-green-600 bg-green-50' : q >= 80 ? 'text-stone-600 bg-stone-50' : 'text-amber-600 bg-amber-50';
 
   return (
     <Layout>
@@ -57,10 +57,10 @@ export function CustomerHistory() {
         {/* Stats strip */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {[
-            { label: 'Tổng copy', value: history.length, icon: Sparkles, color: 'text-purple-600 bg-purple-50' },
-            { label: 'Tuần này', value: 8, icon: Calendar, color: 'text-blue-600 bg-blue-50' },
+            { label: 'Tổng copy', value: history.length, icon: Sparkles, color: 'text-stone-600 bg-stone-50' },
+            { label: 'Tuần này', value: 8, icon: Calendar, color: 'text-stone-600 bg-stone-50' },
             { label: 'Tổng từ', value: history.reduce((a, h) => a + h.words, 0), icon: Clock, color: 'text-green-600 bg-green-50' },
-            { label: 'Chất lượng TB', value: Math.round(history.reduce((a, h) => a + h.quality, 0) / history.length) + '%', icon: Filter, color: 'text-orange-600 bg-orange-50' },
+            { label: 'Chất lượng TB', value: Math.round(history.reduce((a, h) => a + h.quality, 0) / history.length) + '%', icon: Filter, color: 'text-amber-600 bg-amber-50' },
           ].map((s, i) => {
             const Icon = s.icon;
             return (
@@ -176,12 +176,12 @@ export function CustomerHistory() {
                   <Badge className={`${MODEL_MAP[selectedItem.model]?.color} border-0`}>{MODEL_MAP[selectedItem.model]?.label}</Badge>
                 </div>
                 <div className="grid grid-cols-3 gap-3">
-                  <div className="text-center p-3 bg-purple-50 rounded-lg">
-                    <p className="font-bold text-purple-600">{selectedItem.quality}%</p>
+                  <div className="text-center p-3 bg-stone-50 rounded-lg">
+                    <p className="font-bold text-stone-600">{selectedItem.quality}%</p>
                     <p className="text-xs text-gray-500">Chất lượng</p>
                   </div>
-                  <div className="text-center p-3 bg-blue-50 rounded-lg">
-                    <p className="font-bold text-blue-600">{selectedItem.words}</p>
+                  <div className="text-center p-3 bg-stone-50 rounded-lg">
+                    <p className="font-bold text-stone-600">{selectedItem.words}</p>
                     <p className="text-xs text-gray-500">Số từ</p>
                   </div>
                   <div className="text-center p-3 bg-green-50 rounded-lg">
@@ -191,7 +191,7 @@ export function CustomerHistory() {
                 </div>
                 <div className="bg-gray-50 rounded-lg p-4 whitespace-pre-wrap text-sm text-gray-800 border">{selectedItem.content}</div>
                 <div className="flex gap-2">
-                  <Button className="flex-1 bg-purple-600 hover:bg-purple-700 text-white" onClick={() => { handleCopy(selectedItem.content); setSelectedItem(null); }}>
+                  <Button className="flex-1 bg-stone-600 hover:bg-stone-700 text-white" onClick={() => { handleCopy(selectedItem.content); setSelectedItem(null); }}>
                     <Copy className="w-4 h-4 mr-2" /> Sao chép nội dung
                   </Button>
                   <Button variant="outline" onClick={() => setSelectedItem(null)}>Đóng</Button>

@@ -9,11 +9,11 @@ import { BLOG_CATEGORIES, BLOG_POSTS, TRENDING_POSTS } from '@/mocks/blog';
 import { Search, Clock, ArrowRight, BookOpen, TrendingUp, Cpu, Wand2 } from 'lucide-react';
 
 const catColor: Record<string, string> = {
-  ai: 'bg-blue-100 text-blue-700',
+  ai: 'bg-stone-100 text-stone-700',
   copy: 'bg-green-100 text-green-700',
-  marketing: 'bg-orange-100 text-orange-700',
+  marketing: 'bg-amber-100 text-amber-700',
   case: 'bg-emerald-100 text-emerald-700',
-  news: 'bg-purple-100 text-purple-700',
+  news: 'bg-stone-100 text-stone-700',
 };
 
 export function BlogPage() {
@@ -95,7 +95,7 @@ export function BlogPage() {
                 <div className="p-7">
                   <div className="mb-4 flex items-center gap-2">
                     <Badge className={`${catColor[featured.cat]} border-0 text-xs`}>{featured.catLabel}</Badge>
-                    <Badge className="border-0 bg-yellow-100 text-xs text-yellow-700">Nổi bật</Badge>
+                    <Badge className="border-0 bg-amber-100 text-xs text-amber-700">Nổi bật</Badge>
                   </div>
                   <h2 className="mb-3 text-gray-900 transition-colors group-hover:text-green-700" style={{ fontSize: '1.35rem' }}>
                     {featured.title}
@@ -173,7 +173,7 @@ export function BlogPage() {
                   <Link key={post.slug} to={`/blog/${post.slug}`} className="group flex gap-4">
                     <span
                       className="flex-shrink-0 text-2xl font-bold"
-                      style={{ color: index === 0 ? '#16a34a' : '#d1d5db' }}
+                      style={{ color: index === 0 ? '#059669' : '#d1d5db' }}
                     >
                       {String(index + 1).padStart(2, '0')}
                     </span>

@@ -115,9 +115,9 @@ export function ForgotPasswordPage() {
   };
 
   const STEP_CONFIG = {
-    email: { icon: Mail,       iconBg: 'bg-teal-100',   iconColor: 'text-teal-600',   title: 'Quên mật khẩu?',            sub: 'Nhập email để nhận mã OTP xác nhận' },
-    otp:   { icon: KeyRound,   iconBg: 'bg-blue-100',   iconColor: 'text-blue-600',   title: 'Nhập mã OTP',               sub: `Mã 6 chữ số đã gửi đến ${email}` },
-    reset: { icon: KeyRound,   iconBg: 'bg-cyan-100',   iconColor: 'text-cyan-600',   title: 'Đặt mật khẩu mới',        sub: 'Chọn mật khẩu an toàn, ít nhất 8 ký tự' },
+    email: { icon: Mail,       iconBg: 'bg-stone-100',   iconColor: 'text-stone-600',   title: 'Quên mật khẩu?',            sub: 'Nhập email để nhận mã OTP xác nhận' },
+    otp:   { icon: KeyRound,   iconBg: 'bg-stone-100',   iconColor: 'text-stone-600',   title: 'Nhập mã OTP',               sub: `Mã 6 chữ số đã gửi đến ${email}` },
+    reset: { icon: KeyRound,   iconBg: 'bg-stone-100',   iconColor: 'text-stone-600',   title: 'Đặt mật khẩu mới',        sub: 'Chọn mật khẩu an toàn, ít nhất 8 ký tự' },
     done:  { icon: CheckCircle2, iconBg: 'bg-emerald-100', iconColor: 'text-emerald-600', title: 'Đổi mật khẩu thành công!', sub: 'Bạn có thể đăng nhập với mật khẩu mới' },
   };
 
@@ -125,13 +125,13 @@ export function ForgotPasswordPage() {
   const Icon = cfg.icon;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-emerald-50/30 to-cyan-50/60 flex items-center justify-center p-5">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-emerald-50/30 to-stone-50/60 flex items-center justify-center p-5">
       {/* Background dots */}
       <div className="fixed inset-0 opacity-[0.025] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, #0d9488 1px, transparent 1px)', backgroundSize: '28px 28px' }} />
 
       <div className="w-full max-w-[420px] relative">
         {/* Back link */}
-        <Link to="/login" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-teal-700 mb-6 transition-colors">
+        <Link to="/login" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-stone-700 mb-6 transition-colors">
           <ArrowLeft className="w-4 h-4" /> Quay lại đăng nhập
         </Link>
 
@@ -158,10 +158,10 @@ export function ForgotPasswordPage() {
             <form onSubmit={emailForm.handleSubmit(handleSendOtp)} className="space-y-4">
               <div>
                 <Label className="text-gray-700 mb-2 block">Email đã đăng ký</Label>
-                <Input type="email" placeholder="your@email.com" {...emailForm.register('email', { required: 'Email là bắt buộc', pattern: { value: /^\S+@\S+$/, message: 'Email không hợp lệ' } })} className="h-12 rounded-xl border-gray-200 focus:border-teal-500" />
+                <Input type="email" placeholder="your@email.com" {...emailForm.register('email', { required: 'Email là bắt buộc', pattern: { value: /^\S+@\S+$/, message: 'Email không hợp lệ' } })} className="h-12 rounded-xl border-gray-200 focus:border-stone-500" />
                 {emailForm.formState.errors.email && <p className="text-xs text-red-600 mt-1">{emailForm.formState.errors.email.message}</p>}
               </div>
-              <button type="submit" disabled={isLoading || emailForm.formState.isSubmitting} className="w-full h-12 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:via-teal-500 hover:to-cyan-500 disabled:opacity-60 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-teal-200">
+              <button type="submit" disabled={isLoading || emailForm.formState.isSubmitting} className="w-full h-12 bg-gradient-to-r from-emerald-600 via-stone-600 to-stone-600 hover:from-emerald-500 hover:via-stone-500 hover:to-stone-500 disabled:opacity-60 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-stone-200">
                 {isLoading ? 'Đang gửi...' : 'Gửi mã OTP →'}
               </button>
             </form>
@@ -181,14 +181,14 @@ export function ForgotPasswordPage() {
                     value={d}
                     onChange={e => handleOtpChange(e.target.value, idx)}
                     onKeyDown={e => { if (e.key === 'Backspace' && !d && idx > 0) document.getElementById(`otp-${idx - 1}`)?.focus(); }}
-                    className="w-11 h-13 text-center text-xl font-bold border-2 rounded-xl focus:border-teal-500 focus:outline-none transition-colors bg-gray-50 focus:bg-white"
+                    className="w-11 h-13 text-center text-xl font-bold border-2 rounded-xl focus:border-stone-500 focus:outline-none transition-colors bg-gray-50 focus:bg-white"
                   />
                 ))}
               </div>
               <button
                 onClick={handleVerifyOtp}
                 disabled={isLoading}
-                className="w-full h-12 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:via-teal-500 hover:to-cyan-500 disabled:opacity-60 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-teal-200"
+                className="w-full h-12 bg-gradient-to-r from-emerald-600 via-stone-600 to-stone-600 hover:from-emerald-500 hover:via-stone-500 hover:to-stone-500 disabled:opacity-60 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-stone-200"
               >
                 {isLoading ? 'Đang xác nhận...' : 'Xác nhận OTP →'}
               </button>
@@ -196,7 +196,7 @@ export function ForgotPasswordPage() {
                 <button
                   onClick={resendOtp}
                   disabled={isLoading || resendSeconds > 0}
-                  className="text-sm text-teal-700 hover:underline disabled:text-gray-400 disabled:no-underline inline-flex items-center gap-1.5"
+                  className="text-sm text-stone-700 hover:underline disabled:text-gray-400 disabled:no-underline inline-flex items-center gap-1.5"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
                   {resendSeconds > 0 ? `Gửi lại mã sau ${formatCountdown(resendSeconds)}` : 'Gửi lại mã'}
@@ -210,15 +210,15 @@ export function ForgotPasswordPage() {
             <form onSubmit={resetForm.handleSubmit(handleReset)} className="space-y-4">
               <div>
                 <Label className="text-gray-700 mb-2 block">Mật khẩu mới</Label>
-                <Input type="password" placeholder="Ít nhất 8 ký tự" {...resetForm.register('newPass', { required: 'Mật khẩu là bắt buộc', minLength: { value: 8, message: 'Mật khẩu ít nhất 8 ký tự' } })} className="h-12 rounded-xl border-gray-200 focus:border-teal-500" />
+                <Input type="password" placeholder="Ít nhất 8 ký tự" {...resetForm.register('newPass', { required: 'Mật khẩu là bắt buộc', minLength: { value: 8, message: 'Mật khẩu ít nhất 8 ký tự' } })} className="h-12 rounded-xl border-gray-200 focus:border-stone-500" />
                 {resetForm.formState.errors.newPass && <p className="text-xs text-red-600 mt-1">{resetForm.formState.errors.newPass.message}</p>}
               </div>
               <div>
                 <Label className="text-gray-700 mb-2 block">Xác nhận mật khẩu mới</Label>
-                <Input type="password" placeholder="Nhập lại mật khẩu" {...resetForm.register('confirmPass', { required: 'Xác nhận mật khẩu là bắt buộc', validate: (v) => v === resetForm.watch('newPass') || 'Mật khẩu không khớp' })} className="h-12 rounded-xl border-gray-200 focus:border-teal-500" />
+                <Input type="password" placeholder="Nhập lại mật khẩu" {...resetForm.register('confirmPass', { required: 'Xác nhận mật khẩu là bắt buộc', validate: (v) => v === resetForm.watch('newPass') || 'Mật khẩu không khớp' })} className="h-12 rounded-xl border-gray-200 focus:border-stone-500" />
                 {resetForm.formState.errors.confirmPass && <p className="text-xs text-red-600 mt-1">{resetForm.formState.errors.confirmPass.message}</p>}
               </div>
-              <button type="submit" disabled={isLoading || resetForm.formState.isSubmitting} className="w-full h-12 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:via-teal-500 hover:to-cyan-500 disabled:opacity-60 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-teal-200">
+              <button type="submit" disabled={isLoading || resetForm.formState.isSubmitting} className="w-full h-12 bg-gradient-to-r from-emerald-600 via-stone-600 to-stone-600 hover:from-emerald-500 hover:via-stone-500 hover:to-stone-500 disabled:opacity-60 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-stone-200">
                 {isLoading ? 'Đang đặt lại...' : 'Đặt lại mật khẩu →'}
               </button>
             </form>
@@ -229,7 +229,7 @@ export function ForgotPasswordPage() {
             <div className="text-center space-y-4">
               <button
                 onClick={() => navigate('/login')}
-                className="w-full h-12 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:via-teal-500 hover:to-cyan-500 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-teal-200"
+                className="w-full h-12 bg-gradient-to-r from-emerald-600 via-stone-600 to-stone-600 hover:from-emerald-500 hover:via-stone-500 hover:to-stone-500 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-stone-200"
               >
                 Đăng nhập ngay →
               </button>

@@ -43,9 +43,9 @@ export function AdminPayments() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {[
             { label: 'Doanh thu tháng', value: '45.2M₫', icon: DollarSign, color: 'text-green-600 bg-green-50', change: '+23%' },
-            { label: 'Giao dịch hôm nay', value: '18', icon: CreditCard, color: 'text-blue-600 bg-blue-50', change: '+5' },
+            { label: 'Giao dịch hôm nay', value: '18', icon: CreditCard, color: 'text-stone-600 bg-stone-50', change: '+5' },
             { label: 'Tăng trưởng', value: '+23%', icon: TrendingUp, color: 'text-emerald-600 bg-emerald-50', change: 'so với T2' },
-            { label: 'Tỷ lệ thành công', value: '96.5%', icon: CheckCircle2, color: 'text-purple-600 bg-purple-50', change: 'Rất tốt' },
+            { label: 'Tỷ lệ thành công', value: '96.5%', icon: CheckCircle2, color: 'text-stone-600 bg-stone-50', change: 'Rất tốt' },
           ].map((s, i) => (
             <StatTile key={i} icon={s.icon} label={s.label} value={s.value} color={s.color} trend={{ value: s.change }} />
           ))}
@@ -59,7 +59,7 @@ export function AdminPayments() {
             xKey="month"
             height={200}
             valueSuffix="M₫"
-            series={[{ key: 'revenue', label: 'Doanh thu', color: '#16a34a' }]}
+            series={[{ key: 'revenue', label: 'Doanh thu', color: '#059669' }]}
           />
         </Card>
 

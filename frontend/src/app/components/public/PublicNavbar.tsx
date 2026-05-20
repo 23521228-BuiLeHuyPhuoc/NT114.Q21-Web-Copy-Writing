@@ -28,7 +28,7 @@ function Dropdown({ label, items, open, onToggle, onClose }: DropdownProps) {
     <div className="relative">
       <button
         onClick={onToggle}
-        className="flex items-center gap-1 px-2 py-2 text-[0.9rem] font-semibold text-inherit transition-colors hover:text-green-400"
+        className="flex items-center gap-1 px-2 py-2 text-[0.9rem] font-semibold text-inherit transition-colors hover:text-stone-400"
       >
         {label}
         <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? 'rotate-180' : ''}`} />
@@ -45,10 +45,10 @@ function Dropdown({ label, items, open, onToggle, onClose }: DropdownProps) {
                     key={item.label}
                     to={item.href}
                     onClick={onClose}
-                    className="group flex items-start gap-3 rounded-lg p-3 transition-colors hover:bg-green-50"
+                    className="group flex items-start gap-3 rounded-lg p-3 transition-colors hover:bg-stone-50"
                   >
-                    <div className="flex-shrink-0 rounded-lg bg-green-100 p-2 transition-colors group-hover:bg-green-200">
-                      <Icon className="h-4 w-4 text-green-700" />
+                    <div className="flex-shrink-0 rounded-lg bg-stone-100 p-2 transition-colors group-hover:bg-stone-200">
+                      <Icon className="h-4 w-4 text-stone-700" />
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-gray-900">{item.label}</p>
@@ -106,7 +106,7 @@ export function PublicNavbar() {
           <Link to="/" className="flex flex-shrink-0 items-center gap-2">
             <BrandLogo size="lg" tone={scrolled ? 'dark' : 'light'} surface="light" className="p-1" />
             <div className="flex items-center">
-              <Badge className="h-4 border-0 bg-green-100 px-1.5 py-0 text-[10px] text-green-700">AI</Badge>
+              <Badge className="h-4 border-0 bg-stone-100 px-1.5 py-0 text-[10px] text-stone-700">AI</Badge>
             </div>
           </Link>
 
@@ -124,8 +124,8 @@ export function PublicNavbar() {
                 to={link.href}
                 className={`rounded-lg px-3 py-2 text-[0.9rem] font-semibold transition-colors ${
                   location.pathname === link.href
-                    ? scrolled ? 'bg-green-50 text-green-700' : 'bg-white/15 text-white'
-                    : scrolled ? 'text-gray-600 hover:bg-green-50/60 hover:text-green-700' : 'text-white/90 hover:bg-white/15 hover:text-white'
+                    ? scrolled ? 'bg-stone-50 text-stone-700' : 'bg-white/15 text-white'
+                    : scrolled ? 'text-gray-600 hover:bg-stone-50/60 hover:text-stone-700' : 'text-white/90 hover:bg-white/15 hover:text-white'
                 }`}
               >
                 {link.label}
@@ -136,13 +136,13 @@ export function PublicNavbar() {
           <div className="hidden items-center gap-3 lg:flex">
             <Button
               variant="ghost"
-              className={`text-[0.9rem] font-semibold transition-colors ${scrolled ? 'text-gray-600 hover:bg-green-50 hover:text-green-700' : 'text-white/90 hover:bg-white/15 hover:text-white'}`}
+              className={`text-[0.9rem] font-semibold transition-colors ${scrolled ? 'text-gray-600 hover:bg-stone-50 hover:text-stone-700' : 'text-white/90 hover:bg-white/15 hover:text-white'}`}
               onClick={() => navigate('/login')}
             >
               Đăng nhập
             </Button>
             <Button
-              className="rounded-lg bg-gradient-to-r from-green-600 to-emerald-600 px-5 text-[0.9rem] text-white shadow-md shadow-green-200/60 hover:from-green-700 hover:to-emerald-700"
+              className="rounded-lg bg-gradient-to-r from-emerald-600 to-stone-600 px-5 text-[0.9rem] text-white shadow-md shadow-stone-200/60 hover:from-emerald-700 hover:to-stone-700"
               onClick={() => navigate('/register')}
             >
               <Sparkles className="mr-1.5 h-4 w-4" />
@@ -166,8 +166,8 @@ export function PublicNavbar() {
             {PRODUCTS.map((item) => {
               const Icon = item.icon;
               return (
-                <Link key={item.label} to={item.href} className="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-green-50">
-                  <div className="rounded-lg bg-green-100 p-1.5"><Icon className="h-4 w-4 text-green-700" /></div>
+                <Link key={item.label} to={item.href} className="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-stone-50">
+                  <div className="rounded-lg bg-stone-100 p-1.5"><Icon className="h-4 w-4 text-stone-700" /></div>
                   <span className="text-sm font-semibold text-gray-800">{item.label}</span>
                 </Link>
               );
@@ -176,13 +176,13 @@ export function PublicNavbar() {
             <div className="my-3 border-t border-gray-100" />
             <p className="mb-2 px-3 text-xs font-bold uppercase tracking-widest text-gray-400">Điều hướng</p>
             {navLinks.map((link) => (
-              <Link key={link.href} to={link.href} className="block rounded-lg px-3 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-green-50 hover:text-green-700">
+              <Link key={link.href} to={link.href} className="block rounded-lg px-3 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-stone-50 hover:text-stone-700">
                 {link.label}
               </Link>
             ))}
             <div className="mt-3 grid grid-cols-2 gap-2 border-t border-gray-100 pt-4">
               <Button variant="outline" className="w-full rounded-lg text-sm" onClick={() => navigate('/login')}>Đăng nhập</Button>
-              <Button className="w-full rounded-lg bg-gradient-to-r from-green-600 to-emerald-600 text-sm text-white" onClick={() => navigate('/register')}>Đăng ký</Button>
+              <Button className="w-full rounded-lg bg-gradient-to-r from-emerald-600 to-stone-600 text-sm text-white" onClick={() => navigate('/register')}>Đăng ký</Button>
             </div>
           </div>
         </div>

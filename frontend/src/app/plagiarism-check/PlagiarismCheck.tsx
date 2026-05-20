@@ -28,8 +28,8 @@ export function CustomerPlagiarismCheck() {
     toast.success('Kiểm tra hoàn tất!');
   };
 
-  const getScoreColor = (score: number) => score >= 80 ? 'text-green-600' : score >= 60 ? 'text-yellow-600' : 'text-red-600';
-  const getScoreBg = (score: number) => score >= 80 ? 'from-green-100 to-emerald-100' : score >= 60 ? 'from-yellow-100 to-orange-100' : 'from-red-100 to-pink-100';
+  const getScoreColor = (score: number) => score >= 80 ? 'text-green-600' : score >= 60 ? 'text-amber-600' : 'text-red-600';
+  const getScoreBg = (score: number) => score >= 80 ? 'from-green-100 to-emerald-100' : score >= 60 ? 'from-amber-100 to-amber-100' : 'from-red-100 to-amber-100';
 
   return (
     <Layout>
@@ -87,7 +87,7 @@ export function CustomerPlagiarismCheck() {
 
                 {/* Sources found */}
                 <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-yellow-500" />
+                  <AlertTriangle className="w-4 h-4 text-amber-500" />
                   Nguồn tương tự ({result.sources.length})
                 </h4>
                 <div className="space-y-3">
@@ -95,7 +95,7 @@ export function CustomerPlagiarismCheck() {
                     <div key={i} className="p-3 bg-gray-50 rounded-lg border">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm font-medium text-gray-900 truncate flex-1">{source.source}</span>
-                        <Badge className={`border-0 text-xs ml-2 ${source.similarity > 10 ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>
+                        <Badge className={`border-0 text-xs ml-2 ${source.similarity > 10 ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}`}>
                           {source.similarity}% tương tự
                         </Badge>
                       </div>

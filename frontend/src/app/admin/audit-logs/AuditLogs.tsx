@@ -38,7 +38,7 @@ export function AdminAuditLogs() {
         <div className="grid grid-cols-3 gap-4 mb-6">
           {[
             { label: 'Tổng events hôm nay', value: '1,247', color: 'text-green-600 bg-green-50', icon: Shield },
-            { label: 'Warnings', value: '23', color: 'text-yellow-600 bg-yellow-50', icon: AlertTriangle },
+            { label: 'Warnings', value: '23', color: 'text-amber-600 bg-amber-50', icon: AlertTriangle },
             { label: 'Errors', value: '5', color: 'text-red-600 bg-red-50', icon: AlertTriangle },
           ].map((s, i) => {
             const Icon = s.icon;

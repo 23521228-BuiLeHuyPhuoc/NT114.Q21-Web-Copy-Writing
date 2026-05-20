@@ -11,17 +11,17 @@ import {
 
 const TEAM = [
   { name: 'Nguyễn Minh Trí', role: 'CEO & Co-founder', desc: '10+ năm kinh nghiệm AI/ML tại Google, VNG', avatar: 'NT', bg: 'from-green-600 to-emerald-700' },
-  { name: 'Lê Thu Hằng', role: 'CTO & Co-founder', desc: 'PhD Machine Learning, ex-Shopee Engineering Lead', avatar: 'LH', bg: 'from-teal-600 to-cyan-700' },
+  { name: 'Lê Thu Hằng', role: 'CTO & Co-founder', desc: 'PhD Machine Learning, ex-Shopee Engineering Lead', avatar: 'LH', bg: 'from-stone-600 to-stone-700' },
   { name: 'Trần Quốc Bảo', role: 'Head of Product', desc: '8 năm Product Management tại các startup unicorn', avatar: 'TB', bg: 'from-emerald-600 to-green-700' },
-  { name: 'Phạm Thị Lan', role: 'Head of Marketing', desc: 'Chuyên gia digital marketing với 200+ dự án thành công', avatar: 'PL', bg: 'from-green-700 to-teal-700' },
-  { name: 'Hoàng Văn Đức', role: 'Lead AI Engineer', desc: 'Chuyên gia Fine-tuning LLM, 50+ mô hình đã triển khai', avatar: 'HĐ', bg: 'from-cyan-600 to-teal-700' },
+  { name: 'Phạm Thị Lan', role: 'Head of Marketing', desc: 'Chuyên gia digital marketing với 200+ dự án thành công', avatar: 'PL', bg: 'from-green-700 to-stone-700' },
+  { name: 'Hoàng Văn Đức', role: 'Lead AI Engineer', desc: 'Chuyên gia Fine-tuning LLM, 50+ mô hình đã triển khai', avatar: 'HĐ', bg: 'from-stone-600 to-stone-700' },
   { name: 'Vũ Bích Ngọc', role: 'Head of Customer Success', desc: 'Xây dựng và phát triển cộng đồng 2,000+ khách hàng', avatar: 'VN', bg: 'from-green-500 to-emerald-600' },
 ];
 
 const VALUES = [
   { icon: Target, title: 'Sứ mệnh rõ ràng', desc: 'Dân chủ hóa copywriting chuyên nghiệp — giúp mọi doanh nghiệp Việt Nam tiếp cận AI tiên tiến với chi phí hợp lý.', color: 'bg-green-100 text-green-700' },
   { icon: Eye, title: 'Minh bạch tuyệt đối', desc: 'Không chi phí ẩn, không hứa hẹn viển vông. Chúng tôi cam kết kết quả đo lường được và được kiểm chứng bởi hàng nghìn khách hàng thực.', color: 'bg-emerald-100 text-emerald-700' },
-  { icon: Zap, title: 'Đổi mới liên tục', desc: 'Cập nhật model mới nhất (GPT-4o, Llama 3.1), tính năng mới mỗi tháng, luôn đi trước xu hướng công nghệ AI toàn cầu.', color: 'bg-teal-100 text-teal-700' },
+  { icon: Zap, title: 'Đổi mới liên tục', desc: 'Cập nhật model mới nhất (GPT-4o, Llama 3.1), tính năng mới mỗi tháng, luôn đi trước xu hướng công nghệ AI toàn cầu.', color: 'bg-stone-100 text-stone-700' },
   { icon: Heart, title: 'Khách hàng là trung tâm', desc: 'Mỗi tính năng được xây dựng dựa trên phản hồi thực tế. Hỗ trợ tận tâm 24/7, không bao giờ để khách hàng bị bỏ lại phía sau.', color: 'bg-green-100 text-green-700' },
 ];
 
@@ -256,7 +256,7 @@ export function AboutPage() {
                 </div>
                 <p className="text-gray-500 text-sm leading-relaxed">{member.desc}</p>
                 <div className="flex gap-2 mt-4">
-                  <a href="#" className="text-gray-400 hover:text-blue-600 transition-colors"><Linkedin className="w-4 h-4" /></a>
+                  <a href="#" className="text-gray-400 hover:text-stone-600 transition-colors"><Linkedin className="w-4 h-4" /></a>
                   <a href="#" className="text-gray-400 hover:text-gray-800 transition-colors"><Twitter className="w-4 h-4" /></a>
                 </div>
               </div>

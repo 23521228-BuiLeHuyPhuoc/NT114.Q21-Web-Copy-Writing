@@ -145,10 +145,10 @@ export function AdminModelManagement() {
         {/* Summary */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {[
-            { label: 'Tổng models', value: visibleModels.length, icon: Cpu, color: 'bg-purple-50 text-purple-700' },
+            { label: 'Tổng models', value: visibleModels.length, icon: Cpu, color: 'bg-stone-50 text-stone-700' },
             { label: 'Đang hoạt động', value: visibleModels.filter(m => m.status === 'active').length, icon: CheckCircle2, color: 'bg-green-50 text-green-700' },
-            { label: 'Cloud models', value: visibleModels.filter(m => m.type === 'cloud').length, icon: Globe, color: 'bg-blue-50 text-blue-700' },
-            { label: 'Local models', value: visibleModels.filter(m => m.type === 'local').length, icon: Lock, color: 'bg-orange-50 text-orange-700' },
+            { label: 'Cloud models', value: visibleModels.filter(m => m.type === 'cloud').length, icon: Globe, color: 'bg-stone-50 text-stone-700' },
+            { label: 'Local models', value: visibleModels.filter(m => m.type === 'local').length, icon: Lock, color: 'bg-amber-50 text-amber-700' },
           ].map(s => (
             <StatTile key={s.label} icon={s.icon} label={s.label} value={s.value} color={s.color} iconClassName="w-5 h-5" valueClassName="text-2xl" />
           ))}
@@ -173,7 +173,7 @@ export function AdminModelManagement() {
                       <Badge className={m.status === 'active' ? 'bg-green-100 text-green-700 border-0' : 'bg-gray-100 text-gray-500 border-0'}>
                         {m.status === 'active' ? 'Hoạt động' : 'Tắt'}
                       </Badge>
-                      <Badge className={m.type === 'cloud' ? 'bg-blue-100 text-blue-700 border-0' : 'bg-orange-100 text-orange-700 border-0'}>
+                      <Badge className={m.type === 'cloud' ? 'bg-stone-100 text-stone-700 border-0' : 'bg-amber-100 text-amber-700 border-0'}>
                         {m.type === 'cloud' ? '☁️ Cloud' : '🖥️ Local'}
                       </Badge>
                       <span className="text-sm text-gray-500">{m.provider}</span>
@@ -182,9 +182,9 @@ export function AdminModelManagement() {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
                       {[
                         { label: 'Độ chính xác', value: `${m.accuracy}%`, color: 'text-green-600' },
-                        { label: 'Latency', value: `${m.latency}s`, color: 'text-blue-600' },
-                        { label: 'Context', value: m.contextWindow, color: 'text-purple-600' },
-                        { label: 'Chi phí/1K tokens', value: m.cost === 0 ? 'Miễn phí' : `$${m.cost}`, color: m.cost === 0 ? 'text-green-600' : 'text-orange-600' },
+                        { label: 'Latency', value: `${m.latency}s`, color: 'text-stone-600' },
+                        { label: 'Context', value: m.contextWindow, color: 'text-stone-600' },
+                        { label: 'Chi phí/1K tokens', value: m.cost === 0 ? 'Miễn phí' : `$${m.cost}`, color: m.cost === 0 ? 'text-green-600' : 'text-amber-600' },
                       ].map(stat => (
                         <div key={stat.label} className="bg-gray-50 rounded-lg p-2.5 text-center">
                           <p className={`font-bold ${stat.color}`}>{stat.value}</p>
@@ -194,7 +194,7 @@ export function AdminModelManagement() {
                     </div>
 
                     <div className="flex flex-wrap gap-1.5 mb-3">
-                      {m.features.map(f => <Badge key={f} className="bg-purple-100 text-purple-700 border-0 text-xs">{f}</Badge>)}
+                      {m.features.map(f => <Badge key={f} className="bg-stone-100 text-stone-700 border-0 text-xs">{f}</Badge>)}
                     </div>
 
                     {editing === m.id ? (
@@ -214,7 +214,7 @@ export function AdminModelManagement() {
                           </div>
                         </div>
                         <div className="flex gap-2">
-                          <Button size="sm" className="bg-purple-600 text-white" onClick={() => saveEdit(m.id)}>
+                          <Button size="sm" className="bg-stone-600 text-white" onClick={() => saveEdit(m.id)}>
                             <Save className="w-4 h-4 mr-1" /> Lưu
                           </Button>
                           <Button size="sm" variant="outline" onClick={() => setEditing(null)}>Hủy</Button>
@@ -222,7 +222,7 @@ export function AdminModelManagement() {
                       </div>
                     ) : (
                       <div className="bg-gray-50 rounded-lg p-3 border text-xs text-gray-600 font-mono">
-                        <span className="text-purple-600">System:</span> "{m.systemPrompt.slice(0, 100)}..."
+                        <span className="text-stone-600">System:</span> "{m.systemPrompt.slice(0, 100)}..."
                       </div>
                     )}
                   </div>
@@ -265,9 +265,9 @@ export function AdminModelManagement() {
                   yMin={0}
                   yMax={100}
                   series={[
-                    { key: 'accuracy', label: 'Độ chính xác', color: '#22c55e' },
+                    { key: 'accuracy', label: 'Độ chính xác', color: '#78716c' },
                     { key: 'speed', label: 'Tốc độ', color: '#059669' },
-                    { key: 'vietnamese', label: 'Tiếng Việt', color: '#14b8a6' },
+                    { key: 'vietnamese', label: 'Tiếng Việt', color: '#f59e0b' },
                   ]}
                 />
               </Card>
@@ -280,9 +280,9 @@ export function AdminModelManagement() {
                   yMin={0}
                   yMax={100}
                   series={[
-                    { key: 'GPT4o', label: 'GPT-4o', color: '#22c55e' },
+                    { key: 'GPT4o', label: 'GPT-4o', color: '#78716c' },
                     { key: 'Llama70B', label: 'Llama 70B', color: '#059669' },
-                    { key: 'GPT35', label: 'GPT-3.5', color: '#14b8a6' },
+                    { key: 'GPT35', label: 'GPT-3.5', color: '#f59e0b' },
                   ]}
                 />
               </Card>
@@ -291,9 +291,9 @@ export function AdminModelManagement() {
               <h3 className="font-semibold text-gray-900 mb-4">Tóm tắt đề xuất</h3>
               <div className="space-y-3">
                 {[
-                  { model: 'GPT-4o', use: 'Dùng cho landing page, email phức tạp, copy cao cấp', recommend: 'Mặc định', color: 'bg-purple-100 text-purple-800' },
-                  { model: 'GPT-3.5 Turbo', use: 'Dùng cho social media, tiêu đề ngắn, CTA đơn giản', recommend: 'Tiết kiệm', color: 'bg-blue-100 text-blue-800' },
-                  { model: 'Llama 3.1 70B', use: 'Dùng khi cần bảo mật dữ liệu hoàn toàn', recommend: 'Bảo mật', color: 'bg-orange-100 text-orange-800' },
+                  { model: 'GPT-4o', use: 'Dùng cho landing page, email phức tạp, copy cao cấp', recommend: 'Mặc định', color: 'bg-stone-100 text-stone-800' },
+                  { model: 'GPT-3.5 Turbo', use: 'Dùng cho social media, tiêu đề ngắn, CTA đơn giản', recommend: 'Tiết kiệm', color: 'bg-stone-100 text-stone-800' },
+                  { model: 'Llama 3.1 70B', use: 'Dùng khi cần bảo mật dữ liệu hoàn toàn', recommend: 'Bảo mật', color: 'bg-amber-100 text-amber-800' },
                 ].map(r => (
                   <div key={r.model} className="flex items-start gap-4 p-3 bg-gray-50 rounded-lg">
                     <Badge className={`${r.color} border-0 flex-shrink-0`}>{r.recommend}</Badge>
@@ -321,7 +321,7 @@ export function AdminModelManagement() {
                   { condition: 'Default (mọi trường hợp)', model: 'GPT-4o', reason: 'Hiệu suất tốt nhất tổng thể' },
                 ].map((rule, i) => (
                   <div key={i} className="flex items-center gap-4 p-4 border rounded-xl hover:shadow-sm transition-shadow">
-                    <div className="text-xs font-mono text-purple-700 bg-purple-50 px-3 py-2 rounded-lg flex-shrink-0 min-w-48">{rule.condition}</div>
+                    <div className="text-xs font-mono text-stone-700 bg-stone-50 px-3 py-2 rounded-lg flex-shrink-0 min-w-48">{rule.condition}</div>
                     <div className="flex-1 flex items-center gap-2">
                       <span className="text-gray-400">→</span>
                       <Badge className="bg-green-100 text-green-700 border-0">{rule.model}</Badge>
@@ -334,7 +334,7 @@ export function AdminModelManagement() {
                 ))}
               </div>
               <div className="mt-6 flex gap-3">
-                <Button className="bg-purple-600 text-white" onClick={() => toast.success('Đã lưu cấu hình routing!')}>
+                <Button className="bg-stone-600 text-white" onClick={() => toast.success('Đã lưu cấu hình routing!')}>
                   <Save className="w-4 h-4 mr-2" /> Lưu cấu hình
                 </Button>
                 <Button variant="outline" onClick={() => toast.success('Đặt về mặc định...')}>Reset mặc định</Button>

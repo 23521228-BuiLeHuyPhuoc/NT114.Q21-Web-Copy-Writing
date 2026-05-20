@@ -45,9 +45,9 @@ const FOOTER_LINKS = {
 };
 
 const SOCIALS = [
-  { icon: Facebook, label: 'Facebook', href: '#', color: 'hover:bg-blue-600' },
+  { icon: Facebook, label: 'Facebook', href: '#', color: 'hover:bg-stone-600' },
   { icon: Youtube, label: 'Youtube', href: '#', color: 'hover:bg-red-600' },
-  { icon: Linkedin, label: 'LinkedIn', href: '#', color: 'hover:bg-blue-700' },
+  { icon: Linkedin, label: 'LinkedIn', href: '#', color: 'hover:bg-stone-700' },
   { icon: Twitter, label: 'Twitter/X', href: '#', color: 'hover:bg-gray-800' },
 ];
 
@@ -71,7 +71,7 @@ export function PublicFooter() {
             </div>
             <div className="flex gap-3 flex-shrink-0">
               <Link to="/register">
-                <button className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 text-white rounded-xl px-6 py-3 text-sm font-bold transition-all shadow-lg shadow-green-900/40">
+                <button className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-stone-500 hover:from-emerald-400 hover:to-stone-400 text-white rounded-xl px-6 py-3 text-sm font-bold transition-all shadow-lg shadow-stone-900/40">
                   <Sparkles className="w-4 h-4" />
                   Bắt đầu miễn phí
                   <ArrowUpRight className="w-4 h-4" />
@@ -101,16 +101,16 @@ export function PublicFooter() {
 
             {/* Contact */}
             <div className="space-y-2.5 text-sm">
-              <a href="mailto:hello@copypro.vn" className="flex items-center gap-2.5 hover:text-green-400 transition-colors">
-                <Mail className="w-4 h-4 text-green-600 flex-shrink-0" />
+              <a href="mailto:hello@copypro.vn" className="flex items-center gap-2.5 hover:text-stone-400 transition-colors">
+                <Mail className="w-4 h-4 text-stone-500 flex-shrink-0" />
                 hello@copypro.vn
               </a>
-              <a href="tel:+84901234567" className="flex items-center gap-2.5 hover:text-green-400 transition-colors">
-                <Phone className="w-4 h-4 text-green-600 flex-shrink-0" />
+              <a href="tel:+84901234567" className="flex items-center gap-2.5 hover:text-stone-400 transition-colors">
+                <Phone className="w-4 h-4 text-stone-500 flex-shrink-0" />
                 +84 901 234 567
               </a>
               <div className="flex items-start gap-2.5">
-                <MapPin className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                <MapPin className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
                 <span>Tòa nhà Innovation Hub, 2 Nguyễn Thị Minh Khai, Q.1, TP.HCM</span>
               </div>
             </div>
@@ -142,7 +142,7 @@ export function PublicFooter() {
                   <li key={link.label}>
                     <Link
                       to={link.href}
-                      className="text-sm text-gray-500 hover:text-green-400 transition-colors"
+                      className="text-sm text-gray-500 hover:text-stone-400 transition-colors"
                     >
                       {link.label}
                     </Link>

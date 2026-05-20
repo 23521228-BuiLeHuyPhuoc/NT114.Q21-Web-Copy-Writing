@@ -128,7 +128,7 @@ export function CustomerContentDetail() {
                 </div>
                 <p className="text-sm text-gray-600">Chất lượng tốt</p>
                 <div className="flex items-center justify-center gap-1 mt-2">
-                  {[...Array(5)].map((_, i) => <Star key={i} className={`w-4 h-4 ${i < 4 ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />)}
+                  {[...Array(5)].map((_, i) => <Star key={i} className={`w-4 h-4 ${i < 4 ? 'text-amber-400 fill-amber-400' : 'text-gray-300'}`} />)}
                 </div>
               </div>
             </Card>
