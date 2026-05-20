@@ -15,11 +15,11 @@ export function AdminAnalytics() {
   ];
 
   const industryPieData = [
-    { name: 'E-commerce', value: 450, color: '#78716c' },
-    { name: 'Bất động sản', value: 380, color: '#059669' },
-    { name: 'Công nghệ', value: 320, color: '#f59e0b' },
-    { name: 'Ẩm thực', value: 280, color: '#10b981' },
-    { name: 'Khác', value: 270, color: '#6b7280' },
+    { name: 'E-commerce', value: 450, color: '#16723a' },
+    { name: 'Bất động sản', value: 380, color: '#16723a' },
+    { name: 'Công nghệ', value: 320, color: '#d88a0b' },
+    { name: 'Ẩm thực', value: 280, color: '#0f9b6d' },
+    { name: 'Khác', value: 270, color: '#66736a' },
   ];
 
   const stats = [
@@ -33,8 +33,8 @@ export function AdminAnalytics() {
     <Layout>
       <div className="p-6 max-w-7xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Thống Kê & Phân Tích</h1>
-          <p className="text-gray-600">Dữ liệu chi tiết về hoạt động hệ thống</p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Thống Kê & Phân Tích</h1>
+          <p className="text-foreground/70">Dữ liệu chi tiết về hoạt động hệ thống</p>
         </div>
 
         {/* Quick Stats */}
@@ -44,11 +44,11 @@ export function AdminAnalytics() {
             return (
               <Card key={index} className="p-6">
                 <div className="flex items-center justify-between mb-2">
-                  <Icon className="w-5 h-5 text-stone-600" />
-                  <span className="text-sm font-semibold text-green-600">{stat.change}</span>
+                  <Icon className="w-5 h-5 text-primary" />
+                  <span className="text-sm font-semibold text-primary">{stat.change}</span>
                 </div>
-                <p className="text-2xl font-bold text-gray-900 mb-1">{stat.value}</p>
-                <p className="text-sm text-gray-600">{stat.label}</p>
+                <p className="text-2xl font-bold text-foreground mb-1">{stat.value}</p>
+                <p className="text-sm text-foreground/70">{stat.label}</p>
               </Card>
             );
           })}
@@ -62,7 +62,7 @@ export function AdminAnalytics() {
               data={dailyData}
               xKey="date"
               height={300}
-              series={[{ key: 'views', label: 'Views', color: '#78716c', fill: true }]}
+              series={[{ key: 'views', label: 'Views', color: '#16723a', fill: true }]}
             />
           </Card>
 
@@ -81,12 +81,12 @@ export function AdminAnalytics() {
               { name: 'Email Marketing - Tech', uses: 189, trend: '+8%' },
               { name: 'Landing Page - Real Estate', uses: 156, trend: '+15%' },
             ].map((item, index) => (
-              <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div key={index} className="flex items-center justify-between p-4 bg-surface-muted rounded-lg">
                 <div>
                   <p className="font-semibold">{item.name}</p>
-                  <p className="text-sm text-gray-600">{item.uses} lượt sử dụng</p>
+                  <p className="text-sm text-foreground/70">{item.uses} lượt sử dụng</p>
                 </div>
-                <span className="text-sm font-semibold text-green-600">{item.trend}</span>
+                <span className="text-sm font-semibold text-primary">{item.trend}</span>
               </div>
             ))}
           </div>

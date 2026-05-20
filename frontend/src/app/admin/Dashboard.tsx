@@ -5,10 +5,10 @@ import { BarChart, LineChart } from '@/app/components/charts';
 
 export function AdminDashboard() {
   const stats = [
-    { label: 'Tổng Users', value: '1,234', change: '+12%', icon: Users, color: 'bg-stone-500' },
-    { label: 'Copy đã tạo', value: '5,678', change: '+8%', icon: FileText, color: 'bg-green-500' },
-    { label: 'Lượt truy cập', value: '12,345', change: '+15%', icon: TrendingUp, color: 'bg-stone-500' },
-    { label: 'Doanh thu', value: '45.2M', change: '+23%', icon: DollarSign, color: 'bg-amber-500' },
+    { label: 'Tổng Users', value: '1,234', change: '+12%', icon: Users, color: 'bg-primary/50' },
+    { label: 'Copy đã tạo', value: '5,678', change: '+8%', icon: FileText, color: 'bg-primary/50' },
+    { label: 'Lượt truy cập', value: '12,345', change: '+15%', icon: TrendingUp, color: 'bg-primary/50' },
+    { label: 'Doanh thu', value: '45.2M', change: '+23%', icon: DollarSign, color: 'bg-warning/100' },
   ];
 
   const monthlyData = [
@@ -32,8 +32,8 @@ export function AdminDashboard() {
     <Layout>
       <div className="p-6 max-w-7xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
-          <p className="text-gray-600">Tổng quan hệ thống CopyPro</p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Admin Dashboard</h1>
+          <p className="text-foreground/70">Tổng quan hệ thống CopyPro</p>
         </div>
 
         {/* Stats Grid */}
@@ -48,8 +48,8 @@ export function AdminDashboard() {
                   </div>
                   <span className="text-sm font-semibold text-emerald-600">{stat.change}</span>
                 </div>
-                <p className="text-sm text-gray-600 mb-1">{stat.label}</p>
-                <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
+                <p className="text-sm text-foreground/70 mb-1">{stat.label}</p>
+                <p className="text-3xl font-bold text-foreground">{stat.value}</p>
               </Card>
             );
           })}
@@ -64,8 +64,8 @@ export function AdminDashboard() {
               xKey="name"
               height={300}
               series={[
-                { key: 'users', label: 'Users', color: '#78716c' },
-                { key: 'copies', label: 'Copies', color: '#059669' },
+                { key: 'users', label: 'Users', color: '#16723a' },
+                { key: 'copies', label: 'Copies', color: '#16723a' },
               ]}
             />
           </Card>
@@ -76,7 +76,7 @@ export function AdminDashboard() {
               data={industryData}
               xKey="name"
               height={300}
-              series={[{ key: 'value', label: 'Copies', color: '#f59e0b' }]}
+              series={[{ key: 'value', label: 'Copies', color: '#d88a0b' }]}
             />
           </Card>
         </div>

@@ -34,7 +34,7 @@ export function AdminFilterBar({
     <Card className={`p-4 mb-6 ${className}`}>
       <div className="flex flex-wrap gap-3 items-center">
         <div className="relative flex-1 min-w-48">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/80" />
           <Input
             placeholder={searchPlaceholder}
             value={search}
@@ -58,7 +58,7 @@ export function AdminFilterBar({
                     className={`border-0 cursor-pointer transition-colors ${
                       active
                         ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white'
-                        : 'bg-green-50 text-green-700 hover:bg-green-100'
+                        : 'bg-primary/10 text-primary hover:bg-primary/10'
                     }`}
                   >
                     {f.label}

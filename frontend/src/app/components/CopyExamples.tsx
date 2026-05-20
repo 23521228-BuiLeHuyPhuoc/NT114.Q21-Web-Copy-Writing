@@ -253,7 +253,7 @@ Trải nghiệm hương vị phở truyền thống Hà Nội chuẩn vị với
 2️⃣ ĐAU ĐẦU THƯỜNG XUYÊN
 → Cảnh báo huyết áp, stress
 
-3️⃣ GIẢM CÂN NHANH KHÔNG R�� NGUYÊN NHÂN
+3️⃣ GIẢM CÂN NHANH KHÔNG RÕ NGUYÊN NHÂN
 → Cần kiểm tra tuyến giáp, đường huyết
 
 4️⃣ KHÓ THỞ, ĐAU NGỰC
@@ -301,7 +301,7 @@ Module 5: Dự án thực tế & Deploy
 • Đã đào tạo hơn 5000 học viên
 
 💰 HỌC PHÍ: 15 triệu → 9.9 triệu (-33%)
-���� Khai giảng: 15/02/2026
+📅 Khai giảng: 15/02/2026
 
 🎁 ƯU ĐÃI:
 • Tặng khóa tiếng Anh IT
@@ -646,7 +646,7 @@ export function CopyExamples({ industry }: CopyExamplesProps) {
   return (
     <Card className="p-6">
       <div className="flex items-center gap-2 mb-6">
-        <BookOpen className="w-6 h-6 text-stone-600" />
+        <BookOpen className="w-6 h-6 text-primary" />
         <h2 className="text-2xl font-bold">Mẫu Copy Thực Tế - {examples.name}</h2>
       </div>
 
@@ -667,8 +667,8 @@ export function CopyExamples({ industry }: CopyExamplesProps) {
                 <h3 className="font-semibold text-lg">{example.title}</h3>
               </div>
               
-              <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
-                <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-gray-700">
+              <div className="bg-surface-muted rounded-lg p-6 border border-border">
+                <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-foreground/80">
                   {example.content}
                 </pre>
               </div>

@@ -28,15 +28,15 @@ export function CustomerPlagiarismCheck() {
     toast.success('Kiểm tra hoàn tất!');
   };
 
-  const getScoreColor = (score: number) => score >= 80 ? 'text-green-600' : score >= 60 ? 'text-amber-600' : 'text-red-600';
+  const getScoreColor = (score: number) => score >= 80 ? 'text-primary' : score >= 60 ? 'text-amber-600' : 'text-red-600';
   const getScoreBg = (score: number) => score >= 80 ? 'from-green-100 to-emerald-100' : score >= 60 ? 'from-amber-100 to-amber-100' : 'from-red-100 to-amber-100';
 
   return (
     <Layout>
       <div className="p-6 max-w-5xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-1">Kiểm Tra Đạo Văn</h1>
-          <p className="text-gray-600">Plagiarism Detection — kiểm tra tính độc đáo của nội dung AI</p>
+          <h1 className="text-3xl font-bold text-foreground mb-1">Kiểm Tra Đạo Văn</h1>
+          <p className="text-foreground/70">Plagiarism Detection — kiểm tra tính độc đáo của nội dung AI</p>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-6">
@@ -44,8 +44,8 @@ export function CustomerPlagiarismCheck() {
           <div className="lg:col-span-2 space-y-4">
             <Card className="p-5">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold text-gray-900">Nội dung cần kiểm tra</h3>
-                <span className="text-xs text-gray-400">{text.split(/\s+/).filter(Boolean).length} từ</span>
+                <h3 className="font-semibold text-foreground">Nội dung cần kiểm tra</h3>
+                <span className="text-xs text-muted-foreground/80">{text.split(/\s+/).filter(Boolean).length} từ</span>
               </div>
               <Textarea
                 placeholder="Dán nội dung AI đã tạo vào đây để kiểm tra đạo văn..."
@@ -72,34 +72,34 @@ export function CustomerPlagiarismCheck() {
             {/* Results */}
             {result && (
               <Card className="p-5">
-                <h3 className="font-semibold text-gray-900 mb-4">Kết quả chi tiết</h3>
+                <h3 className="font-semibold text-foreground mb-4">Kết quả chi tiết</h3>
 
                 {/* Originality score */}
                 <div className={`text-center py-6 rounded-xl bg-gradient-to-r ${getScoreBg(result.originality)} mb-6`}>
-                  <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-white shadow-lg mb-3">
+                  <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-card shadow-lg mb-3">
                     <span className={`text-3xl font-bold ${getScoreColor(result.originality)}`}>{result.originality}%</span>
                   </div>
-                  <p className="font-semibold text-gray-900">Tính độc đáo</p>
-                  <p className="text-sm text-gray-600 mt-1">
+                  <p className="font-semibold text-foreground">Tính độc đáo</p>
+                  <p className="text-sm text-foreground/70 mt-1">
                     {result.originality >= 80 ? 'Nội dung có tính độc đáo cao' : 'Cần chỉnh sửa để tăng tính độc đáo'}
                   </p>
                 </div>
 
                 {/* Sources found */}
-                <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4 text-amber-500" />
                   Nguồn tương tự ({result.sources.length})
                 </h4>
                 <div className="space-y-3">
                   {result.sources.map((source, i) => (
-                    <div key={i} className="p-3 bg-gray-50 rounded-lg border">
+                    <div key={i} className="p-3 bg-surface-muted rounded-lg border">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-gray-900 truncate flex-1">{source.source}</span>
-                        <Badge className={`border-0 text-xs ml-2 ${source.similarity > 10 ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}`}>
+                        <span className="text-sm font-medium text-foreground truncate flex-1">{source.source}</span>
+                        <Badge className={`border-0 text-xs ml-2 ${source.similarity > 10 ? 'bg-warning/15 text-amber-800' : 'bg-primary/10 text-primary'}`}>
                           {source.similarity}% tương tự
                         </Badge>
                       </div>
-                      <p className="text-xs text-gray-500 italic">"{source.snippet}"</p>
+                      <p className="text-xs text-muted-foreground italic">"{source.snippet}"</p>
                     </div>
                   ))}
                 </div>
@@ -110,7 +110,7 @@ export function CustomerPlagiarismCheck() {
           {/* Sidebar */}
           <div className="space-y-4">
             <Card className="p-5">
-              <h3 className="font-semibold text-gray-900 mb-4">Thống kê</h3>
+              <h3 className="font-semibold text-foreground mb-4">Thống kê</h3>
               <div className="space-y-3">
                 {[
                   { label: 'Tổng lượt kiểm tra', value: '47', icon: Search },
@@ -121,10 +121,10 @@ export function CustomerPlagiarismCheck() {
                   const Icon = s.icon;
                   return (
                     <div key={i} className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-green-50 text-green-600"><Icon className="w-4 h-4" /></div>
+                      <div className="p-2 rounded-lg bg-primary/5 text-primary"><Icon className="w-4 h-4" /></div>
                       <div>
-                        <p className="text-sm font-semibold text-gray-900">{s.value}</p>
-                        <p className="text-xs text-gray-500">{s.label}</p>
+                        <p className="text-sm font-semibold text-foreground">{s.value}</p>
+                        <p className="text-xs text-muted-foreground">{s.label}</p>
                       </div>
                     </div>
                   );
@@ -132,10 +132,10 @@ export function CustomerPlagiarismCheck() {
               </div>
             </Card>
 
-            <Card className="p-5 bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
-              <Sparkles className="w-5 h-5 text-green-600 mb-2" />
-              <h4 className="font-semibold text-gray-900 mb-1">Mẹo hay</h4>
-              <p className="text-xs text-gray-600 leading-relaxed">
+            <Card className="p-5 bg-gradient-to-br from-green-50 to-emerald-50 border-primary/20">
+              <Sparkles className="w-5 h-5 text-primary mb-2" />
+              <h4 className="font-semibold text-foreground mb-1">Mẹo hay</h4>
+              <p className="text-xs text-foreground/70 leading-relaxed">
                 Nội dung AI thường có tính độc đáo cao (85-95%). Nếu điểm thấp hơn 70%, hãy thử tạo lại với temperature cao hơn hoặc thêm context cụ thể hơn.
               </p>
             </Card>

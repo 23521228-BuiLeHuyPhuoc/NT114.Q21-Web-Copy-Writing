@@ -27,42 +27,42 @@ const CONTENT_TYPES: ContentType[] = [
     hint: 'Quảng cáo Facebook siêu chuyển đổi',
     inputLabel: 'Tên sản phẩm / dịch vụ',
     placeholder: 'Ví dụ: Khóa học tiếng Anh online',
-    model: 'GPT-4o', badge: 'Phổ biến nhất', badgeColor: 'bg-amber-100 text-amber-700',
+    model: 'GPT-4o', badge: 'Phổ biến nhất', badgeColor: 'bg-warning/15 text-amber-800',
   },
   {
     id: 'email', icon: Mail,          label: 'Email Marketing',
     hint: 'Subject line & body email tỷ lệ mở cao',
     inputLabel: 'Chủ đề email',
     placeholder: 'Ví dụ: Flash sale cuối tháng',
-    model: 'GPT-4o', badge: 'Email', badgeColor: 'bg-stone-100 text-stone-700',
+    model: 'GPT-4o', badge: 'Email', badgeColor: 'bg-primary/10 text-primary',
   },
   {
     id: 'product', icon: ShoppingCart, label: 'Mô tả sản phẩm',
     hint: 'Mô tả chi tiết sản phẩm thuyết phục',
     inputLabel: 'Tên & tính năng sản phẩm',
     placeholder: 'Ví dụ: Máy lọc không khí thông minh',
-    model: 'Llama 3.1', badge: 'E-commerce', badgeColor: 'bg-green-100 text-green-700',
+    model: 'Llama 3.1', badge: 'E-commerce', badgeColor: 'bg-primary/10 text-primary',
   },
   {
     id: 'landing', icon: FileText,    label: 'Landing Page',
     hint: 'Headline & subheadline tối ưu chuyển đổi',
     inputLabel: 'Sản phẩm / dịch vụ',
     placeholder: 'Ví dụ: Phần mềm kế toán doanh nghiệp',
-    model: 'GPT-4o', badge: 'Conversion', badgeColor: 'bg-stone-100 text-stone-700',
+    model: 'GPT-4o', badge: 'Conversion', badgeColor: 'bg-primary/10 text-primary',
   },
   {
     id: 'push', icon: BellRing,      label: 'Push Notification',
     hint: 'Thông báo ngắn gọn, kích thích click',
     inputLabel: 'Sự kiện / chương trình',
     placeholder: 'Ví dụ: Nhận thưởng cho đơn hàng đầu tiên',
-    model: 'Llama 3.1', badge: 'Mobile', badgeColor: 'bg-stone-100 text-stone-700',
+    model: 'Llama 3.1', badge: 'Mobile', badgeColor: 'bg-primary/10 text-primary',
   },
   {
     id: 'google', icon: Search,       label: 'Google Search Ad',
     hint: 'Headline + description theo chuẩn Google Ads',
     inputLabel: 'Từ khóa / dịch vụ',
     placeholder: 'Ví dụ: Dịch vụ sửa điện lạnh tại nhà',
-    model: 'GPT-4o', badge: 'SEM', badgeColor: 'bg-amber-100 text-amber-700',
+    model: 'GPT-4o', badge: 'SEM', badgeColor: 'bg-warning/15 text-amber-800',
   },
 ];
 
@@ -179,47 +179,47 @@ export function AIDemoSection() {
   };
 
   return (
-    <section className="py-16 md:py-20 bg-gradient-to-b from-white to-gray-50 relative overflow-hidden">
+    <section className="py-16 md:py-20 bg-gradient-to-b from-background to-surface-muted relative overflow-hidden">
       {/* Subtle radial glow */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_50%_60%,rgba(34,197,94,0.05),transparent)] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_50%_60%,rgba(34,197,94,0.06),transparent)] pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-5 lg:px-8 relative">
 
         {/* Section header */}
         <div className="text-center max-w-2xl mx-auto mb-10">
-          <Badge className="mb-5 bg-stone-100 text-stone-700 border-0 px-4 py-1.5 text-sm">
+          <Badge className="mb-5 bg-primary/10 text-primary border-0 px-4 py-1.5 text-sm">
             ✨ Demo tương tác
           </Badge>
-          <h2 className="text-gray-900 mb-5">
+          <h2 className="text-foreground mb-5">
             Thử tạo copy AI ngay — không cần đăng ký
           </h2>
-          <p className="text-gray-500 text-lg leading-relaxed">
+          <p className="text-muted-foreground text-lg leading-relaxed">
             Chọn loại nội dung, nhập thông tin sản phẩm, nhấn "Tạo" và xem AI viết copy trong vài giây.
           </p>
         </div>
 
         {/* Demo card */}
         <div className="max-w-5xl mx-auto">
-          <div className="bg-white rounded-lg shadow-lg shadow-stone-100/50 border border-gray-100 overflow-hidden">
+          <div className="bg-card rounded-lg shadow-lg shadow-primary/20 border border-border overflow-hidden">
 
             {/* Window bar */}
-            <div className="flex items-center gap-2 px-5 py-3.5 bg-gray-50 border-b border-gray-100">
+            <div className="flex items-center gap-2 px-5 py-3.5 bg-surface-muted border-b border-border">
               <div className="w-3 h-3 rounded-full bg-red-400" />
               <div className="w-3 h-3 rounded-full bg-amber-400" />
               <div className="w-3 h-3 rounded-full bg-green-400" />
               <div className="flex-1 text-center">
-                <span className="text-xs text-gray-400 font-mono">copypro.vn/generator</span>
+                <span className="text-xs text-muted-foreground/80 font-mono">copypro.vn/generator</span>
               </div>
             </div>
 
             <div className="grid lg:grid-cols-[320px_1fr] min-h-[500px]">
 
               {/* ── LEFT: Controls ── */}
-              <div className="bg-gray-50/80 border-r border-gray-100 p-5 flex flex-col gap-5">
+              <div className="bg-surface-muted/80 border-r border-border p-5 flex flex-col gap-5">
 
                 {/* Step 1: Content type */}
                 <div>
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
+                  <p className="text-xs font-bold text-muted-foreground/80 uppercase tracking-widest mb-3">
                     1 · Chọn loại nội dung
                   </p>
                   <div className="grid grid-cols-2 gap-2">
@@ -232,14 +232,14 @@ export function AIDemoSection() {
                           onClick={() => handleTypeChange(t)}
                           className={`flex flex-col items-center gap-1.5 p-3 rounded-lg border text-center transition-all ${
                             isActive
-                              ? 'border-stone-500 bg-stone-50 shadow-sm shadow-stone-100'
-                              : 'border-gray-200 bg-white hover:border-stone-300 hover:bg-stone-50/50'
+                              ? 'border-primary bg-primary/5 shadow-sm shadow-primary/10'
+                              : 'border-border bg-card hover:border-primary/30 hover:bg-primary/5'
                           }`}
                         >
-                          <div className={`p-1.5 rounded-lg transition-colors ${isActive ? 'bg-stone-100' : 'bg-gray-100'}`}>
-                            <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-stone-700' : 'text-gray-500'}`} />
+                          <div className={`p-1.5 rounded-lg transition-colors ${isActive ? 'bg-primary/10' : 'bg-muted'}`}>
+                            <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} />
                           </div>
-                          <span className={`text-xs font-semibold leading-tight ${isActive ? 'text-stone-700' : 'text-gray-600'}`}>
+                          <span className={`text-xs font-semibold leading-tight ${isActive ? 'text-primary' : 'text-foreground/70'}`}>
                             {t.label}
                           </span>
                         </button>
@@ -250,25 +250,25 @@ export function AIDemoSection() {
 
                 {/* Step 2: Input */}
                 <div>
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
+                  <p className="text-xs font-bold text-muted-foreground/80 uppercase tracking-widest mb-3">
                     2 · {activeType.inputLabel}
                   </p>
                   <Input
                     placeholder={activeType.placeholder}
                     value={inputValue}
                     onChange={e => setInputValue(e.target.value)}
-                    className="rounded-lg border-gray-200 focus:border-stone-500 bg-white h-11 text-sm"
+                    className="rounded-lg border-border focus:border-primary bg-card h-11 text-sm"
                     onKeyDown={e => { if (e.key === 'Enter') handleGenerate(); }}
                   />
-                  <p className="text-xs text-gray-400 mt-2">
+                  <p className="text-xs text-muted-foreground/80 mt-2">
                     💡 {activeType.hint}
                   </p>
                 </div>
 
                 {/* Model badge */}
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-400">Model:</span>
-                  <Badge className="bg-stone-100 text-stone-700 border-0 text-xs">{activeType.model}</Badge>
+                  <span className="text-xs text-muted-foreground/80">Model:</span>
+                  <Badge className="bg-primary/10 text-primary border-0 text-xs">{activeType.model}</Badge>
                   <Badge className={`${activeType.badgeColor} border-0 text-xs`}>{activeType.badge}</Badge>
                 </div>
 
@@ -278,13 +278,13 @@ export function AIDemoSection() {
                   disabled={isGenerating}
                   className={`relative w-full py-3.5 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 overflow-hidden ${
                     isGenerating
-                      ? 'bg-green-100 text-green-600 cursor-not-allowed'
-                      : 'bg-gradient-to-r from-emerald-600 to-stone-600 hover:from-emerald-500 hover:to-stone-500 text-white shadow-lg shadow-stone-200 hover:shadow-stone-300 hover:-translate-y-0.5 active:translate-y-0'
+                      ? 'bg-primary/10 text-primary cursor-not-allowed'
+                      : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white shadow-lg shadow-primary/20 hover:shadow-green-300 hover:-translate-y-0.5 active:translate-y-0'
                   }`}
                 >
                   {isGenerating ? (
                     <>
-                      <div className="w-4 h-4 border-2 border-green-400 border-t-green-600 rounded-full animate-spin" />
+                      <div className="w-4 h-4 border-2 border-green-300 border-t-green-600 rounded-full animate-spin" />
                       AI đang tạo copy...
                     </>
                   ) : (
@@ -296,7 +296,7 @@ export function AIDemoSection() {
                   )}
                   {/* Shimmer animation when generating */}
                   {isGenerating && (
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-[shimmer_1.5s_infinite] bg-[length:200%_100%]" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-card/10 to-transparent animate-[shimmer_1.5s_infinite] bg-[length:200%_100%]" />
                   )}
                 </button>
               </div>
@@ -304,19 +304,19 @@ export function AIDemoSection() {
               {/* ── RIGHT: Output ── */}
               <div className="flex flex-col">
                 {/* Output header */}
-                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-border">
                   <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${isGenerating ? 'bg-amber-400 animate-pulse' : hasGenerated ? 'bg-green-500' : 'bg-gray-300'}`} />
-                    <span className="text-xs font-semibold text-gray-500">
+                    <div className={`w-2 h-2 rounded-full ${isGenerating ? 'bg-amber-400 animate-pulse' : hasGenerated ? 'bg-primary/50' : 'bg-gray-300'}`} />
+                    <span className="text-xs font-semibold text-muted-foreground">
                       {isGenerating ? 'Đang tạo...' : hasGenerated ? 'Hoàn thành' : 'Sẵn sàng'}
                     </span>
                   </div>
                   {hasGenerated && done && (
                     <div className="flex items-center gap-2">
-                      <Badge className="bg-green-100 text-green-700 border-0 text-xs">
+                      <Badge className="bg-primary/10 text-primary border-0 text-xs">
                         ⭐ {quality}% chất lượng
                       </Badge>
-                      <Badge className="bg-stone-100 text-stone-700 border-0 text-xs">
+                      <Badge className="bg-primary/10 text-primary border-0 text-xs">
                         <Zap className="w-3 h-3 inline mr-0.5" />{genTime}s
                       </Badge>
                     </div>
@@ -328,12 +328,12 @@ export function AIDemoSection() {
                   {/* Empty state */}
                   {!hasGenerated && !isGenerating && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-center px-8">
-                      <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
-                        <Sparkles className="w-7 h-7 text-gray-300" />
+                      <div className="w-16 h-16 bg-muted rounded-lg flex items-center justify-center">
+                        <Sparkles className="w-7 h-7 text-muted-foreground/60" />
                       </div>
                       <div>
-                        <p className="text-gray-500 font-semibold mb-1">Kết quả sẽ hiển thị tại đây</p>
-                        <p className="text-gray-400 text-sm">Chọn loại nội dung và nhấn "Tạo copy AI" để xem demo</p>
+                        <p className="text-muted-foreground font-semibold mb-1">Kết quả sẽ hiển thị tại đây</p>
+                        <p className="text-muted-foreground/80 text-sm">Chọn loại nội dung và nhấn "Tạo copy AI" để xem demo</p>
                       </div>
                       {/* Sample chips */}
                       <div className="flex flex-wrap gap-2 justify-center mt-2">
@@ -341,7 +341,7 @@ export function AIDemoSection() {
                           <button
                             key={tag}
                             onClick={() => setInputValue(tag)}
-                            className="text-xs bg-stone-50 text-stone-700 border border-stone-200 rounded-full px-3 py-1.5 hover:bg-stone-100 transition-colors"
+                            className="text-xs bg-primary/10 text-primary border border-primary/20 rounded-full px-3 py-1.5 hover:bg-primary/10 transition-colors"
                           >
                             {tag}
                           </button>
@@ -357,7 +357,7 @@ export function AIDemoSection() {
                         {[100, 85, 90, 70, 80].map((w, i) => (
                           <div
                             key={i}
-                            className="h-3.5 bg-gray-100 rounded-full animate-pulse"
+                            className="h-3.5 bg-muted rounded-full animate-pulse"
                             style={{ width: `${w}%`, animationDelay: `${i * 0.1}s` }}
                           />
                         ))}
@@ -368,10 +368,10 @@ export function AIDemoSection() {
                   {/* Typewriter output */}
                   {(displayed || rawOutput) && (
                     <div className="absolute inset-0 overflow-y-auto p-5">
-                      <pre className="whitespace-pre-wrap text-gray-800 text-sm leading-relaxed font-sans break-words">
+                      <pre className="whitespace-pre-wrap text-foreground text-sm leading-relaxed font-sans break-words">
                         {displayed}
                         {!done && (
-                          <span className="inline-block w-0.5 h-4 bg-green-500 ml-0.5 animate-pulse align-middle" />
+                          <span className="inline-block w-0.5 h-4 bg-primary/50 ml-0.5 animate-pulse align-middle" />
                         )}
                       </pre>
                     </div>
@@ -380,14 +380,14 @@ export function AIDemoSection() {
 
                 {/* Action bar — shown after done */}
                 {hasGenerated && done && (
-                  <div className="border-t border-gray-100 px-5 py-4 flex items-center justify-between gap-3 bg-gray-50/60">
+                  <div className="border-t border-border px-5 py-4 flex items-center justify-between gap-3 bg-surface-muted/60">
                     <div className="flex gap-2">
                       <button
                         onClick={handleCopy}
                         className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-all border ${
                           copied
-                            ? 'bg-stone-100 text-stone-700 border-stone-200'
-                            : 'bg-white text-gray-700 border-gray-200 hover:border-stone-300 hover:bg-stone-50'
+                            ? 'bg-primary/10 text-primary border-primary/20'
+                            : 'bg-card text-foreground/80 border-border hover:border-primary/30 hover:bg-primary/5'
                         }`}
                       >
                         {copied ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
@@ -395,13 +395,13 @@ export function AIDemoSection() {
                       </button>
                       <button
                         onClick={handleGenerate}
-                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold bg-white text-gray-700 border border-gray-200 hover:border-stone-300 hover:bg-stone-50 transition-all"
+                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold bg-card text-foreground/80 border border-border hover:border-primary/30 hover:bg-primary/5 transition-all"
                       >
                         <RotateCcw className="w-3.5 h-3.5" />
                         Tạo lại
                       </button>
                     </div>
-                    <button className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold bg-green-600 hover:bg-green-500 text-white transition-colors">
+                    <button className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold bg-primary hover:bg-primary/50 text-white transition-colors">
                       <ThumbsUp className="w-3.5 h-3.5" />
                       Tốt lắm!
                     </button>
@@ -412,15 +412,15 @@ export function AIDemoSection() {
           </div>
 
           {/* Footnote */}
-          <div className="text-center mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-gray-400">
+          <div className="text-center mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground/80">
             <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-green-500" /> Demo miễn phí, không cần tài khoản
+              <CheckCircle2 className="w-4 h-4 text-primary" /> Demo miễn phí, không cần tài khoản
             </span>
             <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-green-500" /> Đăng ký để dùng đầy đủ tính năng
+              <CheckCircle2 className="w-4 h-4 text-primary" /> Đăng ký để dùng đầy đủ tính năng
             </span>
             <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-green-500" /> 14 ngày Pro miễn phí
+              <CheckCircle2 className="w-4 h-4 text-primary" /> 14 ngày Pro miễn phí
             </span>
           </div>
         </div>

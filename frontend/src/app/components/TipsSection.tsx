@@ -139,8 +139,8 @@ Theo dõi các chỉ số:
               <span className="font-semibold">{index + 1}. {tip.title}</span>
             </AccordionTrigger>
             <AccordionContent>
-              <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
-                <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-gray-700">
+              <div className="bg-warning/10 rounded-lg p-4 border border-amber-200">
+                <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-foreground/80">
                   {tip.content}
                 </pre>
               </div>
@@ -149,9 +149,9 @@ Theo dõi các chỉ số:
         ))}
       </Accordion>
 
-      <div className="mt-6 p-4 bg-gradient-to-r from-stone-100 to-stone-100 rounded-lg">
+      <div className="mt-6 p-4 bg-gradient-to-r from-slate-100 to-slate-100 rounded-lg">
         <h3 className="font-semibold text-lg mb-2">💡 Lời khuyên cuối cùng:</h3>
-        <p className="text-sm text-gray-700">
+        <p className="text-sm text-foreground/80">
           Copy tốt nhất là copy được viết từ góc nhìn của khách hàng, giải quyết vấn đề của họ và mang lại giá trị thực sự. 
           Hãy luôn đặt mình vào vị trí khách hàng khi viết copy và tự hỏi: "Nếu tôi là khách hàng, thông điệp này có thuyết phục tôi không?"
         </p>

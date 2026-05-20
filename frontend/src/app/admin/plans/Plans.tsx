@@ -132,18 +132,18 @@ export function AdminPlans() {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">Quản Lý Gói Dịch Vụ</h1>
-            <p className="text-gray-500 text-sm">Cấu hình các gói subscription và pricing</p>
+            <h1 className="text-2xl font-bold text-foreground mb-1">Quản Lý Gói Dịch Vụ</h1>
+            <p className="text-muted-foreground text-sm">Cấu hình các gói subscription và pricing</p>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setTrashOpen(true)}
-              className="relative flex items-center gap-1.5 border border-gray-200 hover:border-red-300 hover:bg-red-50 text-gray-500 hover:text-red-600 rounded-xl px-3 py-2 text-sm font-semibold transition-all"
+              className="relative flex items-center gap-1.5 border border-border hover:border-red-300 hover:bg-destructive/10 text-muted-foreground hover:text-red-600 rounded-xl px-3 py-2 text-sm font-semibold transition-all"
             >
               <Trash2 className="w-4 h-4" />
               Thùng rác
               {deletedPlans.length > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">{deletedPlans.length}</span>
+                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-destructive/100 text-white text-[10px] font-bold rounded-full flex items-center justify-center">{deletedPlans.length}</span>
               )}
             </button>
             <Button className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl" onClick={() => setShowAdd(true)}>
@@ -155,10 +155,10 @@ export function AdminPlans() {
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {[
-            { label: 'Tổng gói', value: visible.length, icon: Crown, color: 'text-green-600 bg-green-50' },
-            { label: 'Tổng subscribers', value: visible.reduce((a, p) => a + p.users, 0).toLocaleString(), icon: Users, color: 'text-stone-600 bg-stone-50' },
+            { label: 'Tổng gói', value: visible.length, icon: Crown, color: 'text-primary bg-primary/5' },
+            { label: 'Tổng subscribers', value: visible.reduce((a, p) => a + p.users, 0).toLocaleString(), icon: Users, color: 'text-primary bg-primary/5' },
             { label: 'Doanh thu ước tính', value: (totalRevenue / 1000000).toFixed(1) + 'M₫', icon: DollarSign, color: 'text-emerald-600 bg-emerald-50' },
-            { label: 'Paid users', value: visible.filter(p => p.price > 0).reduce((a, p) => a + p.users, 0).toLocaleString(), icon: Zap, color: 'text-stone-600 bg-stone-50' },
+            { label: 'Paid users', value: visible.filter(p => p.price > 0).reduce((a, p) => a + p.users, 0).toLocaleString(), icon: Zap, color: 'text-primary bg-primary/5' },
           ].map((s, i) => (
             <StatTile key={i} icon={s.icon} label={s.label} value={s.value} color={s.color} />
           ))}
@@ -184,24 +184,24 @@ export function AdminPlans() {
                   <TableCell>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-semibold text-gray-900">{plan.name}</span>
-                        {plan.popular && <Badge className="bg-green-100 text-green-700 border-0 text-xs">Phổ biến</Badge>}
+                        <span className="font-semibold text-foreground">{plan.name}</span>
+                        {plan.popular && <Badge className="bg-warning/15 text-amber-800 border-0 text-xs">Phổ biến</Badge>}
                       </div>
-                      <p className="text-xs text-gray-400 mt-0.5">{plan.description}</p>
+                      <p className="text-xs text-muted-foreground/80 mt-0.5">{plan.description}</p>
                     </div>
                   </TableCell>
-                  <TableCell className="font-semibold text-gray-900">{formatPrice(plan.price)}</TableCell>
-                  <TableCell className="text-sm text-gray-600">{formatVal(plan.copyLimit)}</TableCell>
-                  <TableCell className="text-sm text-gray-600">{formatVal(plan.apiLimit)}</TableCell>
-                  <TableCell className="text-sm text-gray-600">{formatVal(plan.fineTune)}</TableCell>
-                  <TableCell><Badge className="bg-stone-100 text-stone-700 border-0">{plan.users}</Badge></TableCell>
+                  <TableCell className="font-semibold text-foreground">{formatPrice(plan.price)}</TableCell>
+                  <TableCell className="text-sm text-foreground/70">{formatVal(plan.copyLimit)}</TableCell>
+                  <TableCell className="text-sm text-foreground/70">{formatVal(plan.apiLimit)}</TableCell>
+                  <TableCell className="text-sm text-foreground/70">{formatVal(plan.fineTune)}</TableCell>
+                  <TableCell><Badge className="bg-primary/10 text-primary border-0">{plan.users}</Badge></TableCell>
                   <TableCell><Switch checked={plan.active} onCheckedChange={() => toggleActive(plan.id)} /></TableCell>
                   <TableCell>
                     <div className="flex gap-1 justify-end">
-                      <button onClick={() => openEdit(plan)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-stone-50 text-gray-400 hover:text-stone-600 transition-colors">
+                      <button onClick={() => openEdit(plan)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-primary/5 text-muted-foreground/80 hover:text-primary transition-colors">
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
-                      <button onClick={() => setConfirmDelete(plan)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors">
+                      <button onClick={() => setConfirmDelete(plan)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-destructive/10 text-muted-foreground/80 hover:text-red-500 transition-colors">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -217,41 +217,41 @@ export function AdminPlans() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                <Plus className="w-4 h-4 text-green-600" />
+              <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                <Plus className="w-4 h-4 text-primary" />
               </div>
               Tạo Gói Mới
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-1">
             <div>
-              <Label className="text-xs text-gray-500 uppercase tracking-wider mb-1.5 block">Tên gói</Label>
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Tên gói</Label>
               <Input value={addName} onChange={e => setAddName(e.target.value)} placeholder="VD: Team" className="h-10" />
             </div>
             <div>
-              <Label className="text-xs text-gray-500 uppercase tracking-wider mb-1.5 block">Mô tả</Label>
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Mô tả</Label>
               <Input value={addDesc} onChange={e => setAddDesc(e.target.value)} placeholder="Dành cho..." className="h-10" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs text-gray-500 uppercase tracking-wider mb-1.5 block">Giá (₫/tháng)</Label>
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Giá (₫/tháng)</Label>
                 <Input value={addPrice} onChange={e => setAddPrice(e.target.value)} placeholder="Trống = Liên hệ" className="h-10" type="number" />
               </div>
               <div>
-                <Label className="text-xs text-gray-500 uppercase tracking-wider mb-1.5 block">Copy/tháng</Label>
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Copy/tháng</Label>
                 <Input value={addCopy} onChange={e => setAddCopy(e.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
               </div>
               <div>
-                <Label className="text-xs text-gray-500 uppercase tracking-wider mb-1.5 block">API calls/tháng</Label>
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">API calls/tháng</Label>
                 <Input value={addApi} onChange={e => setAddApi(e.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
               </div>
               <div>
-                <Label className="text-xs text-gray-500 uppercase tracking-wider mb-1.5 block">Fine-tune models</Label>
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Fine-tune models</Label>
                 <Input value={addFine} onChange={e => setAddFine(e.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
               </div>
             </div>
             <div className="flex gap-2 pt-1">
-              <button onClick={() => setShowAdd(false)} className="flex-1 h-10 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">Huỷ</button>
+              <button onClick={() => setShowAdd(false)} className="flex-1 h-10 border border-border rounded-xl text-sm font-semibold text-foreground/70 hover:bg-surface-muted transition-colors">Huỷ</button>
               <button onClick={handleAdd} disabled={!addName.trim()} className="flex-1 h-10 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:opacity-40 text-white rounded-xl text-sm font-bold transition-all">
                 Tạo gói
               </button>
@@ -265,8 +265,8 @@ export function AdminPlans() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-stone-100 rounded-lg flex items-center justify-center">
-                <Edit2 className="w-4 h-4 text-stone-600" />
+              <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                <Edit2 className="w-4 h-4 text-primary" />
               </div>
               Chỉnh sửa Gói: {editItem?.name}
             </DialogTitle>
@@ -274,38 +274,38 @@ export function AdminPlans() {
           {editItem && (
             <div className="space-y-4 pt-1">
               <div>
-                <Label className="text-xs text-gray-500 uppercase tracking-wider mb-1.5 block">Tên gói</Label>
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Tên gói</Label>
                 <Input value={editName} onChange={e => setEditName(e.target.value)} className="h-10" />
               </div>
               <div>
-                <Label className="text-xs text-gray-500 uppercase tracking-wider mb-1.5 block">Mô tả</Label>
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Mô tả</Label>
                 <Input value={editDesc} onChange={e => setEditDesc(e.target.value)} className="h-10" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-xs text-gray-500 uppercase tracking-wider mb-1.5 block">Giá (₫/tháng)</Label>
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Giá (₫/tháng)</Label>
                   <Input value={editPrice} onChange={e => setEditPrice(e.target.value)} placeholder="Trống = Liên hệ" className="h-10" type="number" />
                 </div>
                 <div>
-                  <Label className="text-xs text-gray-500 uppercase tracking-wider mb-1.5 block">Copy/tháng</Label>
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Copy/tháng</Label>
                   <Input value={editCopy} onChange={e => setEditCopy(e.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
                 </div>
                 <div>
-                  <Label className="text-xs text-gray-500 uppercase tracking-wider mb-1.5 block">API calls</Label>
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">API calls</Label>
                   <Input value={editApi} onChange={e => setEditApi(e.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
                 </div>
                 <div>
-                  <Label className="text-xs text-gray-500 uppercase tracking-wider mb-1.5 block">Fine-tune</Label>
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Fine-tune</Label>
                   <Input value={editFine} onChange={e => setEditFine(e.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
                 </div>
               </div>
-              <div className="flex items-center justify-between bg-gray-50 rounded-xl p-3">
-                <Label className="text-sm font-medium text-gray-700">Đánh dấu "Phổ biến"</Label>
+              <div className="flex items-center justify-between bg-surface-muted rounded-xl p-3">
+                <Label className="text-sm font-medium text-foreground/80">Đánh dấu "Phổ biến"</Label>
                 <Switch checked={editPopular} onCheckedChange={setEditPopular} />
               </div>
               <div className="flex gap-2 pt-1">
-                <button onClick={() => setEditItem(null)} className="flex-1 h-10 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">Huỷ</button>
-                <button onClick={handleSaveEdit} disabled={editSaving} className="flex-1 h-10 bg-gradient-to-r from-stone-600 to-stone-700 hover:from-stone-700 hover:to-stone-800 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center">
+                <button onClick={() => setEditItem(null)} className="flex-1 h-10 border border-border rounded-xl text-sm font-semibold text-foreground/70 hover:bg-surface-muted transition-colors">Huỷ</button>
+                <button onClick={handleSaveEdit} disabled={editSaving} className="flex-1 h-10 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center">
                   {editSaving ? <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : 'Lưu thay đổi'}
                 </button>
               </div>

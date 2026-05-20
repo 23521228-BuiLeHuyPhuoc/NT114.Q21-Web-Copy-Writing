@@ -28,7 +28,7 @@ function Dropdown({ label, items, open, onToggle, onClose }: DropdownProps) {
     <div className="relative">
       <button
         onClick={onToggle}
-        className="flex items-center gap-1 px-2 py-2 text-[0.9rem] font-semibold text-inherit transition-colors hover:text-stone-400"
+        className="flex items-center gap-1 px-2 py-2 text-[0.9rem] font-semibold text-inherit transition-colors hover:text-primary"
       >
         {label}
         <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? 'rotate-180' : ''}`} />
@@ -36,7 +36,7 @@ function Dropdown({ label, items, open, onToggle, onClose }: DropdownProps) {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={onClose} />
-          <div className="absolute left-1/2 top-full z-50 mt-2 w-72 -translate-x-1/2 overflow-hidden rounded-lg border border-gray-100 bg-white shadow-xl">
+          <div className="absolute left-1/2 top-full z-50 mt-2 w-72 -translate-x-1/2 overflow-hidden rounded-lg border border-border bg-card shadow-xl">
             <div className="p-2">
               {items.map((item) => {
                 const Icon = item.icon;
@@ -45,14 +45,14 @@ function Dropdown({ label, items, open, onToggle, onClose }: DropdownProps) {
                     key={item.label}
                     to={item.href}
                     onClick={onClose}
-                    className="group flex items-start gap-3 rounded-lg p-3 transition-colors hover:bg-stone-50"
+                    className="group flex items-start gap-3 rounded-lg p-3 transition-colors hover:bg-accent"
                   >
-                    <div className="flex-shrink-0 rounded-lg bg-stone-100 p-2 transition-colors group-hover:bg-stone-200">
-                      <Icon className="h-4 w-4 text-stone-700" />
+                    <div className="flex-shrink-0 rounded-lg bg-primary/10 p-2 transition-colors group-hover:bg-primary/15">
+                      <Icon className="h-4 w-4 text-primary" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-gray-900">{item.label}</p>
-                      <p className="mt-0.5 text-xs text-gray-500">{item.desc}</p>
+                      <p className="text-sm font-semibold text-foreground">{item.label}</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">{item.desc}</p>
                     </div>
                   </Link>
                 );
@@ -97,7 +97,7 @@ export function PublicNavbar() {
     <header
       className={`fixed left-0 right-0 top-0 z-50 transition-all duration-300 ${
         scrolled
-          ? 'border-b border-gray-100 bg-white/95 shadow-sm backdrop-blur-xl'
+          ? 'border-b border-border/80 bg-card/95 shadow-sm backdrop-blur-xl'
           : 'bg-transparent'
       }`}
     >
@@ -106,11 +106,11 @@ export function PublicNavbar() {
           <Link to="/" className="flex flex-shrink-0 items-center gap-2">
             <BrandLogo size="lg" tone={scrolled ? 'dark' : 'light'} surface="light" className="p-1" />
             <div className="flex items-center">
-              <Badge className="h-4 border-0 bg-stone-100 px-1.5 py-0 text-[10px] text-stone-700">AI</Badge>
+              <Badge variant="success" className="h-4 px-1.5 py-0 text-[10px]">AI</Badge>
             </div>
           </Link>
 
-          <nav className={`hidden items-center gap-1 lg:flex ${scrolled ? 'text-gray-600' : 'text-white/90'}`}>
+          <nav className={`hidden items-center gap-1 lg:flex ${scrolled ? 'text-foreground/70' : 'text-white/90'}`}>
             <Dropdown
               label="Sản phẩm"
               items={PRODUCTS}
@@ -124,8 +124,8 @@ export function PublicNavbar() {
                 to={link.href}
                 className={`rounded-lg px-3 py-2 text-[0.9rem] font-semibold transition-colors ${
                   location.pathname === link.href
-                    ? scrolled ? 'bg-stone-50 text-stone-700' : 'bg-white/15 text-white'
-                    : scrolled ? 'text-gray-600 hover:bg-stone-50/60 hover:text-stone-700' : 'text-white/90 hover:bg-white/15 hover:text-white'
+                    ? scrolled ? 'bg-primary/10 text-primary' : 'bg-card/15 text-white'
+                    : scrolled ? 'text-muted-foreground hover:bg-accent hover:text-primary' : 'text-white/90 hover:bg-card/15 hover:text-white'
                 }`}
               >
                 {link.label}
@@ -136,13 +136,13 @@ export function PublicNavbar() {
           <div className="hidden items-center gap-3 lg:flex">
             <Button
               variant="ghost"
-              className={`text-[0.9rem] font-semibold transition-colors ${scrolled ? 'text-gray-600 hover:bg-stone-50 hover:text-stone-700' : 'text-white/90 hover:bg-white/15 hover:text-white'}`}
+              className={`text-[0.9rem] font-semibold transition-colors ${scrolled ? 'text-muted-foreground hover:bg-accent hover:text-primary' : 'text-white/90 hover:bg-card/15 hover:text-white'}`}
               onClick={() => navigate('/login')}
             >
               Đăng nhập
             </Button>
             <Button
-              className="rounded-lg bg-gradient-to-r from-emerald-600 to-stone-600 px-5 text-[0.9rem] text-white shadow-md shadow-stone-200/60 hover:from-emerald-700 hover:to-stone-700"
+              className="rounded-lg bg-gradient-to-r from-primary to-success px-5 text-[0.9rem] text-primary-foreground shadow-md shadow-primary/20 hover:from-primary/90 hover:to-success/90"
               onClick={() => navigate('/register')}
             >
               <Sparkles className="mr-1.5 h-4 w-4" />
@@ -151,7 +151,7 @@ export function PublicNavbar() {
           </div>
 
           <button
-            className={`rounded-lg p-2 transition-colors lg:hidden ${scrolled ? 'text-gray-700 hover:bg-gray-100' : 'text-white hover:bg-white/15'}`}
+            className={`rounded-lg p-2 transition-colors lg:hidden ${scrolled ? 'text-foreground hover:bg-muted' : 'text-white hover:bg-card/15'}`}
             onClick={() => setMobileOpen(!mobileOpen)}
           >
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -160,29 +160,29 @@ export function PublicNavbar() {
       </div>
 
       {mobileOpen && (
-        <div className="border-t border-gray-100 bg-white shadow-xl lg:hidden">
+        <div className="border-t border-border bg-card shadow-xl lg:hidden">
           <div className="mx-auto max-w-7xl space-y-1 px-5 py-5">
-            <p className="mb-2 px-3 text-xs font-bold uppercase tracking-widest text-gray-400">Sản phẩm</p>
+            <p className="mb-2 px-3 text-xs font-bold uppercase tracking-widest text-muted-foreground">Sản phẩm</p>
             {PRODUCTS.map((item) => {
               const Icon = item.icon;
               return (
-                <Link key={item.label} to={item.href} className="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-stone-50">
-                  <div className="rounded-lg bg-stone-100 p-1.5"><Icon className="h-4 w-4 text-stone-700" /></div>
-                  <span className="text-sm font-semibold text-gray-800">{item.label}</span>
+                <Link key={item.label} to={item.href} className="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-accent">
+                  <div className="rounded-lg bg-primary/10 p-1.5"><Icon className="h-4 w-4 text-primary" /></div>
+                  <span className="text-sm font-semibold text-foreground">{item.label}</span>
                 </Link>
               );
             })}
 
-            <div className="my-3 border-t border-gray-100" />
-            <p className="mb-2 px-3 text-xs font-bold uppercase tracking-widest text-gray-400">Điều hướng</p>
+            <div className="my-3 border-t border-border" />
+            <p className="mb-2 px-3 text-xs font-bold uppercase tracking-widest text-muted-foreground">Điều hướng</p>
             {navLinks.map((link) => (
-              <Link key={link.href} to={link.href} className="block rounded-lg px-3 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-stone-50 hover:text-stone-700">
+              <Link key={link.href} to={link.href} className="block rounded-lg px-3 py-2.5 text-sm font-semibold text-foreground/80 transition-colors hover:bg-accent hover:text-primary">
                 {link.label}
               </Link>
             ))}
-            <div className="mt-3 grid grid-cols-2 gap-2 border-t border-gray-100 pt-4">
+            <div className="mt-3 grid grid-cols-2 gap-2 border-t border-border pt-4">
               <Button variant="outline" className="w-full rounded-lg text-sm" onClick={() => navigate('/login')}>Đăng nhập</Button>
-              <Button className="w-full rounded-lg bg-gradient-to-r from-emerald-600 to-stone-600 text-sm text-white" onClick={() => navigate('/register')}>Đăng ký</Button>
+              <Button className="w-full rounded-lg bg-gradient-to-r from-primary to-success text-sm text-primary-foreground" onClick={() => navigate('/register')}>Đăng ký</Button>
             </div>
           </div>
         </div>

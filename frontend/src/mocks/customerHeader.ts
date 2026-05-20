@@ -20,15 +20,15 @@ export const BREADCRUMB_MAP: Record<string, string> = {
 
 export const MOCK_NOTIFICATIONS = [
   { id: 1, title: 'Copy của bạn đã sẵn sàng!', desc: 'Facebook Ad – Flash Sale Hè đã tạo xong.', time: '2 phút', read: false, icon: Wand2, color: 'bg-green-100 text-green-600' },
-  { id: 2, title: 'Fine-tune hoàn thành', desc: 'Model "Thời Trang Brand" đã sẵn sàng sử dụng.', time: '1 giờ', read: false, icon: Brain, color: 'bg-purple-100 text-purple-600' },
-  { id: 3, title: 'Hóa đơn tháng 3/2026', desc: 'Gói Pro – 299.000₫ đã được thanh toán thành công.', time: '2 ngày', read: true, icon: CreditCard, color: 'bg-blue-100 text-blue-600' },
+  { id: 2, title: 'Fine-tune hoàn thành', desc: 'Model "Thời Trang Brand" đã sẵn sàng sử dụng.', time: '1 giờ', read: false, icon: Brain, color: 'bg-emerald-100 text-emerald-600' },
+  { id: 3, title: 'Hóa đơn tháng 3/2026', desc: 'Gói Pro – 299.000₫ đã được thanh toán thành công.', time: '2 ngày', read: true, icon: CreditCard, color: 'bg-green-100 text-green-600' },
   { id: 4, title: 'Quota cảnh báo', desc: 'Bạn đã dùng 80% quota tháng này (400/500 copy).', time: '3 ngày', read: true, icon: Zap, color: 'bg-amber-100 text-amber-600' },
 ];
 
 export const QUICK_ACTIONS = [
   { label: 'AI Generator', icon: Wand2,     path: '/generate',         color: 'bg-green-500' },
-  { label: 'Nội dung',     icon: FileText,   path: '/contents',         color: 'bg-blue-500' },
-  { label: 'Dự án',        icon: FolderOpen, path: '/projects',         color: 'bg-purple-500' },
+  { label: 'Nội dung',     icon: FileText,   path: '/contents',         color: 'bg-green-500' },
+  { label: 'Dự án',        icon: FolderOpen, path: '/projects',         color: 'bg-emerald-500' },
   { label: 'Fine-tune',    icon: Brain,      path: '/fine-tune',        color: 'bg-teal-500' },
   { label: 'API Keys',     icon: Key,        path: '/api-keys',         color: 'bg-orange-500' },
 ];

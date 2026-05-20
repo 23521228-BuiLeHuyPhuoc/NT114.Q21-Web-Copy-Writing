@@ -55,8 +55,8 @@ export function AdminSettings() {
     <Layout>
       <div className="p-6 max-w-5xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-1">Cài Đặt Hệ Thống</h1>
-          <p className="text-gray-600">Quản lý cấu hình toàn bộ platform CopyPro</p>
+          <h1 className="text-3xl font-bold text-foreground mb-1">Cài Đặt Hệ Thống</h1>
+          <p className="text-foreground/70">Quản lý cấu hình toàn bộ platform CopyPro</p>
         </div>
 
         <Tabs defaultValue="general">
@@ -72,7 +72,7 @@ export function AdminSettings() {
           {/* General */}
           <TabsContent value="general" className="space-y-4">
             <Card className="p-6 space-y-4">
-              <h3 className="font-semibold text-gray-900">Thông tin cơ bản</h3>
+              <h3 className="font-semibold text-foreground">Thông tin cơ bản</h3>
               <div className="grid md:grid-cols-2 gap-4">
                 <div><Label>Tên website</Label><Input value={settings.siteName} onChange={e => update('siteName', e.target.value)} className="mt-2" /></div>
                 <div><Label>URL website</Label><Input value={settings.siteUrl} onChange={e => update('siteUrl', e.target.value)} className="mt-2" /></div>
@@ -91,7 +91,7 @@ export function AdminSettings() {
             </Card>
 
             <Card className="p-6 space-y-4">
-              <h3 className="font-semibold text-gray-900">Chế độ hoạt động</h3>
+              <h3 className="font-semibold text-foreground">Chế độ hoạt động</h3>
               {[
                 { key: 'maintenanceMode', label: 'Chế độ bảo trì', desc: 'Hiển thị trang bảo trì cho người dùng. Admin vẫn truy cập được.', danger: true },
                 { key: 'registrationEnabled', label: 'Cho phép đăng ký mới', desc: 'Tắt để ngừng nhận người dùng mới.' },
@@ -99,8 +99,8 @@ export function AdminSettings() {
               ].map(s => (
                 <div key={s.key} className="flex items-center justify-between p-4 border rounded-xl">
                   <div>
-                    <p className={`font-medium text-sm ${s.danger ? 'text-red-700' : 'text-gray-900'}`}>{s.label}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{s.desc}</p>
+                    <p className={`font-medium text-sm ${s.danger ? 'text-red-700' : 'text-foreground'}`}>{s.label}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{s.desc}</p>
                   </div>
                   <Switch checked={(settings as any)[s.key]} onCheckedChange={v => update(s.key, v)} />
                 </div>
@@ -108,7 +108,7 @@ export function AdminSettings() {
             </Card>
 
             <Card className="p-6 space-y-4">
-              <h3 className="font-semibold text-gray-900">Quota & Rate Limiting</h3>
+              <h3 className="font-semibold text-foreground">Quota & Rate Limiting</h3>
               <div className="grid md:grid-cols-3 gap-4">
                 <div>
                   <Label className="text-sm">Gói Free (copy/tháng): {settings.rateLimitFree}</Label>
@@ -129,12 +129,12 @@ export function AdminSettings() {
           {/* AI Models */}
           <TabsContent value="ai" className="space-y-4">
             <Card className="p-6 space-y-4">
-              <h3 className="font-semibold text-gray-900">OpenAI Configuration</h3>
+              <h3 className="font-semibold text-foreground">OpenAI Configuration</h3>
               <div>
                 <Label>OpenAI API Key</Label>
                 <div className="relative mt-2">
                   <Input type={showKeys['openai'] ? 'text' : 'password'} value={settings.openaiKey} onChange={e => update('openaiKey', e.target.value)} className="pr-10" />
-                  <button onClick={() => toggle('openai')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                  <button onClick={() => toggle('openai')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/80">
                     {showKeys['openai'] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
@@ -149,7 +149,7 @@ export function AdminSettings() {
             </Card>
 
             <Card className="p-6 space-y-4">
-              <h3 className="font-semibold text-gray-900">Llama (Self-hosted)</h3>
+              <h3 className="font-semibold text-foreground">Llama (Self-hosted)</h3>
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <Label>API Endpoint</Label>
@@ -166,7 +166,7 @@ export function AdminSettings() {
             </Card>
 
             <Card className="p-6 space-y-4">
-              <h3 className="font-semibold text-gray-900">Tham số mặc định</h3>
+              <h3 className="font-semibold text-foreground">Tham số mặc định</h3>
               <div>
                 <Label>Model mặc định</Label>
                 <Select value={settings.defaultModel} onValueChange={v => update('defaultModel', v)}>
@@ -192,7 +192,7 @@ export function AdminSettings() {
           {/* Email */}
           <TabsContent value="email">
             <Card className="p-6 space-y-4">
-              <h3 className="font-semibold text-gray-900">SMTP Configuration</h3>
+              <h3 className="font-semibold text-foreground">SMTP Configuration</h3>
               <div className="grid md:grid-cols-2 gap-4">
                 <div><Label>SMTP Host</Label><Input value={settings.smtpHost} onChange={e => update('smtpHost', e.target.value)} className="mt-2" /></div>
                 <div><Label>SMTP Port</Label><Input value={settings.smtpPort} onChange={e => update('smtpPort', e.target.value)} className="mt-2" /></div>
@@ -201,7 +201,7 @@ export function AdminSettings() {
                   <Label>Password</Label>
                   <div className="relative mt-2">
                     <Input type={showKeys['smtp'] ? 'text' : 'password'} value={settings.smtpPass} onChange={e => update('smtpPass', e.target.value)} className="pr-10" />
-                    <button onClick={() => toggle('smtp')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                    <button onClick={() => toggle('smtp')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/80">
                       {showKeys['smtp'] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
@@ -213,11 +213,11 @@ export function AdminSettings() {
             </Card>
 
             <Card className="p-6 mt-4">
-              <h3 className="font-semibold text-gray-900 mb-4">Email Templates</h3>
+              <h3 className="font-semibold text-foreground mb-4">Email Templates</h3>
               <div className="space-y-3">
                 {['Welcome Email', 'OTP Xác thực', 'Đặt lại mật khẩu', 'Nhắc nhở gia hạn', 'Thông báo hết quota'].map(t => (
                   <div key={t} className="flex items-center justify-between p-3 border rounded-lg">
-                    <span className="text-sm text-gray-700">{t}</span>
+                    <span className="text-sm text-foreground/80">{t}</span>
                     <Button variant="ghost" size="sm" onClick={() => toast.success(`Mở template: ${t}`)}>Chỉnh sửa</Button>
                   </div>
                 ))}
@@ -228,7 +228,7 @@ export function AdminSettings() {
           {/* Security */}
           <TabsContent value="security" className="space-y-4">
             <Card className="p-6 space-y-4">
-              <h3 className="font-semibold text-gray-900">Bảo mật tài khoản</h3>
+              <h3 className="font-semibold text-foreground">Bảo mật tài khoản</h3>
               {[
                 { label: 'Bắt buộc 2FA cho Admin', desc: 'Admin phải bật xác thực 2 bước.' },
                 { label: 'Khóa tài khoản sau 5 lần sai mật khẩu', desc: 'Tự động khóa 15 phút.' },
@@ -237,8 +237,8 @@ export function AdminSettings() {
               ].map(s => (
                 <div key={s.label} className="flex items-center justify-between p-4 border rounded-xl">
                   <div>
-                    <p className="font-medium text-sm text-gray-900">{s.label}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{s.desc}</p>
+                    <p className="font-medium text-sm text-foreground">{s.label}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{s.desc}</p>
                   </div>
                   <Switch defaultChecked />
                 </div>
@@ -246,7 +246,7 @@ export function AdminSettings() {
             </Card>
 
             <Card className="p-6 space-y-4">
-              <h3 className="font-semibold text-gray-900">IP & Rate Limiting</h3>
+              <h3 className="font-semibold text-foreground">IP & Rate Limiting</h3>
               <div>
                 <Label>IP Whitelist (Admin access)</Label>
                 <Textarea placeholder="Mỗi IP một dòng, VD: 116.96.0.0/24" className="mt-2 font-mono text-sm min-h-24" defaultValue={'116.96.0.0/24\n42.118.0.0/24'} />
@@ -261,7 +261,7 @@ export function AdminSettings() {
           {/* Notifications */}
           <TabsContent value="notifications">
             <Card className="p-6 space-y-4">
-              <h3 className="font-semibold text-gray-900">Cảnh báo hệ thống</h3>
+              <h3 className="font-semibold text-foreground">Cảnh báo hệ thống</h3>
               {[
                 { label: 'Gửi email khi lỗi rate >5%', desc: 'Alert khi tỷ lệ lỗi API vượt ngưỡng', defaultOn: true },
                 { label: 'Cảnh báo training job thất bại', desc: 'Thông báo ngay khi fine-tuning job gặp lỗi', defaultOn: true },
@@ -271,24 +271,24 @@ export function AdminSettings() {
               ].map(n => (
                 <div key={n.label} className="flex items-center justify-between p-4 border rounded-xl">
                   <div>
-                    <p className="font-medium text-sm text-gray-900">{n.label}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{n.desc}</p>
+                    <p className="font-medium text-sm text-foreground">{n.label}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{n.desc}</p>
                   </div>
                   <Switch defaultChecked={n.defaultOn} />
                 </div>
               ))}
             </Card>
             <Card className="p-6 mt-4">
-              <h3 className="font-semibold text-gray-900 mb-4">Webhook URL</h3>
+              <h3 className="font-semibold text-foreground mb-4">Webhook URL</h3>
               <Input placeholder="https://hooks.slack.com/services/..." className="font-mono" />
-              <p className="text-xs text-gray-500 mt-2">Nhận thông báo qua Slack, Discord hoặc bất kỳ webhook URL nào</p>
+              <p className="text-xs text-muted-foreground mt-2">Nhận thông báo qua Slack, Discord hoặc bất kỳ webhook URL nào</p>
             </Card>
           </TabsContent>
 
           {/* System */}
           <TabsContent value="system" className="space-y-4">
             <Card className="p-6 space-y-4">
-              <h3 className="font-semibold text-gray-900">Logging</h3>
+              <h3 className="font-semibold text-foreground">Logging</h3>
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <Label>Log Level</Label>
@@ -310,11 +310,11 @@ export function AdminSettings() {
             </Card>
 
             <Card className="p-6 space-y-4">
-              <h3 className="font-semibold text-gray-900">Backup</h3>
+              <h3 className="font-semibold text-foreground">Backup</h3>
               <div className="flex items-center justify-between p-4 border rounded-xl">
                 <div>
                   <p className="font-medium text-sm">Tự động backup database</p>
-                  <p className="text-xs text-gray-500">Backup dữ liệu định kỳ lên S3/cloud storage</p>
+                  <p className="text-xs text-muted-foreground">Backup dữ liệu định kỳ lên S3/cloud storage</p>
                 </div>
                 <Switch checked={settings.backupEnabled} onCheckedChange={v => update('backupEnabled', v)} />
               </div>
@@ -337,12 +337,12 @@ export function AdminSettings() {
             </Card>
 
             <Card className="p-6">
-              <h3 className="font-semibold text-gray-900 mb-4">Thao tác nguy hiểm</h3>
+              <h3 className="font-semibold text-foreground mb-4">Thao tác nguy hiểm</h3>
               <div className="space-y-3">
-                <Button variant="outline" className="w-full justify-start border-amber-300 text-amber-700 hover:bg-amber-50" onClick={() => toast('Đang xóa cache...')}>
+                <Button variant="outline" className="w-full justify-start border-amber-300 text-amber-700 hover:bg-warning/10" onClick={() => toast('Đang xóa cache...')}>
                   <RefreshCw className="w-4 h-4 mr-2" /> Xóa cache toàn bộ
                 </Button>
-                <Button variant="outline" className="w-full justify-start border-red-300 text-red-700 hover:bg-red-50" onClick={() => toast.error('Thao tác này cần xác nhận!')}>
+                <Button variant="outline" className="w-full justify-start border-red-300 text-red-700 hover:bg-destructive/10" onClick={() => toast.error('Thao tác này cần xác nhận!')}>
                   <AlertCircle className="w-4 h-4 mr-2" /> Reset tất cả rate limits
                 </Button>
               </div>
@@ -352,7 +352,7 @@ export function AdminSettings() {
 
         {/* Save button */}
         <div className="flex justify-end mt-6">
-          <Button size="lg" className="bg-gradient-to-r from-stone-600 to-stone-600 text-white px-10" onClick={save}>
+          <Button size="lg" className="bg-gradient-to-r from-green-600 to-green-600 text-white px-10" onClick={save}>
             <Save className="w-5 h-5 mr-2" /> Lưu tất cả cài đặt
           </Button>
         </div>

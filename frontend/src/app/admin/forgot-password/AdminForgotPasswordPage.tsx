@@ -157,27 +157,27 @@ export function AdminForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white flex items-center justify-center px-5 py-10">
+    <div className="dark min-h-screen bg-gray-950 text-white flex items-center justify-center px-5 py-10">
       <div className="fixed inset-0 bg-[radial-gradient(ellipse_70%_60%_at_20%_30%,rgba(20,184,166,0.12),transparent)] pointer-events-none" />
       <div className="fixed inset-0 bg-[radial-gradient(ellipse_60%_50%_at_90%_80%,rgba(245,158,11,0.08),transparent)] pointer-events-none" />
 
       <div className="w-full max-w-[430px] relative">
         <Link
           to="/admin/login"
-          className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-stone-300 mb-6 transition-colors"
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary mb-6 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" /> Quay lại đăng nhập Admin
         </Link>
 
-        <div className="bg-gray-900/90 border border-gray-800 rounded-3xl shadow-2xl shadow-stone-950/20 p-8">
+        <div className="bg-gray-900/90 border border-gray-800 rounded-3xl shadow-2xl shadow-green-950/20 p-8">
           <div className="flex justify-center mb-8">
             <Link to="/" className="inline-flex items-center hover:opacity-90 transition-opacity">
               <BrandLogo size="lg" tone="light" surface="light" />
             </Link>
           </div>
 
-          <div className="w-16 h-16 rounded-2xl bg-stone-950/70 border border-stone-800/50 flex items-center justify-center mx-auto mb-5">
-            <Icon className="w-8 h-8 text-stone-300" />
+          <div className="w-16 h-16 rounded-2xl bg-green-950/70 border border-green-800/50 flex items-center justify-center mx-auto mb-5">
+            <Icon className="w-8 h-8 text-primary" />
           </div>
 
           <div className="text-center mb-8">
@@ -186,13 +186,13 @@ export function AdminForgotPasswordPage() {
               <span className="text-amber-300 text-xs font-semibold">Admin Console</span>
             </div>
             <h1 className="text-2xl font-bold text-white mb-2">{meta.title}</h1>
-            <p className="text-gray-500 text-sm leading-relaxed">{meta.subtitle}</p>
+            <p className="text-muted-foreground text-sm leading-relaxed">{meta.subtitle}</p>
           </div>
 
           {step === 'email' && (
             <form onSubmit={emailForm.handleSubmit(handleSendOtp)} className="space-y-4">
               <div>
-                <Label className="text-gray-400 mb-2 block text-xs uppercase tracking-wider">
+                <Label className="text-muted-foreground/80 mb-2 block text-xs uppercase tracking-wider">
                   Email admin
                 </Label>
                 <Input
@@ -202,7 +202,7 @@ export function AdminForgotPasswordPage() {
                     required: 'Email là bắt buộc',
                     pattern: { value: /^\S+@\S+$/, message: 'Email không hợp lệ' },
                   })}
-                  className="h-12 rounded-xl bg-gray-950 border-gray-700 text-white placeholder:text-gray-600 focus:border-stone-500"
+                  className="h-12 rounded-xl bg-gray-950 border-gray-700 text-white placeholder:text-foreground/70 focus:border-primary"
                 />
                 {emailForm.formState.errors.email && (
                   <p className="text-xs text-red-400 mt-1">{emailForm.formState.errors.email.message}</p>
@@ -212,7 +212,7 @@ export function AdminForgotPasswordPage() {
               <button
                 type="submit"
                 disabled={isLoading || emailForm.formState.isSubmitting}
-                className="w-full h-12 bg-gradient-to-r from-emerald-600 via-stone-600 to-stone-600 hover:from-emerald-500 hover:via-stone-500 hover:to-stone-500 disabled:opacity-60 text-white rounded-xl font-bold text-sm transition-all shadow-xl shadow-stone-900/30"
+                className="w-full h-12 bg-gradient-to-r from-emerald-600 via-green-600 to-green-600 hover:from-emerald-500 hover:via-green-500 hover:to-green-500 disabled:opacity-60 text-white rounded-xl font-bold text-sm transition-all shadow-xl shadow-primary/25"
               >
                 {isLoading ? 'Đang gửi OTP...' : 'Gửi mã OTP admin'}
               </button>
@@ -222,8 +222,8 @@ export function AdminForgotPasswordPage() {
 
           {step === 'otp' && (
             <div className="space-y-5">
-              <div className="text-center text-xs text-gray-500">
-                Mã xác nhận đã gửi đến <span className="text-stone-300 font-semibold">{email}</span>
+              <div className="text-center text-xs text-muted-foreground">
+                Mã xác nhận đã gửi đến <span className="text-primary font-semibold">{email}</span>
               </div>
 
               <div className="flex gap-2.5 justify-center">
@@ -241,7 +241,7 @@ export function AdminForgotPasswordPage() {
                         document.getElementById(`admin-otp-${index - 1}`)?.focus();
                       }
                     }}
-                    className="w-11 h-12 rounded-xl bg-gray-950 border border-gray-700 text-center text-xl font-bold text-white focus:border-stone-500 focus:outline-none transition-colors"
+                    className="w-11 h-12 rounded-xl bg-gray-950 border border-gray-700 text-center text-xl font-bold text-white focus:border-primary focus:outline-none transition-colors"
                   />
                 ))}
               </div>
@@ -250,7 +250,7 @@ export function AdminForgotPasswordPage() {
                 type="button"
                 onClick={handleVerifyOtp}
                 disabled={isLoading}
-                className="w-full h-12 bg-gradient-to-r from-emerald-600 via-stone-600 to-stone-600 hover:from-emerald-500 hover:via-stone-500 hover:to-stone-500 disabled:opacity-60 text-white rounded-xl font-bold text-sm transition-all shadow-xl shadow-stone-900/30"
+                className="w-full h-12 bg-gradient-to-r from-emerald-600 via-green-600 to-green-600 hover:from-emerald-500 hover:via-green-500 hover:to-green-500 disabled:opacity-60 text-white rounded-xl font-bold text-sm transition-all shadow-xl shadow-primary/25"
               >
                 {isLoading ? 'Đang xác nhận...' : 'Xác nhận OTP'}
               </button>
@@ -259,7 +259,7 @@ export function AdminForgotPasswordPage() {
                 type="button"
                 onClick={resendOtp}
                 disabled={isLoading || resendSeconds > 0}
-                className="w-full h-10 text-sm text-stone-300 hover:text-stone-200 disabled:text-gray-600 transition-colors inline-flex items-center justify-center gap-2"
+                className="w-full h-10 text-sm text-primary hover:text-green-200 disabled:text-foreground/70 transition-colors inline-flex items-center justify-center gap-2"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
                 {resendSeconds > 0 ? `Gửi lại mã sau ${formatCountdown(resendSeconds)}` : 'Gửi lại mã OTP'}
@@ -270,7 +270,7 @@ export function AdminForgotPasswordPage() {
           {step === 'reset' && (
             <form onSubmit={resetForm.handleSubmit(handleReset)} className="space-y-4">
               <div>
-                <Label className="text-gray-400 mb-2 block text-xs uppercase tracking-wider">
+                <Label className="text-muted-foreground/80 mb-2 block text-xs uppercase tracking-wider">
                   Mật khẩu admin mới
                 </Label>
                 <Input
@@ -280,7 +280,7 @@ export function AdminForgotPasswordPage() {
                     required: 'Mật khẩu là bắt buộc',
                     minLength: { value: 8, message: 'Mật khẩu tối thiểu 8 ký tự' },
                   })}
-                  className="h-12 rounded-xl bg-gray-950 border-gray-700 text-white placeholder:text-gray-600 focus:border-stone-500"
+                  className="h-12 rounded-xl bg-gray-950 border-gray-700 text-white placeholder:text-foreground/70 focus:border-primary"
                 />
                 {resetForm.formState.errors.newPass && (
                   <p className="text-xs text-red-400 mt-1">{resetForm.formState.errors.newPass.message}</p>
@@ -288,7 +288,7 @@ export function AdminForgotPasswordPage() {
               </div>
 
               <div>
-                <Label className="text-gray-400 mb-2 block text-xs uppercase tracking-wider">
+                <Label className="text-muted-foreground/80 mb-2 block text-xs uppercase tracking-wider">
                   Xác nhận mật khẩu
                 </Label>
                 <Input
@@ -298,7 +298,7 @@ export function AdminForgotPasswordPage() {
                     required: 'Xác nhận mật khẩu là bắt buộc',
                     validate: (value) => value === resetForm.watch('newPass') || 'Mật khẩu không khớp',
                   })}
-                  className="h-12 rounded-xl bg-gray-950 border-gray-700 text-white placeholder:text-gray-600 focus:border-stone-500"
+                  className="h-12 rounded-xl bg-gray-950 border-gray-700 text-white placeholder:text-foreground/70 focus:border-primary"
                 />
                 {resetForm.formState.errors.confirmPass && (
                   <p className="text-xs text-red-400 mt-1">{resetForm.formState.errors.confirmPass.message}</p>
@@ -308,7 +308,7 @@ export function AdminForgotPasswordPage() {
               <button
                 type="submit"
                 disabled={isLoading || resetForm.formState.isSubmitting}
-                className="w-full h-12 bg-gradient-to-r from-emerald-600 via-stone-600 to-stone-600 hover:from-emerald-500 hover:via-stone-500 hover:to-stone-500 disabled:opacity-60 text-white rounded-xl font-bold text-sm transition-all shadow-xl shadow-stone-900/30"
+                className="w-full h-12 bg-gradient-to-r from-emerald-600 via-green-600 to-green-600 hover:from-emerald-500 hover:via-green-500 hover:to-green-500 disabled:opacity-60 text-white rounded-xl font-bold text-sm transition-all shadow-xl shadow-primary/25"
               >
                 {isLoading ? 'Đang đặt lại...' : 'Đặt lại mật khẩu admin'}
               </button>
@@ -323,7 +323,7 @@ export function AdminForgotPasswordPage() {
               <button
                 type="button"
                 onClick={() => navigate('/admin/login')}
-                className="w-full h-12 bg-gradient-to-r from-emerald-600 via-stone-600 to-stone-600 hover:from-emerald-500 hover:via-stone-500 hover:to-stone-500 text-white rounded-xl font-bold text-sm transition-all shadow-xl shadow-stone-900/30"
+                className="w-full h-12 bg-gradient-to-r from-emerald-600 via-green-600 to-green-600 hover:from-emerald-500 hover:via-green-500 hover:to-green-500 text-white rounded-xl font-bold text-sm transition-all shadow-xl shadow-primary/25"
               >
                 Về trang đăng nhập Admin
               </button>

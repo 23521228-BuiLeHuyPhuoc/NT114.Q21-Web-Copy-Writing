@@ -33,16 +33,16 @@ export function CustomerProfile() {
   };
 
   const stats = [
-    { label: 'Copy đã tạo', value: '312', icon: BarChart3, color: 'bg-stone-50 text-stone-700' },
-    { label: 'Model fine-tuned', value: '2', icon: Brain, color: 'bg-stone-50 text-stone-700' },
-    { label: 'Template lưu', value: '18', icon: Key, color: 'bg-green-50 text-green-700' },
-    { label: 'Ngày thành viên', value: '68', icon: Calendar, color: 'bg-amber-50 text-amber-700' },
+    { label: 'Copy đã tạo', value: '312', icon: BarChart3, color: 'bg-primary/10 text-primary' },
+    { label: 'Model fine-tuned', value: '2', icon: Brain, color: 'bg-primary/10 text-primary' },
+    { label: 'Template lưu', value: '18', icon: Key, color: 'bg-primary/10 text-primary' },
+    { label: 'Ngày thành viên', value: '68', icon: Calendar, color: 'bg-warning/10 text-amber-800' },
   ];
 
   return (
     <Layout>
       <div className="p-6 max-w-5xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Hồ Sơ Cá Nhân</h1>
+        <h1 className="text-3xl font-bold text-foreground mb-8">Hồ Sơ Cá Nhân</h1>
 
         <div className="grid md:grid-cols-3 gap-6 mb-6">
           {/* Avatar card */}
@@ -53,16 +53,16 @@ export function CustomerProfile() {
                   {user?.name.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <button className="absolute -bottom-1 -right-1 bg-stone-600 text-white rounded-full p-1.5 hover:bg-stone-700" onClick={() => toast.success('Tính năng upload ảnh sẽ sớm có!')}>
+              <button className="absolute -bottom-1 -right-1 bg-primary text-white rounded-full p-1.5 hover:bg-green-700" onClick={() => toast.success('Tính năng upload ảnh sẽ sớm có!')}>
                 <Edit2 className="w-3 h-3" />
               </button>
             </div>
-            <h2 className="text-xl font-bold mb-1 text-gray-900">{user?.name}</h2>
-            <Badge className="bg-stone-100 text-stone-700 border-0 mb-3">
+            <h2 className="text-xl font-bold mb-1 text-foreground">{user?.name}</h2>
+            <Badge className="bg-primary/10 text-primary border-0 mb-3">
               <Crown className="w-3 h-3 mr-1" /> Pro Member
             </Badge>
-            <p className="text-sm text-gray-500">{user?.email}</p>
-            <div className="mt-4 w-full border-t pt-4 space-y-2 text-sm text-gray-600">
+            <p className="text-sm text-muted-foreground">{user?.email}</p>
+            <div className="mt-4 w-full border-t pt-4 space-y-2 text-sm text-foreground/70">
               <p><Globe className="w-3.5 h-3.5 inline mr-1.5" />{company}</p>
               <p><Calendar className="w-3.5 h-3.5 inline mr-1.5" />Thành viên từ 15/01/2026</p>
             </div>
@@ -78,20 +78,20 @@ export function CustomerProfile() {
                     <div className={`inline-flex p-2 rounded-lg ${s.color} mb-2`}>
                       <Icon className="w-4 h-4" />
                     </div>
-                    <p className="text-2xl font-bold text-gray-900">{s.value}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{s.label}</p>
+                    <p className="text-2xl font-bold text-foreground">{s.value}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{s.label}</p>
                   </Card>
                 );
               })}
             </div>
 
-            <Card className="p-4 bg-gradient-to-r from-stone-50 to-stone-50 border-stone-200">
+            <Card className="p-4 bg-gradient-to-r from-green-50 to-green-50 border-primary/20">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-semibold text-stone-900">Gói Pro đang hoạt động</p>
-                  <p className="text-sm text-stone-700">Gia hạn: 23/04/2026 · 299,000₫/tháng</p>
+                  <p className="font-semibold text-green-900">Gói Pro đang hoạt động</p>
+                  <p className="text-sm text-primary">Gia hạn: 23/04/2026 · 299,000₫/tháng</p>
                 </div>
-                <Badge className="bg-stone-600 text-white border-0">Còn 31 ngày</Badge>
+                <Badge className="bg-primary text-white border-0">Còn 31 ngày</Badge>
               </div>
             </Card>
           </div>
@@ -109,11 +109,11 @@ export function CustomerProfile() {
           <TabsContent value="info">
             <Card className="p-6">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="font-bold text-gray-900">Thông tin cá nhân</h3>
+                <h3 className="font-bold text-foreground">Thông tin cá nhân</h3>
                 {editing ? (
                   <div className="flex gap-2">
                     <Button size="sm" variant="outline" onClick={() => setEditing(false)}>Hủy</Button>
-                    <Button size="sm" className="bg-stone-600 text-white" onClick={saveProfile}>
+                    <Button size="sm" className="bg-primary text-white" onClick={saveProfile}>
                       <Save className="w-4 h-4 mr-1" /> Lưu
                     </Button>
                   </div>
@@ -132,7 +132,7 @@ export function CustomerProfile() {
                   { label: 'Công ty', value: company, key: 'company', setter: setCompany },
                 ].map(f => (
                   <div key={f.key}>
-                    <Label className="text-sm text-gray-600">{f.label}</Label>
+                    <Label className="text-sm text-foreground/70">{f.label}</Label>
                     <Input
                       value={f.value}
                       onChange={f.setter ? e => f.setter!(e.target.value) : undefined}
@@ -142,7 +142,7 @@ export function CustomerProfile() {
                   </div>
                 ))}
                 <div>
-                  <Label className="text-sm text-gray-600">Ngành nghề chính</Label>
+                  <Label className="text-sm text-foreground/70">Ngành nghề chính</Label>
                   <Select value={industry} onValueChange={setIndustry} disabled={!editing}>
                     <SelectTrigger className="mt-2"><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -159,8 +159,8 @@ export function CustomerProfile() {
           {/* AI Preferences */}
           <TabsContent value="preferences">
             <Card className="p-6 space-y-4">
-              <h3 className="font-bold text-gray-900 mb-2">Tùy chọn AI mặc định</h3>
-              <p className="text-sm text-gray-600">Cài đặt mặc định được áp dụng mỗi khi bạn mở AI Generator.</p>
+              <h3 className="font-bold text-foreground mb-2">Tùy chọn AI mặc định</h3>
+              <p className="text-sm text-foreground/70">Cài đặt mặc định được áp dụng mỗi khi bạn mở AI Generator.</p>
               <div className="grid md:grid-cols-3 gap-4">
                 <div>
                   <Label>Model mặc định</Label>
@@ -198,7 +198,7 @@ export function CustomerProfile() {
                   </Select>
                 </div>
               </div>
-              <Button className="bg-stone-600 text-white" onClick={() => toast.success('Đã lưu tùy chọn!')}>
+              <Button className="bg-primary text-white" onClick={() => toast.success('Đã lưu tùy chọn!')}>
                 <Save className="w-4 h-4 mr-2" /> Lưu tùy chọn
               </Button>
             </Card>
@@ -207,18 +207,18 @@ export function CustomerProfile() {
           {/* Security */}
           <TabsContent value="security">
             <Card className="p-6 space-y-4">
-              <h3 className="font-bold text-gray-900">Đổi mật khẩu</h3>
+              <h3 className="font-bold text-foreground">Đổi mật khẩu</h3>
               <div className="space-y-3 max-w-md">
                 <div><Label>Mật khẩu hiện tại</Label><Input type="password" placeholder="••••••••" className="mt-2" /></div>
                 <div><Label>Mật khẩu mới</Label><Input type="password" placeholder="••••••••" className="mt-2" /></div>
                 <div><Label>Xác nhận mật khẩu mới</Label><Input type="password" placeholder="••••••••" className="mt-2" /></div>
-                <Button className="bg-stone-600 text-white" onClick={() => toast.success('Đã đổi mật khẩu!')}>
+                <Button className="bg-primary text-white" onClick={() => toast.success('Đã đổi mật khẩu!')}>
                   <Lock className="w-4 h-4 mr-2" /> Cập nhật mật khẩu
                 </Button>
               </div>
             </Card>
             <Card className="p-6 mt-4">
-              <h3 className="font-bold text-gray-900 mb-4">Bảo mật tài khoản</h3>
+              <h3 className="font-bold text-foreground mb-4">Bảo mật tài khoản</h3>
               {[
                 { label: 'Xác thực 2 bước (2FA)', desc: 'Bảo vệ ti khoản với mã OTP khi đăng nhập', on: false },
                 { label: 'Thông báo đăng nhập lạ', desc: 'Nhận email khi có đăng nhập từ thiết bị mới', on: true },
@@ -226,8 +226,8 @@ export function CustomerProfile() {
               ].map(s => (
                 <div key={s.label} className="flex items-center justify-between p-4 border rounded-xl mb-3">
                   <div>
-                    <p className="font-medium text-sm text-gray-900">{s.label}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{s.desc}</p>
+                    <p className="font-medium text-sm text-foreground">{s.label}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{s.desc}</p>
                   </div>
                   <Switch defaultChecked={s.on} />
                 </div>
@@ -238,7 +238,7 @@ export function CustomerProfile() {
           {/* Notifications */}
           <TabsContent value="notifications">
             <Card className="p-6 space-y-3">
-              <h3 className="font-bold text-gray-900 mb-2">Cài đặt thông báo</h3>
+              <h3 className="font-bold text-foreground mb-2">Cài đặt thông báo</h3>
               {[
                 { label: 'Email khi copy được tạo thành công', on: false },
                 { label: 'Thông báo quota còn 20%', on: true },
@@ -248,11 +248,11 @@ export function CustomerProfile() {
                 { label: 'Weekly report copy đã tạo', on: false },
               ].map(n => (
                 <div key={n.label} className="flex items-center justify-between p-4 border rounded-xl">
-                  <span className="text-sm text-gray-700">{n.label}</span>
+                  <span className="text-sm text-foreground/80">{n.label}</span>
                   <Switch defaultChecked={n.on} />
                 </div>
               ))}
-              <Button className="bg-stone-600 text-white mt-2" onClick={() => toast.success('Đã lưu cài đặt thông báo!')}>
+              <Button className="bg-primary text-white mt-2" onClick={() => toast.success('Đã lưu cài đặt thông báo!')}>
                 <Save className="w-4 h-4 mr-2" /> Lưu cài đặt
               </Button>
             </Card>

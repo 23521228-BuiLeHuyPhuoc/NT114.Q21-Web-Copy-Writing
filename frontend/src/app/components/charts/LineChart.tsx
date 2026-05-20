@@ -53,8 +53,8 @@ export function LineChart({ data, xKey, series, height = 280, yMax, yMin }: Line
       tooltip: { mode: 'index', intersect: false },
     },
     scales: {
-      x: { grid: { color: '#f0f0f0' }, ticks: { font: { size: 11 } } },
-      y: { grid: { color: '#f0f0f0' }, ticks: { font: { size: 11 } }, min: yMin, max: yMax },
+      x: { grid: { color: 'rgba(16, 32, 23, 0.08)' }, ticks: { font: { size: 11 } } },
+      y: { grid: { color: 'rgba(16, 32, 23, 0.08)' }, ticks: { font: { size: 11 } }, min: yMin, max: yMax },
     },
     interaction: { mode: 'nearest', intersect: false },
   };

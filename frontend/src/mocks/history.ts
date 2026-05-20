@@ -3,9 +3,9 @@ import {
 } from 'lucide-react';
 
 export const INDUSTRY_MAP: Record<string, { label: string; color: string; Icon: any }> = {
-  ecommerce:   { label: 'Thương Mại Điện Tử', color: 'bg-purple-100 text-purple-700', Icon: ShoppingBag },
-  realestate:  { label: 'Bất Động Sản',       color: 'bg-blue-100 text-blue-700',     Icon: Building2 },
-  technology:  { label: 'Công Nghệ',           color: 'bg-cyan-100 text-cyan-700',     Icon: Cpu },
+  ecommerce:   { label: 'Thương Mại Điện Tử', color: 'bg-emerald-100 text-emerald-700', Icon: ShoppingBag },
+  realestate:  { label: 'Bất Động Sản',       color: 'bg-green-100 text-green-700',     Icon: Building2 },
+  technology:  { label: 'Công Nghệ',           color: 'bg-teal-100 text-teal-700',     Icon: Cpu },
   fnb:         { label: 'Ẩm Thực',             color: 'bg-orange-100 text-orange-700', Icon: Utensils },
   healthcare:  { label: 'Y Tế & Sức Khỏe',    color: 'bg-red-100 text-red-700',       Icon: Heart },
   education:   { label: 'Giáo Dục',            color: 'bg-green-100 text-green-700',   Icon: GraduationCap },
@@ -22,9 +22,9 @@ export const TYPE_MAP: Record<string, string> = {
 
 export const MODEL_MAP: Record<string, { label: string; color: string }> = {
   'gpt4':      { label: 'GPT-4o', color: 'bg-green-100 text-green-700' },
-  'gpt35':     { label: 'GPT-3.5', color: 'bg-blue-100 text-blue-700' },
+  'gpt35':     { label: 'GPT-3.5', color: 'bg-green-100 text-green-700' },
   'llama3':    { label: 'Llama 3.1', color: 'bg-orange-100 text-orange-700' },
-  'finetuned': { label: 'Fine-tuned', color: 'bg-violet-100 text-violet-700' },
+  'finetuned': { label: 'Fine-tuned', color: 'bg-teal-100 text-teal-700' },
 };
 
 export const MOCK_HISTORY = [

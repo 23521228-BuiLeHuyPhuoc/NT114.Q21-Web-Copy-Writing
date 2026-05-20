@@ -32,18 +32,18 @@ export function CustomerProjectDetail() {
   return (
     <Layout>
       <div className="p-6 max-w-6xl mx-auto">
-        <Button variant="ghost" className="mb-4 text-gray-600" onClick={() => navigate('/projects')}>
+        <Button variant="ghost" className="mb-4 text-foreground/70" onClick={() => navigate('/projects')}>
           <ArrowLeft className="w-4 h-4 mr-2" /> Quay lại dự án
         </Button>
 
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-6">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <Badge className="bg-green-100 text-green-700 border-0">Đang hoạt động</Badge>
-              <Badge className="bg-gray-100 text-gray-600 border-0">{PROJECT.industry}</Badge>
+              <Badge className="bg-primary/10 text-primary border-0">Đang hoạt động</Badge>
+              <Badge className="bg-muted text-foreground/70 border-0">{PROJECT.industry}</Badge>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">{PROJECT.name}</h1>
-            <p className="text-sm text-gray-500 mt-1">{PROJECT.desc}</p>
+            <h1 className="text-2xl font-bold text-foreground">{PROJECT.name}</h1>
+            <p className="text-sm text-muted-foreground mt-1">{PROJECT.desc}</p>
           </div>
           <Button className="bg-gradient-to-r from-green-600 to-emerald-600 text-white" onClick={() => navigate('/generate')}>
             <Plus className="w-4 h-4 mr-2" /> Thêm nội dung
@@ -53,9 +53,9 @@ export function CustomerProjectDetail() {
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {[
-            { label: 'Tổng nội dung', value: PROJECT.stats.total, icon: FileText, color: 'text-green-600 bg-green-50' },
-            { label: 'Đã xuất bản', value: PROJECT.stats.published, icon: Star, color: 'text-stone-600 bg-stone-50' },
-            { label: 'Bản nháp', value: PROJECT.stats.draft, icon: Clock, color: 'text-amber-600 bg-amber-50' },
+            { label: 'Tổng nội dung', value: PROJECT.stats.total, icon: FileText, color: 'text-primary bg-primary/5' },
+            { label: 'Đã xuất bản', value: PROJECT.stats.published, icon: Star, color: 'text-primary bg-primary/5' },
+            { label: 'Bản nháp', value: PROJECT.stats.draft, icon: Clock, color: 'text-amber-600 bg-warning/10' },
             { label: 'Chất lượng TB', value: PROJECT.stats.avgQuality + '%', icon: BarChart3, color: 'text-emerald-600 bg-emerald-50' },
           ].map((s, i) => {
             const Icon = s.icon;
@@ -63,8 +63,8 @@ export function CustomerProjectDetail() {
               <Card key={i} className="p-4 flex items-center gap-3">
                 <div className={`p-2 rounded-lg ${s.color}`}><Icon className="w-4 h-4" /></div>
                 <div>
-                  <p className="text-xl font-bold text-gray-900">{s.value}</p>
-                  <p className="text-xs text-gray-500">{s.label}</p>
+                  <p className="text-xl font-bold text-foreground">{s.value}</p>
+                  <p className="text-xs text-muted-foreground">{s.label}</p>
                 </div>
               </Card>
             );
@@ -72,36 +72,36 @@ export function CustomerProjectDetail() {
         </div>
 
         {/* Progress */}
-        <Card className="p-5 mb-6 bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
+        <Card className="p-5 mb-6 bg-gradient-to-r from-green-50 to-emerald-50 border-primary/20">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-semibold text-gray-900">Tiến độ dự án</span>
-            <span className="text-sm text-green-700 font-semibold">75%</span>
+            <span className="text-sm font-semibold text-foreground">Tiến độ dự án</span>
+            <span className="text-sm text-primary font-semibold">75%</span>
           </div>
           <Progress value={75} className="h-2" />
-          <p className="text-xs text-gray-500 mt-2">18/24 nội dung đã hoàn thành</p>
+          <p className="text-xs text-muted-foreground mt-2">18/24 nội dung đã hoàn thành</p>
         </Card>
 
         {/* Contents */}
-        <h2 className="text-lg font-bold text-gray-900 mb-4">Nội dung trong dự án</h2>
+        <h2 className="text-lg font-bold text-foreground mb-4">Nội dung trong dự án</h2>
         <div className="space-y-3">
           {PROJECT_CONTENTS.map(item => (
             <Card key={item.id} className="p-4 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`/contents/${item.id}`)}>
               <div className="flex items-center gap-4">
-                <div className="bg-green-100 p-2 rounded-lg flex-shrink-0">
-                  <FileText className="w-4 h-4 text-green-600" />
+                <div className="bg-primary/10 p-2 rounded-lg flex-shrink-0">
+                  <FileText className="w-4 h-4 text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-sm text-gray-900 truncate">{item.title}</h3>
+                  <h3 className="font-semibold text-sm text-foreground truncate">{item.title}</h3>
                   <div className="flex items-center gap-2 mt-1">
-                    <Badge className="bg-gray-100 text-gray-600 border-0 text-xs">{item.type}</Badge>
-                    <Badge className="bg-green-100 text-green-700 border-0 text-xs">{item.model}</Badge>
-                    <span className="text-xs text-gray-400">{item.date}</span>
+                    <Badge className="bg-muted text-foreground/70 border-0 text-xs">{item.type}</Badge>
+                    <Badge className="bg-primary/10 text-primary border-0 text-xs">{item.model}</Badge>
+                    <span className="text-xs text-muted-foreground/80">{item.date}</span>
                   </div>
                 </div>
-                <Badge className={`border-0 text-xs ${item.status === 'published' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                <Badge className={`border-0 text-xs ${item.status === 'published' ? 'bg-primary/10 text-primary' : 'bg-warning/15 text-amber-800'}`}>
                   {item.status === 'published' ? 'Xuất bản' : 'Nháp'}
                 </Badge>
-                <span className="text-sm font-semibold text-green-600">⭐ {item.quality}%</span>
+                <span className="text-sm font-semibold text-primary">⭐ {item.quality}%</span>
               </div>
             </Card>
           ))}

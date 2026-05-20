@@ -12,13 +12,13 @@ export function AdminAccessDenied() {
     <div className="min-h-[80vh] flex items-center justify-center p-6">
       <div className="text-center max-w-md">
         {/* Icon */}
-        <div className="w-24 h-24 bg-red-50 border-2 border-red-100 rounded-3xl flex items-center justify-center mx-auto mb-6">
+        <div className="w-24 h-24 bg-destructive/10 border-2 border-red-100 rounded-3xl flex items-center justify-center mx-auto mb-6">
           <ShieldOff className="w-12 h-12 text-red-400" />
         </div>
 
         {/* Heading */}
-        <h2 className="text-gray-900 mb-2">Không có quyền truy cập</h2>
-        <p className="text-gray-500 text-sm leading-relaxed mb-6">
+        <h2 className="text-foreground mb-2">Không có quyền truy cập</h2>
+        <p className="text-muted-foreground text-sm leading-relaxed mb-6">
           Trang này không nằm trong phạm vi quyền của loại tài khoản của bạn.
         </p>
 
@@ -34,11 +34,11 @@ export function AdminAccessDenied() {
 
         {/* Permissions list */}
         {roleDef && (
-          <div className="bg-gray-50 border border-gray-100 rounded-2xl p-4 mb-8 text-left">
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">
+          <div className="bg-surface-muted border border-border rounded-2xl p-4 mb-8 text-left">
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">
               Bạn được phép truy cập
             </p>
-            <p className="text-sm text-gray-600">{roleDef.description}</p>
+            <p className="text-sm text-foreground/70">{roleDef.description}</p>
           </div>
         )}
 
@@ -46,14 +46,14 @@ export function AdminAccessDenied() {
         <div className="flex gap-3 justify-center">
           <button
             onClick={() => navigate(-1)}
-            className="inline-flex items-center gap-2 border border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all"
+            className="inline-flex items-center gap-2 border border-border text-foreground/70 hover:border-primary/30 hover:bg-surface-muted rounded-xl px-5 py-2.5 text-sm font-semibold transition-all"
           >
             <ArrowLeft className="w-4 h-4" />
             Quay lại
           </button>
           <button
             onClick={() => navigate('/admin')}
-            className="inline-flex items-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl px-5 py-2.5 text-sm font-semibold transition-all shadow-md shadow-green-200/60"
+            className="inline-flex items-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl px-5 py-2.5 text-sm font-semibold transition-all shadow-md shadow-primary/20"
           >
             <Home className="w-4 h-4" />
             Dashboard Admin

@@ -111,18 +111,18 @@ export function AdminCategories() {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">Quản Lý Danh Mục</h1>
-            <p className="text-gray-500 text-sm">Quản lý ngành nghề và danh mục cho templates</p>
+            <h1 className="text-2xl font-bold text-foreground mb-1">Quản Lý Danh Mục</h1>
+            <p className="text-muted-foreground text-sm">Quản lý ngành nghề và danh mục cho templates</p>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setTrashOpen(true)}
-              className="relative flex items-center gap-1.5 border border-gray-200 hover:border-red-300 hover:bg-red-50 text-gray-500 hover:text-red-600 rounded-xl px-3 py-2 text-sm font-semibold transition-all"
+              className="relative flex items-center gap-1.5 border border-border hover:border-red-300 hover:bg-destructive/10 text-muted-foreground hover:text-red-600 rounded-xl px-3 py-2 text-sm font-semibold transition-all"
             >
               <Trash2 className="w-4 h-4" />
               Thùng rác
               {deletedCategories.length > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">{deletedCategories.length}</span>
+                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-destructive/100 text-white text-[10px] font-bold rounded-full flex items-center justify-center">{deletedCategories.length}</span>
               )}
             </button>
             <Button className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl" onClick={() => setShowAdd(true)}>
@@ -133,7 +133,7 @@ export function AdminCategories() {
 
         {/* Search */}
         <div className="relative mb-5">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/80" />
           <Input placeholder="Tìm danh mục..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 max-w-md" />
         </div>
 
@@ -154,25 +154,25 @@ export function AdminCategories() {
             <TableBody>
               {filtered.map(cat => (
                 <TableRow key={cat.id} className={!cat.active ? 'opacity-60' : ''}>
-                  <TableCell className="text-gray-400 text-sm">{cat.order}</TableCell>
+                  <TableCell className="text-muted-foreground/80 text-sm">{cat.order}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <span className="text-xl">{cat.icon}</span>
-                      <span className="font-semibold text-gray-900 text-sm">{cat.name}</span>
+                      <span className="font-semibold text-foreground text-sm">{cat.name}</span>
                     </div>
                   </TableCell>
-                  <TableCell><code className="text-xs bg-gray-100 px-2 py-0.5 rounded-md">{cat.slug}</code></TableCell>
-                  <TableCell><Badge className="bg-green-100 text-green-700 border-0 text-xs">{cat.templates}</Badge></TableCell>
-                  <TableCell className="text-sm text-gray-600">{cat.users}</TableCell>
+                  <TableCell><code className="text-xs bg-muted px-2 py-0.5 rounded-md">{cat.slug}</code></TableCell>
+                  <TableCell><Badge className="bg-primary/10 text-primary border-0 text-xs">{cat.templates}</Badge></TableCell>
+                  <TableCell className="text-sm text-foreground/70">{cat.users}</TableCell>
                   <TableCell>
                     <Switch checked={cat.active} onCheckedChange={() => toggleActive(cat.id)} />
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-1 justify-end">
-                      <button onClick={() => openEdit(cat)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-stone-50 text-gray-400 hover:text-stone-600 transition-colors">
+                      <button onClick={() => openEdit(cat)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-primary/5 text-muted-foreground/80 hover:text-primary transition-colors">
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
-                      <button onClick={() => setConfirmDelete(cat)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors">
+                      <button onClick={() => setConfirmDelete(cat)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-destructive/10 text-muted-foreground/80 hover:text-red-500 transition-colors">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -181,7 +181,7 @@ export function AdminCategories() {
               ))}
             </TableBody>
           </Table>
-          {filtered.length === 0 && <div className="text-center py-12 text-gray-400 text-sm">Không tìm thấy danh mục nào.</div>}
+          {filtered.length === 0 && <div className="text-center py-12 text-muted-foreground/80 text-sm">Không tìm thấy danh mục nào.</div>}
         </Card>
       </div>
 
@@ -190,34 +190,34 @@ export function AdminCategories() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                <Plus className="w-4 h-4 text-green-600" />
+              <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                <Plus className="w-4 h-4 text-primary" />
               </div>
               Thêm Danh Mục Mới
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-1">
             <div>
-              <Label className="text-xs text-gray-500 uppercase tracking-wider mb-1.5 block">Tên danh mục</Label>
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Tên danh mục</Label>
               <Input value={addName} onChange={e => { setAddName(e.target.value); setAddSlug(e.target.value.toLowerCase().replace(/\s+/g, '').replace(/[^\w]/g, '')); }} placeholder="VD: Bảo Hiểm" className="h-10" />
             </div>
             <div>
-              <Label className="text-xs text-gray-500 uppercase tracking-wider mb-1.5 block">Slug</Label>
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Slug</Label>
               <Input value={addSlug} onChange={e => setAddSlug(e.target.value)} placeholder="insurance" className="h-10 font-mono text-sm" />
             </div>
             <div>
-              <Label className="text-xs text-gray-500 uppercase tracking-wider mb-2 block">Icon</Label>
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-2 block">Icon</Label>
               <div className="flex flex-wrap gap-2">
                 {ICON_OPTIONS.map(icon => (
                   <button key={icon} onClick={() => setAddIcon(icon)}
-                    className={`w-9 h-9 text-xl rounded-xl border-2 transition-all ${addIcon === icon ? 'border-green-500 bg-green-50 scale-110' : 'border-gray-200 hover:border-gray-300'}`}>
+                    className={`w-9 h-9 text-xl rounded-xl border-2 transition-all ${addIcon === icon ? 'border-primary bg-primary/5 scale-110' : 'border-border hover:border-primary/30'}`}>
                     {icon}
                   </button>
                 ))}
               </div>
             </div>
             <div className="flex gap-2 pt-1">
-              <button onClick={() => setShowAdd(false)} className="flex-1 h-10 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">Huỷ</button>
+              <button onClick={() => setShowAdd(false)} className="flex-1 h-10 border border-border rounded-xl text-sm font-semibold text-foreground/70 hover:bg-surface-muted transition-colors">Huỷ</button>
               <button onClick={handleAdd} disabled={!addName.trim()} className="flex-1 h-10 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:opacity-40 text-white rounded-xl text-sm font-bold transition-all">
                 Thêm danh mục
               </button>
@@ -231,8 +231,8 @@ export function AdminCategories() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-stone-100 rounded-lg flex items-center justify-center">
-                <Edit2 className="w-4 h-4 text-stone-600" />
+              <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                <Edit2 className="w-4 h-4 text-primary" />
               </div>
               Chỉnh sửa Danh Mục
             </DialogTitle>
@@ -240,27 +240,27 @@ export function AdminCategories() {
           {editItem && (
             <div className="space-y-4 pt-1">
               <div>
-                <Label className="text-xs text-gray-500 uppercase tracking-wider mb-1.5 block">Tên danh mục</Label>
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Tên danh mục</Label>
                 <Input value={editName} onChange={e => setEditName(e.target.value)} className="h-10" />
               </div>
               <div>
-                <Label className="text-xs text-gray-500 uppercase tracking-wider mb-1.5 block">Slug</Label>
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Slug</Label>
                 <Input value={editSlug} onChange={e => setEditSlug(e.target.value)} className="h-10 font-mono text-sm" />
               </div>
               <div>
-                <Label className="text-xs text-gray-500 uppercase tracking-wider mb-2 block">Icon</Label>
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-2 block">Icon</Label>
                 <div className="flex flex-wrap gap-2">
                   {ICON_OPTIONS.map(icon => (
                     <button key={icon} onClick={() => setEditIcon(icon)}
-                      className={`w-9 h-9 text-xl rounded-xl border-2 transition-all ${editIcon === icon ? 'border-stone-500 bg-stone-50 scale-110' : 'border-gray-200 hover:border-gray-300'}`}>
+                      className={`w-9 h-9 text-xl rounded-xl border-2 transition-all ${editIcon === icon ? 'border-primary bg-primary/5 scale-110' : 'border-border hover:border-primary/30'}`}>
                       {icon}
                     </button>
                   ))}
                 </div>
               </div>
               <div className="flex gap-2 pt-1">
-                <button onClick={() => setEditItem(null)} className="flex-1 h-10 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">Huỷ</button>
-                <button onClick={handleSaveEdit} disabled={editSaving} className="flex-1 h-10 bg-gradient-to-r from-stone-600 to-stone-700 hover:from-stone-700 hover:to-stone-800 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center">
+                <button onClick={() => setEditItem(null)} className="flex-1 h-10 border border-border rounded-xl text-sm font-semibold text-foreground/70 hover:bg-surface-muted transition-colors">Huỷ</button>
+                <button onClick={handleSaveEdit} disabled={editSaving} className="flex-1 h-10 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center">
                   {editSaving ? <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : 'Lưu thay đổi'}
                 </button>
               </div>

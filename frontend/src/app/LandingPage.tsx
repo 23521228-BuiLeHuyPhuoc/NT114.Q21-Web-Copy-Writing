@@ -15,35 +15,35 @@ const FEATURES = [
     icon: Wand2,
     title: 'AI Generator đa model',
     desc: 'Tạo headline, email, mô tả sản phẩm và social post bằng GPT-4o hoặc Llama 3.1.',
-    accent: 'bg-green-100 text-green-700',
+    accent: 'bg-primary/10 text-primary',
   },
   {
     icon: Brain,
     title: 'Fine-tuning Studio',
     desc: 'Huấn luyện AI theo giọng thương hiệu để nội dung nhất quán hơn giữa các chiến dịch.',
-    accent: 'bg-stone-100 text-stone-700',
+    accent: 'bg-primary/10 text-primary',
   },
   {
     icon: FileText,
     title: 'Template Library',
     desc: 'Bộ mẫu copy theo ngành, phù hợp cho quảng cáo, email, landing page và thương mại điện tử.',
-    accent: 'bg-amber-100 text-amber-700',
+    accent: 'bg-warning/15 text-amber-800',
   },
   {
     icon: Key,
     title: 'RESTful API',
     desc: 'Kết nối CopyPro vào CMS, website hoặc workflow tự động hóa của đội marketing.',
-    accent: 'bg-stone-100 text-stone-700',
+    accent: 'bg-primary/10 text-primary',
   },
 ];
 
 const INDUSTRIES = [
-  { icon: ShoppingBag, name: 'E-commerce', tone: 'bg-green-50 text-green-700' },
-  { icon: Home, name: 'Bất động sản', tone: 'bg-amber-50 text-amber-700' },
-  { icon: Cpu, name: 'Công nghệ', tone: 'bg-stone-50 text-stone-700' },
-  { icon: Utensils, name: 'F&B', tone: 'bg-amber-50 text-amber-700' },
-  { icon: Stethoscope, name: 'Y tế', tone: 'bg-red-50 text-red-700' },
-  { icon: GraduationCap, name: 'Giáo dục', tone: 'bg-stone-50 text-stone-700' },
+  { icon: ShoppingBag, name: 'E-commerce', tone: 'bg-primary/10 text-primary' },
+  { icon: Home, name: 'Bất động sản', tone: 'bg-warning/10 text-amber-800' },
+  { icon: Cpu, name: 'Công nghệ', tone: 'bg-primary/10 text-primary' },
+  { icon: Utensils, name: 'F&B', tone: 'bg-warning/10 text-amber-800' },
+  { icon: Stethoscope, name: 'Y tế', tone: 'bg-destructive/10 text-destructive' },
+  { icon: GraduationCap, name: 'Giáo dục', tone: 'bg-primary/10 text-primary' },
 ];
 
 const HOW_IT_WORKS = [
@@ -75,42 +75,42 @@ const TESTIMONIALS = [
 ];
 
 const STATS = [
-  { value: '2,000+', label: 'doanh nghiệp tin dùng', icon: Users, tone: 'text-green-600' },
-  { value: '500K+', label: 'copy đã tạo', icon: BarChart3, tone: 'text-stone-600' },
+  { value: '2,000+', label: 'doanh nghiệp tin dùng', icon: Users, tone: 'text-primary' },
+  { value: '500K+', label: 'copy đã tạo', icon: BarChart3, tone: 'text-primary' },
   { value: '15+', label: 'ngành nghề hỗ trợ', icon: Globe, tone: 'text-amber-600' },
-  { value: '< 2s', label: 'thời gian phản hồi', icon: Zap, tone: 'text-stone-600' },
+  { value: '< 2s', label: 'thời gian phản hồi', icon: Zap, tone: 'text-primary' },
 ];
 
 export function LandingPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-white">
+    <div className="min-h-screen overflow-x-hidden bg-card">
       <PublicNavbar />
 
       <section className="relative pt-28 pb-16 md:pt-32 md:pb-20">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-emerald-950 to-stone-950" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_60%_at_50%_-10%,rgba(79,70,229,0.18),transparent)]" />
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-950" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_60%_at_50%_-10%,rgba(34,197,94,0.18),transparent)]" />
         </div>
 
         <div className="relative mx-auto max-w-7xl px-5 lg:px-8">
           <div className="grid items-center gap-10 lg:grid-cols-12 lg:gap-12">
             <div className="text-center lg:col-span-5 lg:text-left">
-              <Badge className="mb-5 border border-stone-700/40 bg-stone-950/45 px-4 py-1.5 text-sm text-stone-200">
+              <Badge className="mb-5 border border-green-700/40 bg-green-950/45 px-4 py-1.5 text-sm text-green-200">
                 AI Copywriting cho doanh nghiệp Việt
               </Badge>
               <h1 className="mb-6 text-white leading-[1.08]">
                 Tạo copy marketing rõ ý, đúng giọng thương hiệu
               </h1>
-              <p className="mx-auto mb-8 max-w-xl text-base leading-relaxed text-gray-300 lg:mx-0 lg:text-lg">
+              <p className="mx-auto mb-8 max-w-xl text-base leading-relaxed text-muted-foreground/60 lg:mx-0 lg:text-lg">
                 CopyPro giúp đội marketing tạo headline, email, landing page và social post trong vài giây, có thể tinh chỉnh theo ngành và thương hiệu.
               </p>
 
               <div className="mb-7 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
                 <button
                   onClick={() => navigate('/register')}
-                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-green-500 to-emerald-500 px-7 py-3.5 text-sm font-bold text-white shadow-lg shadow-green-900/30 transition-all hover:from-green-400 hover:to-emerald-400"
+                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-green-500 to-emerald-500 px-7 py-3.5 text-sm font-bold text-white shadow-lg shadow-primary/25 transition-all hover:from-green-400 hover:to-emerald-400"
                 >
                   <Sparkles className="h-4 w-4" />
                   Dùng thử miễn phí
@@ -118,21 +118,21 @@ export function LandingPage() {
                 </button>
                 <button
                   onClick={() => navigate('/about')}
-                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/25 bg-white/10 px-7 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-white/15"
+                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/25 bg-card/10 px-7 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-card/15"
                 >
                   <Play className="h-4 w-4" />
                   Xem cách hoạt động
                 </button>
               </div>
 
-              <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-gray-400 lg:justify-start">
+              <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-muted-foreground/80 lg:justify-start">
                 <span className="flex items-center gap-1.5">
                   {[...Array(5)].map((_, i) => <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />)}
                   4.9/5
                 </span>
-                <span className="hidden text-gray-700 sm:inline">|</span>
+                <span className="hidden text-white/20 sm:inline">|</span>
                 <span><span className="font-semibold text-white">2,000+</span> doanh nghiệp</span>
-                <span className="hidden text-gray-700 sm:inline">|</span>
+                <span className="hidden text-white/20 sm:inline">|</span>
                 <span>Không cần thẻ tín dụng</span>
               </div>
             </div>
@@ -144,16 +144,16 @@ export function LandingPage() {
         </div>
       </section>
 
-      <section className="border-b border-gray-100 bg-white py-10">
+      <section className="border-b border-border bg-card py-10">
         <div className="mx-auto max-w-7xl px-5 lg:px-8">
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             {STATS.map((stat) => {
               const Icon = stat.icon;
               return (
-                <div key={stat.label} className="rounded-lg border border-gray-100 bg-white p-5 text-center">
+                <div key={stat.label} className="rounded-lg border border-border bg-card p-5 text-center">
                   <Icon className={`mx-auto mb-3 h-5 w-5 ${stat.tone}`} />
-                  <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                  <p className="mt-1 text-xs font-medium text-gray-500">{stat.label}</p>
+                  <p className="text-2xl font-bold text-foreground">{stat.value}</p>
+                  <p className="mt-1 text-xs font-medium text-muted-foreground">{stat.label}</p>
                 </div>
               );
             })}
@@ -163,12 +163,12 @@ export function LandingPage() {
 
       <AIDemoSection />
 
-      <section className="bg-white py-16 md:py-20">
+      <section className="bg-card py-16 md:py-20">
         <div className="mx-auto max-w-7xl px-5 lg:px-8">
           <div className="mx-auto mb-10 max-w-2xl text-center">
-            <Badge className="mb-4 border-0 bg-stone-100 px-4 py-1.5 text-sm text-stone-700">Tính năng</Badge>
-            <h2 className="mb-4 text-gray-900">Những công cụ cần thiết để sản xuất copy nhanh hơn</h2>
-            <p className="text-base leading-relaxed text-gray-500">
+            <Badge className="mb-4 border-0 bg-primary/10 px-4 py-1.5 text-sm text-primary">Tính năng</Badge>
+            <h2 className="mb-4 text-foreground">Những công cụ cần thiết để sản xuất copy nhanh hơn</h2>
+            <p className="text-base leading-relaxed text-muted-foreground">
               Tập trung vào các năng lực chính, dễ hiểu và sát nhu cầu vận hành nội dung hằng ngày.
             </p>
           </div>
@@ -177,12 +177,12 @@ export function LandingPage() {
             {FEATURES.map((feature) => {
               const Icon = feature.icon;
               return (
-                <div key={feature.title} className="rounded-lg border border-gray-100 bg-white p-6 shadow-sm transition-colors hover:border-stone-200">
+                <div key={feature.title} className="rounded-lg border border-border bg-card p-6 shadow-sm transition-colors hover:border-primary/20">
                   <div className={`mb-5 inline-flex rounded-lg p-3 ${feature.accent}`}>
                     <Icon className="h-5 w-5" />
                   </div>
-                  <h3 className="mb-3 text-base text-gray-900">{feature.title}</h3>
-                  <p className="text-sm leading-relaxed text-gray-500">{feature.desc}</p>
+                  <h3 className="mb-3 text-base text-foreground">{feature.title}</h3>
+                  <p className="text-sm leading-relaxed text-muted-foreground">{feature.desc}</p>
                 </div>
               );
             })}
@@ -190,13 +190,13 @@ export function LandingPage() {
         </div>
       </section>
 
-      <section className="bg-gray-50 py-16 md:py-20">
+      <section className="bg-surface-muted py-16 md:py-20">
         <div className="mx-auto max-w-7xl px-5 lg:px-8">
           <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
             <div>
-            <Badge className="mb-4 border-0 bg-green-100 px-4 py-1.5 text-sm text-green-700">Quy trình</Badge>
-              <h2 className="mb-4 text-gray-900">Từ ý tưởng đến copy hoàn chỉnh trong 4 bước</h2>
-              <p className="text-base leading-relaxed text-gray-500">
+            <Badge className="mb-4 border-0 bg-primary/10 px-4 py-1.5 text-sm text-primary">Quy trình</Badge>
+              <h2 className="mb-4 text-foreground">Từ ý tưởng đến copy hoàn chỉnh trong 4 bước</h2>
+              <p className="text-base leading-relaxed text-muted-foreground">
                 Luồng làm việc ngắn gọn để người không chuyên copywriting vẫn có thể tạo nội dung dùng được ngay.
               </p>
             </div>
@@ -205,15 +205,15 @@ export function LandingPage() {
               {HOW_IT_WORKS.map((step) => {
                 const Icon = step.icon;
                 return (
-                  <div key={step.step} className="rounded-lg border border-gray-100 bg-white p-5 shadow-sm">
+                  <div key={step.step} className="rounded-lg border border-border bg-card p-5 shadow-sm">
                     <div className="mb-4 flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-600 text-sm font-bold text-white">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-sm font-bold text-white">
                         {step.step}
                       </div>
-                      <Icon className="h-5 w-5 text-stone-600" />
+                      <Icon className="h-5 w-5 text-primary" />
                     </div>
-                    <h3 className="mb-2 text-base text-gray-900">{step.title}</h3>
-                    <p className="text-sm leading-relaxed text-gray-500">{step.desc}</p>
+                    <h3 className="mb-2 text-base text-foreground">{step.title}</h3>
+                    <p className="text-sm leading-relaxed text-muted-foreground">{step.desc}</p>
                   </div>
                 );
               })}
@@ -222,12 +222,12 @@ export function LandingPage() {
         </div>
       </section>
 
-      <section className="bg-white py-16 md:py-20">
+      <section className="bg-card py-16 md:py-20">
         <div className="mx-auto max-w-7xl px-5 lg:px-8">
           <div className="mx-auto mb-10 max-w-2xl text-center">
-            <Badge className="mb-4 border-0 bg-amber-100 px-4 py-1.5 text-sm text-amber-700">Ngành nghề</Badge>
-            <h2 className="mb-4 text-gray-900">Tối ưu cho các lĩnh vực dùng copy thường xuyên</h2>
-            <p className="text-base leading-relaxed text-gray-500">
+            <Badge className="mb-4 border-0 bg-warning/15 px-4 py-1.5 text-sm text-amber-700">Ngành nghề</Badge>
+            <h2 className="mb-4 text-foreground">Tối ưu cho các lĩnh vực dùng copy thường xuyên</h2>
+            <p className="text-base leading-relaxed text-muted-foreground">
               Mỗi ngành có cách nói, điểm đau và lời kêu gọi hành động khác nhau. CopyPro giúp bạn bắt đầu đúng hướng nhanh hơn.
             </p>
           </div>
@@ -236,11 +236,11 @@ export function LandingPage() {
             {INDUSTRIES.map((industry) => {
               const Icon = industry.icon;
               return (
-                <div key={industry.name} className="rounded-lg border border-gray-100 bg-white p-5 text-center shadow-sm">
+                <div key={industry.name} className="rounded-lg border border-border bg-card p-5 text-center shadow-sm">
                   <div className={`mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-lg ${industry.tone}`}>
                     <Icon className="h-5 w-5" />
                   </div>
-                  <p className="text-sm font-semibold text-gray-800">{industry.name}</p>
+                  <p className="text-sm font-semibold text-foreground">{industry.name}</p>
                 </div>
               );
             })}
@@ -248,27 +248,27 @@ export function LandingPage() {
         </div>
       </section>
 
-      <section className="bg-gray-50 py-16 md:py-20">
+      <section className="bg-surface-muted py-16 md:py-20">
         <div className="mx-auto max-w-7xl px-5 lg:px-8">
           <div className="mx-auto mb-10 max-w-2xl text-center">
-            <Badge className="mb-4 border-0 bg-amber-100 px-4 py-1.5 text-sm text-amber-700">Phản hồi</Badge>
-            <h2 className="mb-4 text-gray-900">Đội marketing dùng CopyPro để giảm việc lặp lại</h2>
+            <Badge className="mb-4 border-0 bg-warning/15 px-4 py-1.5 text-sm text-amber-700">Phản hồi</Badge>
+            <h2 className="mb-4 text-foreground">Đội marketing dùng CopyPro để giảm việc lặp lại</h2>
           </div>
 
           <div className="grid gap-5 md:grid-cols-3">
             {TESTIMONIALS.map((item) => (
-              <div key={item.name} className="flex h-full flex-col rounded-lg border border-gray-100 bg-white p-6 shadow-sm">
+              <div key={item.name} className="flex h-full flex-col rounded-lg border border-border bg-card p-6 shadow-sm">
                 <div className="mb-5 flex items-center gap-1">
                   {[...Array(5)].map((_, i) => <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />)}
                 </div>
-                <p className="mb-6 flex-1 text-sm leading-relaxed text-gray-600">"{item.content}"</p>
-                <div className="flex items-center gap-3 border-t border-gray-100 pt-5">
-                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-stone-600 to-amber-500 text-sm font-bold text-white">
+                <p className="mb-6 flex-1 text-sm leading-relaxed text-foreground/70">"{item.content}"</p>
+                <div className="flex items-center gap-3 border-t border-border pt-5">
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-green-600 to-amber-500 text-sm font-bold text-white">
                     {item.avatar}
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-gray-900">{item.name}</p>
-                    <p className="text-xs text-gray-500">{item.role}</p>
+                    <p className="text-sm font-semibold text-foreground">{item.name}</p>
+                    <p className="text-xs text-muted-foreground">{item.role}</p>
                   </div>
                 </div>
               </div>
@@ -278,7 +278,7 @@ export function LandingPage() {
       </section>
 
       <section className="relative overflow-hidden py-20 md:py-24">
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-emerald-950 to-stone-950" />
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-950" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_100%,rgba(245,158,11,0.14),transparent)]" />
 
         <div className="relative mx-auto max-w-3xl px-5 text-center lg:px-8">
@@ -286,28 +286,28 @@ export function LandingPage() {
             Sẵn sàng bắt đầu?
           </Badge>
           <h2 className="mb-5 text-white">Tạo copy chuyên nghiệp nhanh hơn, gọn hơn</h2>
-          <p className="mb-8 text-base leading-relaxed text-gray-300">
+          <p className="mb-8 text-base leading-relaxed text-muted-foreground/60">
             Dùng thử miễn phí, không cần thẻ tín dụng. Bắt đầu với template có sẵn và tinh chỉnh theo thương hiệu của bạn.
           </p>
           <div className="flex flex-col justify-center gap-3 sm:flex-row">
             <button
               onClick={() => navigate('/register')}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-green-500 to-emerald-500 px-8 py-3.5 text-sm font-bold text-white shadow-lg shadow-green-900/40 transition-colors hover:from-green-400 hover:to-emerald-400"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-green-500 to-emerald-500 px-8 py-3.5 text-sm font-bold text-white shadow-lg shadow-primary/30 transition-colors hover:from-green-400 hover:to-emerald-400"
             >
               <Sparkles className="h-4 w-4" />
               Bắt đầu miễn phí
               <ArrowRight className="h-4 w-4" />
             </button>
             <Link to="/pricing">
-              <button className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-white/20 px-8 py-3.5 text-sm font-semibold text-white/85 transition-colors hover:bg-white/10 hover:text-white sm:w-auto">
+              <button className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-white/20 px-8 py-3.5 text-sm font-semibold text-white/85 transition-colors hover:bg-card/10 hover:text-white sm:w-auto">
                 Xem bảng giá
               </button>
             </Link>
           </div>
-          <div className="mt-7 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-gray-400">
+          <div className="mt-7 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground/80">
             {['Setup trong 2 phút', 'Hủy bất kỳ lúc nào', 'Hỗ trợ tiếng Việt'].map((item) => (
               <span key={item} className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-green-500" /> {item}
+                <CheckCircle2 className="h-4 w-4 text-primary" /> {item}
               </span>
             ))}
           </div>

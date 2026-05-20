@@ -43,32 +43,32 @@ export function CustomerHistory() {
   };
 
   const qualityColor = (q: number) =>
-    q >= 90 ? 'text-green-600 bg-green-50' : q >= 80 ? 'text-stone-600 bg-stone-50' : 'text-amber-600 bg-amber-50';
+    q >= 90 ? 'text-primary bg-primary/5' : q >= 80 ? 'text-primary bg-primary/5' : 'text-amber-600 bg-warning/10';
 
   return (
     <Layout>
       <div className="p-6 max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-1">Lịch Sử Copy</h1>
-          <p className="text-gray-600">Tất cả nội dung bạn đã tạo với AI — tìm kiếm, lọc và tái sử dụng dễ dàng</p>
+          <h1 className="text-3xl font-bold text-foreground mb-1">Lịch Sử Copy</h1>
+          <p className="text-foreground/70">Tất cả nội dung bạn đã tạo với AI — tìm kiếm, lọc và tái sử dụng dễ dàng</p>
         </div>
 
         {/* Stats strip */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {[
-            { label: 'Tổng copy', value: history.length, icon: Sparkles, color: 'text-stone-600 bg-stone-50' },
-            { label: 'Tuần này', value: 8, icon: Calendar, color: 'text-stone-600 bg-stone-50' },
-            { label: 'Tổng từ', value: history.reduce((a, h) => a + h.words, 0), icon: Clock, color: 'text-green-600 bg-green-50' },
-            { label: 'Chất lượng TB', value: Math.round(history.reduce((a, h) => a + h.quality, 0) / history.length) + '%', icon: Filter, color: 'text-amber-600 bg-amber-50' },
+            { label: 'Tổng copy', value: history.length, icon: Sparkles, color: 'text-primary bg-primary/5' },
+            { label: 'Tuần này', value: 8, icon: Calendar, color: 'text-primary bg-primary/5' },
+            { label: 'Tổng từ', value: history.reduce((a, h) => a + h.words, 0), icon: Clock, color: 'text-primary bg-primary/5' },
+            { label: 'Chất lượng TB', value: Math.round(history.reduce((a, h) => a + h.quality, 0) / history.length) + '%', icon: Filter, color: 'text-amber-600 bg-warning/10' },
           ].map((s, i) => {
             const Icon = s.icon;
             return (
               <Card key={i} className="p-4 flex items-center gap-3">
                 <div className={`p-2 rounded-lg ${s.color}`}><Icon className="w-4 h-4" /></div>
                 <div>
-                  <p className="text-xl font-bold text-gray-900">{s.value}</p>
-                  <p className="text-xs text-gray-500">{s.label}</p>
+                  <p className="text-xl font-bold text-foreground">{s.value}</p>
+                  <p className="text-xs text-muted-foreground">{s.label}</p>
                 </div>
               </Card>
             );
@@ -79,7 +79,7 @@ export function CustomerHistory() {
         <Card className="p-4 mb-6">
           <div className="flex flex-wrap gap-3">
             <div className="relative flex-1 min-w-48">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/80" />
               <Input placeholder="Tìm kiếm..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
             </div>
             <Select value={filterIndustry} onValueChange={setFilterIndustry}>
@@ -109,7 +109,7 @@ export function CustomerHistory() {
         {/* Results */}
         <div className="space-y-3">
           {filtered.length === 0 && (
-            <div className="text-center py-16 text-gray-400">
+            <div className="text-center py-16 text-muted-foreground/80">
               <Sparkles className="w-12 h-12 mx-auto mb-3 opacity-30" />
               <p>Không tìm thấy kết quả phù hợp</p>
             </div>
@@ -125,13 +125,13 @@ export function CustomerHistory() {
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2 mb-2">
                       <Badge className={`${ind?.color} border-0 text-xs`}><IndIcon className="w-3 h-3 mr-1" />{ind?.label}</Badge>
-                      <Badge className="bg-gray-100 text-gray-600 border-0 text-xs">{TYPE_MAP[item.type]}</Badge>
+                      <Badge className="bg-muted text-foreground/70 border-0 text-xs">{TYPE_MAP[item.type]}</Badge>
                       <Badge className={`${model?.color} border-0 text-xs`}>{model?.label}</Badge>
                       <Badge className={`${qualityColor(item.quality)} border-0 text-xs`}>⭐ {item.quality}%</Badge>
                     </div>
-                    <h3 className="font-semibold text-gray-900 truncate">{item.title}</h3>
-                    <p className="text-sm text-gray-500 mt-1 line-clamp-2">{item.content}</p>
-                    <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
+                    <h3 className="font-semibold text-foreground truncate">{item.title}</h3>
+                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{item.content}</p>
+                    <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground/80">
                       <span><Calendar className="w-3 h-3 inline mr-1" />{item.createdAt}</span>
                       <span>{item.words} từ</span>
                       <span>Tone: {item.tone}</span>
@@ -172,26 +172,26 @@ export function CustomerHistory() {
               <div className="space-y-4">
                 <div className="flex flex-wrap gap-2">
                   <Badge className={`${INDUSTRY_MAP[selectedItem.industry]?.color} border-0`}>{INDUSTRY_MAP[selectedItem.industry]?.label}</Badge>
-                  <Badge className="bg-gray-100 text-gray-600 border-0">{TYPE_MAP[selectedItem.type]}</Badge>
+                  <Badge className="bg-muted text-foreground/70 border-0">{TYPE_MAP[selectedItem.type]}</Badge>
                   <Badge className={`${MODEL_MAP[selectedItem.model]?.color} border-0`}>{MODEL_MAP[selectedItem.model]?.label}</Badge>
                 </div>
                 <div className="grid grid-cols-3 gap-3">
-                  <div className="text-center p-3 bg-stone-50 rounded-lg">
-                    <p className="font-bold text-stone-600">{selectedItem.quality}%</p>
-                    <p className="text-xs text-gray-500">Chất lượng</p>
+                  <div className="text-center p-3 bg-primary/5 rounded-lg">
+                    <p className="font-bold text-primary">{selectedItem.quality}%</p>
+                    <p className="text-xs text-muted-foreground">Chất lượng</p>
                   </div>
-                  <div className="text-center p-3 bg-stone-50 rounded-lg">
-                    <p className="font-bold text-stone-600">{selectedItem.words}</p>
-                    <p className="text-xs text-gray-500">Số từ</p>
+                  <div className="text-center p-3 bg-primary/5 rounded-lg">
+                    <p className="font-bold text-primary">{selectedItem.words}</p>
+                    <p className="text-xs text-muted-foreground">Số từ</p>
                   </div>
-                  <div className="text-center p-3 bg-green-50 rounded-lg">
-                    <p className="font-bold text-green-600">{selectedItem.tone}</p>
-                    <p className="text-xs text-gray-500">Tone giọng</p>
+                  <div className="text-center p-3 bg-primary/5 rounded-lg">
+                    <p className="font-bold text-primary">{selectedItem.tone}</p>
+                    <p className="text-xs text-muted-foreground">Tone giọng</p>
                   </div>
                 </div>
-                <div className="bg-gray-50 rounded-lg p-4 whitespace-pre-wrap text-sm text-gray-800 border">{selectedItem.content}</div>
+                <div className="bg-surface-muted rounded-lg p-4 whitespace-pre-wrap text-sm text-foreground border">{selectedItem.content}</div>
                 <div className="flex gap-2">
-                  <Button className="flex-1 bg-stone-600 hover:bg-stone-700 text-white" onClick={() => { handleCopy(selectedItem.content); setSelectedItem(null); }}>
+                  <Button className="flex-1 bg-primary hover:bg-green-700 text-white" onClick={() => { handleCopy(selectedItem.content); setSelectedItem(null); }}>
                     <Copy className="w-4 h-4 mr-2" /> Sao chép nội dung
                   </Button>
                   <Button variant="outline" onClick={() => setSelectedItem(null)}>Đóng</Button>

@@ -37,8 +37,8 @@ export function CustomerNotifications() {
       <div className="p-6 max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-1">Thông Báo</h1>
-            <p className="text-gray-600">
+            <h1 className="text-3xl font-bold text-foreground mb-1">Thông Báo</h1>
+            <p className="text-foreground/70">
               {unreadCount > 0 ? `Bạn có ${unreadCount} thông báo chưa đọc` : 'Tất cả thông báo đã được đọc'}
             </p>
           </div>
@@ -53,7 +53,7 @@ export function CustomerNotifications() {
 
         <div className="space-y-3">
           {notifications.length === 0 && (
-            <div className="text-center py-16 text-gray-400">
+            <div className="text-center py-16 text-muted-foreground/80">
               <Bell className="w-12 h-12 mx-auto mb-3 opacity-30" />
               <p>Không có thông báo nào</p>
             </div>
@@ -64,7 +64,7 @@ export function CustomerNotifications() {
             return (
               <Card
                 key={notif.id}
-                className={`p-4 transition-all cursor-pointer hover:shadow-md ${!notif.read ? 'border-l-4 border-l-green-500 bg-green-50/30' : ''}`}
+                className={`p-4 transition-all cursor-pointer hover:shadow-md ${!notif.read ? 'border-l-4 border-l-green-500 bg-primary/5' : ''}`}
                 onClick={() => markRead(notif.id)}
               >
                 <div className="flex items-start gap-3">
@@ -73,13 +73,13 @@ export function CustomerNotifications() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <h3 className={`text-sm font-semibold ${!notif.read ? 'text-gray-900' : 'text-gray-700'}`}>{notif.title}</h3>
-                      {!notif.read && <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0" />}
+                      <h3 className={`text-sm font-semibold ${!notif.read ? 'text-foreground' : 'text-foreground/80'}`}>{notif.title}</h3>
+                      {!notif.read && <div className="w-2 h-2 bg-destructive/100 rounded-full flex-shrink-0" />}
                     </div>
-                    <p className="text-sm text-gray-500">{notif.desc}</p>
-                    <p className="text-xs text-gray-400 mt-1.5">{notif.time}</p>
+                    <p className="text-sm text-muted-foreground">{notif.desc}</p>
+                    <p className="text-xs text-muted-foreground/80 mt-1.5">{notif.time}</p>
                   </div>
-                  <Button variant="ghost" size="sm" className="text-gray-400 hover:text-red-500 flex-shrink-0" onClick={e => { e.stopPropagation(); deleteNotification(notif.id); }}>
+                  <Button variant="ghost" size="sm" className="text-muted-foreground/80 hover:text-red-500 flex-shrink-0" onClick={e => { e.stopPropagation(); deleteNotification(notif.id); }}>
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>

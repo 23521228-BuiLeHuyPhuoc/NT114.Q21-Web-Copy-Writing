@@ -76,38 +76,38 @@ export function AdminApiManagement() {
   });
 
   const statusBadge = (code: number) => {
-    if (code < 300) return 'bg-green-100 text-green-700';
-    if (code < 400) return 'bg-stone-100 text-stone-700';
-    if (code === 401) return 'bg-red-100 text-red-700';
-    if (code === 429) return 'bg-amber-100 text-amber-700';
-    return 'bg-red-100 text-red-700';
+    if (code < 300) return 'bg-primary/10 text-primary';
+    if (code < 400) return 'bg-primary/10 text-primary';
+    if (code === 401) return 'bg-destructive/10 text-destructive';
+    if (code === 429) return 'bg-warning/15 text-amber-800';
+    return 'bg-destructive/10 text-destructive';
   };
 
   return (
     <Layout>
       <div className="p-6 max-w-7xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-1">Quản Lý RESTful API</h1>
-          <p className="text-gray-600">Monitor traffic, logs, rate limiting và quản lý API keys toàn hệ thống</p>
+          <h1 className="text-3xl font-bold text-foreground mb-1">Quản Lý RESTful API</h1>
+          <p className="text-foreground/70">Monitor traffic, logs, rate limiting và quản lý API keys toàn hệ thống</p>
         </div>
 
         {/* Real-time stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {[
-            { label: 'Requests/24h', value: '6,692', icon: Activity, color: 'bg-stone-50 text-stone-700', change: '+12%' },
-            { label: 'Avg latency', value: '1.4s', icon: Clock, color: 'bg-stone-50 text-stone-700', change: '-5%' },
-            { label: 'Error rate', value: '1.1%', icon: AlertCircle, color: 'bg-amber-50 text-amber-700', change: '+0.2%' },
-            { label: 'Uptime', value: '99.8%', icon: CheckCircle2, color: 'bg-green-50 text-green-700', change: 'Ổn định' },
+            { label: 'Requests/24h', value: '6,692', icon: Activity, color: 'bg-primary/10 text-primary', change: '+12%' },
+            { label: 'Avg latency', value: '1.4s', icon: Clock, color: 'bg-primary/10 text-primary', change: '-5%' },
+            { label: 'Error rate', value: '1.1%', icon: AlertCircle, color: 'bg-warning/10 text-amber-800', change: '+0.2%' },
+            { label: 'Uptime', value: '99.8%', icon: CheckCircle2, color: 'bg-primary/10 text-primary', change: 'Ổn định' },
           ].map(s => {
             const Icon = s.icon;
             return (
               <Card key={s.label} className="p-4">
                 <div className="flex items-center justify-between mb-2">
                   <div className={`p-2 rounded-lg ${s.color}`}><Icon className="w-4 h-4" /></div>
-                  <span className="text-xs text-gray-500">{s.change}</span>
+                  <span className="text-xs text-muted-foreground">{s.change}</span>
                 </div>
-                <p className="text-2xl font-bold text-gray-900">{s.value}</p>
-                <p className="text-xs text-gray-500 mt-0.5">{s.label}</p>
+                <p className="text-2xl font-bold text-foreground">{s.value}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{s.label}</p>
               </Card>
             );
           })}
@@ -125,28 +125,28 @@ export function AdminApiManagement() {
           <TabsContent value="overview" className="space-y-6">
             <div className="grid lg:grid-cols-2 gap-6">
               <Card className="p-5">
-                <h3 className="font-semibold text-gray-900 mb-4">Traffic 24h</h3>
+                <h3 className="font-semibold text-foreground mb-4">Traffic 24h</h3>
                 <AreaChart
                   data={TRAFFIC_DATA}
                   xKey="time"
                   height={240}
                   series={[
-                    { key: 'requests', label: 'Requests', color: '#78716c', fill: true },
-                    { key: 'errors', label: 'Errors', color: '#ef4444', fill: false, dashed: true },
+                    { key: 'requests', label: 'Requests', color: '#16723a', fill: true },
+                    { key: 'errors', label: 'Errors', color: '#c92a2a', fill: false, dashed: true },
                   ]}
                 />
               </Card>
 
               <Card className="p-5">
-                <h3 className="font-semibold text-gray-900 mb-4">Latency Percentiles</h3>
+                <h3 className="font-semibold text-foreground mb-4">Latency Percentiles</h3>
                 <LineChart
                   data={LATENCY_DATA}
                   xKey="time"
                   height={240}
                   series={[
-                    { key: 'p50', label: 'P50', color: '#78716c' },
-                    { key: 'p95', label: 'P95', color: '#f59e0b' },
-                    { key: 'p99', label: 'P99', color: '#ef4444' },
+                    { key: 'p50', label: 'P50', color: '#16723a' },
+                    { key: 'p95', label: 'P95', color: '#d88a0b' },
+                    { key: 'p99', label: 'P99', color: '#c92a2a' },
                   ]}
                 />
               </Card>
@@ -157,21 +157,21 @@ export function AdminApiManagement() {
           <TabsContent value="endpoints">
             <Card className="overflow-hidden">
               <div className="p-4 border-b">
-                <h3 className="font-semibold text-gray-900">Tất cả Endpoints ({ENDPOINTS.length})</h3>
+                <h3 className="font-semibold text-foreground">Tất cả Endpoints ({ENDPOINTS.length})</h3>
               </div>
               <div className="divide-y overflow-x-auto">
                 {ENDPOINTS.map(ep => (
-                  <div key={ep.path} className="flex items-center gap-4 p-4 hover:bg-gray-50 min-w-max">
-                    <Badge className={`border-0 text-xs w-14 justify-center font-mono ${ep.method === 'POST' ? 'bg-amber-100 text-amber-700' : 'bg-stone-100 text-stone-700'}`}>{ep.method}</Badge>
-                    <span className="font-mono text-sm text-gray-900 min-w-56">{ep.path}</span>
-                    <span className="text-xs text-gray-500 min-w-48 hidden md:block">{ep.desc}</span>
-                    <div className="flex gap-4 text-xs text-gray-600 ml-auto">
+                  <div key={ep.path} className="flex items-center gap-4 p-4 hover:bg-surface-muted min-w-max">
+                    <Badge className={`border-0 text-xs w-14 justify-center font-mono ${ep.method === 'POST' ? 'bg-warning/15 text-amber-800' : 'bg-primary/10 text-primary'}`}>{ep.method}</Badge>
+                    <span className="font-mono text-sm text-foreground min-w-56">{ep.path}</span>
+                    <span className="text-xs text-muted-foreground min-w-48 hidden md:block">{ep.desc}</span>
+                    <div className="flex gap-4 text-xs text-foreground/70 ml-auto">
                       <span><Zap className="w-3 h-3 inline" /> {ep.avgLatency}</span>
                       <span><Activity className="w-3 h-3 inline" /> {ep.calls24h.toLocaleString()} calls</span>
                       <span className="text-red-500">{ep.errors} errors</span>
-                      <span className="text-gray-400">Limit: {ep.rateLimit}</span>
+                      <span className="text-muted-foreground/80">Limit: {ep.rateLimit}</span>
                     </div>
-                    <Badge className={ep.status === 'healthy' ? 'bg-green-100 text-green-700 border-0 text-xs' : 'bg-amber-100 text-amber-700 border-0 text-xs'}>
+                    <Badge className={ep.status === 'healthy' ? 'bg-primary/10 text-primary border-0 text-xs' : 'bg-warning/15 text-amber-800 border-0 text-xs'}>
                       {ep.status}
                     </Badge>
                   </div>
@@ -184,7 +184,7 @@ export function AdminApiManagement() {
           <TabsContent value="logs">
             <div className="flex flex-wrap gap-3 mb-4">
               <div className="relative flex-1 min-w-48">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/80" />
                 <Input placeholder="Tìm user, endpoint..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
               </div>
               <Select value={logFilter} onValueChange={setLogFilter}>
@@ -203,20 +203,20 @@ export function AdminApiManagement() {
 
             <Card className="overflow-hidden">
               <div className="divide-y overflow-x-auto">
-                <div className="grid grid-cols-8 gap-2 p-3 bg-gray-50 text-xs font-semibold text-gray-600 min-w-max">
+                <div className="grid grid-cols-8 gap-2 p-3 bg-surface-muted text-xs font-semibold text-foreground/70 min-w-max">
                   <span>Status</span><span>Endpoint</span><span>User</span><span>Model</span>
                   <span>Tokens</span><span>Latency</span><span>IP</span><span>Time</span>
                 </div>
                 {filteredLogs.map(log => (
-                  <div key={log.id} className="grid grid-cols-8 gap-2 p-3 hover:bg-gray-50 text-xs min-w-max items-center">
+                  <div key={log.id} className="grid grid-cols-8 gap-2 p-3 hover:bg-surface-muted text-xs min-w-max items-center">
                     <Badge className={`${statusBadge(log.status)} border-0 text-xs w-10 justify-center`}>{log.status}</Badge>
-                    <span className="font-mono text-gray-700 truncate">{log.endpoint.replace('/api/v1', '')}</span>
-                    <span className="text-gray-700">{log.user}</span>
-                    <span className="text-gray-500">{log.model !== '-' ? log.model : '-'}</span>
-                    <span className="text-gray-500">{log.tokens || '-'}</span>
-                    <span className={log.latency !== '-' && parseFloat(log.latency) > 3 ? 'text-amber-600 font-medium' : 'text-gray-500'}>{log.latency}</span>
-                    <span className="text-gray-400">{log.ip}</span>
-                    <span className="text-gray-400">{log.time}</span>
+                    <span className="font-mono text-foreground/80 truncate">{log.endpoint.replace('/api/v1', '')}</span>
+                    <span className="text-foreground/80">{log.user}</span>
+                    <span className="text-muted-foreground">{log.model !== '-' ? log.model : '-'}</span>
+                    <span className="text-muted-foreground">{log.tokens || '-'}</span>
+                    <span className={log.latency !== '-' && parseFloat(log.latency) > 3 ? 'text-amber-600 font-medium' : 'text-muted-foreground'}>{log.latency}</span>
+                    <span className="text-muted-foreground/80">{log.ip}</span>
+                    <span className="text-muted-foreground/80">{log.time}</span>
                   </div>
                 ))}
               </div>
@@ -226,7 +226,7 @@ export function AdminApiManagement() {
           {/* API Keys */}
           <TabsContent value="keys">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-gray-900">Tất cả API Keys ({ACTIVE_KEYS.length})</h3>
+              <h3 className="font-semibold text-foreground">Tất cả API Keys ({ACTIVE_KEYS.length})</h3>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm"><Filter className="w-4 h-4 mr-1" /> Lọc</Button>
               </div>
@@ -234,22 +234,22 @@ export function AdminApiManagement() {
             <Card className="overflow-hidden">
               <div className="divide-y">
                 {ACTIVE_KEYS.map(k => (
-                  <div key={k.key} className="flex flex-wrap items-center gap-3 p-4 hover:bg-gray-50">
+                  <div key={k.key} className="flex flex-wrap items-center gap-3 p-4 hover:bg-surface-muted">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="font-mono text-sm text-gray-700">{k.key}</span>
-                        <Badge className={k.status === 'active' ? 'bg-green-100 text-green-700 border-0' : 'bg-red-100 text-red-700 border-0'}>
+                        <span className="font-mono text-sm text-foreground/80">{k.key}</span>
+                        <Badge className={k.status === 'active' ? 'bg-primary/10 text-primary border-0' : 'bg-destructive/10 text-destructive border-0'}>
                           {k.status === 'active' ? 'Hoạt động' : 'Bị khóa'}
                         </Badge>
-                        <Badge className="bg-stone-100 text-stone-700 border-0">{k.plan}</Badge>
+                        <Badge className="bg-primary/10 text-primary border-0">{k.plan}</Badge>
                       </div>
-                      <p className="text-xs text-gray-500"><Users className="w-3 h-3 inline mr-1" />{k.user} · {k.calls.toLocaleString()}/{k.limit.toLocaleString()} calls · Dùng lần cuối: {k.lastUsed}</p>
+                      <p className="text-xs text-muted-foreground"><Users className="w-3 h-3 inline mr-1" />{k.user} · {k.calls.toLocaleString()}/{k.limit.toLocaleString()} calls · Dùng lần cuối: {k.lastUsed}</p>
                     </div>
                     <div className="flex gap-2">
                       {k.status === 'active' ? (
                         <Button variant="ghost" size="sm" className="text-amber-600" onClick={() => toast.success('Đã tạm khóa key!')}>Khóa</Button>
                       ) : (
-                        <Button variant="ghost" size="sm" className="text-green-600" onClick={() => toast.success('Đã mở khóa key!')}>Mở khóa</Button>
+                        <Button variant="ghost" size="sm" className="text-primary" onClick={() => toast.success('Đã mở khóa key!')}>Mở khóa</Button>
                       )}
                       <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(k.key); toast.success('Đã sao chép!'); }}>
                         <Copy className="w-4 h-4" />

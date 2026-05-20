@@ -50,12 +50,12 @@ export function AdminLoginPage() {
   // ── Pending approval screen ────────────────────────────────────
   if (pendingEmail) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950 px-5">
+      <div className="dark min-h-screen flex items-center justify-center bg-gray-950 px-5">
         <div className="text-center max-w-sm">
           {/* Icon */}
           <div className="relative w-24 h-24 mx-auto mb-7">
             <div className="absolute inset-0 rounded-full border-4 border-amber-500/20 border-t-amber-500 animate-spin" style={{ animationDuration: '2.5s' }} />
-            <div className="absolute inset-3 rounded-full bg-amber-500/10 flex items-center justify-center">
+            <div className="absolute inset-3 rounded-full bg-warning/10 flex items-center justify-center">
               <div className="w-11 h-11 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center shadow-lg shadow-amber-900/50">
                 <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <circle cx="12" cy="12" r="10" strokeOpacity="0.3" />
@@ -71,43 +71,43 @@ export function AdminLoginPage() {
           </div>
 
           <h2 className="text-white mb-3">Chưa được phê duyệt</h2>
-          <p className="text-gray-400 text-sm leading-relaxed mb-6">
-            Tài khoản <span className="text-stone-300 font-semibold">{pendingEmail}</span> đã đăng ký thành công nhưng chưa được Super Admin phê duyệt.
+          <p className="text-muted-foreground/80 text-sm leading-relaxed mb-6">
+            Tài khoản <span className="text-primary font-semibold">{pendingEmail}</span> đã đăng ký thành công nhưng chưa được Super Admin phê duyệt.
           </p>
 
           <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4 mb-6 text-left space-y-3">
             <div className="flex items-center gap-3">
-              <div className="w-6 h-6 bg-stone-500 rounded-full flex items-center justify-center flex-shrink-0">
+              <div className="w-6 h-6 bg-primary/50 rounded-full flex items-center justify-center flex-shrink-0">
                 <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
               </div>
               <p className="text-sm text-white">Đăng ký thành công</p>
             </div>
             <div className="ml-3 w-px h-3 bg-gray-700" />
             <div className="flex items-center gap-3">
-              <div className="w-6 h-6 bg-amber-500/20 border-2 border-amber-500 rounded-full flex items-center justify-center flex-shrink-0 animate-pulse">
+              <div className="w-6 h-6 bg-warning/20 border-2 border-amber-500 rounded-full flex items-center justify-center flex-shrink-0 animate-pulse">
                 <div className="w-2 h-2 bg-amber-400 rounded-full" />
               </div>
               <div>
                 <p className="text-sm font-semibold text-amber-300">Chờ Super Admin duyệt</p>
-                <p className="text-xs text-gray-600">Có thể mất 24–48 giờ</p>
+                <p className="text-xs text-foreground/70">Có thể mất 24–48 giờ</p>
               </div>
             </div>
             <div className="ml-3 w-px h-3 bg-gray-800" />
             <div className="flex items-center gap-3 opacity-40">
               <div className="w-6 h-6 bg-gray-800 border-2 border-gray-700 rounded-full flex items-center justify-center flex-shrink-0">
-                <Shield className="w-3 h-3 text-gray-600" />
+                <Shield className="w-3 h-3 text-foreground/70" />
               </div>
-              <p className="text-sm text-gray-400">Kích hoạt & đăng nhập</p>
+              <p className="text-sm text-muted-foreground/80">Kích hoạt & đăng nhập</p>
             </div>
           </div>
 
-          <p className="text-gray-600 text-xs mb-6">
-            Liên hệ <span className="text-gray-400">admin@copypro.vn</span> để được hỗ trợ nhanh hơn.
+          <p className="text-foreground/70 text-xs mb-6">
+            Liên hệ <span className="text-muted-foreground/80">admin@copypro.vn</span> để được hỗ trợ nhanh hơn.
           </p>
 
           <button
             onClick={() => setPendingEmail(null)}
-            className="w-full h-11 border border-gray-800 hover:border-gray-700 text-gray-400 hover:text-gray-200 hover:bg-gray-900 rounded-xl font-semibold text-sm transition-all"
+            className="w-full h-11 border border-gray-800 hover:border-gray-700 text-muted-foreground/80 hover:text-gray-200 hover:bg-gray-900 rounded-xl font-semibold text-sm transition-all"
           >
             ← Quay lại đăng nhập
           </button>
@@ -117,11 +117,11 @@ export function AdminLoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex bg-gray-950">
+    <div className="dark min-h-screen flex bg-gray-950">
 
       {/* ── LEFT: System Panel ── */}
       <div className="hidden lg:flex lg:w-[52%] flex-col relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-950 via-slate-900 to-stone-950" />
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-950 via-slate-900 to-green-950" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_60%_at_20%_50%,rgba(20,184,166,0.1),transparent)]" />
         <div
           className="absolute inset-0 opacity-[0.04]"
@@ -131,8 +131,8 @@ export function AdminLoginPage() {
             backgroundSize: '48px 48px',
           }}
         />
-        <div className="absolute top-0 right-0 w-80 h-80 bg-stone-500/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-60 h-60 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 right-0 w-80 h-80 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-60 h-60 bg-warning/10 rounded-full blur-3xl pointer-events-none" />
 
         {/* Logo bar */}
         <div className="relative p-10 flex items-center gap-3 border-b border-white/5">
@@ -144,13 +144,13 @@ export function AdminLoginPage() {
 
         {/* Main */}
         <div className="relative flex-1 flex flex-col justify-center px-12 xl:px-16">
-          <p className="text-stone-400 text-xs font-bold uppercase tracking-[0.2em] mb-4">Hệ thống quản trị</p>
+          <p className="text-primary text-xs font-bold uppercase tracking-[0.2em] mb-4">Hệ thống quản trị</p>
           <h2 className="text-white mb-4 leading-tight">
             Trung tâm điều hành
             <br />
-            <span className="text-stone-300">CopyPro Platform</span>
+            <span className="text-primary">CopyPro Platform</span>
           </h2>
-          <p className="text-gray-500 text-sm leading-relaxed mb-10">
+          <p className="text-muted-foreground text-sm leading-relaxed mb-10">
             Quản lý toàn bộ người dùng, mô hình AI, templates, analytics và cấu hình hệ thống từ một nơi duy nhất.
           </p>
 
@@ -159,10 +159,10 @@ export function AdminLoginPage() {
             {ADMIN_STATS.map((s) => {
               const Icon = s.icon;
               return (
-                <div key={s.label} className="bg-white/4 border border-white/8 rounded-2xl p-4 hover:bg-white/6 transition-colors">
+                <div key={s.label} className="bg-card/4 border border-white/8 rounded-2xl p-4 hover:bg-card/10 transition-colors">
                   <div className="flex items-center gap-2 mb-2">
-                    <Icon className="w-3.5 h-3.5 text-stone-400" />
-                    <span className="text-gray-500 text-xs">{s.label}</span>
+                    <Icon className="w-3.5 h-3.5 text-primary" />
+                    <span className="text-muted-foreground text-xs">{s.label}</span>
                   </div>
                   <p className="text-white text-xl font-bold tracking-tight">{s.value}</p>
                 </div>
@@ -171,10 +171,10 @@ export function AdminLoginPage() {
           </div>
 
           {/* System status */}
-          <div className="bg-stone-950/35 border border-stone-800/35 rounded-2xl p-4">
+          <div className="bg-green-950/35 border border-green-800/35 rounded-2xl p-4">
             <div className="flex items-center gap-2 mb-3">
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-              <span className="text-stone-300 text-xs font-bold uppercase tracking-wider">Trạng thái hệ thống</span>
+              <span className="text-primary text-xs font-bold uppercase tracking-wider">Trạng thái hệ thống</span>
             </div>
             <div className="space-y-2">
               {[
@@ -183,10 +183,10 @@ export function AdminLoginPage() {
                 { name: 'Fine-tuning Engine', status: 'Đang xử lý 2 jobs', dot: 'bg-amber-400' },
               ].map(item => (
                 <div key={item.name} className="flex items-center justify-between">
-                  <span className="text-gray-400 text-xs">{item.name}</span>
+                  <span className="text-muted-foreground/80 text-xs">{item.name}</span>
                   <div className="flex items-center gap-1.5">
                     <div className={`w-1.5 h-1.5 rounded-full ${item.dot}`} />
-                    <span className="text-xs text-gray-300 font-medium">{item.status}</span>
+                    <span className="text-xs text-muted-foreground/60 font-medium">{item.status}</span>
                   </div>
                 </div>
               ))}
@@ -196,7 +196,7 @@ export function AdminLoginPage() {
 
         {/* Footer */}
         <div className="relative px-12 xl:px-16 pb-10 pt-6 border-t border-white/5">
-          <p className="text-gray-600 text-xs">
+          <p className="text-foreground/70 text-xs">
             CopyPro Admin Console v2.0 · Chỉ dành cho nhân viên được ủy quyền
           </p>
         </div>
@@ -220,7 +220,7 @@ export function AdminLoginPage() {
               <span className="text-amber-500 text-xs font-semibold">Khu vực giới hạn</span>
             </div>
             <h2 className="text-white mb-1.5 leading-tight">Đăng nhập Admin</h2>
-            <p className="text-gray-500 text-sm">
+            <p className="text-muted-foreground text-sm">
               Chỉ dành cho nhân viên CopyPro được ủy quyền.
             </p>
           </div>
@@ -228,9 +228,9 @@ export function AdminLoginPage() {
           {/* Form */}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
-              <Label className="text-gray-400 mb-2 block text-xs uppercase tracking-wider">Email Admin</Label>
+              <Label className="text-muted-foreground/80 mb-2 block text-xs uppercase tracking-wider">Email Admin</Label>
               <div className="relative">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" />
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/70" />
                 <Input
                   type="email"
                   placeholder="admin@copypro.vn"
@@ -238,7 +238,7 @@ export function AdminLoginPage() {
                     required: 'Email là bắt buộc',
                     pattern: { value: /^\S+@\S+$/, message: 'Email không hợp lệ' },
                   })}
-                  className="pl-10 h-12 rounded-xl bg-gray-900 border-gray-700 text-white placeholder:text-gray-600 focus:border-stone-500 focus:bg-gray-800"
+                  className="pl-10 h-12 rounded-xl bg-gray-900 border-gray-700 text-white placeholder:text-foreground/70 focus:border-primary focus:bg-gray-800"
                 />
               </div>
               {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>}
@@ -246,20 +246,20 @@ export function AdminLoginPage() {
 
             <div>
               <div className="mb-2">
-                <Label className="text-gray-400 block text-xs uppercase tracking-wider">Mật khẩu</Label>
+                <Label className="text-muted-foreground/80 block text-xs uppercase tracking-wider">Mật khẩu</Label>
               </div>
               <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" />
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/70" />
                 <Input
                   type={showPass ? 'text' : 'password'}
                   placeholder="••••••••"
                   {...register('password', { required: 'Mật khẩu là bắt buộc' })}
-                  className="pl-10 pr-10 h-12 rounded-xl bg-gray-900 border-gray-700 text-white placeholder:text-gray-600 focus:border-stone-500 focus:bg-gray-800"
+                  className="pl-10 pr-10 h-12 rounded-xl bg-gray-900 border-gray-700 text-white placeholder:text-foreground/70 focus:border-primary focus:bg-gray-800"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPass(!showPass)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-400 transition-colors"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-foreground/70 hover:text-muted-foreground/80 transition-colors"
                 >
                   {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -268,7 +268,7 @@ export function AdminLoginPage() {
               <div className="mt-2 text-right">
                 <Link
                   to="/admin/forgot-password"
-                  className="text-xs text-stone-300 hover:text-stone-200 hover:underline font-semibold transition-colors"
+                  className="text-xs text-primary hover:text-green-200 hover:underline font-semibold transition-colors"
                 >
                   Quên mật khẩu?
                 </Link>
@@ -278,7 +278,7 @@ export function AdminLoginPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full h-12 bg-gradient-to-r from-emerald-600 via-stone-600 to-stone-600 hover:from-emerald-500 hover:via-stone-500 hover:to-stone-500 disabled:opacity-50 text-white rounded-xl font-bold text-sm transition-all shadow-xl shadow-stone-900/30 mt-2 flex items-center justify-center gap-2"
+              className="w-full h-12 bg-gradient-to-r from-emerald-600 via-green-600 to-green-600 hover:from-emerald-500 hover:via-green-500 hover:to-green-500 disabled:opacity-50 text-white rounded-xl font-bold text-sm transition-all shadow-xl shadow-primary/25 mt-2 flex items-center justify-center gap-2"
             >
               {isSubmitting ? (
                 <>
@@ -295,11 +295,11 @@ export function AdminLoginPage() {
           </form>
 
           {/* Demo hint */}
-          <div className="mt-6 bg-stone-950/30 border border-stone-800/35 rounded-xl p-4">
-            <p className="text-stone-300 text-xs font-bold mb-2 flex items-center gap-1.5">
+          <div className="mt-6 bg-green-950/30 border border-green-800/35 rounded-xl p-4">
+            <p className="text-primary text-xs font-bold mb-2 flex items-center gap-1.5">
               <Shield className="w-3.5 h-3.5" /> Demo credentials
             </p>
-            <p className="text-gray-500 text-xs font-mono">admin@copypro.vn / admin123</p>
+            <p className="text-muted-foreground text-xs font-mono">admin@copypro.vn / admin123</p>
           </div>
 
           {/* Register link */}
@@ -308,7 +308,7 @@ export function AdminLoginPage() {
               <div className="w-full border-t border-gray-800" />
             </div>
             <div className="relative flex justify-center">
-              <span className="bg-gray-950 px-3 text-xs text-gray-600">Chưa có tài khoản?</span>
+              <span className="bg-gray-950 px-3 text-xs text-foreground/70">Chưa có tài khoản?</span>
             </div>
           </div>
 
@@ -324,17 +324,17 @@ export function AdminLoginPage() {
               <div className="w-full border-t border-gray-800" />
             </div>
             <div className="relative flex justify-center">
-              <span className="bg-gray-950 px-3 text-xs text-gray-600">Không phải Admin?</span>
+              <span className="bg-gray-950 px-3 text-xs text-foreground/70">Không phải Admin?</span>
             </div>
           </div>
 
           <Link to="/login">
-            <button className="w-full h-11 border border-gray-800 hover:border-gray-700 text-gray-400 hover:text-gray-200 rounded-xl font-semibold text-sm transition-all hover:bg-gray-900">
+            <button className="w-full h-11 border border-gray-800 hover:border-gray-700 text-muted-foreground/80 hover:text-gray-200 rounded-xl font-semibold text-sm transition-all hover:bg-gray-900">
               → Trang đăng nhập người dùng
             </button>
           </Link>
 
-          <p className="text-center text-xs text-gray-700 mt-6">
+          <p className="text-center text-xs text-foreground/80 mt-6">
             © 2026 CopyPro Vietnam · Hệ thống nội bộ
           </p>
         </div>

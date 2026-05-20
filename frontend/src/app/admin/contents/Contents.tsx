@@ -93,9 +93,9 @@ export function AdminContents() {
   };
 
   const typeBadgeColor: Record<string, string> = {
-    headline: 'bg-stone-100 text-stone-700', landing: 'bg-stone-100 text-stone-700',
-    email: 'bg-amber-100 text-amber-700', social: 'bg-amber-100 text-amber-700',
-    description: 'bg-stone-100 text-stone-700',
+    headline: 'bg-primary/10 text-primary', landing: 'bg-primary/10 text-primary',
+    email: 'bg-warning/15 text-amber-800', social: 'bg-warning/15 text-amber-800',
+    description: 'bg-primary/10 text-primary',
   };
 
   return (
@@ -104,17 +104,17 @@ export function AdminContents() {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">Quản Lý Nội Dung</h1>
-            <p className="text-gray-500 text-sm">Quản lý tất cả nội dung do người dùng tạo</p>
+            <h1 className="text-2xl font-bold text-foreground mb-1">Quản Lý Nội Dung</h1>
+            <p className="text-muted-foreground text-sm">Quản lý tất cả nội dung do người dùng tạo</p>
           </div>
           <button
             onClick={() => setTrashOpen(true)}
-            className="relative flex items-center gap-1.5 border border-gray-200 hover:border-red-300 hover:bg-red-50 text-gray-500 hover:text-red-600 rounded-xl px-3 py-2 text-sm font-semibold transition-all"
+            className="relative flex items-center gap-1.5 border border-border hover:border-red-300 hover:bg-destructive/10 text-muted-foreground hover:text-red-600 rounded-xl px-3 py-2 text-sm font-semibold transition-all"
           >
             <Trash2 className="w-4 h-4" />
             Thùng rác
             {deletedContents.length > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">{deletedContents.length}</span>
+              <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-destructive/100 text-white text-[10px] font-bold rounded-full flex items-center justify-center">{deletedContents.length}</span>
             )}
           </button>
         </div>
@@ -122,10 +122,10 @@ export function AdminContents() {
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {[
-            { label: 'Tổng nội dung', value: visible.length.toString(), icon: FileText, color: 'text-green-600 bg-green-50' },
-            { label: 'Hôm nay', value: '124', icon: Calendar, color: 'text-stone-600 bg-stone-50' },
-            { label: 'Đã flag', value: visible.filter(c => c.flagged).length.toString(), icon: Flag, color: 'text-red-600 bg-red-50' },
-            { label: 'Người dùng hoạt động', value: '342', icon: Users, color: 'text-stone-600 bg-stone-50' },
+            { label: 'Tổng nội dung', value: visible.length.toString(), icon: FileText, color: 'text-primary bg-primary/5' },
+            { label: 'Hôm nay', value: '124', icon: Calendar, color: 'text-primary bg-primary/5' },
+            { label: 'Đã flag', value: visible.filter(c => c.flagged).length.toString(), icon: Flag, color: 'text-red-600 bg-destructive/10' },
+            { label: 'Người dùng hoạt động', value: '342', icon: Users, color: 'text-primary bg-primary/5' },
           ].map((s, i) => (
             <StatTile key={i} icon={s.icon} label={s.label} value={s.value} color={s.color} />
           ))}
@@ -150,7 +150,7 @@ export function AdminContents() {
 
         {/* Table */}
         <AdminTable
-          empty={filtered.length === 0 ? <div className="text-center py-12 text-gray-400 text-sm">Không tìm thấy nội dung nào.</div> : undefined}
+          empty={filtered.length === 0 ? <div className="text-center py-12 text-muted-foreground/80 text-sm">Không tìm thấy nội dung nào.</div> : undefined}
         >
             <TableHeader>
               <TableRow>
@@ -166,7 +166,7 @@ export function AdminContents() {
             </TableHeader>
             <TableBody>
               {filtered.map(item => (
-                <TableRow key={item.id} className={item.flagged ? 'bg-red-50/30' : ''}>
+                <TableRow key={item.id} className={item.flagged ? 'bg-destructive/10' : ''}>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       {item.flagged && <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />}
@@ -176,27 +176,27 @@ export function AdminContents() {
                   <TableCell>
                     <div>
                       <p className="text-sm font-medium">{item.user}</p>
-                      <p className="text-xs text-gray-500">{item.email}</p>
+                      <p className="text-xs text-muted-foreground">{item.email}</p>
                     </div>
                   </TableCell>
-                  <TableCell><Badge className={`border-0 text-xs ${typeBadgeColor[item.type] || 'bg-gray-100 text-gray-600'}`}>{item.type}</Badge></TableCell>
-                  <TableCell><Badge className="bg-green-100 text-green-700 border-0 text-xs">{item.model}</Badge></TableCell>
-                  <TableCell><span className="text-sm font-semibold text-green-600">{item.quality}%</span></TableCell>
+                  <TableCell><Badge className={`border-0 text-xs ${typeBadgeColor[item.type] || 'bg-muted text-foreground/70'}`}>{item.type}</Badge></TableCell>
+                  <TableCell><Badge className="bg-primary/10 text-primary border-0 text-xs">{item.model}</Badge></TableCell>
+                  <TableCell><span className="text-sm font-semibold text-primary">{item.quality}%</span></TableCell>
                   <TableCell>
-                    <Badge className={`border-0 text-xs ${item.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                    <Badge className={`border-0 text-xs ${item.status === 'active' ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive'}`}>
                       {item.status === 'active' ? 'Hoạt động' : 'Ẩn'}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-sm text-gray-500">{item.date}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{item.date}</TableCell>
                   <TableCell>
                     <div className="flex gap-1 justify-end">
-                      <button onClick={() => setViewItem(item)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors" title="Xem">
+                      <button onClick={() => setViewItem(item)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-muted text-muted-foreground/80 hover:text-foreground/80 transition-colors" title="Xem">
                         <Eye className="w-3.5 h-3.5" />
                       </button>
-                      <button onClick={() => openEdit(item)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-stone-50 text-gray-400 hover:text-stone-600 transition-colors" title="Chỉnh sửa">
+                      <button onClick={() => openEdit(item)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-primary/5 text-muted-foreground/80 hover:text-primary transition-colors" title="Chỉnh sửa">
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
-                      <button onClick={() => setConfirmDelete(item)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors" title="Xoá">
+                      <button onClick={() => setConfirmDelete(item)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-destructive/10 text-muted-foreground/80 hover:text-red-500 transition-colors" title="Xoá">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -212,33 +212,33 @@ export function AdminContents() {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Eye className="w-4 h-4 text-gray-500" /> Xem nội dung
+              <Eye className="w-4 h-4 text-muted-foreground" /> Xem nội dung
             </DialogTitle>
           </DialogHeader>
           {viewItem && (
             <div className="space-y-4">
               <div>
-                <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Tiêu đề</p>
-                <p className="font-semibold text-gray-900">{viewItem.title}</p>
+                <p className="text-xs text-muted-foreground/80 uppercase tracking-wider mb-1">Tiêu đề</p>
+                <p className="font-semibold text-foreground">{viewItem.title}</p>
               </div>
               <div className="flex gap-2">
-                <Badge className={`border-0 text-xs ${typeBadgeColor[viewItem.type] || 'bg-gray-100 text-gray-600'}`}>{viewItem.type}</Badge>
-                <Badge className="bg-green-100 text-green-700 border-0 text-xs">{viewItem.model}</Badge>
-                <Badge className={`border-0 text-xs ${viewItem.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{viewItem.status === 'active' ? 'Hoạt động' : 'Ẩn'}</Badge>
-                {viewItem.flagged && <Badge className="bg-red-100 text-red-600 border-0 text-xs">Đã flag</Badge>}
+                <Badge className={`border-0 text-xs ${typeBadgeColor[viewItem.type] || 'bg-muted text-foreground/70'}`}>{viewItem.type}</Badge>
+                <Badge className="bg-primary/10 text-primary border-0 text-xs">{viewItem.model}</Badge>
+                <Badge className={`border-0 text-xs ${viewItem.status === 'active' ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive'}`}>{viewItem.status === 'active' ? 'Hoạt động' : 'Ẩn'}</Badge>
+                {viewItem.flagged && <Badge className="bg-destructive/10 text-red-600 border-0 text-xs">Đã flag</Badge>}
               </div>
-              <div className="bg-gray-50 rounded-xl p-4">
-                <p className="text-sm text-gray-700 leading-relaxed">{viewItem.body}</p>
+              <div className="bg-surface-muted rounded-xl p-4">
+                <p className="text-sm text-foreground/80 leading-relaxed">{viewItem.body}</p>
               </div>
-              <div className="flex items-center justify-between text-xs text-gray-500">
-                <span>Tạo bởi: <span className="font-medium text-gray-700">{viewItem.user}</span></span>
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>Tạo bởi: <span className="font-medium text-foreground/80">{viewItem.user}</span></span>
                 <span>{viewItem.words} từ · {viewItem.quality}% chất lượng · {viewItem.date}</span>
               </div>
               <div className="flex gap-2 pt-1">
-                <button onClick={() => { setViewItem(null); openEdit(viewItem); }} className="flex-1 h-9 border border-stone-200 text-stone-600 hover:bg-stone-50 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-1.5">
+                <button onClick={() => { setViewItem(null); openEdit(viewItem); }} className="flex-1 h-9 border border-primary/20 text-primary hover:bg-primary/5 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-1.5">
                   <Edit2 className="w-3.5 h-3.5" /> Chỉnh sửa
                 </button>
-                <button onClick={() => setViewItem(null)} className="flex-1 h-9 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-sm font-semibold transition-colors">Đóng</button>
+                <button onClick={() => setViewItem(null)} className="flex-1 h-9 bg-muted hover:bg-gray-200 text-foreground/80 rounded-xl text-sm font-semibold transition-colors">Đóng</button>
               </div>
             </div>
           )}
@@ -250,8 +250,8 @@ export function AdminContents() {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-stone-100 rounded-lg flex items-center justify-center">
-                <Edit2 className="w-4 h-4 text-stone-600" />
+              <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                <Edit2 className="w-4 h-4 text-primary" />
               </div>
               Chỉnh sửa nội dung
             </DialogTitle>
@@ -259,16 +259,16 @@ export function AdminContents() {
           {editItem && (
             <div className="space-y-4 pt-1">
               <div>
-                <Label className="text-xs text-gray-500 uppercase tracking-wider mb-1.5 block">Tiêu đề</Label>
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Tiêu đề</Label>
                 <Input value={editTitle} onChange={e => setEditTitle(e.target.value)} className="h-10" />
               </div>
               <div>
-                <Label className="text-xs text-gray-500 uppercase tracking-wider mb-1.5 block">Nội dung</Label>
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Nội dung</Label>
                 <Textarea value={editBody} onChange={e => setEditBody(e.target.value)} rows={4} className="resize-none" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-xs text-gray-500 uppercase tracking-wider mb-1.5 block">Trạng thái</Label>
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Trạng thái</Label>
                   <Select value={editStatus} onValueChange={setEditStatus}>
                     <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -278,7 +278,7 @@ export function AdminContents() {
                   </Select>
                 </div>
                 <div>
-                  <Label className="text-xs text-gray-500 uppercase tracking-wider mb-1.5 block">Flag vi phạm</Label>
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Flag vi phạm</Label>
                   <Select value={editFlagged ? 'true' : 'false'} onValueChange={v => setEditFlagged(v === 'true')}>
                     <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -289,8 +289,8 @@ export function AdminContents() {
                 </div>
               </div>
               <div className="flex gap-2 pt-2">
-                <button onClick={() => setEditItem(null)} className="flex-1 h-10 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">Huỷ</button>
-                <button onClick={handleSaveEdit} disabled={editSaving} className="flex-1 h-10 bg-gradient-to-r from-stone-600 to-stone-700 hover:from-stone-700 hover:to-stone-800 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+                <button onClick={() => setEditItem(null)} className="flex-1 h-10 border border-border rounded-xl text-sm font-semibold text-foreground/70 hover:bg-surface-muted transition-colors">Huỷ</button>
+                <button onClick={handleSaveEdit} disabled={editSaving} className="flex-1 h-10 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-2">
                   {editSaving ? <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : 'Lưu thay đổi'}
                 </button>
               </div>

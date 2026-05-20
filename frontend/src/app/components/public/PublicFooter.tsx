@@ -45,15 +45,15 @@ const FOOTER_LINKS = {
 };
 
 const SOCIALS = [
-  { icon: Facebook, label: 'Facebook', href: '#', color: 'hover:bg-stone-600' },
+  { icon: Facebook, label: 'Facebook', href: '#', color: 'hover:bg-primary' },
   { icon: Youtube, label: 'Youtube', href: '#', color: 'hover:bg-red-600' },
-  { icon: Linkedin, label: 'LinkedIn', href: '#', color: 'hover:bg-stone-700' },
+  { icon: Linkedin, label: 'LinkedIn', href: '#', color: 'hover:bg-green-700' },
   { icon: Twitter, label: 'Twitter/X', href: '#', color: 'hover:bg-gray-800' },
 ];
 
 export function PublicFooter() {
   return (
-    <footer className="bg-gray-950 text-gray-400">
+    <footer className="dark bg-gray-950 text-muted-foreground/80">
       {/* Top CTA strip */}
       <div className="border-b border-gray-800">
         <div className="max-w-7xl mx-auto px-5 lg:px-8 py-12">
@@ -65,13 +65,13 @@ export function PublicFooter() {
               >
                 Sẵn sàng tạo copy đỉnh cao?
               </h3>
-              <p className="text-gray-400 text-sm">
+              <p className="text-muted-foreground/80 text-sm">
                 Dùng thử miễn phí 14 ngày · Không cần thẻ tín dụng · Hủy bất kỳ lúc nào
               </p>
             </div>
             <div className="flex gap-3 flex-shrink-0">
               <Link to="/register">
-                <button className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-stone-500 hover:from-emerald-400 hover:to-stone-400 text-white rounded-xl px-6 py-3 text-sm font-bold transition-all shadow-lg shadow-stone-900/40">
+                <button className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-400 hover:to-green-400 text-white rounded-xl px-6 py-3 text-sm font-bold transition-all shadow-lg shadow-primary/30">
                   <Sparkles className="w-4 h-4" />
                   Bắt đầu miễn phí
                   <ArrowUpRight className="w-4 h-4" />
@@ -95,18 +95,18 @@ export function PublicFooter() {
             <Link to="/" className="inline-flex items-center mb-5 hover:opacity-90 transition-opacity">
               <BrandLogo size="lg" tone="light" surface="light" />
             </Link>
-            <p className="text-sm leading-relaxed mb-6 text-gray-500">
+            <p className="text-sm leading-relaxed mb-6 text-muted-foreground">
               Nền tảng AI Copywriting hàng đầu Việt Nam — tích hợp GPT-4o, Llama 3.1 và Fine-tuning, giúp doanh nghiệp tạo nội dung marketing chuyên nghiệp trong vài giây.
             </p>
 
             {/* Contact */}
             <div className="space-y-2.5 text-sm">
-              <a href="mailto:hello@copypro.vn" className="flex items-center gap-2.5 hover:text-stone-400 transition-colors">
-                <Mail className="w-4 h-4 text-stone-500 flex-shrink-0" />
+              <a href="mailto:hello@copypro.vn" className="flex items-center gap-2.5 hover:text-primary transition-colors">
+                <Mail className="w-4 h-4 text-primary flex-shrink-0" />
                 hello@copypro.vn
               </a>
-              <a href="tel:+84901234567" className="flex items-center gap-2.5 hover:text-stone-400 transition-colors">
-                <Phone className="w-4 h-4 text-stone-500 flex-shrink-0" />
+              <a href="tel:+84901234567" className="flex items-center gap-2.5 hover:text-primary transition-colors">
+                <Phone className="w-4 h-4 text-primary flex-shrink-0" />
                 +84 901 234 567
               </a>
               <div className="flex items-start gap-2.5">
@@ -126,7 +126,7 @@ export function PublicFooter() {
                     aria-label={s.label}
                     className={`w-9 h-9 bg-gray-800 ${s.color} rounded-lg flex items-center justify-center transition-colors`}
                   >
-                    <Icon className="w-4 h-4 text-gray-300" />
+                    <Icon className="w-4 h-4 text-muted-foreground/60" />
                   </a>
                 );
               })}
@@ -142,7 +142,7 @@ export function PublicFooter() {
                   <li key={link.label}>
                     <Link
                       to={link.href}
-                      className="text-sm text-gray-500 hover:text-stone-400 transition-colors"
+                      className="text-sm text-muted-foreground hover:text-primary transition-colors"
                     >
                       {link.label}
                     </Link>
@@ -155,17 +155,17 @@ export function PublicFooter() {
 
         {/* Bottom */}
         <div className="border-t border-gray-800 mt-14 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-sm text-gray-600">
+          <div className="flex items-center gap-2 text-sm text-foreground/70">
             <span>© 2026 CopyPro Vietnam Co., Ltd.</span>
-            <span className="text-gray-700">·</span>
+            <span className="text-foreground/80">·</span>
             <span>Mã số doanh nghiệp: 0317xxxxxx</span>
           </div>
-          <div className="flex items-center gap-3 text-sm text-gray-600">
+          <div className="flex items-center gap-3 text-sm text-foreground/70">
             <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-primary/50 animate-pulse" />
               Tất cả hệ thống hoạt động bình thường
             </span>
-            <span className="text-gray-700">·</span>
+            <span className="text-foreground/80">·</span>
             <span>Made with 🇻🇳 in Vietnam</span>
           </div>
         </div>

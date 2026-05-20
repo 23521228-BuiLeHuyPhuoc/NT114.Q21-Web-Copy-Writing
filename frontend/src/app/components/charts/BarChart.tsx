@@ -44,7 +44,7 @@ export function BarChart({ data, xKey, series, height = 280, yMax, yMin, valueSu
     },
     scales: {
       x: { grid: { display: false }, ticks: { font: { size: 11 } } },
-      y: { grid: { color: '#f0f0f0' }, ticks: { font: { size: 11 } }, min: yMin, max: yMax },
+      y: { grid: { color: 'rgba(16, 32, 23, 0.08)' }, ticks: { font: { size: 11 } }, min: yMin, max: yMax },
     },
   };
 

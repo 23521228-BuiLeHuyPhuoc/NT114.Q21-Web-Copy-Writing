@@ -11,8 +11,8 @@ export function CustomerTemplates() {
     <Layout>
       <div className="p-6 max-w-6xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Thư Viện Mẫu Copy</h1>
-          <p className="text-gray-600">Khám phá các mẫu copy chuyên nghiệp cho từng ngành nghề</p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Thư Viện Mẫu Copy</h1>
+          <p className="text-foreground/70">Khám phá các mẫu copy chuyên nghiệp cho từng ngành nghề</p>
         </div>
 
         <div className="mb-8">

@@ -39,10 +39,10 @@ const DATASETS = [
 ];
 
 const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
-  completed: { label: 'Hoàn thành', color: 'bg-green-100 text-green-700', icon: CheckCircle2 },
-  running:   { label: 'Đang chạy',  color: 'bg-stone-100 text-stone-700',   icon: RefreshCw },
-  queued:    { label: 'Hàng chờ',   color: 'bg-amber-100 text-amber-700', icon: Clock },
-  failed:    { label: 'Thất bại',   color: 'bg-red-100 text-red-700',     icon: AlertCircle },
+  completed: { label: 'Hoàn thành', color: 'bg-primary/10 text-primary', icon: CheckCircle2 },
+  running:   { label: 'Đang chạy',  color: 'bg-primary/10 text-primary',   icon: RefreshCw },
+  queued:    { label: 'Hàng chờ',   color: 'bg-warning/15 text-amber-800', icon: Clock },
+  failed:    { label: 'Thất bại',   color: 'bg-destructive/10 text-destructive',     icon: AlertCircle },
 };
 
 export function AdminFineTuning() {
@@ -69,10 +69,10 @@ export function AdminFineTuning() {
       <div className="p-6 max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-1">Fine-tuning Manager</h1>
-            <p className="text-gray-600">Quản lý tất cả jobs fine-tuning, dataset và model của hệ thống</p>
+            <h1 className="text-3xl font-bold text-foreground mb-1">Fine-tuning Manager</h1>
+            <p className="text-foreground/70">Quản lý tất cả jobs fine-tuning, dataset và model của hệ thống</p>
           </div>
-          <Button className="bg-stone-600 hover:bg-stone-700 text-white" onClick={() => toast.success('Mở form tạo job mới...')}>
+          <Button className="bg-primary hover:bg-green-700 text-white" onClick={() => toast.success('Mở form tạo job mới...')}>
             <Plus className="w-4 h-4 mr-2" /> Tạo Job Mới
           </Button>
         </div>
@@ -80,16 +80,16 @@ export function AdminFineTuning() {
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {[
-            { label: 'Tổng jobs', value: stats.total, color: 'bg-stone-50 text-stone-700', icon: Brain },
-            { label: 'Đang chạy', value: stats.running, color: 'bg-stone-50 text-stone-700', icon: RefreshCw },
-            { label: 'Hoàn thành', value: stats.completed, color: 'bg-green-50 text-green-700', icon: CheckCircle2 },
-            { label: 'Thất bại', value: stats.failed, color: 'bg-red-50 text-red-700', icon: AlertCircle },
+            { label: 'Tổng jobs', value: stats.total, color: 'bg-primary/10 text-primary', icon: Brain },
+            { label: 'Đang chạy', value: stats.running, color: 'bg-primary/10 text-primary', icon: RefreshCw },
+            { label: 'Hoàn thành', value: stats.completed, color: 'bg-primary/10 text-primary', icon: CheckCircle2 },
+            { label: 'Thất bại', value: stats.failed, color: 'bg-destructive/10 text-destructive', icon: AlertCircle },
           ].map(s => {
             const Icon = s.icon;
             return (
               <Card key={s.label} className="p-4 flex items-center gap-3">
                 <div className={`p-2 rounded-lg ${s.color}`}><Icon className="w-5 h-5" /></div>
-                <div><p className="text-2xl font-bold text-gray-900">{s.value}</p><p className="text-xs text-gray-500">{s.label}</p></div>
+                <div><p className="text-2xl font-bold text-foreground">{s.value}</p><p className="text-xs text-muted-foreground">{s.label}</p></div>
               </Card>
             );
           })}
@@ -106,7 +106,7 @@ export function AdminFineTuning() {
           <TabsContent value="jobs">
             <div className="flex gap-3 mb-4">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/80" />
                 <Input placeholder="Tìm theo tên job, user..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
               </div>
               <Select value={filterStatus} onValueChange={setFilterStatus}>
@@ -130,14 +130,14 @@ export function AdminFineTuning() {
                     <div className="flex flex-col md:flex-row gap-4">
                       <div className="flex-1">
                         <div className="flex flex-wrap items-center gap-2 mb-2">
-                          <span className="font-semibold text-gray-900">{job.name}</span>
+                          <span className="font-semibold text-foreground">{job.name}</span>
                           <Badge className={`${st.color} border-0 text-xs`}>
                             <StatusIcon className={`w-3 h-3 mr-1 ${job.status === 'running' ? 'animate-spin' : ''}`} />
                             {st.label}
                           </Badge>
-                          <Badge className="bg-gray-100 text-gray-600 border-0 text-xs">{job.baseModel}</Badge>
+                          <Badge className="bg-muted text-foreground/70 border-0 text-xs">{job.baseModel}</Badge>
                         </div>
-                        <div className="flex flex-wrap gap-4 text-xs text-gray-500 mb-3">
+                        <div className="flex flex-wrap gap-4 text-xs text-muted-foreground mb-3">
                           <span>User: <strong>{job.user}</strong></span>
                           <span>Ngành: {job.industry}</span>
                           <span>{job.samples} mẫu · {job.epochs} epochs</span>
@@ -148,7 +148,7 @@ export function AdminFineTuning() {
                         {(job.status === 'running' || job.status === 'completed') && (
                           <div>
                             <div className="flex justify-between text-xs mb-1">
-                              <span className="text-gray-600">Tiến trình</span>
+                              <span className="text-foreground/70">Tiến trình</span>
                               <span className="font-medium">{job.progress}%</span>
                             </div>
                             <Progress value={job.progress} className="h-2" />
@@ -156,8 +156,8 @@ export function AdminFineTuning() {
                         )}
                         {job.status === 'completed' && (
                           <div className="flex gap-4 mt-2 text-xs">
-                            <span className="text-green-600">Accuracy: <strong>{job.accuracy}%</strong></span>
-                            <span className="text-stone-600">Val Loss: <strong>{job.loss}</strong></span>
+                            <span className="text-primary">Accuracy: <strong>{job.accuracy}%</strong></span>
+                            <span className="text-primary">Val Loss: <strong>{job.loss}</strong></span>
                           </div>
                         )}
                       </div>
@@ -195,16 +195,16 @@ export function AdminFineTuning() {
           <TabsContent value="monitor">
             <div className="grid lg:grid-cols-3 gap-6">
               <div>
-                <h3 className="font-semibold text-gray-900 mb-3">Chọn job để xem:</h3>
+                <h3 className="font-semibold text-foreground mb-3">Chọn job để xem:</h3>
                 <div className="space-y-2">
                   {jobs.filter(j => j.status === 'completed' || j.status === 'running').map(job => (
                     <button
                       key={job.id}
                       onClick={() => setSelectedJob(job)}
-                      className={`w-full text-left p-3 rounded-lg border transition-all text-sm ${selectedJob.id === job.id ? 'border-stone-500 bg-stone-50' : 'border-gray-200 hover:border-gray-300'}`}
+                      className={`w-full text-left p-3 rounded-lg border transition-all text-sm ${selectedJob.id === job.id ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/30'}`}
                     >
-                      <p className="font-medium text-gray-900 truncate">{job.name}</p>
-                      <p className="text-xs text-gray-500">{job.user} · {job.baseModel}</p>
+                      <p className="font-medium text-foreground truncate">{job.name}</p>
+                      <p className="text-xs text-muted-foreground">{job.user} · {job.baseModel}</p>
                     </button>
                   ))}
                 </div>
@@ -212,28 +212,28 @@ export function AdminFineTuning() {
 
               <div className="lg:col-span-2 space-y-4">
                 <Card className="p-5">
-                  <h3 className="font-semibold text-gray-900 mb-4">{selectedJob.name} — Training Curves</h3>
+                  <h3 className="font-semibold text-foreground mb-4">{selectedJob.name} — Training Curves</h3>
                   <LineChart
                     data={TRAINING_CHART}
                     xKey="epoch"
                     height={280}
                     series={[
-                      { key: 'trainLoss', label: 'Train Loss', color: '#78716c' },
-                      { key: 'valLoss', label: 'Val Loss', color: '#059669', dashed: true },
-                      { key: 'accuracy', label: 'Accuracy %', color: '#f59e0b' },
+                      { key: 'trainLoss', label: 'Train Loss', color: '#16723a' },
+                      { key: 'valLoss', label: 'Val Loss', color: '#16723a', dashed: true },
+                      { key: 'accuracy', label: 'Accuracy %', color: '#d88a0b' },
                     ]}
                   />
                 </Card>
 
                 <div className="grid grid-cols-3 gap-3">
                   {[
-                    { label: 'Final Loss', value: selectedJob.loss || '—', color: 'bg-stone-50 text-stone-700' },
-                    { label: 'Accuracy', value: selectedJob.accuracy ? `${selectedJob.accuracy}%` : '—', color: 'bg-green-50 text-green-700' },
-                    { label: 'Samples', value: selectedJob.samples, color: 'bg-stone-50 text-stone-700' },
+                    { label: 'Final Loss', value: selectedJob.loss || '—', color: 'bg-primary/10 text-primary' },
+                    { label: 'Accuracy', value: selectedJob.accuracy ? `${selectedJob.accuracy}%` : '—', color: 'bg-primary/10 text-primary' },
+                    { label: 'Samples', value: selectedJob.samples, color: 'bg-primary/10 text-primary' },
                   ].map(m => (
                     <Card key={m.label} className="p-4 text-center">
                       <div className={`text-xl font-bold ${m.color} rounded-lg py-2 mb-1`}>{m.value}</div>
-                      <p className="text-xs text-gray-500">{m.label}</p>
+                      <p className="text-xs text-muted-foreground">{m.label}</p>
                     </Card>
                   ))}
                 </div>
@@ -244,8 +244,8 @@ export function AdminFineTuning() {
           {/* Datasets */}
           <TabsContent value="datasets">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-gray-900">Dataset Library ({DATASETS.length})</h3>
-              <Button size="sm" className="bg-stone-600 hover:bg-stone-700 text-white" onClick={() => toast.success('Upload dataset...')}>
+              <h3 className="font-semibold text-foreground">Dataset Library ({DATASETS.length})</h3>
+              <Button size="sm" className="bg-primary hover:bg-green-700 text-white" onClick={() => toast.success('Upload dataset...')}>
                 <Upload className="w-4 h-4 mr-2" /> Upload Dataset
               </Button>
             </div>
@@ -253,12 +253,12 @@ export function AdminFineTuning() {
               {DATASETS.map(ds => (
                 <Card key={ds.id} className="p-4 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-4">
-                    <div className="bg-stone-100 p-2.5 rounded-lg">
-                      <Database className="w-5 h-5 text-stone-600" />
+                    <div className="bg-primary/10 p-2.5 rounded-lg">
+                      <Database className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <p className="font-semibold text-gray-900 text-sm">{ds.name}</p>
-                      <div className="flex gap-3 text-xs text-gray-500 mt-0.5">
+                      <p className="font-semibold text-foreground text-sm">{ds.name}</p>
+                      <div className="flex gap-3 text-xs text-muted-foreground mt-0.5">
                         <span>{ds.samples.toLocaleString()} mẫu</span>
                         <span>{ds.size}</span>
                         <span>Ngành: {ds.industry}</span>
@@ -267,7 +267,7 @@ export function AdminFineTuning() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Badge className={ds.quality === 'high' ? 'bg-green-100 text-green-700 border-0' : 'bg-amber-100 text-amber-700 border-0'}>
+                    <Badge className={ds.quality === 'high' ? 'bg-primary/10 text-primary border-0' : 'bg-warning/15 text-amber-800 border-0'}>
                       {ds.quality === 'high' ? '⭐ Cao' : '📊 Trung bình'}
                     </Badge>
                     <Button variant="ghost" size="sm" onClick={() => toast.success('Đang tải dataset...')}><Download className="w-4 h-4" /></Button>

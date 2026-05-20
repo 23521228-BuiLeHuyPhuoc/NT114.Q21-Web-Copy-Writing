@@ -25,9 +25,9 @@ const SCENARIOS: Scenario[] = [
   {
     type: 'Facebook Ad',
     typeIcon: Megaphone,
-    typeColor: 'bg-amber-100 text-amber-700',
+    typeColor: 'bg-warning/15 text-amber-800',
     model: 'GPT-4o',
-    modelBg: 'bg-stone-100 text-stone-700',
+    modelBg: 'bg-primary/10 text-primary',
     industry: 'E-commerce',
     inputText: 'Khóa học lập trình Python',
     tone: 'Hấp dẫn, thúc đẩy hành động',
@@ -47,9 +47,9 @@ const SCENARIOS: Scenario[] = [
   {
     type: 'Email Marketing',
     typeIcon: Mail,
-    typeColor: 'bg-stone-100 text-stone-700',
+    typeColor: 'bg-primary/10 text-primary',
     model: 'GPT-4o',
-    modelBg: 'bg-amber-100 text-amber-700',
+    modelBg: 'bg-warning/15 text-amber-800',
     industry: 'Retail',
     inputText: 'Flash sale cuối năm giảm 70%',
     tone: 'Khẩn cấp, cá nhân hóa',
@@ -69,9 +69,9 @@ const SCENARIOS: Scenario[] = [
   {
     type: 'Mô tả sản phẩm',
     typeIcon: ShoppingCart,
-    typeColor: 'bg-green-100 text-green-700',
+    typeColor: 'bg-primary/10 text-primary',
     model: 'Llama 3.1',
-    modelBg: 'bg-stone-100 text-stone-700',
+    modelBg: 'bg-primary/10 text-primary',
     industry: 'Bất động sản',
     inputText: 'Căn hộ cao cấp view sông Q.7',
     tone: 'Sang trọng, thu hút nhà đầu tư',
@@ -92,9 +92,9 @@ const SCENARIOS: Scenario[] = [
   {
     type: 'Landing Page',
     typeIcon: FileText,
-    typeColor: 'bg-stone-100 text-stone-700',
+    typeColor: 'bg-primary/10 text-primary',
     model: 'GPT-4o',
-    modelBg: 'bg-amber-100 text-amber-700',
+    modelBg: 'bg-warning/15 text-amber-800',
     industry: 'SaaS / Công nghệ',
     inputText: 'Phần mềm quản lý nhà hàng',
     tone: 'Chuyên nghiệp, thuyết phục',
@@ -271,7 +271,7 @@ export function HeroGeneratorDemo() {
 
   return (
     <div
-      className={`relative transition-opacity duration-700 ${isFading ? 'opacity-0' : 'opacity-100'}`}
+      className={`dark relative transition-opacity duration-700 ${isFading ? 'opacity-0' : 'opacity-100'}`}
     >
       {/* Outer card — browser chrome */}
       <div className="rounded-2xl overflow-hidden shadow-[0_24px_60px_rgba(0,0,0,0.5)] ring-1 ring-white/10 bg-[#0f1117]">
@@ -285,8 +285,8 @@ export function HeroGeneratorDemo() {
           </div>
           <div className="flex-1 flex justify-center">
             <div className="bg-[#0f1117] rounded-lg px-4 py-1 flex items-center gap-2 border border-white/8">
-              <div className="w-3 h-3 rounded-full bg-stone-500/80" />
-              <span className="text-[11px] text-gray-500 font-mono truncate">app.copypro.vn/generator</span>
+              <div className="w-3 h-3 rounded-full bg-primary/80" />
+              <span className="text-[11px] text-muted-foreground font-mono truncate">app.copypro.vn/generator</span>
             </div>
           </div>
           <div className="w-16" />
@@ -305,7 +305,7 @@ export function HeroGeneratorDemo() {
                 <span className={`text-[10px] px-2 py-1 rounded-full font-semibold ${scenario.modelBg}`}>
                   {scenario.model}
                 </span>
-                <span className="text-[10px] px-2 py-1 rounded-full bg-gray-800 text-gray-400 font-medium hidden sm:block">
+                <span className="text-[10px] px-2 py-1 rounded-full bg-gray-800 text-muted-foreground/80 font-medium hidden sm:block">
                   {scenario.industry}
                 </span>
               </div>
@@ -314,7 +314,7 @@ export function HeroGeneratorDemo() {
             {/* Progress bar */}
             <div className="h-0.5 bg-gray-800 relative flex-shrink-0">
               <div
-                className="absolute inset-y-0 left-0 bg-gradient-to-r from-emerald-500 to-stone-500 transition-all duration-700 ease-out"
+                className="absolute inset-y-0 left-0 bg-gradient-to-r from-green-500 to-emerald-500 transition-all duration-700 ease-out"
                 style={{ width: `${progressPct}%` }}
               />
             </div>
@@ -327,28 +327,28 @@ export function HeroGeneratorDemo() {
 
                 {/* Content type */}
                 <div>
-                  <p className="text-gray-600 text-[10px] font-bold uppercase tracking-widest mb-2">Loại nội dung</p>
+                  <p className="text-foreground/70 text-[10px] font-bold uppercase tracking-widest mb-2">Loại nội dung</p>
                   <div
                     className={`flex items-center gap-2 p-2.5 rounded-xl border ${
                       isInputVisible
-                        ? 'border-stone-500/50 bg-stone-500/8'
-                        : 'border-white/8 bg-white/4'
+                        ? 'border-primary/50 bg-primary/10'
+                        : 'border-white/8 bg-card/4'
                     } transition-all`}
                   >
                     <div className={`p-1.5 rounded-lg ${scenario.typeColor} transition-all`}>
                       <TypeIcon className="w-3 h-3" />
                     </div>
                     <span className="text-white text-[11px] font-semibold flex-1 truncate">{scenario.type}</span>
-                    <ChevronDown className="w-3 h-3 text-gray-600 flex-shrink-0" />
+                    <ChevronDown className="w-3 h-3 text-foreground/70 flex-shrink-0" />
                   </div>
                 </div>
 
                 {/* Input field */}
                 <div>
-                  <p className="text-gray-600 text-[10px] font-bold uppercase tracking-widest mb-2">Sản phẩm / Chủ đề</p>
-                  <div className={`relative rounded-xl border px-3 py-2.5 bg-white/4 min-h-[38px] transition-all ${
+                  <p className="text-foreground/70 text-[10px] font-bold uppercase tracking-widest mb-2">Sản phẩm / Chủ đề</p>
+                  <div className={`relative rounded-xl border px-3 py-2.5 bg-card/4 min-h-[38px] transition-all ${
                     phase === 'typing_input'
-                      ? 'border-stone-500/60 shadow-[0_0_0_2px_rgba(79,70,229,0.14)]'
+                      ? 'border-primary/60 shadow-[0_0_0_2px_rgba(34,197,94,0.14)]'
                       : isInputVisible
                       ? 'border-white/15'
                       : 'border-white/6'
@@ -360,30 +360,30 @@ export function HeroGeneratorDemo() {
                       )}
                     </span>
                     {!isInputVisible && (
-                      <span className="text-gray-700 text-[11px]">Nhập tên sản phẩm...</span>
+                      <span className="text-foreground/80 text-[11px]">Nhập tên sản phẩm...</span>
                     )}
                   </div>
                 </div>
 
                 {/* Tone */}
                 <div>
-                  <p className="text-gray-600 text-[10px] font-bold uppercase tracking-widest mb-2">Giọng văn</p>
-                  <div className={`rounded-xl border px-3 py-2 bg-white/4 transition-all ${isInputVisible ? 'border-white/12' : 'border-white/5'}`}>
-                    <span className="text-gray-400 text-[11px]">{isInputVisible ? scenario.tone : '—'}</span>
+                  <p className="text-foreground/70 text-[10px] font-bold uppercase tracking-widest mb-2">Giọng văn</p>
+                  <div className={`rounded-xl border px-3 py-2 bg-card/4 transition-all ${isInputVisible ? 'border-white/12' : 'border-white/5'}`}>
+                    <span className="text-muted-foreground/80 text-[11px]">{isInputVisible ? scenario.tone : '—'}</span>
                   </div>
                 </div>
 
                 {/* Versions */}
                 <div>
-                  <p className="text-gray-600 text-[10px] font-bold uppercase tracking-widest mb-2">Số phiên bản</p>
+                  <p className="text-foreground/70 text-[10px] font-bold uppercase tracking-widest mb-2">Số phiên bản</p>
                   <div className="flex gap-1.5">
                     {[1, 2, 3].map(n => (
                       <div
                         key={n}
                         className={`flex-1 text-center py-1.5 rounded-lg text-[11px] font-bold border transition-all cursor-default ${
                           n === 1
-                            ? 'bg-stone-600/20 border-stone-500/40 text-stone-300'
-                            : 'bg-white/4 border-white/8 text-gray-600'
+                            ? 'bg-primary/20 border-primary/40 text-primary'
+                            : 'bg-card/4 border-white/8 text-foreground/70'
                         }`}
                       >
                         {n}
@@ -396,17 +396,17 @@ export function HeroGeneratorDemo() {
                 <button
                   className={`w-full py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all ${
                     phase === 'generating' || phase === 'streaming'
-                      ? 'bg-green-600/30 text-green-400 border border-green-500/30 cursor-not-allowed'
+                      ? 'bg-primary/30 text-primary border border-primary/30 cursor-not-allowed'
                       : btnPressed
                       ? 'bg-green-400 text-white scale-95 shadow-none'
                       : phase === 'pre_gen'
-                      ? 'bg-gradient-to-r from-emerald-500 to-stone-500 text-white shadow-lg shadow-stone-900/40 scale-100'
-                      : 'bg-gradient-to-r from-emerald-600 to-stone-600 text-white shadow-md shadow-stone-900/30'
+                      ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-primary/30 scale-100'
+                      : 'bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-md shadow-primary/25'
                   }`}
                 >
                   {phase === 'generating' ? (
                     <>
-                      <div className="w-3 h-3 border-2 border-green-400 border-t-transparent rounded-full animate-spin" />
+                      <div className="w-3 h-3 border-2 border-green-300 border-t-transparent rounded-full animate-spin" />
                       Đang tạo...
                     </>
                   ) : (
@@ -426,11 +426,11 @@ export function HeroGeneratorDemo() {
                   <div className="flex items-center gap-2">
                     <div className={`w-1.5 h-1.5 rounded-full transition-colors flex-shrink-0 ${
                       phase === 'generating' ? 'bg-amber-400 animate-pulse'
-                      : isDone ? 'bg-green-500'
+                      : isDone ? 'bg-primary/50'
                       : phase === 'streaming' ? 'bg-green-400 animate-pulse'
                       : 'bg-gray-700'
                     }`} />
-                    <span className="text-gray-600 text-[10px] font-semibold uppercase tracking-wider truncate">
+                    <span className="text-foreground/70 text-[10px] font-semibold uppercase tracking-wider truncate">
                       {phase === 'idle' ? 'Sẵn sàng'
                         : phase === 'typing_input' ? 'Đang nhập...'
                         : phase === 'pre_gen' ? 'Chuẩn bị...'
@@ -444,7 +444,7 @@ export function HeroGeneratorDemo() {
                       <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-900/40 text-emerald-400 border border-emerald-700/30 font-medium hidden sm:block">
                         ⭐ {scenario.quality}%
                       </span>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-stone-900/30 text-stone-400 border border-stone-700/30 font-medium">
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-900/30 text-primary border border-green-700/30 font-medium">
                         ⚡ {scenario.seconds}s
                       </span>
                     </div>
@@ -475,9 +475,9 @@ export function HeroGeneratorDemo() {
                   {(phase === 'idle' || phase === 'typing_input' || phase === 'pre_gen') && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
                       <div className="w-12 h-12 rounded-2xl bg-gray-800 flex items-center justify-center">
-                        <Wand2 className="w-5 h-5 text-gray-600" />
+                        <Wand2 className="w-5 h-5 text-foreground/70" />
                       </div>
-                      <p className="text-gray-700 text-xs font-medium text-center px-6">
+                      <p className="text-foreground/80 text-xs font-medium text-center px-6">
                         {phase === 'idle'
                           ? 'Kết quả sẽ xuất hiện tại đây...'
                           : phase === 'typing_input'
@@ -507,19 +507,19 @@ export function HeroGeneratorDemo() {
                       onClick={() => setCopied(true)}
                       className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all ${
                         copied
-                          ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                          : 'bg-white/6 text-gray-300 border border-white/10 hover:bg-white/10'
+                          ? 'bg-primary/20 text-primary border border-primary/30'
+                          : 'bg-card/10 text-muted-foreground/60 border border-white/10 hover:bg-card/10'
                       }`}
                     >
                       {copied
                         ? <><CheckCircle2 className="w-3 h-3" /> Đã copy!</>
                         : <><Copy className="w-3 h-3" /> Copy</>}
                     </button>
-                    <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-white/6 text-gray-300 border border-white/10 transition-all">
+                    <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-card/10 text-muted-foreground/60 border border-white/10 transition-all">
                       <RotateCcw className="w-3 h-3" /> Tạo lại
                     </button>
-                    <div className="ml-auto flex items-center gap-1 text-[10px] text-gray-700">
-                      <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                    <div className="ml-auto flex items-center gap-1 text-[10px] text-foreground/80">
+                      <div className="w-1.5 h-1.5 bg-primary/50 rounded-full animate-pulse" />
                       Phiên bản 1/1
                     </div>
                   </div>
@@ -539,8 +539,8 @@ export function HeroGeneratorDemo() {
               key={i}
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-semibold transition-all ${
                 i === scenarioIdx
-                  ? 'bg-green-500/20 border-green-500/40 text-green-400'
-                  : 'bg-white/4 border-white/8 text-gray-600'
+                  ? 'bg-primary/20 border-primary/40 text-primary'
+                  : 'bg-card/4 border-white/8 text-foreground/70'
               }`}
             >
               <Icon className="w-2.5 h-2.5 flex-shrink-0" />

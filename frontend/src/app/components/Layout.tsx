@@ -57,7 +57,7 @@ export function Layout({ children }: LayoutProps) {
         <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
           <BrandLogo size="md" />
           <div className="min-w-0">
-            <p className="text-xs text-gray-500">{user?.role === 'admin' ? 'Admin Panel' : 'Customer Portal'}</p>
+            <p className="text-xs text-muted-foreground">{user?.role === 'admin' ? 'Admin Panel' : 'Customer Portal'}</p>
           </div>
         </Link>
       </div>
@@ -70,7 +70,7 @@ export function Layout({ children }: LayoutProps) {
             <span className={`text-xs font-semibold ${adminRoleDef.textColor} truncate`}>{adminRoleDef.label}</span>
           </div>
         ) : (
-          <Badge className="bg-amber-100 text-amber-700 border-0">👤 Customer · Pro</Badge>
+          <Badge variant="warning">👤 Customer · Pro</Badge>
         )}
       </div>
 
@@ -83,15 +83,15 @@ export function Layout({ children }: LayoutProps) {
             <Link key={item.path} to={item.path}>
               <div className={`flex items-center justify-between px-3 py-2.5 rounded-xl transition-colors ${
                 isActive
-                  ? 'bg-stone-100 text-stone-700'
-                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
               }`}>
                 <div className="flex items-center gap-3">
-                  <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-stone-600' : ''}`} />
+                  <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-primary' : ''}`} />
                   <span className="text-sm font-medium">{item.label}</span>
                 </div>
                 {'badge' in item && item.badge && (
-                  <Badge className="bg-amber-100 text-amber-700 border-0 text-xs px-1.5 py-0">{item.badge}</Badge>
+                  <Badge variant="warning" className="text-xs px-1.5 py-0">{item.badge}</Badge>
                 )}
               </div>
             </Link>
@@ -103,13 +103,13 @@ export function Layout({ children }: LayoutProps) {
       <div className="p-4 border-t flex-shrink-0">
         <div className="flex items-center gap-3 mb-3">
           <Avatar className="w-9 h-9 flex-shrink-0">
-            <AvatarFallback className="bg-gradient-to-br from-emerald-600 to-stone-700 text-white text-sm">
+            <AvatarFallback className="bg-gradient-to-br from-primary to-success text-primary-foreground text-sm">
               {user?.name.charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-sm truncate text-gray-900">{user?.name}</p>
-            <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+            <p className="font-semibold text-sm truncate text-foreground">{user?.name}</p>
+            <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
           </div>
         </div>
         <Button variant="outline" className="w-full h-9 text-sm rounded-xl" onClick={handleLogout}>
@@ -122,13 +122,13 @@ export function Layout({ children }: LayoutProps) {
   // ── ADMIN LAYOUT (sidebar only, no extra header/footer) ──
   if (user?.role === 'admin') {
     return (
-      <div className="min-h-screen bg-gray-50 flex">
-        <aside className="hidden md:block w-60 bg-white border-r flex-shrink-0">
+      <div className="min-h-screen bg-surface-muted flex">
+        <aside className="hidden md:block w-60 bg-card border-r flex-shrink-0">
           <Sidebar />
         </aside>
         <div className="flex-1 flex flex-col min-w-0">
           {/* Mobile Header for admin */}
-          <header className="md:hidden bg-white border-b p-4 flex items-center justify-between flex-shrink-0">
+          <header className="md:hidden bg-card border-b p-4 flex items-center justify-between flex-shrink-0">
             <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
               <BrandLogo size="md" />
             </Link>
@@ -151,16 +151,16 @@ export function Layout({ children }: LayoutProps) {
 
   // ── CUSTOMER LAYOUT (sidebar + header + footer) ──
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-surface-muted flex">
       {/* Desktop Sidebar */}
-      <aside className="hidden md:block w-60 bg-white border-r flex-shrink-0 sticky top-0 h-screen overflow-y-auto">
+      <aside className="hidden md:block w-60 bg-card border-r flex-shrink-0 sticky top-0 h-screen overflow-y-auto">
         <Sidebar />
       </aside>
 
       {/* Main column */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile top bar */}
-        <header className="md:hidden bg-white border-b p-4 flex items-center justify-between flex-shrink-0">
+        <header className="md:hidden bg-card border-b p-4 flex items-center justify-between flex-shrink-0">
           <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
             <BrandLogo size="md" />
           </Link>

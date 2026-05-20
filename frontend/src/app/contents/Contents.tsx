@@ -34,8 +34,8 @@ export function CustomerContents() {
       <div className="p-6 max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-1">Quản Lý Nội Dung</h1>
-            <p className="text-gray-600">Tất cả copy AI bạn đã tạo — tìm kiếm, lọc và quản lý dễ dàng</p>
+            <h1 className="text-3xl font-bold text-foreground mb-1">Quản Lý Nội Dung</h1>
+            <p className="text-foreground/70">Tất cả copy AI bạn đã tạo — tìm kiếm, lọc và quản lý dễ dàng</p>
           </div>
           <Button className="bg-gradient-to-r from-green-600 to-emerald-600 text-white" onClick={() => navigate('/generate')}>
             <Plus className="w-4 h-4 mr-2" /> Tạo Nội Dung Mới
@@ -45,9 +45,9 @@ export function CustomerContents() {
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {[
-            { label: 'Tổng nội dung', value: contents.length, icon: FileText, color: 'text-green-600 bg-green-50' },
-            { label: 'Đã xuất bản', value: contents.filter(c => c.status === 'published').length, icon: Star, color: 'text-stone-600 bg-stone-50' },
-            { label: 'Bản nháp', value: contents.filter(c => c.status === 'draft').length, icon: Clock, color: 'text-amber-600 bg-amber-50' },
+            { label: 'Tổng nội dung', value: contents.length, icon: FileText, color: 'text-primary bg-primary/5' },
+            { label: 'Đã xuất bản', value: contents.filter(c => c.status === 'published').length, icon: Star, color: 'text-primary bg-primary/5' },
+            { label: 'Bản nháp', value: contents.filter(c => c.status === 'draft').length, icon: Clock, color: 'text-amber-600 bg-warning/10' },
             { label: 'Chất lượng TB', value: (contents.length ? Math.round(contents.reduce((a, c) => a + c.quality, 0) / contents.length) : 0) + '%', icon: Sparkles, color: 'text-emerald-600 bg-emerald-50' },
           ].map((s, i) => {
             const Icon = s.icon;
@@ -55,8 +55,8 @@ export function CustomerContents() {
               <Card key={i} className="p-4 flex items-center gap-3">
                 <div className={`p-2 rounded-lg ${s.color}`}><Icon className="w-4 h-4" /></div>
                 <div>
-                  <p className="text-xl font-bold text-gray-900">{s.value}</p>
-                  <p className="text-xs text-gray-500">{s.label}</p>
+                  <p className="text-xl font-bold text-foreground">{s.value}</p>
+                  <p className="text-xs text-muted-foreground">{s.label}</p>
                 </div>
               </Card>
             );
@@ -67,7 +67,7 @@ export function CustomerContents() {
         <Card className="p-4 mb-6">
           <div className="flex flex-wrap gap-3">
             <div className="relative flex-1 min-w-48">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/80" />
               <Input placeholder="Tìm kiếm nội dung..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
             </div>
             <Select value={filterStatus} onValueChange={setFilterStatus}>
@@ -98,7 +98,7 @@ export function CustomerContents() {
         {/* Content list */}
         <div className="space-y-3">
           {filtered.length === 0 && (
-            <div className="text-center py-16 text-gray-400">
+            <div className="text-center py-16 text-muted-foreground/80">
               <FileText className="w-12 h-12 mx-auto mb-3 opacity-30" />
               <p>Không tìm thấy nội dung phù hợp</p>
             </div>
@@ -111,16 +111,16 @@ export function CustomerContents() {
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2 mb-1.5">
                       <Badge className={`${status.color} border-0 text-xs`}>{status.label}</Badge>
-                      <Badge className="bg-gray-100 text-gray-600 border-0 text-xs">{item.type}</Badge>
-                      <Badge className="bg-green-100 text-green-700 border-0 text-xs">{item.model}</Badge>
+                      <Badge className="bg-muted text-foreground/70 border-0 text-xs">{item.type}</Badge>
+                      <Badge className="bg-primary/10 text-primary border-0 text-xs">{item.model}</Badge>
                       <Badge className="bg-emerald-50 text-emerald-700 border-0 text-xs">⭐ {item.quality}%</Badge>
                     </div>
-                    <h3 className="font-semibold text-gray-900 truncate">{item.title}</h3>
-                    <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-400">
+                    <h3 className="font-semibold text-foreground truncate">{item.title}</h3>
+                    <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground/80">
                       <span><Calendar className="w-3 h-3 inline mr-1" />{item.createdAt}</span>
                       <span>{item.words} từ</span>
                       <span>{item.industry}</span>
-                      {item.project && <span className="text-green-600">{item.project}</span>}
+                      {item.project && <span className="text-primary">{item.project}</span>}
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0" onClick={e => e.stopPropagation()}>

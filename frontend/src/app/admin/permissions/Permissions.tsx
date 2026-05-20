@@ -21,11 +21,11 @@ import {
 } from '@/lib/permissions';
 
 const COLOR_PRESETS = [
-  { name: 'Purple', color: 'bg-stone-100', textColor: 'text-stone-700', borderColor: 'border-stone-200', dotColor: 'bg-stone-500' },
-  { name: 'Blue', color: 'bg-stone-100', textColor: 'text-stone-700', borderColor: 'border-stone-200', dotColor: 'bg-stone-500' },
-  { name: 'Green', color: 'bg-green-100', textColor: 'text-green-700', borderColor: 'border-green-200', dotColor: 'bg-green-500' },
-  { name: 'Amber', color: 'bg-amber-100', textColor: 'text-amber-700', borderColor: 'border-amber-200', dotColor: 'bg-amber-500' },
-  { name: 'Cyan', color: 'bg-stone-100', textColor: 'text-stone-700', borderColor: 'border-stone-200', dotColor: 'bg-stone-500' },
+  { name: 'Forest', color: 'bg-primary/10', textColor: 'text-primary', borderColor: 'border-primary/20', dotColor: 'bg-primary/50' },
+  { name: 'Sage', color: 'bg-lime-100', textColor: 'text-lime-700', borderColor: 'border-lime-200', dotColor: 'bg-lime-500' },
+  { name: 'Leaf', color: 'bg-emerald-100', textColor: 'text-emerald-700', borderColor: 'border-emerald-200', dotColor: 'bg-emerald-500' },
+  { name: 'Amber', color: 'bg-warning/15', textColor: 'text-amber-700', borderColor: 'border-amber-200', dotColor: 'bg-warning/100' },
+  { name: 'Teal', color: 'bg-teal-100', textColor: 'text-teal-700', borderColor: 'border-teal-200', dotColor: 'bg-teal-500' },
   { name: 'Rose', color: 'bg-rose-100', textColor: 'text-rose-700', borderColor: 'border-rose-200', dotColor: 'bg-rose-500' },
 ];
 
@@ -50,7 +50,7 @@ export function AdminPermissions() {
   const [roles, setRoles] = useState<Record<string, AdminRoleDef>>(() => getAdminRoles());
   const [selectedRole, setSelectedRole] = useState('super_admin');
   const [newPermission, setNewPermission] = useState({ key: '', label: '', group: 'Custom', description: '' });
-  const [newRole, setNewRole] = useState({ key: '', label: '', description: '', preset: 'Purple' });
+  const [newRole, setNewRole] = useState({ key: '', label: '', description: '', preset: 'Forest' });
 
   const groupedPermissions = useMemo(() => groupPermissions(permissions), [permissions]);
   const selectedRoleDef = roles[selectedRole];
@@ -134,7 +134,7 @@ export function AdminPermissions() {
     };
     persistRoles(next);
     setSelectedRole(key);
-    setNewRole({ key: '', label: '', description: '', preset: 'Purple' });
+    setNewRole({ key: '', label: '', description: '', preset: 'Forest' });
     toast.success('Đã tạo loại admin mới');
   };
 
@@ -177,12 +177,12 @@ export function AdminPermissions() {
       <div className="p-6 max-w-7xl mx-auto space-y-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <div className="inline-flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 rounded-full px-3 py-1 text-xs font-semibold mb-3">
+            <div className="inline-flex items-center gap-2 bg-primary/5 border border-primary/20 text-primary rounded-full px-3 py-1 text-xs font-semibold mb-3">
               <Shield className="w-3.5 h-3.5" />
               RBAC Admin
             </div>
-            <h1 className="text-3xl font-bold text-gray-900">Phân quyền Admin</h1>
-            <p className="text-gray-500 text-sm mt-1">Tạo quyền, tạo loại admin và gán phạm vi truy cập cho từng nhóm.</p>
+            <h1 className="text-3xl font-bold text-foreground">Phân quyền Admin</h1>
+            <p className="text-muted-foreground text-sm mt-1">Tạo quyền, tạo loại admin và gán phạm vi truy cập cho từng nhóm.</p>
           </div>
           <Button variant="outline" className="gap-2" onClick={resetConfig}>
             <RotateCcw className="w-4 h-4" />
@@ -194,8 +194,8 @@ export function AdminPermissions() {
           <div className="space-y-6">
             <Card className="p-5">
               <div className="flex items-center gap-2 mb-4">
-                <Users className="w-5 h-5 text-green-600" />
-                <h2 className="font-bold text-gray-900">Loại admin</h2>
+                <Users className="w-5 h-5 text-primary" />
+                <h2 className="font-bold text-foreground">Loại admin</h2>
               </div>
               <div className="space-y-2">
                 {Object.entries(roles).map(([key, role]) => (
@@ -204,16 +204,16 @@ export function AdminPermissions() {
                     type="button"
                     onClick={() => setSelectedRole(key)}
                     className={`w-full text-left p-3 rounded-xl border transition-all ${
-                      selectedRole === key ? 'border-green-300 bg-green-50' : 'border-gray-200 hover:bg-gray-50'
+                      selectedRole === key ? 'border-green-300 bg-primary/5' : 'border-border hover:bg-surface-muted'
                     }`}
                   >
                     <div className="flex items-center gap-2">
                       <span className={`w-2 h-2 rounded-full ${role.dotColor}`} />
-                      <span className="text-sm font-semibold text-gray-900">{role.label}</span>
-                      {role.system && <Badge className="ml-auto bg-gray-100 text-gray-600 border-0">System</Badge>}
+                      <span className="text-sm font-semibold text-foreground">{role.label}</span>
+                      {role.system && <Badge className="ml-auto bg-muted text-foreground/70 border-0">System</Badge>}
                     </div>
-                    <p className="text-xs text-gray-500 mt-1 line-clamp-2">{role.description}</p>
-                    <p className="text-[11px] text-gray-400 mt-1">{selectedRole === 'super_admin' && key === 'super_admin' ? permissions.length : role.permissions.length} quyền</p>
+                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{role.description}</p>
+                    <p className="text-[11px] text-muted-foreground/80 mt-1">{selectedRole === 'super_admin' && key === 'super_admin' ? permissions.length : role.permissions.length} quyền</p>
                   </button>
                 ))}
               </div>
@@ -221,8 +221,8 @@ export function AdminPermissions() {
 
             <Card className="p-5 space-y-4">
               <div className="flex items-center gap-2">
-                <Plus className="w-5 h-5 text-green-600" />
-                <h2 className="font-bold text-gray-900">Tạo loại admin</h2>
+                <Plus className="w-5 h-5 text-primary" />
+                <h2 className="font-bold text-foreground">Tạo loại admin</h2>
               </div>
               <div>
                 <Label>Mã loại admin</Label>
@@ -244,7 +244,7 @@ export function AdminPermissions() {
                       key={preset.name}
                       type="button"
                       onClick={() => setNewRole((prev) => ({ ...prev, preset: preset.name }))}
-                      className={`flex items-center gap-2 border rounded-lg px-2 py-2 text-xs ${newRole.preset === preset.name ? 'border-green-400 bg-green-50' : 'border-gray-200'}`}
+                      className={`flex items-center gap-2 border rounded-lg px-2 py-2 text-xs ${newRole.preset === preset.name ? 'border-green-400 bg-primary/5' : 'border-border'}`}
                     >
                       <span className={`w-2 h-2 rounded-full ${preset.dotColor}`} />
                       {preset.name}
@@ -252,7 +252,7 @@ export function AdminPermissions() {
                   ))}
                 </div>
               </div>
-              <Button className="w-full gap-2 bg-green-600 hover:bg-green-700 text-white" onClick={createRole}>
+              <Button className="w-full gap-2 bg-primary hover:bg-green-700 text-white" onClick={createRole}>
                 <Plus className="w-4 h-4" />
                 Tạo loại admin
               </Button>
@@ -269,15 +269,15 @@ export function AdminPermissions() {
                         <span className={`w-2 h-2 rounded-full ${selectedRoleDef.dotColor}`} />
                         {selectedRoleDef.label}
                       </div>
-                      <h2 className="text-xl font-bold text-gray-900">Gán quyền cho loại admin</h2>
-                      <p className="text-sm text-gray-500 mt-1">{selectedRoleDef.description}</p>
+                      <h2 className="text-xl font-bold text-foreground">Gán quyền cho loại admin</h2>
+                      <p className="text-sm text-muted-foreground mt-1">{selectedRoleDef.description}</p>
                     </div>
                     <div className="flex gap-2">
-                      <Badge className="bg-gray-100 text-gray-700 border-0">
+                      <Badge className="bg-muted text-foreground/80 border-0">
                         {selectedRole === 'super_admin' ? permissions.length : selectedRoleDef.permissions.length}/{permissions.length} quyền
                       </Badge>
                       {!selectedRoleDef.system && (
-                        <Button variant="outline" className="gap-2 border-red-200 text-red-600 hover:bg-red-50" onClick={() => deleteRole(selectedRole)}>
+                        <Button variant="outline" className="gap-2 border-red-200 text-red-600 hover:bg-destructive/10" onClick={() => deleteRole(selectedRole)}>
                           <Trash2 className="w-4 h-4" />
                           Xoá
                         </Button>
@@ -286,7 +286,7 @@ export function AdminPermissions() {
                   </div>
 
                   {selectedRole === 'super_admin' && (
-                    <div className="mb-4 flex items-start gap-2 rounded-xl border border-stone-200 bg-stone-50 p-3 text-sm text-stone-700">
+                    <div className="mb-4 flex items-start gap-2 rounded-xl border border-primary/20 bg-primary/5 p-3 text-sm text-primary">
                       <CheckCircle2 className="w-4 h-4 mt-0.5" />
                       Super Admin luôn có toàn bộ quyền, bao gồm quyền tuỳ chỉnh được tạo sau này.
                     </div>
@@ -295,12 +295,12 @@ export function AdminPermissions() {
                   <div className="space-y-5">
                     {Object.entries(groupedPermissions).map(([group, items]) => (
                       <div key={group}>
-                        <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{group}</p>
+                        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 mb-2">{group}</p>
                         <div className="grid md:grid-cols-2 gap-3">
                           {items.map((permission) => {
                             const checked = selectedRole === 'super_admin' || selectedRoleDef.permissions.includes(permission.key);
                             return (
-                              <div key={permission.key} className="flex gap-3 rounded-xl border border-gray-200 p-3">
+                              <div key={permission.key} className="flex gap-3 rounded-xl border border-border p-3">
                                 <Checkbox
                                   checked={checked}
                                   disabled={selectedRole === 'super_admin'}
@@ -309,15 +309,15 @@ export function AdminPermissions() {
                                 />
                                 <div className="min-w-0 flex-1">
                                   <div className="flex items-center gap-2">
-                                    <p className="text-sm font-semibold text-gray-900">{permission.label}</p>
+                                    <p className="text-sm font-semibold text-foreground">{permission.label}</p>
                                     {permission.system ? (
-                                      <Badge className="bg-gray-100 text-gray-600 border-0">System</Badge>
+                                      <Badge className="bg-muted text-foreground/70 border-0">System</Badge>
                                     ) : (
-                                      <Badge className="bg-green-100 text-green-700 border-0">Custom</Badge>
+                                      <Badge className="bg-primary/10 text-primary border-0">Custom</Badge>
                                     )}
                                   </div>
-                                  <p className="text-xs text-gray-500 mt-0.5">{permission.description}</p>
-                                  <p className="text-[11px] text-gray-400 mt-1 font-mono">{permission.key}</p>
+                                  <p className="text-xs text-muted-foreground mt-0.5">{permission.description}</p>
+                                  <p className="text-[11px] text-muted-foreground/80 mt-1 font-mono">{permission.key}</p>
                                 </div>
                               </div>
                             );
@@ -328,14 +328,14 @@ export function AdminPermissions() {
                   </div>
                 </>
               ) : (
-                <div className="py-16 text-center text-gray-400">Chọn một loại admin để cấu hình quyền.</div>
+                <div className="py-16 text-center text-muted-foreground/80">Chọn một loại admin để cấu hình quyền.</div>
               )}
             </Card>
 
             <Card className="p-5">
               <div className="flex items-center gap-2 mb-4">
-                <KeyRound className="w-5 h-5 text-green-600" />
-                <h2 className="font-bold text-gray-900">Tạo loại quyền</h2>
+                <KeyRound className="w-5 h-5 text-primary" />
+                <h2 className="font-bold text-foreground">Tạo loại quyền</h2>
               </div>
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
@@ -355,25 +355,25 @@ export function AdminPermissions() {
                   <Input className="mt-2" placeholder="Mô tả quyền này dùng để làm gì" value={newPermission.description} onChange={(e) => setNewPermission((prev) => ({ ...prev, description: e.target.value }))} />
                 </div>
               </div>
-              <Button className="mt-4 gap-2 bg-green-600 hover:bg-green-700 text-white" onClick={createPermission}>
+              <Button className="mt-4 gap-2 bg-primary hover:bg-green-700 text-white" onClick={createPermission}>
                 <Plus className="w-4 h-4" />
                 Tạo quyền
               </Button>
 
               <div className="mt-6 border-t pt-4">
-                <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Quyền tuỳ chỉnh</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 mb-3">Quyền tuỳ chỉnh</p>
                 <div className="space-y-2">
                   {permissions.filter((permission) => !permission.system).length === 0 ? (
-                    <p className="text-sm text-gray-400">Chưa có quyền tuỳ chỉnh.</p>
+                    <p className="text-sm text-muted-foreground/80">Chưa có quyền tuỳ chỉnh.</p>
                   ) : (
                     permissions.filter((permission) => !permission.system).map((permission) => (
-                      <div key={permission.key} className="flex items-center justify-between rounded-xl border border-gray-200 p-3">
+                      <div key={permission.key} className="flex items-center justify-between rounded-xl border border-border p-3">
                         <div>
-                          <p className="text-sm font-semibold text-gray-900">{permission.label}</p>
-                          <p className="text-xs text-gray-500">{permission.description}</p>
-                          <p className="text-[11px] text-gray-400 font-mono">{permission.key}</p>
+                          <p className="text-sm font-semibold text-foreground">{permission.label}</p>
+                          <p className="text-xs text-muted-foreground">{permission.description}</p>
+                          <p className="text-[11px] text-muted-foreground/80 font-mono">{permission.key}</p>
                         </div>
-                        <Button variant="ghost" size="icon" className="text-red-500 hover:bg-red-50" onClick={() => deletePermission(permission.key)}>
+                        <Button variant="ghost" size="icon" className="text-red-500 hover:bg-destructive/10" onClick={() => deletePermission(permission.key)}>
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>

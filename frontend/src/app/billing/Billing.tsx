@@ -28,7 +28,7 @@ const PLANS = [
     name: 'Miễn phí',
     price: 0,
     icon: Zap,
-    color: 'border-gray-200',
+    color: 'border-border',
     features: ['30 copy/tháng', '2 model AI cơ bản', '5 templates', 'Không có API'],
     limits: ['Không có fine-tuning', 'Không kiểm tra đạo văn'],
   },
@@ -47,7 +47,7 @@ const PLANS = [
     name: 'Business',
     price: 799000,
     icon: Building2,
-    color: 'border-gray-200',
+    color: 'border-border',
     features: ['Unlimited copy', 'Tất cả model AI', 'Unlimited templates', 'API 50,000 calls/tháng', 'Fine-tuning unlimited', 'Kiểm tra đạo văn unlimited', 'Hỗ trợ 24/7 + SLA', 'Custom model training'],
     limits: [],
   },
@@ -60,7 +60,7 @@ const PAYMENT_METHODS = [
     shortName: 'Tiền mặt',
     desc: 'Thanh toán tại văn phòng hoặc khi nhân viên hỗ trợ thu phí.',
     icon: Banknote,
-    color: 'bg-green-100 text-green-700',
+    color: 'bg-primary/10 text-primary',
     guide: 'CopyPro sẽ ghi nhận thanh toán sau khi thu tiền và kích hoạt gói trong giờ làm việc.',
   },
   {
@@ -69,7 +69,7 @@ const PAYMENT_METHODS = [
     shortName: 'Ngân hàng',
     desc: 'Chuyển khoản qua số tài khoản doanh nghiệp CopyPro.',
     icon: Landmark,
-    color: 'bg-stone-100 text-stone-700',
+    color: 'bg-primary/10 text-primary',
     guide: 'Ngân hàng: Vietcombank · STK: 0123456789 · Nội dung: COPYPRO + email tài khoản.',
   },
   {
@@ -78,7 +78,7 @@ const PAYMENT_METHODS = [
     shortName: 'ZaloPay',
     desc: 'Quét QR hoặc mở ứng dụng ZaloPay để thanh toán nhanh.',
     icon: Smartphone,
-    color: 'bg-stone-100 text-stone-700',
+    color: 'bg-primary/10 text-primary',
     guide: 'Sau khi bấm thanh toán, hệ thống sẽ tạo mã QR ZaloPay cho hóa đơn đang chọn.',
   },
   {
@@ -87,7 +87,7 @@ const PAYMENT_METHODS = [
     shortName: 'MoMo',
     desc: 'Thanh toán qua ví MoMo, hỗ trợ xác nhận gần như tức thì.',
     icon: Wallet,
-    color: 'bg-amber-100 text-amber-700',
+    color: 'bg-warning/15 text-amber-800',
     guide: 'Sau khi bấm thanh toán, hệ thống sẽ tạo mã QR MoMo và tự cập nhật trạng thái hóa đơn.',
   },
 ];
@@ -128,8 +128,8 @@ export function CustomerBilling() {
     <Layout>
       <div className="mx-auto max-w-6xl p-6">
         <div className="mb-8">
-          <h1 className="mb-1 text-3xl font-bold text-gray-900">Gói dịch vụ & Thanh toán</h1>
-          <p className="text-gray-600">Quản lý gói đăng ký, phương thức thanh toán và hóa đơn</p>
+          <h1 className="mb-1 text-3xl font-bold text-foreground">Gói dịch vụ & Thanh toán</h1>
+          <p className="text-foreground/70">Quản lý gói đăng ký, phương thức thanh toán và hóa đơn</p>
         </div>
 
         <Tabs defaultValue="plan">
@@ -141,34 +141,34 @@ export function CustomerBilling() {
           </TabsList>
 
           <TabsContent value="plan">
-            <Card className="mb-6 border-amber-200 bg-gradient-to-r from-amber-50 to-stone-50 p-6">
+            <Card className="mb-6 border-amber-200 bg-gradient-to-r from-amber-50 to-green-50 p-6">
               <div className="mb-4 flex items-start justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="rounded-lg bg-gradient-to-br from-amber-500 to-stone-600 p-3">
+                  <div className="rounded-lg bg-gradient-to-br from-amber-500 to-green-600 p-3">
                     <Crown className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold text-gray-900">Gói {CURRENT_PLAN.name}</h2>
-                    <p className="text-sm text-gray-600">Gia hạn ngày {CURRENT_PLAN.renewDate}</p>
+                    <h2 className="text-xl font-bold text-foreground">Gói {CURRENT_PLAN.name}</h2>
+                    <p className="text-sm text-foreground/70">Gia hạn ngày {CURRENT_PLAN.renewDate}</p>
                   </div>
                 </div>
                 <div className="text-right">
                   <p className="text-2xl font-bold text-amber-700">{formatCurrency(CURRENT_PLAN.price)}</p>
-                  <p className="text-xs text-gray-500">/tháng</p>
+                  <p className="text-xs text-muted-foreground">/tháng</p>
                 </div>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
                   <div className="mb-1 flex justify-between text-sm">
-                    <span className="text-gray-600">Copy đã tạo</span>
+                    <span className="text-foreground/70">Copy đã tạo</span>
                     <span className="font-semibold">{CURRENT_PLAN.copyUsed}/{CURRENT_PLAN.copyLimit}</span>
                   </div>
                   <Progress value={(CURRENT_PLAN.copyUsed / CURRENT_PLAN.copyLimit) * 100} className="h-2" />
                 </div>
                 <div>
                   <div className="mb-1 flex justify-between text-sm">
-                    <span className="text-gray-600">API calls</span>
+                    <span className="text-foreground/70">API calls</span>
                     <span className="font-semibold">{CURRENT_PLAN.apiCalls.toLocaleString()}/{CURRENT_PLAN.apiLimit.toLocaleString()}</span>
                   </div>
                   <Progress value={(CURRENT_PLAN.apiCalls / CURRENT_PLAN.apiLimit) * 100} className="h-2" />
@@ -179,10 +179,10 @@ export function CustomerBilling() {
             <Card className="p-5">
               <div className="mb-4 flex items-center justify-between gap-4">
                 <div>
-                  <h3 className="font-semibold text-gray-900">Phương thức thanh toán đang chọn</h3>
-                  <p className="text-sm text-gray-500">Áp dụng cho lần gia hạn hoặc nâng cấp tiếp theo</p>
+                  <h3 className="font-semibold text-foreground">Phương thức thanh toán đang chọn</h3>
+                  <p className="text-sm text-muted-foreground">Áp dụng cho lần gia hạn hoặc nâng cấp tiếp theo</p>
                 </div>
-                <Badge className="border-0 bg-amber-100 text-amber-700">{selectedMethod.name}</Badge>
+                <Badge className="border-0 bg-warning/15 text-amber-800">{selectedMethod.name}</Badge>
               </div>
               <PaymentMethodGrid selectedId={selectedMethod.id} onSelect={setSelectedMethod} />
             </Card>
@@ -191,8 +191,8 @@ export function CustomerBilling() {
           <TabsContent value="payment">
             <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
               <Card className="p-5">
-                <h3 className="mb-2 font-semibold text-gray-900">Chọn phương thức thanh toán</h3>
-                <p className="mb-5 text-sm text-gray-500">Hỗ trợ tiền mặt, chuyển khoản ngân hàng, ZaloPay và MoMo.</p>
+                <h3 className="mb-2 font-semibold text-foreground">Chọn phương thức thanh toán</h3>
+                <p className="mb-5 text-sm text-muted-foreground">Hỗ trợ tiền mặt, chuyển khoản ngân hàng, ZaloPay và MoMo.</p>
                 <PaymentMethodGrid selectedId={selectedMethod.id} onSelect={setSelectedMethod} />
               </Card>
 
@@ -202,14 +202,14 @@ export function CustomerBilling() {
                     <selectedMethod.icon className="h-5 w-5" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900">{selectedMethod.name}</h3>
-                    <p className="text-sm text-gray-500">{selectedMethod.desc}</p>
+                    <h3 className="font-semibold text-foreground">{selectedMethod.name}</h3>
+                    <p className="text-sm text-muted-foreground">{selectedMethod.desc}</p>
                   </div>
                 </div>
 
-                <div className="rounded-lg border border-gray-100 bg-gray-50 p-4">
-                  <p className="mb-2 text-xs font-bold uppercase tracking-widest text-gray-400">Hướng dẫn</p>
-                  <p className="text-sm leading-relaxed text-gray-700">{selectedMethod.guide}</p>
+                <div className="rounded-lg border border-border bg-surface-muted p-4">
+                  <p className="mb-2 text-xs font-bold uppercase tracking-widest text-muted-foreground/80">Hướng dẫn</p>
+                  <p className="text-sm leading-relaxed text-foreground/80">{selectedMethod.guide}</p>
                 </div>
 
                 {selectedMethod.id === 'bank' && (
@@ -220,10 +220,10 @@ export function CustomerBilling() {
                 )}
 
                 {(selectedMethod.id === 'momo' || selectedMethod.id === 'zalo') && (
-                  <div className="mt-4 flex items-center justify-center rounded-lg border border-dashed border-gray-200 bg-white p-6">
+                  <div className="mt-4 flex items-center justify-center rounded-lg border border-dashed border-border bg-card p-6">
                     <div className="text-center">
-                      <QrCode className="mx-auto mb-2 h-12 w-12 text-gray-300" />
-                      <p className="text-xs text-gray-500">QR sẽ được tạo khi xác nhận thanh toán</p>
+                      <QrCode className="mx-auto mb-2 h-12 w-12 text-muted-foreground/60" />
+                      <p className="text-xs text-muted-foreground">QR sẽ được tạo khi xác nhận thanh toán</p>
                     </div>
                   </div>
                 )}
@@ -232,7 +232,7 @@ export function CustomerBilling() {
           </TabsContent>
 
           <TabsContent value="plans">
-            <div className="mb-5 rounded-lg border border-amber-100 bg-amber-50 p-4">
+            <div className="mb-5 rounded-lg border border-amber-100 bg-warning/10 p-4">
               <p className="text-sm text-amber-800">
                 Phương thức thanh toán đang chọn: <strong>{selectedMethod.name}</strong>. Bạn có thể đổi trong tab Thanh toán trước khi nâng cấp.
               </p>
@@ -244,34 +244,34 @@ export function CustomerBilling() {
                 return (
                   <Card key={plan.id} className={`relative p-6 ${plan.color}`}>
                     {plan.popular && (
-                      <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 border-0 bg-amber-500 px-3 text-white">Đang dùng</Badge>
+                      <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 border-0 bg-warning/100 px-3 text-white">Đang dùng</Badge>
                     )}
                     <div className="mb-6 text-center">
-                      <div className="mb-3 inline-flex rounded-lg bg-amber-100 p-3">
+                      <div className="mb-3 inline-flex rounded-lg bg-warning/15 p-3">
                         <Icon className="h-6 w-6 text-amber-700" />
                       </div>
-                      <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
-                      <p className="mt-2 text-3xl font-bold text-gray-900">
+                      <h3 className="text-xl font-bold text-foreground">{plan.name}</h3>
+                      <p className="mt-2 text-3xl font-bold text-foreground">
                         {plan.price === 0 ? 'Miễn phí' : formatCurrency(plan.price)}
-                        {plan.price > 0 && <span className="text-sm font-normal text-gray-500">/tháng</span>}
+                        {plan.price > 0 && <span className="text-sm font-normal text-muted-foreground">/tháng</span>}
                       </p>
                     </div>
                     <div className="mb-6 space-y-2">
                       {plan.features.map(feature => (
                         <div key={feature} className="flex items-center gap-2 text-sm">
-                          <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-green-500" />
-                          <span className="text-gray-700">{feature}</span>
+                          <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-primary" />
+                          <span className="text-foreground/80">{feature}</span>
                         </div>
                       ))}
                       {plan.limits.map(limit => (
                         <div key={limit} className="flex items-center gap-2 text-sm">
-                          <X className="h-4 w-4 flex-shrink-0 text-gray-300" />
-                          <span className="text-gray-400">{limit}</span>
+                          <X className="h-4 w-4 flex-shrink-0 text-muted-foreground/60" />
+                          <span className="text-muted-foreground/80">{limit}</span>
                         </div>
                       ))}
                     </div>
                     <Button
-                      className={`w-full ${plan.popular ? 'bg-amber-500 text-white hover:bg-amber-600' : ''}`}
+                      className={`w-full ${plan.popular ? 'bg-warning/100 text-white hover:bg-amber-600' : ''}`}
                       variant={plan.popular ? 'default' : 'outline'}
                       onClick={() => handlePlanAction(plan)}
                     >
@@ -285,17 +285,17 @@ export function CustomerBilling() {
 
           <TabsContent value="invoices">
             <Card className="p-5">
-              <h3 className="mb-4 font-semibold text-gray-900">Lịch sử hóa đơn</h3>
+              <h3 className="mb-4 font-semibold text-foreground">Lịch sử hóa đơn</h3>
               <div className="space-y-3">
                 {INVOICES.map(invoice => (
-                  <div key={invoice.id} className="flex items-center gap-4 rounded-lg border bg-gray-50 p-3">
-                    <div className="rounded-lg bg-stone-100 p-2"><FileText className="h-4 w-4 text-stone-600" /></div>
+                  <div key={invoice.id} className="flex items-center gap-4 rounded-lg border bg-surface-muted p-3">
+                    <div className="rounded-lg bg-primary/10 p-2"><FileText className="h-4 w-4 text-primary" /></div>
                     <div className="flex-1">
-                      <p className="text-sm font-semibold text-gray-900">{invoice.id}</p>
-                      <p className="text-xs text-gray-500">{invoice.date} · {invoice.plan} · {invoice.method}</p>
+                      <p className="text-sm font-semibold text-foreground">{invoice.id}</p>
+                      <p className="text-xs text-muted-foreground">{invoice.date} · {invoice.plan} · {invoice.method}</p>
                     </div>
-                    <span className="text-sm font-semibold text-gray-900">{formatCurrency(invoice.amount)}</span>
-                    <Badge className="border-0 bg-green-100 text-xs text-green-700">Đã thanh toán</Badge>
+                    <span className="text-sm font-semibold text-foreground">{formatCurrency(invoice.amount)}</span>
+                    <Badge className="border-0 bg-primary/10 text-xs text-primary">Đã thanh toán</Badge>
                     <Button variant="ghost" size="sm"><Download className="h-4 w-4" /></Button>
                   </div>
                 ))}
@@ -328,8 +328,8 @@ function PaymentMethodGrid({
             onClick={() => onSelect(method)}
             className={`flex items-start gap-3 rounded-lg border p-4 text-left transition-all ${
               active
-                ? 'border-stone-500 bg-stone-50 shadow-sm shadow-stone-100'
-                : 'border-gray-200 bg-white hover:border-stone-300 hover:bg-stone-50/40'
+                ? 'border-primary bg-primary/5 shadow-sm shadow-primary/10'
+                : 'border-border bg-card hover:border-primary/30 hover:bg-primary/5'
             }`}
           >
             <div className={`rounded-lg p-2 ${method.color}`}>
@@ -337,10 +337,10 @@ function PaymentMethodGrid({
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <p className="text-sm font-semibold text-gray-900">{method.name}</p>
-                {active && <CheckCircle2 className="h-4 w-4 text-green-600" />}
+                <p className="text-sm font-semibold text-foreground">{method.name}</p>
+                {active && <CheckCircle2 className="h-4 w-4 text-primary" />}
               </div>
-              <p className="mt-1 text-xs leading-relaxed text-gray-500">{method.desc}</p>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{method.desc}</p>
             </div>
           </button>
         );

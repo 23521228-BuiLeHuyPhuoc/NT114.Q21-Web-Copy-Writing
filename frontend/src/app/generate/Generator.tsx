@@ -124,8 +124,8 @@ export function CustomerGenerator() {
     <Layout>
       <div className="p-4 md:p-6 max-w-7xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-1">AI Copywriting Engine</h1>
-          <p className="text-gray-600">Tạo copy marketing chuyên nghiệp với GPT-4o, Llama 3.1 và model fine-tuned</p>
+          <h1 className="text-3xl font-bold text-foreground mb-1">AI Copywriting Engine</h1>
+          <p className="text-foreground/70">Tạo copy marketing chuyên nghiệp với GPT-4o, Llama 3.1 và model fine-tuned</p>
         </div>
 
         <div className="grid lg:grid-cols-5 gap-6">
@@ -175,16 +175,16 @@ export function CustomerGenerator() {
               <div className={`${selectedIndustry?.color} p-1.5 rounded flex-shrink-0`}>
                 <IndustryIcon className="w-4 h-4 text-white" />
               </div>
-              <span className="text-sm font-medium text-gray-700">{selectedIndustry?.name}</span>
-              <span className="text-gray-300">·</span>
-              <Badge className="bg-gray-100 text-gray-700 border-0">{selectedType?.name}</Badge>
-              <Badge className={`border-0 ${MODELS.find(m => m.id === model)?.color === 'text-green-600' ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-700'}`}>
+              <span className="text-sm font-medium text-foreground/80">{selectedIndustry?.name}</span>
+              <span className="text-muted-foreground/60">·</span>
+              <Badge className="bg-muted text-foreground/80 border-0">{selectedType?.name}</Badge>
+              <Badge className={`border-0 ${MODELS.find(m => m.id === model)?.color === 'text-primary' ? 'bg-primary/10 text-primary' : 'bg-primary/10 text-primary'}`}>
                 {selectedModel?.name}
               </Badge>
               {results.length > 0 && (
                 <>
-                  <Badge className="bg-stone-100 text-stone-700 border-0">{tokensUsed} tokens</Badge>
-                  <Badge className="bg-gray-100 text-gray-600 border-0">{latency}s</Badge>
+                  <Badge className="bg-primary/10 text-primary border-0">{tokensUsed} tokens</Badge>
+                  <Badge className="bg-muted text-foreground/70 border-0">{latency}s</Badge>
                 </>
               )}
             </div>
@@ -206,9 +206,9 @@ export function CustomerGenerator() {
 
             {/* Prompt preview */}
             {(productName || keywords || targetAudience) && (
-              <Card className="p-4 bg-gray-50">
-                <p className="text-xs font-semibold text-gray-600 mb-2">Prompt sẽ gửi đến {selectedModel?.name}:</p>
-                <p className="text-xs text-gray-700 font-mono bg-white rounded border p-3">
+              <Card className="p-4 bg-surface-muted">
+                <p className="text-xs font-semibold text-foreground/70 mb-2">Prompt sẽ gửi đến {selectedModel?.name}:</p>
+                <p className="text-xs text-foreground/80 font-mono bg-card rounded border p-3">
                   Bạn là chuyên gia copywriting cho ngành <strong>{selectedIndustry?.name}</strong>.
                   Viết <strong>{selectedType?.name}</strong> với tone <strong>{TONES.find(t => t.id === tone)?.name}</strong>.
                   {productName && ` Sản phẩm: "${productName}".`}
@@ -223,14 +223,14 @@ export function CustomerGenerator() {
             {/* Saved items */}
             {savedItems.length > 0 && (
               <Card className="p-4">
-                <h3 className="font-semibold text-sm text-gray-900 mb-3 flex items-center gap-2">
-                  <History className="w-4 h-4 text-stone-600" /> Đã lưu trong phiên này ({savedItems.length})
+                <h3 className="font-semibold text-sm text-foreground mb-3 flex items-center gap-2">
+                  <History className="w-4 h-4 text-primary" /> Đã lưu trong phiên này ({savedItems.length})
                 </h3>
                 <div className="space-y-2 max-h-40 overflow-y-auto">
                   {savedItems.map((item, i) => (
-                    <div key={i} className="flex items-start gap-2 p-2 bg-gray-50 rounded text-xs text-gray-700">
+                    <div key={i} className="flex items-start gap-2 p-2 bg-surface-muted rounded text-xs text-foreground/80">
                       <span className="flex-1 line-clamp-2">{item}</span>
-                      <button onClick={() => handleCopy(item)} className="text-stone-600 hover:text-stone-700 flex-shrink-0">
+                      <button onClick={() => handleCopy(item)} className="text-primary hover:text-primary flex-shrink-0">
                         <Copy className="w-3.5 h-3.5" />
                       </button>
                     </div>

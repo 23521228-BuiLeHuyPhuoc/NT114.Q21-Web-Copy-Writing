@@ -33,9 +33,9 @@ const INDUSTRY_OPTIONS = ['E-commerce', 'Công nghệ', 'Bất động sản', '
 const TYPE_OPTIONS = ['headline', 'email', 'landing', 'social', 'description', 'ads'];
 
 const typeBadgeColor: Record<string, string> = {
-  headline: 'bg-stone-100 text-stone-700', email: 'bg-amber-100 text-amber-700',
-  landing: 'bg-stone-100 text-stone-700', social: 'bg-amber-100 text-amber-700',
-  description: 'bg-stone-100 text-stone-700', ads: 'bg-amber-100 text-amber-700',
+  headline: 'bg-primary/10 text-primary', email: 'bg-warning/15 text-amber-800',
+  landing: 'bg-primary/10 text-primary', social: 'bg-warning/15 text-amber-800',
+  description: 'bg-primary/10 text-primary', ads: 'bg-warning/15 text-amber-800',
 };
 
 export function AdminTemplates() {
@@ -118,18 +118,18 @@ export function AdminTemplates() {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">Quản Lý Templates</h1>
-            <p className="text-gray-500 text-sm">Quản lý mẫu copy cho các ngành nghề</p>
+            <h1 className="text-2xl font-bold text-foreground mb-1">Quản Lý Templates</h1>
+            <p className="text-muted-foreground text-sm">Quản lý mẫu copy cho các ngành nghề</p>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setTrashOpen(true)}
-              className="relative flex items-center gap-1.5 border border-gray-200 hover:border-red-300 hover:bg-red-50 text-gray-500 hover:text-red-600 rounded-xl px-3 py-2 text-sm font-semibold transition-all"
+              className="relative flex items-center gap-1.5 border border-border hover:border-red-300 hover:bg-destructive/10 text-muted-foreground hover:text-red-600 rounded-xl px-3 py-2 text-sm font-semibold transition-all"
             >
               <Trash2 className="w-4 h-4" />
               Thùng rác
               {deletedTemplates.length > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">{deletedTemplates.length}</span>
+                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-destructive/100 text-white text-[10px] font-bold rounded-full flex items-center justify-center">{deletedTemplates.length}</span>
               )}
             </button>
             <Button className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl gap-2" onClick={() => setShowAdd(true)}>
@@ -141,10 +141,10 @@ export function AdminTemplates() {
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {[
-            { label: 'Tổng templates', value: visible.length, icon: ScrollText, color: 'text-green-600 bg-green-50' },
-            { label: 'Đang hoạt động', value: visible.filter(t => t.active).length, icon: Zap, color: 'text-stone-600 bg-stone-50' },
-            { label: 'Lượt sử dụng', value: visible.reduce((a, t) => a + t.uses, 0).toLocaleString(), icon: BarChart3, color: 'text-stone-600 bg-stone-50' },
-            { label: 'Rating TB', value: (visible.reduce((a, t) => a + t.rating, 0) / (visible.length || 1)).toFixed(1), icon: Star, color: 'text-amber-600 bg-amber-50' },
+            { label: 'Tổng templates', value: visible.length, icon: ScrollText, color: 'text-primary bg-primary/5' },
+            { label: 'Đang hoạt động', value: visible.filter(t => t.active).length, icon: Zap, color: 'text-primary bg-primary/5' },
+            { label: 'Lượt sử dụng', value: visible.reduce((a, t) => a + t.uses, 0).toLocaleString(), icon: BarChart3, color: 'text-primary bg-primary/5' },
+            { label: 'Rating TB', value: (visible.reduce((a, t) => a + t.rating, 0) / (visible.length || 1)).toFixed(1), icon: Star, color: 'text-amber-600 bg-warning/10' },
           ].map((s, i) => (
             <StatTile key={i} icon={s.icon} label={s.label} value={s.value} color={s.color} />
           ))}
@@ -173,17 +173,17 @@ export function AdminTemplates() {
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <h3 className="font-bold text-gray-900 text-sm truncate">{t.name}</h3>
-                    {!t.active && <Badge className="bg-gray-100 text-gray-500 border-0 text-[10px]">Tắt</Badge>}
+                    <h3 className="font-bold text-foreground text-sm truncate">{t.name}</h3>
+                    {!t.active && <Badge className="bg-muted text-muted-foreground border-0 text-[10px]">Tắt</Badge>}
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge className={`border-0 text-[10px] ${typeBadgeColor[t.type] || 'bg-gray-100 text-gray-600'}`}>{t.type}</Badge>
-                    <span className="text-xs text-gray-500">{t.industry}</span>
+                    <Badge className={`border-0 text-[10px] ${typeBadgeColor[t.type] || 'bg-muted text-foreground/70'}`}>{t.type}</Badge>
+                    <span className="text-xs text-muted-foreground">{t.industry}</span>
                   </div>
                 </div>
               </div>
-              <p className="text-xs text-gray-500 leading-relaxed mb-4 line-clamp-2">{t.description}</p>
-              <div className="flex items-center justify-between mb-4 text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground leading-relaxed mb-4 line-clamp-2">{t.description}</p>
+              <div className="flex items-center justify-between mb-4 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1"><BarChart3 className="w-3 h-3" />{t.uses.toLocaleString()} lượt dùng</span>
                 {t.rating > 0 && (
                   <span className="flex items-center gap-1"><Star className="w-3 h-3 text-amber-400 fill-amber-400" />{t.rating}</span>
@@ -192,13 +192,13 @@ export function AdminTemplates() {
               <div className="flex gap-2">
                 <button
                   onClick={() => openEdit(t)}
-                  className="flex-1 flex items-center justify-center gap-1.5 h-8 border border-stone-200 text-stone-600 hover:bg-stone-50 rounded-lg text-xs font-semibold transition-colors"
+                  className="flex-1 flex items-center justify-center gap-1.5 h-8 border border-primary/20 text-primary hover:bg-primary/5 rounded-lg text-xs font-semibold transition-colors"
                 >
                   <Edit2 className="w-3.5 h-3.5" /> Chỉnh sửa
                 </button>
                 <button
                   onClick={() => setConfirmDelete(t)}
-                  className="w-8 h-8 flex items-center justify-center border border-red-200 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                  className="w-8 h-8 flex items-center justify-center border border-red-200 text-red-500 hover:bg-destructive/10 rounded-lg transition-colors"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
@@ -208,8 +208,8 @@ export function AdminTemplates() {
         </div>
         {filtered.length === 0 && (
           <Card className="p-16 text-center">
-            <ScrollText className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-400 text-sm">Không tìm thấy template nào.</p>
+            <ScrollText className="w-10 h-10 text-muted-foreground/60 mx-auto mb-3" />
+            <p className="text-muted-foreground/80 text-sm">Không tìm thấy template nào.</p>
           </Card>
         )}
       </div>
@@ -219,27 +219,27 @@ export function AdminTemplates() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                <FilePlus className="w-4 h-4 text-green-600" />
+              <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                <FilePlus className="w-4 h-4 text-primary" />
               </div>
               Thêm Template Mới
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-1">
             <div>
-              <Label className="text-xs text-gray-500 uppercase tracking-wider mb-1.5 block">Tên template</Label>
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Tên template</Label>
               <Input value={addName} onChange={e => setAddName(e.target.value)} placeholder="VD: Google Ads Copy" className="h-10" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs text-gray-500 uppercase tracking-wider mb-1.5 block">Ngành</Label>
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Ngành</Label>
                 <Select value={addIndustry} onValueChange={setAddIndustry}>
                   <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
                   <SelectContent>{INDUSTRY_OPTIONS.map(i => <SelectItem key={i} value={i}>{i}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div>
-                <Label className="text-xs text-gray-500 uppercase tracking-wider mb-1.5 block">Loại</Label>
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Loại</Label>
                 <Select value={addType} onValueChange={setAddType}>
                   <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
                   <SelectContent>{TYPE_OPTIONS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
@@ -247,11 +247,11 @@ export function AdminTemplates() {
               </div>
             </div>
             <div>
-              <Label className="text-xs text-gray-500 uppercase tracking-wider mb-1.5 block">Mô tả</Label>
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Mô tả</Label>
               <Textarea value={addDesc} onChange={e => setAddDesc(e.target.value)} placeholder="Mô tả ngắn về template này..." rows={3} className="resize-none" />
             </div>
             <div className="flex gap-2 pt-1">
-              <button onClick={() => setShowAdd(false)} className="flex-1 h-10 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">Huỷ</button>
+              <button onClick={() => setShowAdd(false)} className="flex-1 h-10 border border-border rounded-xl text-sm font-semibold text-foreground/70 hover:bg-surface-muted transition-colors">Huỷ</button>
               <button onClick={handleAdd} disabled={!addName.trim()} className="flex-1 h-10 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:opacity-40 text-white rounded-xl text-sm font-bold transition-all">
                 Thêm Template
               </button>
@@ -265,8 +265,8 @@ export function AdminTemplates() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-stone-100 rounded-lg flex items-center justify-center">
-                <Edit2 className="w-4 h-4 text-stone-600" />
+              <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                <Edit2 className="w-4 h-4 text-primary" />
               </div>
               Chỉnh sửa Template
             </DialogTitle>
@@ -274,19 +274,19 @@ export function AdminTemplates() {
           {editItem && (
             <div className="space-y-4 pt-1">
               <div>
-                <Label className="text-xs text-gray-500 uppercase tracking-wider mb-1.5 block">Tên template</Label>
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Tên template</Label>
                 <Input value={editName} onChange={e => setEditName(e.target.value)} className="h-10" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-xs text-gray-500 uppercase tracking-wider mb-1.5 block">Ngành</Label>
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Ngành</Label>
                   <Select value={editIndustry} onValueChange={setEditIndustry}>
                     <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
                     <SelectContent>{INDUSTRY_OPTIONS.map(i => <SelectItem key={i} value={i}>{i}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <Label className="text-xs text-gray-500 uppercase tracking-wider mb-1.5 block">Loại</Label>
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Loại</Label>
                   <Select value={editType} onValueChange={setEditType}>
                     <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
                     <SelectContent>{TYPE_OPTIONS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
@@ -294,11 +294,11 @@ export function AdminTemplates() {
                 </div>
               </div>
               <div>
-                <Label className="text-xs text-gray-500 uppercase tracking-wider mb-1.5 block">Mô tả</Label>
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Mô tả</Label>
                 <Textarea value={editDesc} onChange={e => setEditDesc(e.target.value)} rows={3} className="resize-none" />
               </div>
               <div>
-                <Label className="text-xs text-gray-500 uppercase tracking-wider mb-1.5 block">Trạng thái</Label>
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Trạng thái</Label>
                 <Select value={editActive ? 'true' : 'false'} onValueChange={v => setEditActive(v === 'true')}>
                   <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -308,8 +308,8 @@ export function AdminTemplates() {
                 </Select>
               </div>
               <div className="flex gap-2 pt-1">
-                <button onClick={() => setEditItem(null)} className="flex-1 h-10 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">Huỷ</button>
-                <button onClick={handleSaveEdit} disabled={editSaving} className="flex-1 h-10 bg-gradient-to-r from-stone-600 to-stone-700 hover:from-stone-700 hover:to-stone-800 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center">
+                <button onClick={() => setEditItem(null)} className="flex-1 h-10 border border-border rounded-xl text-sm font-semibold text-foreground/70 hover:bg-surface-muted transition-colors">Huỷ</button>
+                <button onClick={handleSaveEdit} disabled={editSaving} className="flex-1 h-10 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center">
                   {editSaving ? <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : 'Lưu thay đổi'}
                 </button>
               </div>

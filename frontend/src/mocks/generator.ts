@@ -6,10 +6,10 @@ import {
 
 export const MODELS = [
   { id: 'gpt4o', name: 'GPT-4o', badge: 'Khuyên dùng', color: 'text-green-600', desc: 'Mạnh nhất, sáng tạo cao, phù hợp mọi ngành', latency: '~2s', tokens: '128K' },
-  { id: 'gpt35', name: 'GPT-3.5 Turbo', badge: 'Nhanh', color: 'text-blue-600', desc: 'Nhanh hơn, tiết kiệm quota, phù hợp copywriting cơ bản', latency: '~0.8s', tokens: '16K' },
+  { id: 'gpt35', name: 'GPT-3.5 Turbo', badge: 'Nhanh', color: 'text-green-600', desc: 'Nhanh hơn, tiết kiệm quota, phù hợp copywriting cơ bản', latency: '~0.8s', tokens: '16K' },
   { id: 'llama3', name: 'Llama 3.1 70B', badge: 'Open-source', color: 'text-orange-600', desc: 'Mã nguồn mở, chạy local, không gửi dữ liệu ra ngoài', latency: '~3s', tokens: '128K' },
   { id: 'llama3-8b', name: 'Llama 3.1 8B', badge: 'Nhẹ', color: 'text-yellow-600', desc: 'Phiên bản nhẹ của Llama, xử lý nhanh', latency: '~1.2s', tokens: '128K' },
-  { id: 'finetuned-ec', name: 'Fine-tuned E-commerce', badge: 'Custom', color: 'text-violet-600', desc: 'Model được huấn luyện riêng cho thương mại điện tử của bạn', latency: '~1.5s', tokens: '8K' },
+  { id: 'finetuned-ec', name: 'Fine-tuned E-commerce', badge: 'Custom', color: 'text-teal-600', desc: 'Model được huấn luyện riêng cho thương mại điện tử của bạn', latency: '~1.5s', tokens: '8K' },
 ];
 
 export const COPY_TYPES = [
@@ -33,16 +33,16 @@ export const TONES = [
 ];
 
 export const INDUSTRIES = [
-  { id: 'ecommerce', name: 'Thương Mại Điện Tử', icon: ShoppingBag, color: 'bg-purple-500' },
-  { id: 'realestate', name: 'Bất Động Sản', icon: Building2, color: 'bg-blue-500' },
-  { id: 'technology', name: 'Công Nghệ', icon: Laptop, color: 'bg-cyan-500' },
+  { id: 'ecommerce', name: 'Thương Mại Điện Tử', icon: ShoppingBag, color: 'bg-emerald-500' },
+  { id: 'realestate', name: 'Bất Động Sản', icon: Building2, color: 'bg-green-500' },
+  { id: 'technology', name: 'Công Nghệ', icon: Laptop, color: 'bg-teal-500' },
   { id: 'fnb', name: 'Ẩm Thực F&B', icon: Utensils, color: 'bg-orange-500' },
   { id: 'healthcare', name: 'Y Tế & Sức Khỏe', icon: Heart, color: 'bg-red-500' },
   { id: 'education', name: 'Giáo Dục', icon: GraduationCap, color: 'bg-green-500' },
   { id: 'finance', name: 'Tài Chính', icon: DollarSign, color: 'bg-emerald-500' },
   { id: 'fashion', name: 'Thời Trang', icon: Shirt, color: 'bg-pink-500' },
-  { id: 'business', name: 'Doanh Nghiệp', icon: Briefcase, color: 'bg-stone-500' },
-  { id: 'travel', name: 'Du Lịch', icon: Plane, color: 'bg-sky-500' },
+  { id: 'business', name: 'Doanh Nghiệp', icon: Briefcase, color: 'bg-slate-500' },
+  { id: 'travel', name: 'Du Lịch', icon: Plane, color: 'bg-emerald-500' },
 ];
 
 export const MOCK_OUTPUTS: Record<string, Record<string, string[]>> = {

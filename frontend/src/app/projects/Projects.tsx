@@ -31,8 +31,8 @@ export function CustomerProjects() {
       <div className="p-6 max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-1">Quản Lý Dự Án</h1>
-            <p className="text-gray-600">Tổ chức nội dung theo dự án để dễ quản lý và theo dõi</p>
+            <h1 className="text-3xl font-bold text-foreground mb-1">Quản Lý Dự Án</h1>
+            <p className="text-foreground/70">Tổ chức nội dung theo dự án để dễ quản lý và theo dõi</p>
           </div>
           <Button className="bg-gradient-to-r from-green-600 to-emerald-600 text-white" onClick={() => setShowNew(true)}>
             <Plus className="w-4 h-4 mr-2" /> Tạo Dự Án Mới
@@ -41,7 +41,7 @@ export function CustomerProjects() {
 
         {/* Search */}
         <div className="relative mb-6">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/80" />
           <Input placeholder="Tìm dự án..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 max-w-md" />
         </div>
 
@@ -53,19 +53,19 @@ export function CustomerProjects() {
                 <div className={`bg-gradient-to-br ${project.color} p-3 rounded-xl`}>
                   <FolderOpen className="w-5 h-5 text-white" />
                 </div>
-                <Badge className={project.status === 'active' ? 'bg-green-100 text-green-700 border-0' : 'bg-gray-100 text-gray-600 border-0'}>
+                <Badge className={project.status === 'active' ? 'bg-primary/10 text-primary border-0' : 'bg-muted text-foreground/70 border-0'}>
                   {project.status === 'active' ? 'Đang hoạt động' : 'Hoàn thành'}
                 </Badge>
               </div>
-              <h3 className="font-semibold text-gray-900 mb-1">{project.name}</h3>
-              <p className="text-sm text-gray-500 mb-4 line-clamp-2">{project.desc}</p>
-              <div className="flex items-center justify-between text-xs text-gray-400">
+              <h3 className="font-semibold text-foreground mb-1">{project.name}</h3>
+              <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{project.desc}</p>
+              <div className="flex items-center justify-between text-xs text-muted-foreground/80">
                 <span className="flex items-center gap-1"><FileText className="w-3 h-3" /> {project.contents} nội dung</span>
                 <span><Calendar className="w-3 h-3 inline mr-1" />{project.createdAt}</span>
               </div>
               <div className="mt-3 pt-3 border-t flex items-center justify-between">
-                <Badge className="bg-gray-100 text-gray-600 border-0 text-xs">{project.industry}</Badge>
-                <span className="text-green-600 text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                <Badge className="bg-muted text-foreground/70 border-0 text-xs">{project.industry}</Badge>
+                <span className="text-primary text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
                   Xem chi tiết <ArrowRight className="w-3 h-3" />
                 </span>
               </div>

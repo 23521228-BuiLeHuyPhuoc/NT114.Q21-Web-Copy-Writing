@@ -264,7 +264,7 @@ export function CopywritingGenerator({ industry }: CopywritingGeneratorProps) {
   return (
     <Card className="p-6">
       <div className="flex items-center gap-2 mb-6">
-        <Wand2 className="w-6 h-6 text-stone-600" />
+        <Wand2 className="w-6 h-6 text-primary" />
         <h2 className="text-2xl font-bold">Tạo Nội dung Marketing</h2>
       </div>
 
@@ -277,22 +277,22 @@ export function CopywritingGenerator({ industry }: CopywritingGeneratorProps) {
         </TabsList>
 
         <TabsContent value="headline" className="mt-4">
-          <p className="text-sm text-gray-600 mb-4">
+          <p className="text-sm text-foreground/70 mb-4">
             Tạo tiêu đề hấp dẫn, thu hút sự chú ý của khách hàng ngay lập tức
           </p>
         </TabsContent>
         <TabsContent value="description" className="mt-4">
-          <p className="text-sm text-gray-600 mb-4">
+          <p className="text-sm text-foreground/70 mb-4">
             Mô tả sản phẩm/dịch vụ chi tiết, làm nổi bật lợi ích và giá trị
           </p>
         </TabsContent>
         <TabsContent value="cta" className="mt-4">
-          <p className="text-sm text-gray-600 mb-4">
+          <p className="text-sm text-foreground/70 mb-4">
             Tạo lời kêu gọi hành động mạnh mẽ, thúc đẩy khách hàng chuyển đổi
           </p>
         </TabsContent>
         <TabsContent value="social" className="mt-4">
-          <p className="text-sm text-gray-600 mb-4">
+          <p className="text-sm text-foreground/70 mb-4">
             Nội dung cho Facebook, Instagram, TikTok với hashtag và emoji
           </p>
         </TabsContent>
@@ -322,16 +322,16 @@ export function CopywritingGenerator({ industry }: CopywritingGeneratorProps) {
       </div>
 
       <div className="flex gap-3 mb-6">
-        <Button onClick={generateCopy} className="flex-1 bg-stone-600 hover:bg-stone-700">
+        <Button onClick={generateCopy} className="flex-1 bg-primary hover:bg-green-700">
           <RefreshCw className="w-4 h-4 mr-2" />
           Tạo Nội Dung
         </Button>
       </div>
 
       {generatedCopy && (
-        <div className="bg-gray-50 rounded-lg p-4 border-2 border-stone-200">
+        <div className="bg-surface-muted rounded-lg p-4 border-2 border-primary/20">
           <div className="flex justify-between items-start mb-2">
-            <Label className="text-sm font-semibold text-stone-600">Kết quả:</Label>
+            <Label className="text-sm font-semibold text-primary">Kết quả:</Label>
             <Button 
               variant="ghost" 
               size="sm" 
@@ -345,7 +345,7 @@ export function CopywritingGenerator({ industry }: CopywritingGeneratorProps) {
           <Textarea
             value={generatedCopy}
             onChange={(e) => setGeneratedCopy(e.target.value)}
-            className="min-h-[100px] bg-white"
+            className="min-h-[100px] bg-card"
           />
         </div>
       )}

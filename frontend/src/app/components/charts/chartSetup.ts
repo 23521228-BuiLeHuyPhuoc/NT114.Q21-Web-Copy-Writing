@@ -27,4 +27,5 @@ Chart.register(
 
 Chart.defaults.font.family =
   '"Google Sans Flex", -apple-system, BlinkMacSystemFont, sans-serif';
-Chart.defaults.color = '#6b7280';
+Chart.defaults.color = '#66736a';
+Chart.defaults.borderColor = 'rgba(16, 32, 23, 0.08)';

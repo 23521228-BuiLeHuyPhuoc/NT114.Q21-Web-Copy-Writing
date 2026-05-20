@@ -7,9 +7,9 @@ export interface StatTileProps {
   value: string | number;
   /** When provided, renders the stacked layout (icon+label row, then large value, then trend) */
   trend?: { value: string; positive?: boolean };
-  /** Tailwind classes for the icon bubble background (e.g. "bg-green-50") */
+  /** Tailwind classes for the icon bubble background (e.g. "bg-primary/5") */
   iconBg?: string;
-  /** Tailwind classes for the icon color (e.g. "text-green-600") */
+  /** Tailwind classes for the icon color (e.g. "text-primary") */
   iconColor?: string;
   /** Combined "text-... bg-..." className for the icon bubble (legacy shape used by existing pages) */
   color?: string;
@@ -47,12 +47,12 @@ export function StatTile({
           <div className={`p-2 rounded-lg ${bubbleClass}`}>
             <Icon className={iconClassName} />
           </div>
-          <span className="text-xs text-gray-500">{label}</span>
+          <span className="text-xs text-muted-foreground">{label}</span>
         </div>
-        <p className={`${valueClassName ?? 'text-2xl'} font-bold text-gray-900`}>{value}</p>
+        <p className={`${valueClassName ?? 'text-2xl'} font-bold text-foreground`}>{value}</p>
         <p
           className={`text-xs mt-1 ${
-            trend.positive === false ? 'text-red-600' : 'text-green-600'
+            trend.positive === false ? 'text-red-600' : 'text-primary'
           }`}
         >
           {trend.value}
@@ -67,8 +67,8 @@ export function StatTile({
         <Icon className={iconClassName} />
       </div>
       <div>
-        <p className={`${valueClassName ?? 'text-xl'} font-bold text-gray-900`}>{value}</p>
-        <p className="text-xs text-gray-500">{label}</p>
+        <p className={`${valueClassName ?? 'text-xl'} font-bold text-foreground`}>{value}</p>
+        <p className="text-xs text-muted-foreground">{label}</p>
       </div>
     </Card>
   );
