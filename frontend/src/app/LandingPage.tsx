@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { PublicNavbar } from '@/app/components/public/PublicNavbar';
 import { PublicFooter } from '@/app/components/public/PublicFooter';
@@ -83,9 +84,36 @@ const STATS = [
 
 export function LandingPage() {
   const navigate = useNavigate();
+  const [scrollProgress, setScrollProgress] = useState(0);
+
+  useEffect(() => {
+    const updateScrollProgress = () => {
+      const scrollableHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const nextProgress = scrollableHeight > 0
+        ? Math.min(100, Math.max(0, (window.scrollY / scrollableHeight) * 100))
+        : 0;
+
+      setScrollProgress(nextProgress);
+    };
+
+    updateScrollProgress();
+    window.addEventListener('scroll', updateScrollProgress, { passive: true });
+    window.addEventListener('resize', updateScrollProgress);
+
+    return () => {
+      window.removeEventListener('scroll', updateScrollProgress);
+      window.removeEventListener('resize', updateScrollProgress);
+    };
+  }, []);
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-card">
+      <div className="pointer-events-none fixed left-0 right-0 top-0 z-[70] h-1 bg-transparent" aria-hidden="true">
+        <div
+          className="h-full origin-left bg-gradient-to-r from-green-400 via-emerald-500 to-amber-400 shadow-[0_0_18px_rgba(47,182,93,0.45)] transition-transform duration-150 ease-out will-change-transform"
+          style={{ transform: `scaleX(${scrollProgress / 100})` }}
+        />
+      </div>
       <PublicNavbar />
 
       <section className="relative pt-28 pb-16 md:pt-32 md:pb-20">

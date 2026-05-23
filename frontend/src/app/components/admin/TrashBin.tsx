@@ -1,4 +1,6 @@
 import { Trash2, RotateCcw, X, Flame } from 'lucide-react';
+import { DataPagination } from '@/app/components/common/DataPagination';
+import { usePagination } from '@/hooks/usePagination';
 
 interface TrashItem {
   id: number | string;
@@ -21,6 +23,11 @@ export function TrashBin({
   open, onClose, items, onRestore, onPermanentDelete,
   entityName = 'mục', loading,
 }: TrashBinProps) {
+  const pagination = usePagination(items, {
+    initialPageSize: 5,
+    resetKey: `${items.length}|${open}`,
+  });
+
   if (!open) return null;
 
   return (
@@ -70,7 +77,7 @@ export function TrashBin({
               <p className="text-xs text-muted-foreground/80 mt-1">Không có {entityName} nào bị xoá</p>
             </div>
           ) : (
-            items.map(item => {
+            pagination.pageItems.map(item => {
               const isLoading = loading === String(item.id);
               return (
                 <div
@@ -117,6 +124,23 @@ export function TrashBin({
             })
           )}
         </div>
+        {items.length > 0 && (
+          <div className="border-t p-4">
+            <DataPagination
+              page={pagination.page}
+              pageSize={pagination.pageSize}
+              totalItems={pagination.totalItems}
+              totalPages={pagination.totalPages}
+              startIndex={pagination.startIndex}
+              endIndex={pagination.endIndex}
+              onPageChange={pagination.setPage}
+              onPageSizeChange={pagination.setPageSize}
+              itemLabel={entityName}
+              pageSizeOptions={[5, 10, 20]}
+              className="mt-0"
+            />
+          </div>
+        )}
       </div>
     </div>
   );

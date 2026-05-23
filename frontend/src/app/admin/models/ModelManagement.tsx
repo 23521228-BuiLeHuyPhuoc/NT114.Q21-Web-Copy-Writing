@@ -19,6 +19,8 @@ import { BarChart } from '@/app/components/charts';
 import { ConfirmDialog } from '@/app/components/admin/ConfirmDialog';
 import { TrashBin } from '@/app/components/admin/TrashBin';
 import { StatTile } from '@/app/components/admin/StatTile';
+import { DataPagination } from '@/app/components/common/DataPagination';
+import { usePagination } from '@/hooks/usePagination';
 
 const MODELS = [
   {
@@ -83,6 +85,10 @@ export function AdminModelManagement() {
   const [trashLoading, setTrashLoading] = useState<string | null>(null);
 
   const visibleModels = models.filter(m => !deletedModels.find(d => d.id === m.id));
+  const modelsPagination = usePagination(visibleModels, {
+    initialPageSize: 5,
+    resetKey: `${visibleModels.length}`,
+  });
 
   const startEdit = (m: typeof MODELS[0]) => {
     setEditing(m.id);
@@ -163,7 +169,7 @@ export function AdminModelManagement() {
 
           {/* Models tab */}
           <TabsContent value="models" className="space-y-4">
-            {visibleModels.map(m => (
+            {modelsPagination.pageItems.map(m => (
               <Card key={m.id} className={`p-5 ${m.status === 'inactive' ? 'opacity-60' : ''}`}>
                 <div className="flex flex-col lg:flex-row gap-4">
                   <div className="flex-1">
@@ -251,6 +257,17 @@ export function AdminModelManagement() {
                 <p className="text-muted-foreground/80 text-sm">Tất cả model đã bị xoá. Khôi phục từ thùng rác.</p>
               </Card>
             )}
+            <DataPagination
+              page={modelsPagination.page}
+              pageSize={modelsPagination.pageSize}
+              totalItems={modelsPagination.totalItems}
+              totalPages={modelsPagination.totalPages}
+              startIndex={modelsPagination.startIndex}
+              endIndex={modelsPagination.endIndex}
+              onPageChange={modelsPagination.setPage}
+              onPageSizeChange={modelsPagination.setPageSize}
+              itemLabel="model"
+            />
           </TabsContent>
 
           {/* Benchmark */}

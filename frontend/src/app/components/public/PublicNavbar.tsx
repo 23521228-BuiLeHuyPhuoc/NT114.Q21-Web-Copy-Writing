@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/app/components/ui/button';
-import { Badge } from '@/app/components/ui/badge';
 import { BrandLogo } from '@/app/components/BrandLogo';
 import {
   Sparkles, Menu, X, ChevronDown,
@@ -105,9 +104,6 @@ export function PublicNavbar() {
         <div className="flex h-[70px] items-center justify-between">
           <Link to="/" className="flex flex-shrink-0 items-center gap-2">
             <BrandLogo size="lg" tone={scrolled ? 'dark' : 'light'} surface="light" className="p-1" />
-            <div className="flex items-center">
-              <Badge variant="success" className="h-4 px-1.5 py-0 text-[10px]">AI</Badge>
-            </div>
           </Link>
 
           <nav className={`hidden items-center gap-1 lg:flex ${scrolled ? 'text-foreground/70' : 'text-white/90'}`}>

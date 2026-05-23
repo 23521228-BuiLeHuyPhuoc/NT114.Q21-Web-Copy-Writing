@@ -12,9 +12,11 @@ import {
 import { StatTile } from '@/app/components/admin/StatTile';
 import { AdminFilterBar } from '@/app/components/admin/AdminFilterBar';
 import { AdminTable } from '@/app/components/admin/AdminTable';
+import { DataPagination } from '@/app/components/common/DataPagination';
 import { BarChart } from '@/app/components/charts';
 import { STATUS_MAP } from '@/mocks/payments';
 import { usePayments, useRevenue } from '@/hooks/queries/usePayments';
+import { usePagination } from '@/hooks/usePagination';
 
 export function AdminPayments() {
   const [search, setSearch] = useState('');
@@ -26,6 +28,10 @@ export function AdminPayments() {
     const matchSearch = p.user.toLowerCase().includes(search.toLowerCase()) || p.id.toLowerCase().includes(search.toLowerCase());
     const matchStatus = filterStatus === 'all' || p.status === filterStatus;
     return matchSearch && matchStatus;
+  });
+  const pagination = usePagination(filtered, {
+    initialPageSize: 10,
+    resetKey: `${search}|${filterStatus}`,
   });
 
   return (
@@ -96,7 +102,7 @@ export function AdminPayments() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map(pay => {
+              {pagination.pageItems.map(pay => {
                 const status = STATUS_MAP[pay.status];
                 const StatusIcon = status.icon;
                 return (
@@ -125,6 +131,17 @@ export function AdminPayments() {
               })}
             </TableBody>
         </AdminTable>
+        <DataPagination
+          page={pagination.page}
+          pageSize={pagination.pageSize}
+          totalItems={pagination.totalItems}
+          totalPages={pagination.totalPages}
+          startIndex={pagination.startIndex}
+          endIndex={pagination.endIndex}
+          onPageChange={pagination.setPage}
+          onPageSizeChange={pagination.setPageSize}
+          itemLabel="giao dịch"
+        />
       </div>
     </Layout>
   );

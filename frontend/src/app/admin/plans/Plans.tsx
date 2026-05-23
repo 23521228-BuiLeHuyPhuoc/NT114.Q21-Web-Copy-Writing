@@ -13,6 +13,8 @@ import { ConfirmDialog } from '@/app/components/admin/ConfirmDialog';
 import { TrashBin } from '@/app/components/admin/TrashBin';
 import { StatTile } from '@/app/components/admin/StatTile';
 import { AdminTable } from '@/app/components/admin/AdminTable';
+import { DataPagination } from '@/app/components/common/DataPagination';
+import { usePagination } from '@/hooks/usePagination';
 import toast from 'react-hot-toast';
 
 const INITIAL_PLANS = [
@@ -56,6 +58,10 @@ export function AdminPlans() {
 
   const visible = plans.filter(p => !deletedPlans.find(d => d.id === p.id));
   const totalRevenue = visible.reduce((a, p) => a + (p.price > 0 ? p.price * p.users : 0), 0);
+  const pagination = usePagination(visible, {
+    initialPageSize: 10,
+    resetKey: `${deletedPlans.length}|${plans.length}`,
+  });
 
   const openEdit = (p: Plan) => {
     setEditItem(p);
@@ -179,7 +185,7 @@ export function AdminPlans() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {visible.map(plan => (
+              {pagination.pageItems.map(plan => (
                 <TableRow key={plan.id} className={!plan.active ? 'opacity-60' : ''}>
                   <TableCell>
                     <div>
@@ -210,6 +216,17 @@ export function AdminPlans() {
               ))}
             </TableBody>
         </AdminTable>
+        <DataPagination
+          page={pagination.page}
+          pageSize={pagination.pageSize}
+          totalItems={pagination.totalItems}
+          totalPages={pagination.totalPages}
+          startIndex={pagination.startIndex}
+          endIndex={pagination.endIndex}
+          onPageChange={pagination.setPage}
+          onPageSizeChange={pagination.setPageSize}
+          itemLabel="gói"
+        />
       </div>
 
       {/* ── ADD DIALOG ── */}

@@ -40,7 +40,7 @@ const PERMISSION_STORAGE_KEY = 'admin_permission_defs';
 
 export const ADMIN_PERMISSIONS: AdminPermissionDef[] = [
   { key: 'dashboard', label: 'Dashboard', description: 'Xem trang tổng quan hệ thống', group: 'Tổng quan', route: '/admin', system: true },
-  { key: 'users', label: 'Quản lý users', description: 'Xem, duyệt và chỉnh sửa tài khoản', group: 'Người dùng', route: '/admin/users', system: true },
+  { key: 'users', label: 'Quản lý người dùng', description: 'Xem, duyệt và chỉnh sửa tài khoản', group: 'Người dùng', route: '/admin/users', system: true },
   { key: 'contents', label: 'Nội dung', description: 'Quản lý nội dung copy đã tạo', group: 'Nội dung', route: '/admin/contents', system: true },
   { key: 'templates', label: 'Templates', description: 'Quản lý mẫu copywriting', group: 'Nội dung', route: '/admin/templates', system: true },
   { key: 'categories', label: 'Danh mục', description: 'Quản lý danh mục ngành nghề/template', group: 'Nội dung', route: '/admin/categories', system: true },
@@ -175,7 +175,7 @@ export function resetAdminPermissionConfig() {
 
 export const ADMIN_MENU_ITEMS = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/admin', permission: 'dashboard' as AdminPermission },
-  { label: 'Quản lý Users', icon: Users, path: '/admin/users', permission: 'users' as AdminPermission },
+  { label: 'Quản lý người dùng', icon: Users, path: '/admin/users', permission: 'users' as AdminPermission },
   { label: 'Nội dung', icon: FileText, path: '/admin/contents', permission: 'contents' as AdminPermission },
   { label: 'Templates', icon: ScrollText, path: '/admin/templates', permission: 'templates' as AdminPermission },
   { label: 'Danh mục', icon: Tag, path: '/admin/categories', permission: 'categories' as AdminPermission },

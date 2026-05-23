@@ -15,6 +15,8 @@ import { ConfirmDialog } from '@/app/components/admin/ConfirmDialog';
 import { TrashBin } from '@/app/components/admin/TrashBin';
 import { StatTile } from '@/app/components/admin/StatTile';
 import { AdminFilterBar } from '@/app/components/admin/AdminFilterBar';
+import { DataPagination } from '@/app/components/common/DataPagination';
+import { usePagination } from '@/hooks/usePagination';
 import toast from 'react-hot-toast';
 
 const INITIAL_TEMPLATES = [
@@ -70,6 +72,10 @@ export function AdminTemplates() {
     const matchSearch = t.name.toLowerCase().includes(search.toLowerCase());
     const matchIndustry = filterIndustry === 'all' || t.industry === filterIndustry;
     return matchSearch && matchIndustry;
+  });
+  const pagination = usePagination(filtered, {
+    initialPageSize: 6,
+    resetKey: `${search}|${filterIndustry}`,
   });
 
   const openEdit = (t: Template) => {
@@ -168,7 +174,7 @@ export function AdminTemplates() {
 
         {/* Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map(t => (
+          {pagination.pageItems.map(t => (
             <Card key={t.id} className={`p-5 hover:shadow-md transition-shadow ${!t.active ? 'opacity-60' : ''}`}>
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1 min-w-0">
@@ -206,6 +212,17 @@ export function AdminTemplates() {
             </Card>
           ))}
         </div>
+        <DataPagination
+          page={pagination.page}
+          pageSize={pagination.pageSize}
+          totalItems={pagination.totalItems}
+          totalPages={pagination.totalPages}
+          startIndex={pagination.startIndex}
+          endIndex={pagination.endIndex}
+          onPageChange={pagination.setPage}
+          onPageSizeChange={pagination.setPageSize}
+          itemLabel="template"
+        />
         {filtered.length === 0 && (
           <Card className="p-16 text-center">
             <ScrollText className="w-10 h-10 text-muted-foreground/60 mx-auto mb-3" />

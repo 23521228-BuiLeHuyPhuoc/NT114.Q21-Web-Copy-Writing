@@ -9,6 +9,8 @@ import { Label } from '@/app/components/ui/label';
 import { Textarea } from '@/app/components/ui/textarea';
 import { Badge } from '@/app/components/ui/badge';
 import { Checkbox } from '@/app/components/ui/checkbox';
+import { DataPagination } from '@/app/components/common/DataPagination';
+import { usePagination } from '@/hooks/usePagination';
 import {
   ADMIN_ROLES,
   getAdminPermissions,
@@ -52,8 +54,22 @@ export function AdminPermissions() {
   const [newPermission, setNewPermission] = useState({ key: '', label: '', group: 'Custom', description: '' });
   const [newRole, setNewRole] = useState({ key: '', label: '', description: '', preset: 'Forest' });
 
-  const groupedPermissions = useMemo(() => groupPermissions(permissions), [permissions]);
   const selectedRoleDef = roles[selectedRole];
+  const roleEntries = useMemo(() => Object.entries(roles), [roles]);
+  const customPermissions = useMemo(() => permissions.filter((permission) => !permission.system), [permissions]);
+  const rolesPagination = usePagination(roleEntries, {
+    initialPageSize: 6,
+    resetKey: roleEntries.length,
+  });
+  const permissionPagination = usePagination(permissions, {
+    initialPageSize: 8,
+    resetKey: selectedRole,
+  });
+  const groupedPermissions = useMemo(() => groupPermissions(permissionPagination.pageItems), [permissionPagination.pageItems]);
+  const customPermissionPagination = usePagination(customPermissions, {
+    initialPageSize: 5,
+    resetKey: customPermissions.length,
+  });
 
   const persistPermissions = (next: AdminPermissionDef[]) => {
     setPermissions(next);
@@ -198,7 +214,7 @@ export function AdminPermissions() {
                 <h2 className="font-bold text-foreground">Loại admin</h2>
               </div>
               <div className="space-y-2">
-                {Object.entries(roles).map(([key, role]) => (
+                {rolesPagination.pageItems.map(([key, role]) => (
                   <button
                     key={key}
                     type="button"
@@ -217,6 +233,19 @@ export function AdminPermissions() {
                   </button>
                 ))}
               </div>
+              <DataPagination
+                page={rolesPagination.page}
+                pageSize={rolesPagination.pageSize}
+                totalItems={rolesPagination.totalItems}
+                totalPages={rolesPagination.totalPages}
+                startIndex={rolesPagination.startIndex}
+                endIndex={rolesPagination.endIndex}
+                onPageChange={rolesPagination.setPage}
+                onPageSizeChange={rolesPagination.setPageSize}
+                itemLabel="loại admin"
+                pageSizeOptions={[6, 10, 20]}
+                className="mt-4"
+              />
             </Card>
 
             <Card className="p-5 space-y-4">
@@ -326,6 +355,18 @@ export function AdminPermissions() {
                       </div>
                     ))}
                   </div>
+                  <DataPagination
+                    page={permissionPagination.page}
+                    pageSize={permissionPagination.pageSize}
+                    totalItems={permissionPagination.totalItems}
+                    totalPages={permissionPagination.totalPages}
+                    startIndex={permissionPagination.startIndex}
+                    endIndex={permissionPagination.endIndex}
+                    onPageChange={permissionPagination.setPage}
+                    onPageSizeChange={permissionPagination.setPageSize}
+                    itemLabel="quyền"
+                    pageSizeOptions={[8, 12, 20]}
+                  />
                 </>
               ) : (
                 <div className="py-16 text-center text-muted-foreground/80">Chọn một loại admin để cấu hình quyền.</div>
@@ -363,10 +404,10 @@ export function AdminPermissions() {
               <div className="mt-6 border-t pt-4">
                 <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 mb-3">Quyền tuỳ chỉnh</p>
                 <div className="space-y-2">
-                  {permissions.filter((permission) => !permission.system).length === 0 ? (
+                  {customPermissions.length === 0 ? (
                     <p className="text-sm text-muted-foreground/80">Chưa có quyền tuỳ chỉnh.</p>
                   ) : (
-                    permissions.filter((permission) => !permission.system).map((permission) => (
+                    customPermissionPagination.pageItems.map((permission) => (
                       <div key={permission.key} className="flex items-center justify-between rounded-xl border border-border p-3">
                         <div>
                           <p className="text-sm font-semibold text-foreground">{permission.label}</p>
@@ -380,6 +421,18 @@ export function AdminPermissions() {
                     ))
                   )}
                 </div>
+                <DataPagination
+                  page={customPermissionPagination.page}
+                  pageSize={customPermissionPagination.pageSize}
+                  totalItems={customPermissionPagination.totalItems}
+                  totalPages={customPermissionPagination.totalPages}
+                  startIndex={customPermissionPagination.startIndex}
+                  endIndex={customPermissionPagination.endIndex}
+                  onPageChange={customPermissionPagination.setPage}
+                  onPageSizeChange={customPermissionPagination.setPageSize}
+                  itemLabel="quyền tuỳ chỉnh"
+                  pageSizeOptions={[5, 10, 20]}
+                />
               </div>
             </Card>
           </div>

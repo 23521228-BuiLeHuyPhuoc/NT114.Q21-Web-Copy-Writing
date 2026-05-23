@@ -7,6 +7,8 @@ import { Input } from '@/app/components/ui/input';
 import { ImageWithFallback } from '@/app/components/figma/ImageWithFallback';
 import { BLOG_CATEGORIES, BLOG_POSTS, TRENDING_POSTS } from '@/mocks/blog';
 import { Search, Clock, ArrowRight, BookOpen, TrendingUp, Cpu, Wand2 } from 'lucide-react';
+import { DataPagination } from '@/app/components/common/DataPagination';
+import { usePagination } from '@/hooks/usePagination';
 
 const catColor: Record<string, string> = {
   ai: 'bg-primary/10 text-primary',
@@ -29,6 +31,10 @@ export function BlogPage() {
 
   const featured = filtered.find(post => post.featured);
   const rest = filtered.filter(post => !post.featured);
+  const pagination = usePagination(rest, {
+    initialPageSize: 6,
+    resetKey: `${cat}|${search}`,
+  });
 
   return (
     <div className="min-h-screen bg-card">
@@ -120,7 +126,7 @@ export function BlogPage() {
             )}
 
             <div className="grid gap-6 md:grid-cols-2">
-              {rest.map(post => (
+              {pagination.pageItems.map(post => (
                 <Link
                   key={post.id}
                   to={`/blog/${post.slug}`}
@@ -154,6 +160,17 @@ export function BlogPage() {
                 </Link>
               ))}
             </div>
+            <DataPagination
+              page={pagination.page}
+              pageSize={pagination.pageSize}
+              totalItems={pagination.totalItems}
+              totalPages={pagination.totalPages}
+              startIndex={pagination.startIndex}
+              endIndex={pagination.endIndex}
+              onPageChange={pagination.setPage}
+              onPageSizeChange={pagination.setPageSize}
+              itemLabel="bài viết"
+            />
 
             {filtered.length === 0 && (
               <div className="py-20 text-center text-muted-foreground/80">

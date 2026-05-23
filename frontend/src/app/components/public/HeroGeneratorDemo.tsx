@@ -142,7 +142,13 @@ function useTypewriter(
   const timerRef = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
-    if (!active) { setDisplayed(''); indexRef.current = 0; return; }
+    if (!active) {
+      clearTimeout(timerRef.current);
+      return;
+    }
+
+    setDisplayed('');
+    indexRef.current = 0;
 
     function tick() {
       if (indexRef.current < fullText.length) {
@@ -176,7 +182,13 @@ function useInputTypewriter(
   const timerRef = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
-    if (!active) { setDisplayed(''); indexRef.current = 0; return; }
+    if (!active) {
+      clearTimeout(timerRef.current);
+      return;
+    }
+
+    setDisplayed('');
+    indexRef.current = 0;
 
     function tick() {
       if (indexRef.current < fullText.length) {
@@ -271,7 +283,7 @@ export function HeroGeneratorDemo() {
 
   return (
     <div
-      className={`dark relative transition-opacity duration-700 ${isFading ? 'opacity-0' : 'opacity-100'}`}
+      className={`dark relative select-none transition-opacity duration-700 ${isFading ? 'opacity-0' : 'opacity-100'}`}
     >
       {/* Outer card — browser chrome */}
       <div className="rounded-2xl overflow-hidden shadow-[0_24px_60px_rgba(0,0,0,0.5)] ring-1 ring-white/10 bg-[#0f1117]">
@@ -293,7 +305,7 @@ export function HeroGeneratorDemo() {
         </div>
 
         {/* App shell — unified height for balanced look */}
-        <div className="flex h-[440px] bg-[#0f1117]">
+        <div className="flex h-[450px] bg-[#0f1117]">
 
           {/* ── Main area ── */}
           <div className="flex-1 flex flex-col overflow-hidden min-w-0">
@@ -323,7 +335,7 @@ export function HeroGeneratorDemo() {
             <div className="flex flex-1 overflow-hidden min-h-0">
 
               {/* ── Left: Controls — narrower so output gets more room ── */}
-              <div className="w-[170px] sm:w-[185px] flex-shrink-0 border-r border-white/5 p-3 sm:p-3.5 flex flex-col gap-3 overflow-y-auto">
+              <div className="scrollbar-none w-[170px] sm:w-[185px] flex-shrink-0 border-r border-white/5 p-3 flex flex-col gap-2.5 overflow-y-auto">
 
                 {/* Content type */}
                 <div>
@@ -346,7 +358,7 @@ export function HeroGeneratorDemo() {
                 {/* Input field */}
                 <div>
                   <p className="text-foreground/70 text-[10px] font-bold uppercase tracking-widest mb-2">Sản phẩm / Chủ đề</p>
-                  <div className={`relative rounded-xl border px-3 py-2.5 bg-card/4 min-h-[38px] transition-all ${
+                  <div className={`relative rounded-xl border px-3 py-2 bg-card/4 min-h-[38px] transition-all ${
                     phase === 'typing_input'
                       ? 'border-primary/60 shadow-[0_0_0_2px_rgba(34,197,94,0.14)]'
                       : isInputVisible
@@ -368,7 +380,7 @@ export function HeroGeneratorDemo() {
                 {/* Tone */}
                 <div>
                   <p className="text-foreground/70 text-[10px] font-bold uppercase tracking-widest mb-2">Giọng văn</p>
-                  <div className={`rounded-xl border px-3 py-2 bg-card/4 transition-all ${isInputVisible ? 'border-white/12' : 'border-white/5'}`}>
+                  <div className={`rounded-xl border px-3 py-1.5 bg-card/4 transition-all ${isInputVisible ? 'border-white/12' : 'border-white/5'}`}>
                     <span className="text-muted-foreground/80 text-[11px]">{isInputVisible ? scenario.tone : '—'}</span>
                   </div>
                 </div>
@@ -394,7 +406,7 @@ export function HeroGeneratorDemo() {
 
                 {/* Generate button */}
                 <button
-                  className={`w-full py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all ${
+                  className={`w-full py-2 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all ${
                     phase === 'generating' || phase === 'streaming'
                       ? 'bg-primary/30 text-primary border border-primary/30 cursor-not-allowed'
                       : btnPressed

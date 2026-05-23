@@ -15,6 +15,8 @@ import {
 import toast from 'react-hot-toast';
 
 import { useProjects } from '@/hooks/queries/useProjects';
+import { DataPagination } from '@/app/components/common/DataPagination';
+import { usePagination } from '@/hooks/usePagination';
 
 export function CustomerProjects() {
   const navigate = useNavigate();
@@ -25,6 +27,10 @@ export function CustomerProjects() {
   const { data: projects = [] } = useProjects();
 
   const filtered = projects.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
+  const pagination = usePagination(filtered, {
+    initialPageSize: 6,
+    resetKey: search,
+  });
 
   return (
     <Layout>
@@ -47,7 +53,7 @@ export function CustomerProjects() {
 
         {/* Projects grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map(project => (
+          {pagination.pageItems.map(project => (
             <Card key={project.id} className="p-5 hover:shadow-lg transition-all cursor-pointer group" onClick={() => navigate(`/projects/${project.id}`)}>
               <div className="flex items-start justify-between mb-4">
                 <div className={`bg-gradient-to-br ${project.color} p-3 rounded-xl`}>
@@ -72,6 +78,17 @@ export function CustomerProjects() {
             </Card>
           ))}
         </div>
+        <DataPagination
+          page={pagination.page}
+          pageSize={pagination.pageSize}
+          totalItems={pagination.totalItems}
+          totalPages={pagination.totalPages}
+          startIndex={pagination.startIndex}
+          endIndex={pagination.endIndex}
+          onPageChange={pagination.setPage}
+          onPageSizeChange={pagination.setPageSize}
+          itemLabel="dự án"
+        />
 
         {/* New project dialog */}
         <Dialog open={showNew} onOpenChange={setShowNew}>

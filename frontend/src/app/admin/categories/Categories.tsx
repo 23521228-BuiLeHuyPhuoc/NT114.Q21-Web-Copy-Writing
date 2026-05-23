@@ -11,6 +11,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tag, Plus, Edit2, Trash2, Search } from 'lucide-react';
 import { ConfirmDialog } from '@/app/components/admin/ConfirmDialog';
 import { TrashBin } from '@/app/components/admin/TrashBin';
+import { DataPagination } from '@/app/components/common/DataPagination';
+import { usePagination } from '@/hooks/usePagination';
 import toast from 'react-hot-toast';
 
 const INITIAL_CATEGORIES = [
@@ -56,6 +58,10 @@ export function AdminCategories() {
 
   const visible = categories.filter(c => !deletedCategories.find(d => d.id === c.id));
   const filtered = visible.filter(c => c.name.toLowerCase().includes(search.toLowerCase()) || c.slug.toLowerCase().includes(search.toLowerCase()));
+  const pagination = usePagination(filtered, {
+    initialPageSize: 10,
+    resetKey: search,
+  });
 
   const toggleActive = (id: number) => {
     setCategories(prev => prev.map(c => c.id === id ? { ...c, active: !c.active } : c));
@@ -152,7 +158,7 @@ export function AdminCategories() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map(cat => (
+              {pagination.pageItems.map(cat => (
                 <TableRow key={cat.id} className={!cat.active ? 'opacity-60' : ''}>
                   <TableCell className="text-muted-foreground/80 text-sm">{cat.order}</TableCell>
                   <TableCell>
@@ -183,6 +189,17 @@ export function AdminCategories() {
           </Table>
           {filtered.length === 0 && <div className="text-center py-12 text-muted-foreground/80 text-sm">Không tìm thấy danh mục nào.</div>}
         </Card>
+        <DataPagination
+          page={pagination.page}
+          pageSize={pagination.pageSize}
+          totalItems={pagination.totalItems}
+          totalPages={pagination.totalPages}
+          startIndex={pagination.startIndex}
+          endIndex={pagination.endIndex}
+          onPageChange={pagination.setPage}
+          onPageSizeChange={pagination.setPageSize}
+          itemLabel="danh mục"
+        />
       </div>
 
       {/* ── ADD DIALOG ── */}

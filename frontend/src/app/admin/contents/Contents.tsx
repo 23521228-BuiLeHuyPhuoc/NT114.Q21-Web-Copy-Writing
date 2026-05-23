@@ -17,6 +17,8 @@ import { TrashBin } from '@/app/components/admin/TrashBin';
 import { StatTile } from '@/app/components/admin/StatTile';
 import { AdminFilterBar } from '@/app/components/admin/AdminFilterBar';
 import { AdminTable } from '@/app/components/admin/AdminTable';
+import { DataPagination } from '@/app/components/common/DataPagination';
+import { usePagination } from '@/hooks/usePagination';
 import toast from 'react-hot-toast';
 
 const INITIAL_CONTENTS = [
@@ -57,6 +59,10 @@ export function AdminContents() {
     const matchSearch = c.title.toLowerCase().includes(search.toLowerCase()) || c.user.toLowerCase().includes(search.toLowerCase());
     const matchStatus = filterStatus === 'all' || c.status === filterStatus;
     return matchSearch && matchStatus;
+  });
+  const pagination = usePagination(filtered, {
+    initialPageSize: 10,
+    resetKey: `${search}|${filterStatus}`,
   });
 
   const openEdit = (item: ContentItem) => {
@@ -165,7 +171,7 @@ export function AdminContents() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map(item => (
+              {pagination.pageItems.map(item => (
                 <TableRow key={item.id} className={item.flagged ? 'bg-destructive/10' : ''}>
                   <TableCell>
                     <div className="flex items-center gap-2">
@@ -205,6 +211,17 @@ export function AdminContents() {
               ))}
             </TableBody>
         </AdminTable>
+        <DataPagination
+          page={pagination.page}
+          pageSize={pagination.pageSize}
+          totalItems={pagination.totalItems}
+          totalPages={pagination.totalPages}
+          startIndex={pagination.startIndex}
+          endIndex={pagination.endIndex}
+          onPageChange={pagination.setPage}
+          onPageSizeChange={pagination.setPageSize}
+          itemLabel="nội dung"
+        />
       </div>
 
       {/* ── VIEW DIALOG ── */}

@@ -168,7 +168,8 @@ export function CustomerGenerator() {
           </div>
 
           {/* ─── RIGHT PANEL: Output ─── */}
-          <div className="lg:col-span-3 space-y-4">
+          <div className="lg:col-span-3">
+            <div className="generator-sticky-panel space-y-4 lg:sticky lg:top-20 lg:max-h-[calc(100vh-5.5rem)] lg:overflow-y-auto lg:pr-2 lg:pb-3">
 
             {/* Meta info bar */}
             <div className="flex flex-wrap items-center gap-2">
@@ -238,6 +239,7 @@ export function CustomerGenerator() {
                 </div>
               </Card>
             )}
+            </div>
           </div>
         </div>
       </div>

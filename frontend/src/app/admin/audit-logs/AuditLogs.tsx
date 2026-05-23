@@ -9,8 +9,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import {
   Search, Shield, Download, AlertTriangle,
 } from 'lucide-react';
+import { DataPagination } from '@/app/components/common/DataPagination';
 import { LEVEL_MAP, ACTION_ICONS } from '@/mocks/auditLogs';
 import { useAuditLogs } from '@/hooks/queries/useAuditLogs';
+import { usePagination } from '@/hooks/usePagination';
 
 export function AdminAuditLogs() {
   const [search, setSearch] = useState('');
@@ -21,6 +23,10 @@ export function AdminAuditLogs() {
     const matchSearch = log.action.includes(search.toLowerCase()) || log.user.includes(search.toLowerCase()) || log.details.toLowerCase().includes(search.toLowerCase());
     const matchLevel = filterLevel === 'all' || log.level === filterLevel;
     return matchSearch && matchLevel;
+  });
+  const pagination = usePagination(filtered, {
+    initialPageSize: 10,
+    resetKey: `${search}|${filterLevel}`,
   });
 
   return (
@@ -87,7 +93,7 @@ export function AdminAuditLogs() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map(log => {
+              {pagination.pageItems.map(log => {
                 const level = LEVEL_MAP[log.level] || LEVEL_MAP.info;
                 const LevelIcon = level.icon;
                 const ActionIcon = ACTION_ICONS[log.action] || Shield;
@@ -119,6 +125,17 @@ export function AdminAuditLogs() {
             </TableBody>
           </Table>
         </Card>
+        <DataPagination
+          page={pagination.page}
+          pageSize={pagination.pageSize}
+          totalItems={pagination.totalItems}
+          totalPages={pagination.totalPages}
+          startIndex={pagination.startIndex}
+          endIndex={pagination.endIndex}
+          onPageChange={pagination.setPage}
+          onPageSizeChange={pagination.setPageSize}
+          itemLabel="log"
+        />
       </div>
     </Layout>
   );

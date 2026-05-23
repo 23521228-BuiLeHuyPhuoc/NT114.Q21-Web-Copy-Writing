@@ -7,6 +7,8 @@ import { Bell, Trash2, Check } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { TYPE_COLORS } from '@/mocks/notifications';
 import { useNotifications } from '@/hooks/queries/useNotifications';
+import { DataPagination } from '@/app/components/common/DataPagination';
+import { usePagination } from '@/hooks/usePagination';
 
 export function CustomerNotifications() {
   const { data } = useNotifications();
@@ -17,6 +19,10 @@ export function CustomerNotifications() {
   }, [data]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
+  const pagination = usePagination(notifications, {
+    initialPageSize: 8,
+    resetKey: notifications.length,
+  });
 
   const markAllRead = () => {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
@@ -58,7 +64,7 @@ export function CustomerNotifications() {
               <p>Không có thông báo nào</p>
             </div>
           )}
-          {notifications.map(notif => {
+          {pagination.pageItems.map(notif => {
             const Icon = notif.icon;
             const colors = TYPE_COLORS[notif.type] || TYPE_COLORS.info;
             return (
@@ -87,6 +93,17 @@ export function CustomerNotifications() {
             );
           })}
         </div>
+        <DataPagination
+          page={pagination.page}
+          pageSize={pagination.pageSize}
+          totalItems={pagination.totalItems}
+          totalPages={pagination.totalPages}
+          startIndex={pagination.startIndex}
+          endIndex={pagination.endIndex}
+          onPageChange={pagination.setPage}
+          onPageSizeChange={pagination.setPageSize}
+          itemLabel="thông báo"
+        />
       </div>
     </Layout>
   );

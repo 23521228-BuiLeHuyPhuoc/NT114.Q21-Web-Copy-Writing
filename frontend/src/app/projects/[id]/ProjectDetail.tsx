@@ -9,6 +9,8 @@ import {
   Eye, Download, Trash2, BarChart3, Star, Clock,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { DataPagination } from '@/app/components/common/DataPagination';
+import { usePagination } from '@/hooks/usePagination';
 
 const PROJECT = {
   id: '1', name: 'Campaign Hè 2026', desc: 'Toàn bộ copy cho chiến dịch sale mùa hè 2026, bao gồm Facebook Ads, Email marketing, Landing page và Social media posts.',
@@ -28,6 +30,9 @@ const PROJECT_CONTENTS = [
 export function CustomerProjectDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const contentPagination = usePagination(PROJECT_CONTENTS, {
+    initialPageSize: 5,
+  });
 
   return (
     <Layout>
@@ -84,7 +89,7 @@ export function CustomerProjectDetail() {
         {/* Contents */}
         <h2 className="text-lg font-bold text-foreground mb-4">Nội dung trong dự án</h2>
         <div className="space-y-3">
-          {PROJECT_CONTENTS.map(item => (
+          {contentPagination.pageItems.map(item => (
             <Card key={item.id} className="p-4 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`/contents/${item.id}`)}>
               <div className="flex items-center gap-4">
                 <div className="bg-primary/10 p-2 rounded-lg flex-shrink-0">
@@ -106,6 +111,17 @@ export function CustomerProjectDetail() {
             </Card>
           ))}
         </div>
+        <DataPagination
+          page={contentPagination.page}
+          pageSize={contentPagination.pageSize}
+          totalItems={contentPagination.totalItems}
+          totalPages={contentPagination.totalPages}
+          startIndex={contentPagination.startIndex}
+          endIndex={contentPagination.endIndex}
+          onPageChange={contentPagination.setPage}
+          onPageSizeChange={contentPagination.setPageSize}
+          itemLabel="nội dung"
+        />
       </div>
     </Layout>
   );

@@ -6,7 +6,7 @@ import { Badge } from '@/app/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/app/components/ui/avatar';
 import { Sheet, SheetContent, SheetTrigger } from '@/app/components/ui/sheet';
 import {
-  LayoutDashboard, Wand2, FileText, User, Users,
+  LayoutDashboard, Wand2, FileText, User,
   LogOut, Menu, CreditCard, Brain, Key, Settings,
   FolderOpen, Bell, Shield, Tag, DollarSign, ScrollText,
   FileCheck, Crown,
@@ -56,9 +56,6 @@ export function Layout({ children }: LayoutProps) {
       <div className="p-5 border-b flex-shrink-0">
         <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
           <BrandLogo size="md" />
-          <div className="min-w-0">
-            <p className="text-xs text-muted-foreground">{user?.role === 'admin' ? 'Admin Panel' : 'Customer Portal'}</p>
-          </div>
         </Link>
       </div>
 
@@ -70,7 +67,7 @@ export function Layout({ children }: LayoutProps) {
             <span className={`text-xs font-semibold ${adminRoleDef.textColor} truncate`}>{adminRoleDef.label}</span>
           </div>
         ) : (
-          <Badge variant="warning">👤 Customer · Pro</Badge>
+          <Badge variant="warning">👤 Khách hàng · Pro</Badge>
         )}
       </div>
 

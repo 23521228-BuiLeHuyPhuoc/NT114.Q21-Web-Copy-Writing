@@ -11,6 +11,8 @@ import {
   Wallet, Smartphone, Copy, QrCode,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { DataPagination } from '@/app/components/common/DataPagination';
+import { usePagination } from '@/hooks/usePagination';
 
 const CURRENT_PLAN = {
   name: 'Pro',
@@ -104,6 +106,9 @@ function formatCurrency(value: number) {
 
 export function CustomerBilling() {
   const [selectedMethod, setSelectedMethod] = useState(PAYMENT_METHODS[3]);
+  const invoicePagination = usePagination(INVOICES, {
+    initialPageSize: 5,
+  });
 
   const handleCopyBankInfo = () => {
     navigator.clipboard.writeText('Vietcombank - 0123456789 - COPYPRO + email tài khoản').catch(() => {});
@@ -287,7 +292,7 @@ export function CustomerBilling() {
             <Card className="p-5">
               <h3 className="mb-4 font-semibold text-foreground">Lịch sử hóa đơn</h3>
               <div className="space-y-3">
-                {INVOICES.map(invoice => (
+                {invoicePagination.pageItems.map(invoice => (
                   <div key={invoice.id} className="flex items-center gap-4 rounded-lg border bg-surface-muted p-3">
                     <div className="rounded-lg bg-primary/10 p-2"><FileText className="h-4 w-4 text-primary" /></div>
                     <div className="flex-1">
@@ -300,6 +305,17 @@ export function CustomerBilling() {
                   </div>
                 ))}
               </div>
+              <DataPagination
+                page={invoicePagination.page}
+                pageSize={invoicePagination.pageSize}
+                totalItems={invoicePagination.totalItems}
+                totalPages={invoicePagination.totalPages}
+                startIndex={invoicePagination.startIndex}
+                endIndex={invoicePagination.endIndex}
+                onPageChange={invoicePagination.setPage}
+                onPageSizeChange={invoicePagination.setPageSize}
+                itemLabel="hóa đơn"
+              />
             </Card>
           </TabsContent>
         </Tabs>

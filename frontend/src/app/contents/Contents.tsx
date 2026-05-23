@@ -14,6 +14,8 @@ import toast from 'react-hot-toast';
 
 import { CONTENTS_STATUS_MAP as STATUS_MAP } from '@/mocks/contents';
 import { useContents } from '@/hooks/queries/useContents';
+import { DataPagination } from '@/app/components/common/DataPagination';
+import { usePagination } from '@/hooks/usePagination';
 
 export function CustomerContents() {
   const navigate = useNavigate();
@@ -27,6 +29,10 @@ export function CustomerContents() {
     const matchStatus = filterStatus === 'all' || c.status === filterStatus;
     const matchType = filterType === 'all' || c.type === filterType;
     return matchSearch && matchStatus && matchType;
+  });
+  const pagination = usePagination(filtered, {
+    initialPageSize: 6,
+    resetKey: `${search}|${filterStatus}|${filterType}`,
   });
 
   return (
@@ -103,7 +109,7 @@ export function CustomerContents() {
               <p>Không tìm thấy nội dung phù hợp</p>
             </div>
           )}
-          {filtered.map(item => {
+          {pagination.pageItems.map(item => {
             const status = STATUS_MAP[item.status];
             return (
               <Card key={item.id} className="p-4 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`/contents/${item.id}`)}>
@@ -134,6 +140,17 @@ export function CustomerContents() {
             );
           })}
         </div>
+        <DataPagination
+          page={pagination.page}
+          pageSize={pagination.pageSize}
+          totalItems={pagination.totalItems}
+          totalPages={pagination.totalPages}
+          startIndex={pagination.startIndex}
+          endIndex={pagination.endIndex}
+          onPageChange={pagination.setPage}
+          onPageSizeChange={pagination.setPageSize}
+          itemLabel="nội dung"
+        />
       </div>
     </Layout>
   );

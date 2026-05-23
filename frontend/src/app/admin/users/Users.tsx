@@ -28,6 +28,8 @@ import { ConfirmDialog } from '@/app/components/admin/ConfirmDialog';
 import { TrashBin } from '@/app/components/admin/TrashBin';
 import { AdminFilterBar } from '@/app/components/admin/AdminFilterBar';
 import { AdminTable } from '@/app/components/admin/AdminTable';
+import { DataPagination } from '@/app/components/common/DataPagination';
+import { usePagination } from '@/hooks/usePagination';
 import toast from 'react-hot-toast';
 import type { UserRole, UserStatus } from '@/types/auth';
 
@@ -35,6 +37,12 @@ type Tab = 'all' | 'pending';
 
 const CUSTOMER_STATUS_OPTIONS: UserStatus[] = ['active', 'locked'];
 const ADMIN_STATUS_OPTIONS: UserStatus[] = ['pending', 'active', 'rejected', 'locked'];
+const STATUS_LABELS: Record<UserStatus, string> = {
+  active: 'Đang hoạt động',
+  locked: 'Đã khóa',
+  pending: 'Chờ duyệt',
+  rejected: 'Từ chối',
+};
 
 function getErrorMessage(error: unknown, fallback: string) {
   const err = error as { response?: { data?: { message?: string } }; message?: string };
@@ -58,7 +66,7 @@ export function AdminUsers() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [trashUsers, setTrashUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<Tab>('pending');
+  const [tab, setTab] = useState<Tab>('all');
   const [search, setSearch] = useState('');
 
   const [approvingId, setApprovingId] = useState<string | null>(null);
@@ -94,7 +102,7 @@ export function AdminUsers() {
       setUsers(activeItems);
       setTrashUsers(deletedItems);
     } catch (error) {
-      toast.error(getErrorMessage(error, 'Khong tai duoc danh sach users'));
+      toast.error(getErrorMessage(error, 'Không tải được danh sách người dùng'));
     } finally {
       setLoading(false);
     }
@@ -127,6 +135,15 @@ export function AdminUsers() {
     );
   }, [search, users]);
 
+  const pendingPagination = usePagination(pendingUsers, {
+    initialPageSize: 5,
+    resetKey: `${pendingUsers.length}`,
+  });
+  const usersPagination = usePagination(filteredUsers, {
+    initialPageSize: 10,
+    resetKey: search,
+  });
+
   const openEdit = (item: AdminUser) => {
     setEditUser(item);
     setEditName(item.name);
@@ -140,9 +157,9 @@ export function AdminUsers() {
     try {
       await adminUserService.approve(id);
       await loadUsers();
-      toast.success(`Da phe duyet tai khoan "${name}"`);
+      toast.success(`Đã phê duyệt tài khoản "${name}"`);
     } catch (error) {
-      toast.error(getErrorMessage(error, 'Khong phe duyet duoc tai khoan'));
+      toast.error(getErrorMessage(error, 'Không phê duyệt được tài khoản'));
     } finally {
       setApprovingId(null);
     }
@@ -153,9 +170,9 @@ export function AdminUsers() {
     try {
       await adminUserService.reject(id);
       await loadUsers();
-      toast.success(`Da tu choi tai khoan "${name}"`);
+      toast.success(`Đã từ chối tài khoản "${name}"`);
     } catch (error) {
-      toast.error(getErrorMessage(error, 'Khong tu choi duoc tai khoan'));
+      toast.error(getErrorMessage(error, 'Không từ chối được tài khoản'));
     } finally {
       setRejectingId(null);
     }
@@ -173,9 +190,9 @@ export function AdminUsers() {
       });
       await loadUsers();
       setEditUser(null);
-      toast.success(`Da cap nhat thong tin "${editName}"`);
+      toast.success(`Đã cập nhật thông tin "${editName}"`);
     } catch (error) {
-      toast.error(getErrorMessage(error, 'Khong cap nhat duoc tai khoan'));
+      toast.error(getErrorMessage(error, 'Không cập nhật được tài khoản'));
     } finally {
       setEditSaving(false);
     }
@@ -183,11 +200,11 @@ export function AdminUsers() {
 
   const handleCreateUser = async () => {
     if (!addName.trim() || !addEmail.trim() || !addPassword.trim()) {
-      toast.error('Vui long nhap day du ten, email va mat khau');
+      toast.error('Vui lòng nhập đầy đủ tên, email và mật khẩu');
       return;
     }
     if (addPassword.length < 8) {
-      toast.error('Mat khau phai co it nhat 8 ky tu');
+      toast.error('Mật khẩu phải có ít nhất 8 ký tự');
       return;
     }
 
@@ -206,9 +223,9 @@ export function AdminUsers() {
       setAddOpen(false);
       setTab('all');
       await loadUsers();
-      toast.success(`Da tao tai khoan "${createdName}"`);
+      toast.success(`Đã tạo tài khoản "${createdName}"`);
     } catch (error) {
-      toast.error(getErrorMessage(error, 'Khong tao duoc tai khoan'));
+      toast.error(getErrorMessage(error, 'Không tạo được tài khoản'));
     } finally {
       setAddSaving(false);
     }
@@ -219,9 +236,9 @@ export function AdminUsers() {
     try {
       await adminUserService.remove(accountTypeOf(confirmDelete), confirmDelete.id);
       await loadUsers();
-      toast.success('Da chuyen vao thung rac');
+      toast.success('Đã chuyển vào thùng rác');
     } catch (error) {
-      toast.error(getErrorMessage(error, 'Khong xoa duoc tai khoan'));
+      toast.error(getErrorMessage(error, 'Không xóa được tài khoản'));
     } finally {
       setConfirmDelete(null);
     }
@@ -237,9 +254,9 @@ export function AdminUsers() {
     try {
       await adminUserService.restore(accountTypeOf(item), item.id);
       await loadUsers();
-      toast.success('Da khoi phuc tai khoan');
+      toast.success('Đã khôi phục tài khoản');
     } catch (error) {
-      toast.error(getErrorMessage(error, 'Khong khoi phuc duoc tai khoan'));
+      toast.error(getErrorMessage(error, 'Không khôi phục được tài khoản'));
     } finally {
       setProcessingTrashId(null);
     }
@@ -253,25 +270,25 @@ export function AdminUsers() {
     try {
       await adminUserService.permanentDelete(accountTypeOf(item), item.id);
       await loadUsers();
-      toast.success('Da xoa vinh vien tai khoan');
+      toast.success('Đã xóa vĩnh viễn tài khoản');
     } catch (error) {
-      toast.error(getErrorMessage(error, 'Khong xoa vinh vien duoc tai khoan'));
+      toast.error(getErrorMessage(error, 'Không xóa vĩnh viễn được tài khoản'));
     } finally {
       setProcessingTrashId(null);
     }
   };
 
   const statusBadge = (status: UserStatus) => {
-    if (status === 'active') return <Badge className="bg-primary/10 text-primary border-0 gap-1"><span className="w-1.5 h-1.5 bg-primary/50 rounded-full" />Active</Badge>;
-    if (status === 'pending') return <Badge className="bg-warning/15 text-amber-800 border-0 gap-1"><span className="w-1.5 h-1.5 bg-warning/100 rounded-full animate-pulse" />Cho duyet</Badge>;
-    if (status === 'rejected') return <Badge className="bg-destructive/10 text-destructive border-0 gap-1"><span className="w-1.5 h-1.5 bg-destructive/100 rounded-full" />Tu choi</Badge>;
-    return <Badge className="bg-muted text-foreground/80 border-0 gap-1"><Lock className="w-3 h-3" />Locked</Badge>;
+    if (status === 'active') return <Badge className="bg-primary/10 text-primary border-0 gap-1"><span className="w-1.5 h-1.5 bg-primary/50 rounded-full" />{STATUS_LABELS[status]}</Badge>;
+    if (status === 'pending') return <Badge className="bg-warning/15 text-amber-800 border-0 gap-1"><span className="w-1.5 h-1.5 bg-warning/100 rounded-full animate-pulse" />{STATUS_LABELS[status]}</Badge>;
+    if (status === 'rejected') return <Badge className="bg-destructive/10 text-destructive border-0 gap-1"><span className="w-1.5 h-1.5 bg-destructive/100 rounded-full" />{STATUS_LABELS[status]}</Badge>;
+    return <Badge className="bg-muted text-foreground/80 border-0 gap-1"><Lock className="w-3 h-3" />{STATUS_LABELS[status]}</Badge>;
   };
 
   const roleBadge = (item: AdminUser) => {
-    if (item.role === 'customer') return <Badge className="bg-muted text-foreground/70 border-0">Customer</Badge>;
+    if (item.role === 'customer') return <Badge className="bg-muted text-foreground/70 border-0">Khách hàng</Badge>;
     const def = getAdminRoleDef(item.adminRole);
-    if (!def) return <Badge className="bg-destructive/10 text-destructive border-0">Admin</Badge>;
+    if (!def) return <Badge className="bg-destructive/10 text-destructive border-0">Quản trị viên</Badge>;
     return (
       <Badge className={`${def.color} ${def.textColor} border-0 gap-1`}>
         <span className={`w-1.5 h-1.5 rounded-full ${def.dotColor}`} />
@@ -287,14 +304,14 @@ export function AdminUsers() {
       <div className="p-6 max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-foreground mb-1">Quan Ly Users</h1>
-            <p className="text-muted-foreground text-sm">Du lieu duoc doc truc tiep tu MongoDB qua API admin.</p>
+            <h1 className="text-2xl font-bold text-foreground mb-1">Quản lý người dùng</h1>
+            <p className="text-muted-foreground text-sm">Dữ liệu được đọc trực tiếp từ MongoDB qua API admin.</p>
           </div>
           <div className="flex items-center gap-2">
             {pendingUsers.length > 0 && (
               <div className="flex items-center gap-1.5 bg-warning/10 border border-amber-200 text-amber-700 rounded-xl px-3 py-1.5 text-xs font-semibold">
                 <span className="w-2 h-2 bg-warning/100 rounded-full animate-pulse" />
-                {pendingUsers.length} cho duyet
+                {pendingUsers.length} chờ duyệt
               </div>
             )}
             <button
@@ -302,7 +319,7 @@ export function AdminUsers() {
               className="relative flex items-center gap-1.5 border border-border hover:border-red-300 hover:bg-destructive/10 text-muted-foreground hover:text-red-600 rounded-xl px-3 py-2 text-sm font-semibold transition-all"
             >
               <Trash2 className="w-4 h-4" />
-              Thung rac
+              Thùng rác
               {trashUsers.length > 0 && (
                 <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-destructive/100 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                   {trashUsers.length}
@@ -314,7 +331,7 @@ export function AdminUsers() {
                 onClick={() => setAddOpen(true)}
                 className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl gap-2 text-sm"
               >
-                <UserPlus className="w-4 h-4" /> Them User
+                <UserPlus className="w-4 h-4" /> Thêm người dùng
               </Button>
             )}
           </div>
@@ -323,31 +340,32 @@ export function AdminUsers() {
         <div className="flex gap-1 mb-5 bg-muted p-1 rounded-xl w-fit">
           <button onClick={() => setTab('pending')} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${tab === 'pending' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground/80'}`}>
             <Clock className="w-4 h-4" />
-            Cho duyet
+            Chờ duyệt
             {pendingUsers.length > 0 && (
               <span className="bg-warning/100 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">{pendingUsers.length}</span>
             )}
           </button>
           <button onClick={() => setTab('all')} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${tab === 'all' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground/80'}`}>
             <UsersIcon className="w-4 h-4" />
-            Tat ca Users
+            Tất cả người dùng
           </button>
         </div>
 
         {loading ? (
-          <Card className="p-16 text-center text-sm text-muted-foreground">Dang tai du lieu MongoDB...</Card>
+          <Card className="p-16 text-center text-sm text-muted-foreground">Đang tải dữ liệu MongoDB...</Card>
         ) : tab === 'pending' ? (
           pendingUsers.length === 0 ? (
             <Card className="p-16 text-center">
               <div className="w-16 h-16 bg-primary/5 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <CheckCircle2 className="w-8 h-8 text-primary" />
               </div>
-              <h3 className="font-semibold text-foreground mb-1">Khong co yeu cau nao</h3>
-              <p className="text-muted-foreground/80 text-sm">Tat ca tai khoan Admin da duoc xem xet.</p>
+              <h3 className="font-semibold text-foreground mb-1">Không có yêu cầu nào</h3>
+              <p className="text-muted-foreground/80 text-sm">Tất cả tài khoản Admin đã được xem xét.</p>
             </Card>
           ) : (
-            <div className="space-y-3">
-              {pendingUsers.map((item) => {
+            <>
+              <div className="space-y-3">
+              {pendingPagination.pageItems.map((item) => {
                 const roleDef = item.adminRole ? getAdminRoleDef(item.adminRole) : null;
                 const isApproving = approvingId === item.id;
                 const isRejecting = rejectingId === item.id;
@@ -370,52 +388,64 @@ export function AdminUsers() {
                         </div>
                         <div className="flex items-center gap-4 text-xs text-muted-foreground">
                           <span className="flex items-center gap-1"><Mail className="w-3 h-3" />{item.email}</span>
-                          <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />Dang ky {formatDate(item.createdAt)}</span>
+                          <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />Đăng ký {formatDate(item.createdAt)}</span>
                         </div>
                       </div>
                       {isSuperAdmin ? (
                         <div className="flex items-center gap-2 flex-shrink-0">
                           <button onClick={() => handleReject(item.id, item.name)} disabled={isApproving || isRejecting} className="flex items-center gap-1.5 border border-red-200 text-red-600 hover:bg-destructive/10 disabled:opacity-40 rounded-xl px-4 py-2 text-sm font-semibold transition-all">
                             {isRejecting ? <div className="w-3.5 h-3.5 border-2 border-red-400 border-t-transparent rounded-full animate-spin" /> : <XCircle className="w-3.5 h-3.5" />}
-                            Tu choi
+                            Từ chối
                           </button>
                           <button onClick={() => handleApprove(item.id, item.name)} disabled={isApproving || isRejecting} className="flex items-center gap-1.5 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:opacity-40 text-white rounded-xl px-4 py-2 text-sm font-semibold transition-all shadow-sm shadow-primary/20">
                             {isApproving ? <div className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
-                            Phe duyet
+                            Phê duyệt
                           </button>
                         </div>
                       ) : (
-                        <span className="text-xs text-muted-foreground/80 italic flex-shrink-0">Chi Super Admin moi co the duyet</span>
+                        <span className="text-xs text-muted-foreground/80 italic flex-shrink-0">Chỉ Super Admin mới có thể duyệt</span>
                       )}
                     </div>
                   </Card>
                 );
               })}
-            </div>
+              </div>
+              <DataPagination
+                page={pendingPagination.page}
+                pageSize={pendingPagination.pageSize}
+                totalItems={pendingPagination.totalItems}
+                totalPages={pendingPagination.totalPages}
+                startIndex={pendingPagination.startIndex}
+                endIndex={pendingPagination.endIndex}
+                onPageChange={pendingPagination.setPage}
+                onPageSizeChange={pendingPagination.setPageSize}
+                itemLabel="yêu cầu"
+              />
+            </>
           )
         ) : (
           <>
             <AdminFilterBar
               search={search}
               onSearchChange={setSearch}
-              searchPlaceholder="Tim theo ten, email..."
+              searchPlaceholder="Tìm theo tên, email..."
               className="mb-4"
             />
 
             <AdminTable
-              empty={filteredUsers.length === 0 ? <div className="text-center py-12 text-muted-foreground/80 text-sm">Khong tim thay user nao.</div> : undefined}
+              empty={filteredUsers.length === 0 ? <div className="text-center py-12 text-muted-foreground/80 text-sm">Không tìm thấy người dùng nào.</div> : undefined}
             >
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nguoi dung</TableHead>
-                  <TableHead>Vai tro</TableHead>
-                  <TableHead>Trang thai</TableHead>
-                  <TableHead>Ngay tham gia</TableHead>
-                  <TableHead className="text-right">Thao tac</TableHead>
+                  <TableHead>Người dùng</TableHead>
+                  <TableHead>Vai trò</TableHead>
+                  <TableHead>Trạng thái</TableHead>
+                  <TableHead>Ngày tham gia</TableHead>
+                  <TableHead className="text-right">Thao tác</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredUsers.map((item) => (
+                {usersPagination.pageItems.map((item) => (
                   <TableRow key={item.id} className={item.status === 'pending' ? 'bg-warning/15' : item.status === 'rejected' ? 'bg-destructive/10' : ''}>
                     <TableCell>
                       <div className="flex items-center gap-3">
@@ -435,8 +465,8 @@ export function AdminUsers() {
                       <div className="flex gap-1 justify-end">
                         {isSuperAdmin && item.role === 'admin' && item.status === 'pending' && (
                           <>
-                            <button onClick={() => handleReject(item.id, item.name)} className="text-xs text-red-600 hover:text-red-700 font-semibold border border-red-200 hover:bg-destructive/10 rounded-lg px-2.5 py-1 transition-all">Tu choi</button>
-                            <button onClick={() => handleApprove(item.id, item.name)} className="text-xs text-primary hover:text-primary/80 font-semibold border border-primary/20 hover:bg-primary/5 rounded-lg px-2.5 py-1 transition-all">Duyet</button>
+                            <button onClick={() => handleReject(item.id, item.name)} className="text-xs text-red-600 hover:text-red-700 font-semibold border border-red-200 hover:bg-destructive/10 rounded-lg px-2.5 py-1 transition-all">Từ chối</button>
+                            <button onClick={() => handleApprove(item.id, item.name)} className="text-xs text-primary hover:text-primary/80 font-semibold border border-primary/20 hover:bg-primary/5 rounded-lg px-2.5 py-1 transition-all">Duyệt</button>
                           </>
                         )}
                         <button onClick={() => openEdit(item)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-primary/5 text-muted-foreground/80 hover:text-primary transition-colors">
@@ -453,6 +483,17 @@ export function AdminUsers() {
                 ))}
               </TableBody>
             </AdminTable>
+            <DataPagination
+              page={usersPagination.page}
+              pageSize={usersPagination.pageSize}
+              totalItems={usersPagination.totalItems}
+              totalPages={usersPagination.totalPages}
+              startIndex={usersPagination.startIndex}
+              endIndex={usersPagination.endIndex}
+              onPageChange={usersPagination.setPage}
+              onPageSizeChange={usersPagination.setPageSize}
+              itemLabel="người dùng"
+            />
           </>
         )}
       </div>
@@ -464,40 +505,40 @@ export function AdminUsers() {
               <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
                 <UserPlus className="w-4 h-4 text-primary" />
               </div>
-              Them User
+              Thêm người dùng
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-1">
             <div>
-              <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Ho va ten</Label>
-              <Input value={addName} onChange={event => setAddName(event.target.value)} placeholder="Nguyen Van A" className="h-10" />
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Họ và tên</Label>
+              <Input value={addName} onChange={event => setAddName(event.target.value)} placeholder="Nguyễn Văn A" className="h-10" />
             </div>
             <div>
               <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Email</Label>
               <Input value={addEmail} onChange={event => setAddEmail(event.target.value)} placeholder="user@copypro.vn" className="h-10" />
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Mat khau</Label>
-              <Input type="password" value={addPassword} onChange={event => setAddPassword(event.target.value)} placeholder="Toi thieu 8 ky tu" className="h-10" />
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Mật khẩu</Label>
+              <Input type="password" value={addPassword} onChange={event => setAddPassword(event.target.value)} placeholder="Tối thiểu 8 ký tự" className="h-10" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Vai tro</Label>
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Vai trò</Label>
                 <Select value={addRole} onValueChange={(value: UserRole) => { setAddRole(value); setAddStatus(value === 'admin' ? 'pending' : 'active'); }}>
                   <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="customer">Customer</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="customer">Khách hàng</SelectItem>
+                    <SelectItem value="admin">Quản trị viên</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Trang thai</Label>
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Trạng thái</Label>
                 <Select value={addStatus} onValueChange={(value: UserStatus) => setAddStatus(value)}>
                   <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {statusOptions(addRole).map((status) => (
-                      <SelectItem key={status} value={status}>{status}</SelectItem>
+                      <SelectItem key={status} value={status}>{STATUS_LABELS[status]}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -505,7 +546,7 @@ export function AdminUsers() {
             </div>
             {addRole === 'admin' && (
               <div>
-                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Loai Admin</Label>
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Loại Admin</Label>
                 <Select value={addAdminRole} onValueChange={(value) => setAddAdminRole(value)}>
                   <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -522,9 +563,9 @@ export function AdminUsers() {
               </div>
             )}
             <div className="flex gap-2 pt-2">
-              <button onClick={() => setAddOpen(false)} className="flex-1 h-10 border border-border rounded-xl text-sm font-semibold text-foreground/70 hover:bg-surface-muted transition-colors">Huy</button>
+              <button onClick={() => setAddOpen(false)} className="flex-1 h-10 border border-border rounded-xl text-sm font-semibold text-foreground/70 hover:bg-surface-muted transition-colors">Hủy</button>
               <button onClick={handleCreateUser} disabled={addSaving} className="flex-1 h-10 bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-2">
-                {addSaving ? <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : 'Tao user'}
+                {addSaving ? <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : 'Tạo người dùng'}
               </button>
             </div>
           </div>
@@ -538,13 +579,13 @@ export function AdminUsers() {
               <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
                 <Edit2 className="w-4 h-4 text-primary" />
               </div>
-              Chinh sua tai khoan
+              Chỉnh sửa tài khoản
             </DialogTitle>
           </DialogHeader>
           {editUser && (
             <div className="space-y-4 pt-1">
               <div>
-                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Ho va ten</Label>
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Họ và tên</Label>
                 <Input value={editName} onChange={event => setEditName(event.target.value)} className="h-10" />
               </div>
               <div>
@@ -553,7 +594,7 @@ export function AdminUsers() {
               </div>
               {editUser.role === 'admin' && (
                 <div>
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Loai Admin</Label>
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Loại Admin</Label>
                   <Select value={editRole} onValueChange={(value) => setEditRole(value)}>
                     <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -570,20 +611,20 @@ export function AdminUsers() {
                 </div>
               )}
               <div>
-                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Trang thai</Label>
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Trạng thái</Label>
                 <Select value={editStatus} onValueChange={(value: UserStatus) => setEditStatus(value)}>
                   <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {statusOptions(editUser.role).map((status) => (
-                      <SelectItem key={status} value={status}>{status}</SelectItem>
+                      <SelectItem key={status} value={status}>{STATUS_LABELS[status]}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="flex gap-2 pt-2">
-                <button onClick={() => setEditUser(null)} className="flex-1 h-10 border border-border rounded-xl text-sm font-semibold text-foreground/70 hover:bg-surface-muted transition-colors">Huy</button>
+                <button onClick={() => setEditUser(null)} className="flex-1 h-10 border border-border rounded-xl text-sm font-semibold text-foreground/70 hover:bg-surface-muted transition-colors">Hủy</button>
                 <button onClick={handleSaveEdit} disabled={editSaving} className="flex-1 h-10 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-2">
-                  {editSaving ? <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : 'Luu thay doi'}
+                  {editSaving ? <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : 'Lưu thay đổi'}
                 </button>
               </div>
             </div>
@@ -595,9 +636,9 @@ export function AdminUsers() {
         open={!!confirmDelete}
         onClose={() => setConfirmDelete(null)}
         onConfirm={handleSoftDelete}
-        title={`Xoa tai khoan "${confirmDelete?.name}"?`}
-        description="Tai khoan se duoc chuyen vao thung rac va co the khoi phuc."
-        confirmLabel="Chuyen vao thung rac"
+        title={`Xóa tài khoản "${confirmDelete?.name}"?`}
+        description="Tài khoản sẽ được chuyển vào thùng rác và có thể khôi phục."
+        confirmLabel="Chuyển vào thùng rác"
       />
 
       <TrashBin
@@ -611,7 +652,7 @@ export function AdminUsers() {
         }))}
         onRestore={handleRestore}
         onPermanentDelete={handlePermanentDelete}
-        entityName="tai khoan"
+        entityName="tài khoản"
         loading={processingTrashId}
       />
     </Layout>

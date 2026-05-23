@@ -18,6 +18,8 @@ import toast from 'react-hot-toast';
 import { ImageWithFallback } from '@/app/components/figma/ImageWithFallback';
 
 import { useFineTuningModels, useTrainingLog, useExamplePairs } from '@/hooks/queries/useFineTuning';
+import { DataPagination } from '@/app/components/common/DataPagination';
+import { usePagination } from '@/hooks/usePagination';
 
 export function CustomerFineTuningStudio() {
   const { data: modelsData } = useFineTuningModels();
@@ -34,6 +36,18 @@ export function CustomerFineTuningStudio() {
   const [newModelBase, setNewModelBase] = useState('gpt4o');
   const [newModelDesc, setNewModelDesc] = useState('');
   const [trainProgress, setTrainProgress] = useState(55); // training epoch 3
+  const modelPagination = usePagination(models, {
+    initialPageSize: 5,
+    resetKey: models.length,
+  });
+  const examplePagination = usePagination(examples, {
+    initialPageSize: 5,
+    resetKey: examples.length,
+  });
+  const trainingLogPagination = usePagination(trainingLog, {
+    initialPageSize: 6,
+    resetKey: trainingLog.length,
+  });
 
   const addExample = () => {
     if (!newInput || !newOutput) { toast.error('Điền đầy đủ input và output'); return; }
@@ -86,7 +100,7 @@ export function CustomerFineTuningStudio() {
 
           {/* Models list */}
           <TabsContent value="models" className="space-y-4">
-            {models.map(m => (
+            {modelPagination.pageItems.map(m => (
               <Card key={m.id} className="p-5">
                 <div className="flex flex-col md:flex-row gap-4">
                   <div className="flex-1">
@@ -134,6 +148,17 @@ export function CustomerFineTuningStudio() {
                 <p>Chưa có model nào. Tạo model đầu tiên của bạn!</p>
               </div>
             )}
+            <DataPagination
+              page={modelPagination.page}
+              pageSize={modelPagination.pageSize}
+              totalItems={modelPagination.totalItems}
+              totalPages={modelPagination.totalPages}
+              startIndex={modelPagination.startIndex}
+              endIndex={modelPagination.endIndex}
+              onPageChange={modelPagination.setPage}
+              onPageSizeChange={modelPagination.setPageSize}
+              itemLabel="model"
+            />
           </TabsContent>
 
           {/* Create model */}
@@ -205,7 +230,7 @@ export function CustomerFineTuningStudio() {
                 )}
 
                 <div className="space-y-3 max-h-48 overflow-y-auto mb-4">
-                  {examples.map(ex => (
+                  {examplePagination.pageItems.map(ex => (
                     <div key={ex.id} className="border rounded-lg p-3 bg-surface-muted">
                       <div className="flex justify-between items-start mb-1">
                         <Badge className="bg-primary/10 text-primary border-0 text-xs">Input</Badge>
@@ -219,6 +244,18 @@ export function CustomerFineTuningStudio() {
                     </div>
                   ))}
                 </div>
+                <DataPagination
+                  page={examplePagination.page}
+                  pageSize={examplePagination.pageSize}
+                  totalItems={examplePagination.totalItems}
+                  totalPages={examplePagination.totalPages}
+                  startIndex={examplePagination.startIndex}
+                  endIndex={examplePagination.endIndex}
+                  onPageChange={examplePagination.setPage}
+                  onPageSizeChange={examplePagination.setPageSize}
+                  itemLabel="ví dụ"
+                  pageSizeOptions={[5, 10, 20]}
+                />
 
                 {/* Add example */}
                 <div className="border-t pt-4 space-y-2">
@@ -267,7 +304,7 @@ export function CustomerFineTuningStudio() {
 
                 {/* Log */}
                 <div className="space-y-2">
-                  {trainingLog.map((log, i) => (
+                  {trainingLogPagination.pageItems.map((log, i) => (
                     <div key={i} className="flex items-center gap-3 text-sm">
                       {log.status === 'done' ? (
                         <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" />
@@ -281,6 +318,18 @@ export function CustomerFineTuningStudio() {
                     </div>
                   ))}
                 </div>
+                <DataPagination
+                  page={trainingLogPagination.page}
+                  pageSize={trainingLogPagination.pageSize}
+                  totalItems={trainingLogPagination.totalItems}
+                  totalPages={trainingLogPagination.totalPages}
+                  startIndex={trainingLogPagination.startIndex}
+                  endIndex={trainingLogPagination.endIndex}
+                  onPageChange={trainingLogPagination.setPage}
+                  onPageSizeChange={trainingLogPagination.setPageSize}
+                  itemLabel="log"
+                  pageSizeOptions={[6, 10, 20]}
+                />
               </Card>
 
               {/* Metrics */}
