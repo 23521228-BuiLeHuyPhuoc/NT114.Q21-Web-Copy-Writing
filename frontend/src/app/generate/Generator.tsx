@@ -19,9 +19,10 @@ import { CopyTypePicker } from '@/app/components/generator/CopyTypePicker';
 import { TonePicker } from '@/app/components/generator/TonePicker';
 import { ModelPicker } from '@/app/components/generator/ModelPicker';
 import { ProductInfoForm } from '@/app/components/generator/ProductInfoForm';
-import { AdvancedSettings } from '@/app/components/generator/AdvancedSettings';
+import { AdvancedSettings, type ContentLength } from '@/app/components/generator/AdvancedSettings';
 import { GeneratorResults } from '@/app/components/generator/GeneratorResults';
 import { useGenerateContent } from '@/hooks/queries/useContents';
+import { formatGeneratedCopyForTinyMce, htmlToPlainText } from '@/lib/richText';
 
 function splitGeneratedVariations(text: string, expectedCount: number) {
   const trimmed = text.trim();
@@ -45,6 +46,18 @@ function splitGeneratedVariations(text: string, expectedCount: number) {
   return [trimmed];
 }
 
+const CONTENT_LENGTH_LABELS: Record<ContentLength, string> = {
+  short: 'ngắn gọn',
+  medium: 'vừa đủ chi tiết',
+  long: 'dài và giàu chi tiết',
+};
+
+const LENGTH_TOKEN_LIMITS: Record<ContentLength, number> = {
+  short: 900,
+  medium: 1800,
+  long: 3200,
+};
+
 export function CustomerGenerator() {
   const navigate = useNavigate();
   const generateContent = useGenerateContent();
@@ -54,6 +67,8 @@ export function CustomerGenerator() {
   const [tone, setTone] = useState('urgent');
   const [variations, setVariations] = useState(3);
   const [temperature, setTemperature] = useState([0.7]);
+  const [contentLength, setContentLength] = useState<ContentLength>('medium');
+  const [maxOutputTokens, setMaxOutputTokens] = useState(LENGTH_TOKEN_LIMITS.medium);
   const [productName, setProductName] = useState('');
   const [keywords, setKeywords] = useState('');
   const [targetAudience, setTargetAudience] = useState('');
@@ -82,6 +97,8 @@ export function CustomerGenerator() {
     keywords ? `Từ khóa chính: ${keywords}.` : 'Từ khóa chính: chưa được cung cấp, ưu tiên lợi ích rõ ràng và CTA mạnh.',
     targetAudience ? `Đối tượng mục tiêu: ${targetAudience}.` : 'Đối tượng mục tiêu: khách hàng tiềm năng phổ thông.',
     additionalContext ? `Thông tin bổ sung: ${additionalContext}.` : '',
+    `Độ dài mong muốn: ${CONTENT_LENGTH_LABELS[contentLength]}.`,
+    `Giới hạn output tối đa: ${maxOutputTokens} tokens.`,
     `Tạo đúng ${variations} phiên bản riêng biệt.`,
     'Định dạng bắt buộc:',
     'Phiên bản 1: ...',
@@ -104,12 +121,16 @@ export function CustomerGenerator() {
       const result = await generateContent.mutateAsync({
         prompt: buildPrompt(),
         type: copyType,
+        industry,
         tone,
         language: 'vi',
         model,
+        length: contentLength,
+        maxOutputTokens,
       });
 
-      const splitResults = splitGeneratedVariations(result.content.content, variations);
+      const splitResults = splitGeneratedVariations(result.content.content, variations)
+        .map(formatGeneratedCopyForTinyMce);
       setResults(splitResults);
       setQualityScores(splitResults.map((_, index) => Math.max(86, result.content.quality - index)));
       setSelectedResult(0);
@@ -131,18 +152,18 @@ export function CustomerGenerator() {
   };
 
   const handleCopy = (text: string) => {
-    navigator.clipboard.writeText(text);
+    navigator.clipboard.writeText(htmlToPlainText(text));
     toast.success('Đã sao chép!');
   };
 
   const handleSave = (text: string) => {
-    setSavedItems(prev => [...prev, text]);
+    setSavedItems(prev => [...prev, htmlToPlainText(text)]);
     toast.success('Nội dung đã được lưu trong DB!');
     if (generatedContentId) navigate(`/contents/${generatedContentId}`);
   };
 
   const handleDownload = (text: string) => {
-    const blob = new Blob([text], { type: 'text/plain' });
+    const blob = new Blob([htmlToPlainText(text)], { type: 'text/plain' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = 'copy.txt';
@@ -155,6 +176,11 @@ export function CustomerGenerator() {
     else if (field === 'keywords') setKeywords(value);
     else if (field === 'targetAudience') setTargetAudience(value);
     else setAdditionalContext(value);
+  };
+
+  const handleContentLengthChange = (value: ContentLength) => {
+    setContentLength(value);
+    setMaxOutputTokens(LENGTH_TOKEN_LIMITS[value]);
   };
 
   const handleResultChange = (i: number, value: string) => {
@@ -189,6 +215,10 @@ export function CustomerGenerator() {
               onVariationsChange={setVariations}
               temperature={temperature}
               onTemperatureChange={setTemperature}
+              contentLength={contentLength}
+              onContentLengthChange={handleContentLengthChange}
+              maxOutputTokens={maxOutputTokens}
+              onMaxOutputTokensChange={setMaxOutputTokens}
               open={showAdvanced}
               onOpenChange={setShowAdvanced}
             />

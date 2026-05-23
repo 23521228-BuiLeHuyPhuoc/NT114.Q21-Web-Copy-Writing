@@ -41,7 +41,7 @@ const contentSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
-      maxlength: 20000,
+      maxlength: 60000,
     },
     type: {
       type: String,

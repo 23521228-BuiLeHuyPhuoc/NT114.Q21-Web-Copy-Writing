@@ -10,9 +10,12 @@ export interface ContentListParams {
 export interface GenerateContentPayload {
   prompt: string;
   type: string;
+  industry?: string;
   tone: string;
   language: string;
   model: string;
+  length?: 'short' | 'medium' | 'long';
+  maxOutputTokens?: number;
   templateId?: string | null;
   projectId?: string | null;
 }
@@ -96,6 +99,19 @@ export interface GenerateContentResult {
   fallback: boolean;
 }
 
+const INDUSTRY_LABELS: Record<string, string> = {
+  ecommerce: 'Thương mại điện tử',
+  realestate: 'Bất động sản',
+  technology: 'Công nghệ',
+  fnb: 'Ẩm thực F&B',
+  healthcare: 'Y tế & sức khỏe',
+  education: 'Giáo dục',
+  finance: 'Tài chính',
+  fashion: 'Thời trang',
+  business: 'Doanh nghiệp',
+  travel: 'Du lịch',
+};
+
 function countWords(text: string) {
   return text.trim().split(/\s+/).filter(Boolean).length;
 }
@@ -114,6 +130,11 @@ function formatDate(value?: string) {
   }).format(date);
 }
 
+function formatIndustry(value?: string) {
+  if (!value) return 'General';
+  return INDUSTRY_LABELS[value] || value;
+}
+
 function normalizeContent(item: BackendContent): UiContent {
   const content = item.outputText || item.content || '';
   const id = item.id || item._id || '';
@@ -123,7 +144,7 @@ function normalizeContent(item: BackendContent): UiContent {
     id,
     title: item.title || 'Untitled content',
     type: item.type || 'content',
-    industry: item.tags?.[0] || 'General',
+    industry: formatIndustry(item.tags?.[0]),
     model: item.modelUsed || item.model || 'fallback-mvp',
     quality,
     words: item.wordCount || item.words || countWords(content),

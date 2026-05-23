@@ -7,6 +7,8 @@ import {
 export const MODELS = [
   { id: 'gemini-flash', name: 'Gemini 2.5 Flash', badge: 'Free', color: 'text-green-600', desc: 'Free tier chạy ổn với key hiện tại, hợp đa số nội dung marketing', latency: '~2s', tokens: '1M' },
   { id: 'gemini-flash-lite', name: 'Gemini 2.5 Flash Lite', badge: 'Free', color: 'text-teal-600', desc: 'Free tier nhẹ và nhanh, hợp demo hoặc request nhiều', latency: '~1s', tokens: '1M' },
+  { id: 'groq-llama-3-3-70b', name: 'Llama 3.3 70B (Groq)', badge: 'Groq', color: 'text-orange-600', desc: 'Llama chạy qua Groq API, hợp copy dài và cần chất lượng tốt', latency: '~1-3s', tokens: '128K' },
+  { id: 'groq-llama-3-1-8b', name: 'Llama 3.1 8B Instant', badge: 'Groq', color: 'text-amber-600', desc: 'Bản Llama nhẹ hơn trên Groq, ưu tiên tốc độ và demo nhanh', latency: '<1s', tokens: '128K' },
   { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', badge: 'Free', color: 'text-emerald-600', desc: 'Preview đang gọi được với key này, chất lượng mới hơn Flash 2.5', latency: '~2s', tokens: '1M' },
   { id: 'gemini-3-1-flash-lite', name: 'Gemini 3.1 Flash Lite', badge: 'Free', color: 'text-cyan-600', desc: 'Model free/lite mới, hợp nội dung ngắn và phản hồi nhanh', latency: '~5-15s', tokens: '1M' },
   { id: 'gemma-4-26b', name: 'Gemma 4 26B', badge: 'Free', color: 'text-orange-600', desc: 'Gemma qua Gemini API, miễn phí nhưng có thể chậm hơn dòng Flash', latency: '~30-90s', tokens: '262K' },

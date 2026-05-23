@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Editor } from '@tinymce/tinymce-react';
 import { Card } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Markdown } from '@/app/components/common/Markdown';
+import { looksLikeHtml, sanitizeHtml } from '@/lib/richText';
 
 interface Props {
   isGenerating: boolean;
@@ -46,10 +47,6 @@ function countWords(text: string) {
     .filter(Boolean).length;
 }
 
-function looksLikeHtml(text: string) {
-  return /<\/?[a-z][\s\S]*>/i.test(text);
-}
-
 export function GeneratorResults({
   isGenerating,
   streamText,
@@ -64,9 +61,15 @@ export function GeneratorResults({
   onDownload,
   onRegenerate,
 }: Props) {
-  const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
+  const [viewMode, setViewMode] = useState<'edit' | 'preview'>('preview');
   const activeResult = results[selectedResult] || '';
   const activeQuality = qualityScores[selectedResult] || 90;
+
+  useEffect(() => {
+    if (!isGenerating && results.length > 0) {
+      setViewMode('preview');
+    }
+  }, [isGenerating, results.length]);
 
   if (isGenerating || results.length > 0) {
     return (
@@ -102,7 +105,10 @@ export function GeneratorResults({
               {results.map((_, i) => (
                 <button
                   key={i}
-                  onClick={() => onSelectResult(i)}
+                  onClick={() => {
+                    onSelectResult(i);
+                    setViewMode('preview');
+                  }}
                   className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                     selectedResult === i
                       ? 'bg-primary text-white'
@@ -127,16 +133,6 @@ export function GeneratorResults({
                   <div className="flex gap-1 items-center">
                     <div className="flex items-center gap-1 mr-2 bg-muted rounded-lg p-0.5">
                       <button
-                        onClick={() => setViewMode('edit')}
-                        className={`px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1 transition-colors ${
-                          viewMode === 'edit'
-                            ? 'bg-card text-foreground shadow-sm'
-                            : 'text-muted-foreground hover:text-foreground/80'
-                        }`}
-                      >
-                        <Pencil className="w-3 h-3" /> Chỉnh sửa
-                      </button>
-                      <button
                         onClick={() => setViewMode('preview')}
                         className={`px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1 transition-colors ${
                           viewMode === 'preview'
@@ -145,6 +141,16 @@ export function GeneratorResults({
                         }`}
                       >
                         <Eye className="w-3 h-3" /> Xem trước
+                      </button>
+                      <button
+                        onClick={() => setViewMode('edit')}
+                        className={`px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1 transition-colors ${
+                          viewMode === 'edit'
+                            ? 'bg-card text-foreground shadow-sm'
+                            : 'text-muted-foreground hover:text-foreground/80'
+                        }`}
+                      >
+                        <Pencil className="w-3 h-3" /> Chỉnh sửa
                       </button>
                     </div>
                     <button className="p-1.5 hover:bg-muted rounded" onClick={() => toast.success('Đã đánh giá tốt!')}>
@@ -170,14 +176,14 @@ export function GeneratorResults({
                         toolbar:
                           'undo redo | blocks | bold italic underline | bullist numlist | link table | removeformat | code',
                         content_style:
-                          'body { font-family: Inter, Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #1f2937; }',
+                          'body { font-family: Inter, Arial, sans-serif; font-size: 14px; line-height: 1.65; color: #1f2937; } p { margin: 0 0 12px; } ul, ol { margin: 0 0 12px 22px; padding: 0; } li { margin: 4px 0; } h1, h2, h3 { margin: 0 0 12px; line-height: 1.3; }',
                       }}
                     />
                   </div>
                 ) : (
                   <div className="min-h-40 bg-surface-muted rounded-md p-4 text-sm leading-relaxed">
                     {looksLikeHtml(activeResult) ? (
-                      <div dangerouslySetInnerHTML={{ __html: activeResult }} />
+                      <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(activeResult) }} />
                     ) : (
                       <Markdown>{activeResult}</Markdown>
                     )}

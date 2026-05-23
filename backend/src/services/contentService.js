@@ -176,6 +176,7 @@ function buildTitleFromOutput(type, outputText) {
 
 async function generateContent(userId, payload) {
   const aiResult = await aiService.generateCopy(payload);
+  const generatedTags = payload.industry ? [payload.industry] : (payload.tags || []);
 
   const content = await Content.create({
     userId,
@@ -188,7 +189,7 @@ async function generateContent(userId, payload) {
     tone: payload.tone,
     language: payload.language,
     modelUsed: aiResult.modelUsed,
-    tags: payload.tags || [],
+    tags: generatedTags,
   });
 
   const usage = await UsageLog.create({
