@@ -5,11 +5,12 @@ import {
 } from 'lucide-react';
 
 export const MODELS = [
-  { id: 'gpt4o', name: 'GPT-4o', badge: 'Khuyên dùng', color: 'text-green-600', desc: 'Mạnh nhất, sáng tạo cao, phù hợp mọi ngành', latency: '~2s', tokens: '128K' },
-  { id: 'gpt35', name: 'GPT-3.5 Turbo', badge: 'Nhanh', color: 'text-green-600', desc: 'Nhanh hơn, tiết kiệm quota, phù hợp copywriting cơ bản', latency: '~0.8s', tokens: '16K' },
-  { id: 'llama3', name: 'Llama 3.1 70B', badge: 'Open-source', color: 'text-orange-600', desc: 'Mã nguồn mở, chạy local, không gửi dữ liệu ra ngoài', latency: '~3s', tokens: '128K' },
-  { id: 'llama3-8b', name: 'Llama 3.1 8B', badge: 'Nhẹ', color: 'text-yellow-600', desc: 'Phiên bản nhẹ của Llama, xử lý nhanh', latency: '~1.2s', tokens: '128K' },
-  { id: 'finetuned-ec', name: 'Fine-tuned E-commerce', badge: 'Custom', color: 'text-teal-600', desc: 'Model được huấn luyện riêng cho thương mại điện tử của bạn', latency: '~1.5s', tokens: '8K' },
+  { id: 'gemini-flash', name: 'Gemini 2.5 Flash', badge: 'Free', color: 'text-green-600', desc: 'Free tier chạy ổn với key hiện tại, hợp đa số nội dung marketing', latency: '~2s', tokens: '1M' },
+  { id: 'gemini-flash-lite', name: 'Gemini 2.5 Flash Lite', badge: 'Free', color: 'text-teal-600', desc: 'Free tier nhẹ và nhanh, hợp demo hoặc request nhiều', latency: '~1s', tokens: '1M' },
+  { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', badge: 'Free', color: 'text-emerald-600', desc: 'Preview đang gọi được với key này, chất lượng mới hơn Flash 2.5', latency: '~2s', tokens: '1M' },
+  { id: 'gemini-3-1-flash-lite', name: 'Gemini 3.1 Flash Lite', badge: 'Free', color: 'text-cyan-600', desc: 'Model free/lite mới, hợp nội dung ngắn và phản hồi nhanh', latency: '~5-15s', tokens: '1M' },
+  { id: 'gemma-4-26b', name: 'Gemma 4 26B', badge: 'Free', color: 'text-orange-600', desc: 'Gemma qua Gemini API, miễn phí nhưng có thể chậm hơn dòng Flash', latency: '~30-90s', tokens: '262K' },
+  { id: 'openrouter-free', name: 'OpenRouter Free Router', badge: 'Free', color: 'text-blue-600', desc: 'Tự chọn model free khả dụng trên OpenRouter; dùng khi Gemini lỗi/quota', latency: '~3s', tokens: '200K' },
 ];
 
 export const COPY_TYPES = [

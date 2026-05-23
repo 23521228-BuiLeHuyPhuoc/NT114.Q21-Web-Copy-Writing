@@ -1292,6 +1292,13 @@
   dependencies:
     "@tanstack/query-core" "5.100.10"
 
+"@tinymce/tinymce-react@^6.3.0":
+  version "6.3.0"
+  resolved "https://registry.yarnpkg.com/@tinymce/tinymce-react/-/tinymce-react-6.3.0.tgz#f64ee77aa85f6b19da98f5292988bb2ce2d6ed73"
+  integrity sha512-E++xnn0XzDzpKr40jno2Kj7umfAE6XfINZULEBBeNjTMvbACWzA6CjiR6V8eTDc9yVmdVhIPqVzV4PqD5TZ/4g==
+  dependencies:
+    prop-types "^15.6.2"
+
 "@tybys/wasm-util@^0.10.1":
   version "0.10.2"
   resolved "https://registry.yarnpkg.com/@tybys/wasm-util/-/wasm-util-0.10.2.tgz#12b3a1b33db1f9cad4ddff1f604ab7dd00bf464e"

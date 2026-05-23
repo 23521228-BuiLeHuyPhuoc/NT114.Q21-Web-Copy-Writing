@@ -1,25 +1,66 @@
+import { useNavigate, useParams } from 'react-router-dom';
+import {
+  ArrowLeft,
+  Calendar,
+  Copy,
+  Download,
+  Edit2,
+  FileText,
+  RefreshCw,
+  Share2,
+  Star,
+  Trash2,
+} from 'lucide-react';
+import toast from 'react-hot-toast';
+
 import { Layout } from '@/app/components/Layout';
 import { Card } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
 import { Badge } from '@/app/components/ui/badge';
-import { useParams, useNavigate } from 'react-router-dom';
-import {
-  ArrowLeft, Copy, Download, Edit2, Trash2, Star,
-  Calendar, Clock, Cpu, FileText, RefreshCw, Share2,
-} from 'lucide-react';
-import toast from 'react-hot-toast';
-import { useContent } from '@/hooks/queries/useContents';
+import { useContent, useDeleteContent } from '@/hooks/queries/useContents';
 import { Markdown } from '@/app/components/common/Markdown';
 
 export function CustomerContentDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { data: content } = useContent(id ?? '');
+  const { data: content, isError, isLoading } = useContent(id ?? '');
+  const deleteContent = useDeleteContent();
 
-  if (!content) {
+  const handleDelete = async () => {
+    if (!id) return;
+
+    try {
+      await deleteContent.mutateAsync(id);
+      toast.success('Đã xóa nội dung!');
+      navigate('/contents');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Không thể xóa nội dung';
+      toast.error(message);
+    }
+  };
+
+  if (isLoading) {
     return (
       <Layout>
-        <div className="p-6 max-w-5xl mx-auto" />
+        <div className="p-6 max-w-5xl mx-auto">
+          <Card className="p-8 text-center text-muted-foreground">Đang tải nội dung...</Card>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (isError || !content) {
+    return (
+      <Layout>
+        <div className="p-6 max-w-5xl mx-auto">
+          <Button variant="ghost" className="mb-4 text-foreground/70" onClick={() => navigate('/contents')}>
+            <ArrowLeft className="w-4 h-4 mr-2" /> Quay lại danh sách
+          </Button>
+          <Card className="p-8 text-center text-muted-foreground">
+            <FileText className="w-10 h-10 mx-auto mb-3 opacity-40" />
+            Không tìm thấy nội dung hoặc bạn không có quyền xem nội dung này.
+          </Card>
+        </div>
       </Layout>
     );
   }
@@ -27,12 +68,10 @@ export function CustomerContentDetail() {
   return (
     <Layout>
       <div className="p-6 max-w-5xl mx-auto">
-        {/* Back */}
         <Button variant="ghost" className="mb-4 text-foreground/70" onClick={() => navigate('/contents')}>
           <ArrowLeft className="w-4 h-4 mr-2" /> Quay lại danh sách
         </Button>
 
-        {/* Header */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-6">
           <div>
             <div className="flex flex-wrap items-center gap-2 mb-2">
@@ -42,21 +81,29 @@ export function CustomerContentDetail() {
             </div>
             <h1 className="text-2xl font-bold text-foreground">{content.title}</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              <Calendar className="w-3 h-3 inline mr-1" />{content.createdAt} · {content.industry} · {content.project}
+              <Calendar className="w-3 h-3 inline mr-1" />{content.createdAt} · {content.industry}
+              {content.project ? ` · ${content.project}` : ''}
             </p>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm"><Edit2 className="w-4 h-4 mr-1.5" /> Chỉnh sửa</Button>
             <Button variant="outline" size="sm"><Share2 className="w-4 h-4 mr-1.5" /> Chia sẻ</Button>
-            <Button variant="outline" size="sm" className="text-red-500 hover:text-red-600"><Trash2 className="w-4 h-4" /></Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-red-500 hover:text-red-600"
+              disabled={deleteContent.isPending}
+              onClick={handleDelete}
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
           </div>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-6">
-          {/* Main content */}
           <div className="lg:col-span-2 space-y-4">
             <Card className="p-6">
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-4 gap-3">
                 <h3 className="font-semibold text-foreground">Nội dung</h3>
                 <div className="flex gap-2">
                   <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(content.content); toast.success('Đã sao chép!'); }}>
@@ -70,12 +117,11 @@ export function CustomerContentDetail() {
               </div>
             </Card>
 
-            {/* Versions */}
             <Card className="p-6">
               <h3 className="font-semibold text-foreground mb-4">Phiên bản</h3>
               <div className="flex gap-3">
                 {content.versions.map(v => (
-                  <div key={v.id} className={`flex-1 p-3 rounded-xl border-2 cursor-pointer transition-all ${v.selected ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/30'}`}>
+                  <div key={v.id} className={`flex-1 p-3 rounded-xl border-2 ${v.selected ? 'border-primary bg-primary/5' : 'border-border'}`}>
                     <p className="text-sm font-semibold text-foreground">{v.label}</p>
                     <p className="text-xs text-muted-foreground mt-1">Chất lượng: <span className="text-primary font-semibold">{v.quality}%</span></p>
                   </div>
@@ -83,21 +129,19 @@ export function CustomerContentDetail() {
               </div>
             </Card>
 
-            {/* Regenerate */}
             <Card className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 border-primary/20">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-4">
                 <div>
                   <h3 className="font-semibold text-foreground mb-1">Tạo lại nội dung</h3>
-                  <p className="text-sm text-foreground/70">Tạo phiên bản mới với cùng cấu hình hoặc chỉnh sửa tham số</p>
+                  <p className="text-sm text-foreground/70">Quay lại generator để tạo phiên bản mới với cấu hình tương tự.</p>
                 </div>
-                <Button className="bg-gradient-to-r from-green-600 to-emerald-600 text-white">
+                <Button className="bg-gradient-to-r from-green-600 to-emerald-600 text-white" onClick={() => navigate('/generate')}>
                   <RefreshCw className="w-4 h-4 mr-2" /> Tạo lại
                 </Button>
               </div>
             </Card>
           </div>
 
-          {/* Sidebar */}
           <div className="space-y-4">
             <Card className="p-5">
               <h3 className="font-semibold text-foreground mb-4">Thông tin chi tiết</h3>
@@ -105,16 +149,16 @@ export function CustomerContentDetail() {
                 {[
                   { label: 'Ngành nghề', value: content.industry },
                   { label: 'Loại nội dung', value: content.type },
-                  { label: 'Tone giọng', value: content.tone },
+                  { label: 'Tone giọng', value: content.tone || 'Không có' },
                   { label: 'Model AI', value: content.model },
                   { label: 'Số từ', value: `${content.words} từ` },
-                  { label: 'Tokens', value: content.tokens.toString() },
+                  { label: 'Tokens', value: content.tokens ? content.tokens.toString() : '0' },
                   { label: 'Thời gian xử lý', value: content.latency },
-                  { label: 'Dự án', value: content.project || '—' },
-                ].map((item, i) => (
-                  <div key={i} className="flex justify-between text-sm">
+                  { label: 'Dự án', value: content.project || 'Không có' },
+                ].map((item) => (
+                  <div key={item.label} className="flex justify-between gap-3 text-sm">
                     <span className="text-muted-foreground">{item.label}</span>
-                    <span className="font-medium text-foreground">{item.value}</span>
+                    <span className="font-medium text-foreground text-right">{item.value}</span>
                   </div>
                 ))}
               </div>
@@ -128,7 +172,9 @@ export function CustomerContentDetail() {
                 </div>
                 <p className="text-sm text-foreground/70">Chất lượng tốt</p>
                 <div className="flex items-center justify-center gap-1 mt-2">
-                  {[...Array(5)].map((_, i) => <Star key={i} className={`w-4 h-4 ${i < 4 ? 'text-amber-400 fill-amber-400' : 'text-muted-foreground/60'}`} />)}
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className={`w-4 h-4 ${i < 4 ? 'text-amber-400 fill-amber-400' : 'text-muted-foreground/60'}`} />
+                  ))}
                 </div>
               </div>
             </Card>
@@ -136,13 +182,13 @@ export function CustomerContentDetail() {
             <Card className="p-5">
               <h3 className="font-semibold text-foreground mb-3">Thời gian</h3>
               <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
+                <div className="flex justify-between gap-3">
                   <span className="text-muted-foreground">Tạo lúc</span>
-                  <span className="text-foreground">{content.createdAt}</span>
+                  <span className="text-foreground text-right">{content.createdAt}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between gap-3">
                   <span className="text-muted-foreground">Cập nhật</span>
-                  <span className="text-foreground">{content.updatedAt}</span>
+                  <span className="text-foreground text-right">{content.updatedAt}</span>
                 </div>
               </div>
             </Card>
