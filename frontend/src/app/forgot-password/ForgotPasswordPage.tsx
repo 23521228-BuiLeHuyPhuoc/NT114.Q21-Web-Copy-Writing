@@ -2,6 +2,12 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { api } from '@/lib/axios';
+import {
+  AUTH_PASSWORD_RULES,
+  validateConfirmPassword,
+  validateEmail,
+  validateStrongPassword,
+} from '@/lib/authValidation';
 import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
 import { BrandLogo } from '@/app/components/BrandLogo';
@@ -30,6 +36,7 @@ export function ForgotPasswordPage() {
   const emailForm = useForm<EmailFormData>({ defaultValues: { email: '' } });
   const resetForm = useForm<ResetFormData>({ defaultValues: { newPass: '', confirmPass: '' } });
   const email = emailForm.watch('email');
+  const newPassword = resetForm.watch('newPass', '');
 
   useEffect(() => {
     if (resendSeconds <= 0) return undefined;
@@ -158,7 +165,7 @@ export function ForgotPasswordPage() {
             <form onSubmit={emailForm.handleSubmit(handleSendOtp)} className="space-y-4">
               <div>
                 <Label className="text-foreground/80 mb-2 block">Email đã đăng ký</Label>
-                <Input type="email" placeholder="your@email.com" {...emailForm.register('email', { required: 'Email là bắt buộc', pattern: { value: /^\S+@\S+$/, message: 'Email không hợp lệ' } })} className="h-12 rounded-xl border-border focus:border-primary" />
+                <Input type="email" placeholder="your@email.com" {...emailForm.register('email', { validate: validateEmail })} className="h-12 rounded-xl border-border focus:border-primary" />
                 {emailForm.formState.errors.email && <p className="text-xs text-red-600 mt-1">{emailForm.formState.errors.email.message}</p>}
               </div>
               <button type="submit" disabled={isLoading || emailForm.formState.isSubmitting} className="w-full h-12 bg-gradient-to-r from-emerald-600 via-green-600 to-green-600 hover:from-emerald-500 hover:via-green-500 hover:to-green-500 disabled:opacity-60 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-primary/20">
@@ -210,12 +217,22 @@ export function ForgotPasswordPage() {
             <form onSubmit={resetForm.handleSubmit(handleReset)} className="space-y-4">
               <div>
                 <Label className="text-foreground/80 mb-2 block">Mật khẩu mới</Label>
-                <Input type="password" placeholder="Ít nhất 8 ký tự" {...resetForm.register('newPass', { required: 'Mật khẩu là bắt buộc', minLength: { value: 8, message: 'Mật khẩu ít nhất 8 ký tự' } })} className="h-12 rounded-xl border-border focus:border-primary" />
+                <Input type="password" placeholder="Ít nhất 8 ký tự" {...resetForm.register('newPass', { validate: validateStrongPassword })} className="h-12 rounded-xl border-border focus:border-primary" />
                 {resetForm.formState.errors.newPass && <p className="text-xs text-red-600 mt-1">{resetForm.formState.errors.newPass.message}</p>}
+                {newPassword && (
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                    {AUTH_PASSWORD_RULES.map((rule) => (
+                      <div key={rule.label} className={`flex items-center gap-1 text-xs ${rule.test(newPassword) ? 'text-primary' : 'text-muted-foreground/80'}`}>
+                        <CheckCircle2 className="w-3 h-3" />
+                        {rule.label}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               <div>
                 <Label className="text-foreground/80 mb-2 block">Xác nhận mật khẩu mới</Label>
-                <Input type="password" placeholder="Nhập lại mật khẩu" {...resetForm.register('confirmPass', { required: 'Xác nhận mật khẩu là bắt buộc', validate: (v) => v === resetForm.watch('newPass') || 'Mật khẩu không khớp' })} className="h-12 rounded-xl border-border focus:border-primary" />
+                <Input type="password" placeholder="Nhập lại mật khẩu" {...resetForm.register('confirmPass', { validate: (value) => validateConfirmPassword(value, resetForm.watch('newPass')) })} className="h-12 rounded-xl border-border focus:border-primary" />
                 {resetForm.formState.errors.confirmPass && <p className="text-xs text-red-600 mt-1">{resetForm.formState.errors.confirmPass.message}</p>}
               </div>
               <button type="submit" disabled={isLoading || resetForm.formState.isSubmitting} className="w-full h-12 bg-gradient-to-r from-emerald-600 via-green-600 to-green-600 hover:from-emerald-500 hover:via-green-500 hover:to-green-500 disabled:opacity-60 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-primary/20">

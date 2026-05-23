@@ -9,29 +9,84 @@ const adminRoles = [
   'analyst',
 ];
 
-const email = Joi.string().trim().lowercase().email().required();
-const password = Joi.string().min(8).max(128).required();
+const strongPasswordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/;
+
+const email = Joi.string()
+  .trim()
+  .lowercase()
+  .email({ tlds: { allow: false } })
+  .max(254)
+  .required()
+  .messages({
+    'any.required': 'Email is required',
+    'string.empty': 'Email is required',
+    'string.email': 'Email is invalid',
+    'string.max': 'Email must be at most 254 characters',
+  });
+
+const name = Joi.string()
+  .trim()
+  .min(2)
+  .max(120)
+  .required()
+  .messages({
+    'any.required': 'Name is required',
+    'string.empty': 'Name is required',
+    'string.min': 'Name must be at least 2 characters',
+    'string.max': 'Name must be at most 120 characters',
+  });
+
+const loginPassword = Joi.string()
+  .min(1)
+  .max(128)
+  .required()
+  .messages({
+    'any.required': 'Password is required',
+    'string.empty': 'Password is required',
+    'string.max': 'Password must be at most 128 characters',
+  });
+
+const strongPassword = Joi.string()
+  .min(8)
+  .max(128)
+  .pattern(strongPasswordPattern)
+  .required()
+  .messages({
+    'any.required': 'Password is required',
+    'string.empty': 'Password is required',
+    'string.min': 'Password must be at least 8 characters',
+    'string.max': 'Password must be at most 128 characters',
+    'string.pattern.base': 'Password must include uppercase, lowercase and number',
+  });
+
 const otp = Joi.string().pattern(/^\d{6}$/).required().messages({
+  'any.required': 'OTP is required',
+  'string.empty': 'OTP is required',
   'string.pattern.base': 'OTP must be exactly 6 digits',
 });
 
 const userRegisterSchema = Joi.object({
-  name: Joi.string().trim().min(2).max(120).required(),
+  name,
   email,
-  password,
+  password: strongPassword,
 });
 
 const adminRegisterSchema = Joi.object({
-  name: Joi.string().trim().min(2).max(120).required(),
+  name,
   email,
-  password,
+  password: strongPassword,
   adminRole: Joi.string().valid(...adminRoles).default('analyst'),
-  inviteCode: Joi.string().trim().required(),
+  inviteCode: Joi.string().trim().min(4).max(64).required().messages({
+    'any.required': 'Invite code is required',
+    'string.empty': 'Invite code is required',
+    'string.min': 'Invite code must be at least 4 characters',
+    'string.max': 'Invite code must be at most 64 characters',
+  }),
 });
 
 const loginSchema = Joi.object({
   email,
-  password: Joi.string().required(),
+  password: loginPassword,
 });
 
 const forgotPasswordSchema = Joi.object({
@@ -46,7 +101,7 @@ const verifyOtpSchema = Joi.object({
 const resetPasswordSchema = Joi.object({
   email,
   otp,
-  newPassword: password,
+  newPassword: strongPassword,
 });
 
 module.exports = {

@@ -1,13 +1,17 @@
 const AccountAdmin = require('../../models/AccountAdmin');
 const AccountUser = require('../../models/AccountUser');
 const asyncHandler = require('../../utils/asyncHandler');
+const { AUTH_COOKIE_NAME } = require('../../utils/authCookie');
 const createError = require('../../utils/createError');
 const { verifyToken, toRole } = require('../../utils/jwt');
 
 function getToken(req) {
   const header = req.headers.authorization || '';
-  if (!header.startsWith('Bearer ')) return null;
-  return header.slice('Bearer '.length).trim();
+  if (header.startsWith('Bearer ')) {
+    return header.slice('Bearer '.length).trim();
+  }
+
+  return req.cookies?.[AUTH_COOKIE_NAME] || null;
 }
 
 async function loadAccount(accountType, id) {

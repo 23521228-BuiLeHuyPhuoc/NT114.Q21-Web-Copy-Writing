@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '@/app/contexts/AuthContext';
+import { validateEmail, validateLoginPassword } from '@/lib/authValidation';
 import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
 import { BrandLogo } from '@/app/components/BrandLogo';
@@ -235,8 +236,7 @@ export function AdminLoginPage() {
                   type="email"
                   placeholder="admin@copypro.vn"
                   {...register('email', {
-                    required: 'Email là bắt buộc',
-                    pattern: { value: /^\S+@\S+$/, message: 'Email không hợp lệ' },
+                    validate: validateEmail,
                   })}
                   className="pl-10 h-12 rounded-xl bg-gray-900 border-gray-700 text-white placeholder:text-foreground/70 focus:border-primary focus:bg-gray-800"
                 />
@@ -253,7 +253,7 @@ export function AdminLoginPage() {
                 <Input
                   type={showPass ? 'text' : 'password'}
                   placeholder="••••••••"
-                  {...register('password', { required: 'Mật khẩu là bắt buộc' })}
+                  {...register('password', { validate: validateLoginPassword })}
                   className="pl-10 pr-10 h-12 rounded-xl bg-gray-900 border-gray-700 text-white placeholder:text-foreground/70 focus:border-primary focus:bg-gray-800"
                 />
                 <button

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '@/app/contexts/AuthContext';
+import { validateEmail, validateLoginPassword } from '@/lib/authValidation';
 import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
 import { BrandLogo } from '@/app/components/BrandLogo';
@@ -178,8 +179,7 @@ export function LoginPage() {
                   type="email"
                   placeholder="your@email.com"
                   {...register('email', {
-                    required: 'Email là bắt buộc',
-                    pattern: { value: /^\S+@\S+$/, message: 'Email không hợp lệ' },
+                    validate: validateEmail,
                   })}
                   className="pl-10 h-12 rounded-xl border-border focus:border-primary focus:ring-ring/30"
                 />
@@ -196,7 +196,7 @@ export function LoginPage() {
                 <Input
                   type={showPass ? 'text' : 'password'}
                   placeholder="••••••••"
-                  {...register('password', { required: 'Mật khẩu là bắt buộc' })}
+                  {...register('password', { validate: validateLoginPassword })}
                   className="pl-10 pr-10 h-12 rounded-xl border-border focus:border-primary"
                 />
                 <button

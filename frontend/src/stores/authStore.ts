@@ -17,8 +17,8 @@ function canUseStorage() {
   return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
 }
 
-function saveSession(token: string, user: User) {
-  localStorage.setItem('auth_token', token);
+function saveSession(user: User) {
+  localStorage.removeItem('auth_token');
   localStorage.setItem('user', JSON.stringify(user));
 }
 
@@ -32,6 +32,34 @@ function accountTypeFromUser(user: User | null): AccountType {
   return user?.role === 'admin' ? 'admin' : 'user';
 }
 
+function getStoredUser() {
+  if (!canUseStorage()) return null;
+
+  const savedUserRaw = localStorage.getItem('user');
+  if (!savedUserRaw) return null;
+
+  try {
+    return JSON.parse(savedUserRaw) as User;
+  } catch {
+    return null;
+  }
+}
+
+function getHydrationOrder(savedUser: User | null): AccountType[] {
+  const path = typeof window !== 'undefined' ? window.location.pathname : '';
+  const preferred = path.startsWith('/admin') ? 'admin' : accountTypeFromUser(savedUser);
+  return preferred === 'admin' ? ['admin', 'user'] : ['user', 'admin'];
+}
+
+async function fetchCurrentUser(accountType: AccountType) {
+  try {
+    const response = await api.get<AuthApiResponse>(`/auth/${accountType}/me`);
+    return response.data.data?.user ?? null;
+  } catch {
+    return null;
+  }
+}
+
 function getErrorMessage(error: unknown, fallback: string) {
   const err = error as { response?: { data?: { message?: string } }; message?: string };
   return err.response?.data?.message || err.message || fallback;
@@ -41,7 +69,7 @@ interface AuthState {
   user: User | null;
   isLoading: boolean;
   hydrate: () => Promise<void>;
-  login: (email: string, password: string, accountType?: AccountType) => Promise<void>;
+  login: (email: string, password: string, accountType?: AccountType) => Promise<User>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -56,31 +84,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return;
     }
 
-    const token = localStorage.getItem('auth_token');
-    const savedUserRaw = localStorage.getItem('user');
+    const savedUser = getStoredUser();
 
-    if (!token || !savedUserRaw) {
-      clearSession();
-      set({ user: null, isLoading: false });
-      return;
-    }
-
-    try {
-      const savedUser = JSON.parse(savedUserRaw) as User;
-      const accountType = accountTypeFromUser(savedUser);
-      const response = await api.get<AuthApiResponse>(`/auth/${accountType}/me`);
-      const hydratedUser = response.data.data?.user;
-
-      if (!hydratedUser) {
-        throw new Error('Invalid auth response');
+    for (const accountType of getHydrationOrder(savedUser)) {
+      const hydratedUser = await fetchCurrentUser(accountType);
+      if (hydratedUser) {
+        saveSession(hydratedUser);
+        set({ user: hydratedUser, isLoading: false });
+        return;
       }
-
-      localStorage.setItem('user', JSON.stringify(hydratedUser));
-      set({ user: hydratedUser, isLoading: false });
-    } catch {
-      clearSession();
-      set({ user: null, isLoading: false });
     }
+
+    clearSession();
+    set({ user: null, isLoading: false });
   },
 
   login: async (email, password, accountType = 'user') => {
@@ -90,15 +106,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         password,
       });
 
-      const token = response.data.data?.token;
       const user = response.data.data?.user;
 
-      if (!token || !user) {
+      if (!user) {
         throw new Error('Invalid auth response');
       }
 
-      saveSession(token, user);
-      set({ user });
+      saveSession(user);
+      set({ user, isLoading: false });
+      return user;
     } catch (error) {
       throw new Error(getErrorMessage(error, 'Email hoac mat khau khong dung'));
     }
@@ -128,21 +144,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   logout: async () => {
-    const currentUser = get().user;
+    const currentUser = get().user ?? getStoredUser();
     const accountType = accountTypeFromUser(currentUser);
-    const token = canUseStorage() ? localStorage.getItem('auth_token') : null;
-
-    clearSession();
-    set({ user: null });
 
     try {
-      if (token) {
-        await api.post(`/auth/${accountType}/logout`, undefined, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-      }
+      await api.post(`/auth/${accountType}/logout`);
     } catch {
       // Local logout must always finish even if the backend is unreachable.
+    } finally {
+      clearSession();
+      set({ user: null, isLoading: false });
     }
   },
 }));

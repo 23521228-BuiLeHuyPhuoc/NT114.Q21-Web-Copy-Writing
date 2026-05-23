@@ -1,5 +1,6 @@
 const asyncHandler = require('../../utils/asyncHandler');
 const authService = require('../../services/authService');
+const { clearAuthCookie, setAuthCookie } = require('../../utils/authCookie');
 
 const register = asyncHandler(async (req, res) => {
   const user = await authService.registerUser(req.body);
@@ -13,6 +14,7 @@ const register = asyncHandler(async (req, res) => {
 
 const login = asyncHandler(async (req, res) => {
   const data = await authService.loginUser(req.body.email, req.body.password);
+  setAuthCookie(res, data.token);
 
   return res.status(200).json({
     success: true,
@@ -32,6 +34,8 @@ const me = asyncHandler(async (req, res) => {
 });
 
 const logout = asyncHandler(async (req, res) => {
+  clearAuthCookie(res);
+
   return res.status(200).json({
     success: true,
     message: 'Logged out',

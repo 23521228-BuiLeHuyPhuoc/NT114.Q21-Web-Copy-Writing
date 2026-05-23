@@ -244,10 +244,14 @@ async function verifyOtp(accountType, email, otp) {
 async function resetPassword(accountType, email, otp, newPassword) {
   const record = await verifyOtpOrThrow(email, accountType, otp);
   const Model = getAccountModel(accountType);
-  const account = await Model.findById(record.accountId);
+  const account = await Model.findById(record.accountId).select('+password');
 
   if (!account) {
     throw createError(404, 'Account not found');
+  }
+
+  if (await account.comparePassword(newPassword)) {
+    throw createError(400, 'Mật khẩu mới phải khác mật khẩu hiện tại');
   }
 
   account.password = newPassword;

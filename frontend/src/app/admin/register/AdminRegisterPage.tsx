@@ -1,6 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth, ADMIN_INVITE_CODE } from '@/app/contexts/AuthContext';
+import {
+  validateConfirmPassword,
+  validateEmail,
+  validateName,
+  validateStrongPassword,
+} from '@/lib/authValidation';
 import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
 import { BrandLogo } from '@/app/components/BrandLogo';
@@ -58,11 +64,27 @@ export function AdminRegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password !== confirmPass) { toast.error('Mật khẩu xác nhận không khớp'); return; }
-    if (password.length < 8)      { toast.error('Mật khẩu phải có ít nhất 8 ký tự'); return; }
+    const nameError = validateName(name);
+    const emailError = validateEmail(email);
+    const passwordError = validateStrongPassword(password);
+    const confirmError = validateConfirmPassword(confirmPass, password);
+
+    if (nameError !== true) { toast.error(nameError); return; }
+    if (emailError !== true) { toast.error(emailError); return; }
+    if (passwordError !== true) { toast.error(passwordError); return; }
+    if (confirmError !== true) { toast.error(confirmError); return; }
+    if (inviteCode.trim().length < 4) { toast.error('Mã mời Admin là bắt buộc'); return; }
+
     setIsLoading(true);
     try {
-      await register({ email, password, name, role: 'admin', adminRole, inviteCode });
+      await register({
+        email: email.trim().toLowerCase(),
+        password,
+        name: name.trim(),
+        role: 'admin',
+        adminRole,
+        inviteCode: inviteCode.trim(),
+      });
       setSuccess(true);
       toast('Yêu cầu đã gửi — đang chờ Super Admin phê duyệt.');
     } catch (err: any) {

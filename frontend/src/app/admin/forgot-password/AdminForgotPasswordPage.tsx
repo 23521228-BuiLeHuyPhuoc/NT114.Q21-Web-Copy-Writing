@@ -2,6 +2,12 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { api } from '@/lib/axios';
+import {
+  AUTH_PASSWORD_RULES,
+  validateConfirmPassword,
+  validateEmail,
+  validateStrongPassword,
+} from '@/lib/authValidation';
 import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
 import { BrandLogo } from '@/app/components/BrandLogo';
@@ -61,6 +67,7 @@ export function AdminForgotPasswordPage() {
   const emailForm = useForm<EmailFormData>({ defaultValues: { email: 'admin@copypro.vn' } });
   const resetForm = useForm<ResetFormData>({ defaultValues: { newPass: '', confirmPass: '' } });
   const email = emailForm.watch('email');
+  const newPassword = resetForm.watch('newPass', '');
   const meta = STEP_META[step];
   const Icon = meta.icon;
 
@@ -198,10 +205,7 @@ export function AdminForgotPasswordPage() {
                 <Input
                   type="email"
                   placeholder="admin@copypro.vn"
-                  {...emailForm.register('email', {
-                    required: 'Email là bắt buộc',
-                    pattern: { value: /^\S+@\S+$/, message: 'Email không hợp lệ' },
-                  })}
+                  {...emailForm.register('email', { validate: validateEmail })}
                   className="h-12 rounded-xl bg-gray-950 border-gray-700 text-white placeholder:text-foreground/70 focus:border-primary"
                 />
                 {emailForm.formState.errors.email && (
@@ -276,14 +280,21 @@ export function AdminForgotPasswordPage() {
                 <Input
                   type="password"
                   placeholder="Tối thiểu 8 ký tự"
-                  {...resetForm.register('newPass', {
-                    required: 'Mật khẩu là bắt buộc',
-                    minLength: { value: 8, message: 'Mật khẩu tối thiểu 8 ký tự' },
-                  })}
+                  {...resetForm.register('newPass', { validate: validateStrongPassword })}
                   className="h-12 rounded-xl bg-gray-950 border-gray-700 text-white placeholder:text-foreground/70 focus:border-primary"
                 />
                 {resetForm.formState.errors.newPass && (
                   <p className="text-xs text-red-400 mt-1">{resetForm.formState.errors.newPass.message}</p>
+                )}
+                {newPassword && (
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                    {AUTH_PASSWORD_RULES.map((rule) => (
+                      <div key={rule.label} className={`flex items-center gap-1 text-xs ${rule.test(newPassword) ? 'text-primary' : 'text-muted-foreground'}`}>
+                        <CheckCircle2 className="w-3 h-3" />
+                        {rule.label}
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
 
@@ -294,10 +305,7 @@ export function AdminForgotPasswordPage() {
                 <Input
                   type="password"
                   placeholder="Nhập lại mật khẩu"
-                  {...resetForm.register('confirmPass', {
-                    required: 'Xác nhận mật khẩu là bắt buộc',
-                    validate: (value) => value === resetForm.watch('newPass') || 'Mật khẩu không khớp',
-                  })}
+                  {...resetForm.register('confirmPass', { validate: (value) => validateConfirmPassword(value, resetForm.watch('newPass')) })}
                   className="h-12 rounded-xl bg-gray-950 border-gray-700 text-white placeholder:text-foreground/70 focus:border-primary"
                 />
                 {resetForm.formState.errors.confirmPass && (

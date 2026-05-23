@@ -9,6 +9,7 @@
 
 html {
   scroll-behavior: smooth;
+  font-family: 'Noto Sans', 'Google Sans Flex', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 * {
