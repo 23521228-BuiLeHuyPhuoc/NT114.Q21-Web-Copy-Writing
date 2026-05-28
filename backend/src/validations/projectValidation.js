@@ -16,12 +16,14 @@ const listProjectsSchema = Joi.object({
 const createProjectSchema = Joi.object({
   name: Joi.string().trim().min(2).max(120).required(),
   description: Joi.string().trim().max(1000).allow('').default(''),
+  industry: Joi.string().trim().max(120).allow('').default('General'),
   color: Joi.string().trim().max(80).allow('').optional(),
 });
 
 const updateProjectSchema = Joi.object({
   name: Joi.string().trim().min(2).max(120),
   description: Joi.string().trim().max(1000).allow(''),
+  industry: Joi.string().trim().max(120).allow(''),
   isArchived: Joi.boolean(),
   color: Joi.string().trim().max(80).allow(''),
 }).min(1);

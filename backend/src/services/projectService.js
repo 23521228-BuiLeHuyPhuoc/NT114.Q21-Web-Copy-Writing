@@ -35,6 +35,7 @@ function buildSearchFilter(search) {
     $or: [
       { name: regex },
       { description: regex },
+      { industry: regex },
     ],
   };
 }
@@ -52,7 +53,7 @@ function serializeProject(project, contentCount = 0) {
     color: project.color || PROJECT_COLORS[0],
     contentCount,
     contents: contentCount,
-    industry: 'General',
+    industry: project.industry || 'General',
     createdAt: project.createdAt,
     updatedAt: project.updatedAt,
   };
@@ -143,6 +144,7 @@ async function createProject(userId, payload) {
     userId,
     name: payload.name,
     description: payload.description || '',
+    industry: payload.industry || 'General',
     color: payload.color || PROJECT_COLORS[existingCount % PROJECT_COLORS.length],
   });
 
@@ -154,6 +156,7 @@ async function updateProject(userId, id, payload) {
 
   if (payload.name !== undefined) project.name = payload.name;
   if (payload.description !== undefined) project.description = payload.description;
+  if (payload.industry !== undefined) project.industry = payload.industry;
   if (payload.isArchived !== undefined) project.isArchived = payload.isArchived;
   if (payload.color !== undefined) project.color = payload.color;
 

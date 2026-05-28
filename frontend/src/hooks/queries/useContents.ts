@@ -1,5 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { contentService, type ContentListParams, type CreateContentPayload } from '@/services/contentService';
+import {
+  contentService,
+  type ContentListParams,
+  type CreateContentPayload,
+  type UpdateContentPayload,
+} from '@/services/contentService';
+import { projectKeys } from '@/hooks/queries/useProjects';
 import { templateKeys } from '@/hooks/queries/useTemplates';
 
 export const contentKeys = {
@@ -45,6 +51,21 @@ export function useCreateContent() {
     mutationFn: (payload: CreateContentPayload) => contentService.create(payload),
     onSuccess: (content) => {
       queryClient.invalidateQueries({ queryKey: contentKeys.all });
+      if (content.id) {
+        queryClient.setQueryData(contentKeys.detail(content.id), content);
+      }
+    },
+  });
+}
+
+export function useUpdateContent() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: UpdateContentPayload }) => contentService.update(id, payload),
+    onSuccess: (content) => {
+      queryClient.invalidateQueries({ queryKey: contentKeys.all });
+      queryClient.invalidateQueries({ queryKey: projectKeys.all });
       if (content.id) {
         queryClient.setQueryData(contentKeys.detail(content.id), content);
       }

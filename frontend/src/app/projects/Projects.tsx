@@ -24,10 +24,19 @@ export function CustomerProjects() {
   const [showNew, setShowNew] = useState(false);
   const [newName, setNewName] = useState('');
   const [newDesc, setNewDesc] = useState('');
+  const [newIndustry, setNewIndustry] = useState('');
   const { data: projects = [], isLoading } = useProjects({ limit: 50 });
   const createProject = useCreateProject();
 
-  const filtered = projects.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
+  const keyword = search.trim().toLowerCase();
+  const filtered = projects.filter((project) => {
+    if (!keyword) return true;
+    return [
+      project.name,
+      project.desc,
+      project.industry,
+    ].join(' ').toLowerCase().includes(keyword);
+  });
   const pagination = usePagination(filtered, {
     initialPageSize: 6,
     resetKey: search,
@@ -38,18 +47,19 @@ export function CustomerProjects() {
     const description = newDesc.trim();
 
     if (!name) {
-      toast.error('Vui long nhap ten du an');
+      toast.error('Vui lòng nhập tên dự án');
       return;
     }
 
     try {
-      await createProject.mutateAsync({ name, description });
-      toast.success('Da tao du an');
+      await createProject.mutateAsync({ name, description, industry: newIndustry.trim() || 'General' });
+      toast.success('Đã tạo dự án');
       setNewName('');
       setNewDesc('');
+      setNewIndustry('');
       setShowNew(false);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Khong the tao du an';
+      const message = error instanceof Error ? error.message : 'Không thể tạo dự án';
       toast.error(message);
     }
   };
@@ -74,11 +84,11 @@ export function CustomerProjects() {
         </div>
 
         {isLoading && (
-          <Card className="p-6 text-sm text-muted-foreground">Dang tai danh sach du an...</Card>
+          <Card className="p-6 text-sm text-muted-foreground">Đang tải danh sách dự án...</Card>
         )}
 
         {!isLoading && filtered.length === 0 && (
-          <Card className="p-6 text-sm text-muted-foreground">Chua co du an nao phu hop.</Card>
+          <Card className="p-6 text-sm text-muted-foreground">Chưa có dự án nào phù hợp.</Card>
         )}
 
         {/* Projects grid */}
@@ -133,12 +143,16 @@ export function CustomerProjects() {
                 <Label>Mô tả</Label>
                 <Textarea placeholder="Mô tả ngắn về dự án..." value={newDesc} onChange={e => setNewDesc(e.target.value)} className="mt-1" />
               </div>
+              <div>
+                <Label>Ngành/chủ đề</Label>
+                <Input placeholder="VD: Thương mại điện tử" value={newIndustry} onChange={e => setNewIndustry(e.target.value)} className="mt-1" />
+              </div>
               <Button
                 className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white"
                 onClick={handleCreateProject}
                 disabled={createProject.isPending}
               >
-                <Plus className="w-4 h-4 mr-2" /> {createProject.isPending ? 'Dang tao...' : 'Tạo dự án'}
+                <Plus className="w-4 h-4 mr-2" /> {createProject.isPending ? 'Đang tạo...' : 'Tạo dự án'}
               </Button>
             </div>
           </DialogContent>

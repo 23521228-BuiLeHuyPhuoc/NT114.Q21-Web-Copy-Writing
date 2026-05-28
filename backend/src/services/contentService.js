@@ -1,6 +1,7 @@
 const Content = require('../models/Content');
 const UsageLog = require('../models/UsageLog');
 const aiService = require('./aiService');
+const notificationService = require('./notificationService');
 const projectService = require('./projectService');
 const templateService = require('./templateService');
 const createError = require('../utils/createError');
@@ -239,6 +240,11 @@ async function generateContent(userId, payload) {
   });
 
   await templateService.incrementTemplateUsage(template?._id);
+  try {
+    await notificationService.createGenerateSuccessNotification(userId, content);
+  } catch (error) {
+    console.warn(`Failed to create generate notification: ${error.message}`);
+  }
 
   return {
     item: serializeContent(content),

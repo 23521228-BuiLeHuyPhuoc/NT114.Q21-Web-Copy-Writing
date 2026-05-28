@@ -20,6 +20,13 @@ const projectSchema = new mongoose.Schema(
       maxlength: 1000,
       default: '',
     },
+    industry: {
+      type: String,
+      trim: true,
+      maxlength: 120,
+      default: 'General',
+      index: true,
+    },
     isArchived: {
       type: Boolean,
       default: false,

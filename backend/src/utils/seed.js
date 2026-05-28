@@ -5,6 +5,7 @@ const AccountAdmin = require('../models/AccountAdmin');
 const AccountUser = require('../models/AccountUser');
 const Category = require('../models/Category');
 const Content = require('../models/Content');
+const Notification = require('../models/Notification');
 const Project = require('../models/Project');
 const Template = require('../models/Template');
 const UsageLog = require('../models/UsageLog');
@@ -55,23 +56,79 @@ async function upsertAdmin() {
   return account;
 }
 
-async function upsertDemoProject(user) {
+async function upsertDemoProject(user, data) {
   const project = await Project.findOneAndUpdate(
     {
       userId: user._id,
-      name: { $in: ['Campaign Hè 2026', 'Campaign He 2026'] },
+      name: { $in: data.aliases || [data.name] },
     },
     {
       userId: user._id,
-      name: 'Campaign Hè 2026',
-      description: 'Demo project for the summer 2026 marketing campaign.',
-      isArchived: false,
-      color: 'from-green-500 to-emerald-600',
+      name: data.name,
+      description: data.description,
+      industry: data.industry,
+      isArchived: Boolean(data.isArchived),
+      color: data.color,
     },
     { upsert: true, new: true, setDefaultsOnInsert: true },
   );
 
   return project;
+}
+
+async function seedDemoProjects(user) {
+  const projectData = [
+    {
+      key: 'summer',
+      name: 'Campaign Hè 2026',
+      aliases: ['Campaign Hè 2026', 'Campaign He 2026'],
+      industry: 'Thương mại điện tử',
+      description: 'Bộ nội dung cho chiến dịch flash sale mùa hè của một sàn thời trang online: quảng cáo, landing page, email và social post.',
+      color: 'from-green-500 to-emerald-600',
+    },
+    {
+      key: 'saas',
+      name: 'Ra mắt SaaS OmniCRM',
+      industry: 'Công nghệ B2B',
+      description: 'Nội dung launch phiên bản V2 cho nền tảng CRM: landing page, email giới thiệu tính năng, case study và CTA đặt lịch demo.',
+      color: 'from-teal-500 to-cyan-600',
+    },
+    {
+      key: 'realEstate',
+      name: 'The Grand Riverside Q2',
+      industry: 'Bất động sản',
+      description: 'Copy marketing cho dự án căn hộ ven sông trong quý 2: lead ads, bài giới thiệu vị trí, email tư vấn và landing page thu lead.',
+      color: 'from-indigo-500 to-sky-600',
+    },
+    {
+      key: 'education',
+      name: 'Khóa học AI Copywriting',
+      industry: 'Giáo dục trực tuyến',
+      description: 'Chiến dịch tuyển sinh khóa học AI copywriting cho người mới: SEO article, landing page, email nurturing và social proof.',
+      color: 'from-orange-500 to-amber-600',
+    },
+    {
+      key: 'fnb',
+      name: 'Menu mùa hè Nhà Bếp Lá',
+      industry: 'F&B',
+      description: 'Nội dung ra mắt menu mùa hè cho nhà hàng healthy casual: mô tả món, combo trưa văn phòng, caption social và email khách thân thiết.',
+      color: 'from-lime-500 to-green-600',
+    },
+    {
+      key: 'beauty',
+      name: 'Serum Trà Xanh An Nhiên',
+      industry: 'Mỹ phẩm',
+      description: 'Copy cho sản phẩm serum trà xanh: PDP tuân thủ claim, bài social launch, email giới thiệu và FAQ chăm sóc da.',
+      color: 'from-pink-500 to-rose-600',
+    },
+  ];
+
+  const entries = await Promise.all(projectData.map(async (item) => {
+    const project = await upsertDemoProject(user, item);
+    return [item.key, project];
+  }));
+
+  return Object.fromEntries(entries);
 }
 
 async function upsertDemoContent(user, data) {
@@ -109,7 +166,7 @@ async function upsertDemoContent(user, data) {
       completionTokens: Math.max(20, Math.ceil(content.outputText.length / 4)),
       totalTokens: 120 + Math.max(20, Math.ceil(content.outputText.length / 4)),
       action: 'generate',
-      status: 'fallback',
+      status: 'success',
     },
     { upsert: true, new: true, setDefaultsOnInsert: true },
   );
@@ -117,11 +174,9 @@ async function upsertDemoContent(user, data) {
   return content;
 }
 
-async function seedDemoContents(user, project) {
-  const projectId = project?._id || null;
+async function seedDemoContents(user, projects) {
   const shared = {
     userId: user._id,
-    projectId,
     templateId: null,
     language: 'vi',
     isFavorite: false,
@@ -132,22 +187,65 @@ async function seedDemoContents(user, project) {
   const contents = [
     {
       ...shared,
+      projectId: projects.summer?._id || null,
       title: 'Facebook Ad - Flash Sale Hè 2026',
-      prompt: 'Viết headline quảng cáo cho chiến dịch flash sale mùa hè, tập trung vào FOMO và freeship.',
+      prompt: 'Viết headline quảng cáo cho chiến dịch flash sale mùa hè của shop thời trang online, tập trung vào FOMO và freeship.',
       outputText: [
         '# FLASH SALE HÈ 2026',
         '',
-        'Giảm đến 70% cho bộ sưu tập mùa hè. Chỉ trong 24 giờ, đặt hàng ngay để nhận freeship và quà tặng giới hạn.',
+        'Giảm đến 70% cho váy linen, áo thun basic và phụ kiện đi biển. Chỉ trong 24 giờ, đơn từ 499K được freeship toàn quốc và nhận thêm voucher 80K cho lần mua kế tiếp.',
         '',
-        'CTA: Mua ngay trước khi ưu đãi kết thúc.',
+        'CTA: Chốt outfit hè ngay trước khi size đẹp hết hàng.',
       ].join('\n'),
       type: 'headline',
       tone: 'urgent',
-      modelUsed: 'fallback-mvp',
+      modelUsed: 'demo-seed',
       tags: ['sale', 'ecommerce'],
     },
     {
       ...shared,
+      projectId: projects.summer?._id || null,
+      title: 'Landing Page - Bộ Sưu Tập Đi Biển',
+      prompt: 'Viết hero landing page cho bộ sưu tập đi biển trong chiến dịch hè 2026.',
+      outputText: [
+        '# Outfit đi biển nhẹ tênh cho mùa hè rực rỡ',
+        '',
+        'Bộ sưu tập Hè 2026 được thiết kế cho những chuyến đi nhiều nắng: chất vải thoáng, form dễ mặc, màu sắc nổi bật khi lên ảnh và vẫn đủ gọn để xếp vào vali cuối tuần.',
+        '',
+        'Lợi ích chính:',
+        '- Phối sẵn theo set để tiết kiệm thời gian chọn đồ.',
+        '- Chất liệu linen, cotton và rayon giúp da dễ chịu cả ngày.',
+        '- Nhiều size, nhiều dáng cho đi biển, dạo phố và cafe sau chuyến đi.',
+        '',
+        'CTA: Khám phá bộ sưu tập hè.',
+      ].join('\n'),
+      type: 'landing',
+      tone: 'friendly',
+      modelUsed: 'demo-seed',
+      tags: ['ecommerce', 'fashion', 'summer'],
+    },
+    {
+      ...shared,
+      projectId: projects.summer?._id || null,
+      title: 'Email - Nhắc Ưu Đãi Flash Sale Hè',
+      prompt: 'Viết email nhắc khách hàng quay lại mua trước khi flash sale hè kết thúc.',
+      outputText: [
+        '# Subject: Còn vài giờ để giữ outfit hè giá tốt',
+        '',
+        'Chào bạn, flash sale Hè 2026 đang bước vào những giờ cuối. Các mẫu váy linen, áo chống nắng mỏng nhẹ và set đi biển bán chạy đang giảm đến 70%.',
+        '',
+        'Nếu bạn đã để vài món trong giỏ hàng, đây là thời điểm tốt để hoàn tất đơn trước khi size đẹp hết hàng. Đơn từ 499K vẫn được freeship toàn quốc.',
+        '',
+        'CTA: Quay lại giỏ hàng.',
+      ].join('\n'),
+      type: 'email',
+      tone: 'urgent',
+      modelUsed: 'demo-seed',
+      tags: ['ecommerce', 'email', 'sale'],
+    },
+    {
+      ...shared,
+      projectId: projects.education?._id || null,
       title: 'SEO Content - Khóa Học Online',
       prompt: 'Tạo title và meta description SEO cho khóa học online về AI copywriting.',
       outputText: [
@@ -159,11 +257,52 @@ async function seedDemoContents(user, project) {
       ].join('\n'),
       type: 'seo',
       tone: 'professional',
-      modelUsed: 'fallback-mvp',
+      modelUsed: 'demo-seed',
       tags: ['seo', 'education'],
     },
     {
       ...shared,
+      projectId: projects.education?._id || null,
+      title: 'Landing Page - Khóa Học AI Copywriting 6 Tuần',
+      prompt: 'Viết landing page cho khóa học AI copywriting 6 tuần dành cho marketer mới.',
+      outputText: [
+        '# Làm chủ AI Copywriting trong 6 tuần',
+        '',
+        'Khóa học giúp marketer, chủ shop và freelancer biết cách biến brief thành nội dung bán hàng rõ ràng: từ headline, email, caption đến landing page.',
+        '',
+        'Bạn sẽ học cách viết prompt có cấu trúc, kiểm tra chất lượng đầu ra và chỉnh sửa copy để phù hợp thương hiệu thay vì phụ thuộc hoàn toàn vào AI.',
+        '',
+        'Sau khóa học, học viên hoàn thành 4 dự án thực hành: một landing page, một chuỗi email, một bộ social post và một bài SEO ngắn.',
+        '',
+        'CTA: Nhận lộ trình học thử.',
+      ].join('\n'),
+      type: 'landing',
+      tone: 'professional',
+      modelUsed: 'demo-seed',
+      tags: ['education', 'landing', 'ai-copywriting'],
+    },
+    {
+      ...shared,
+      projectId: projects.education?._id || null,
+      title: 'Email Nurturing - Bài Học AI Copywriting Đầu Tiên',
+      prompt: 'Viết email nuôi dưỡng lead cho người đã tải checklist AI copywriting.',
+      outputText: [
+        '# Subject: Một lỗi phổ biến khi dùng AI viết nội dung',
+        '',
+        'Chào bạn, nhiều người bắt đầu dùng AI bằng một câu lệnh rất ngắn như “viết giúp tôi caption bán hàng”. Kết quả thường chung chung vì AI chưa có đủ bối cảnh về khách hàng, offer và giọng thương hiệu.',
+        '',
+        'Trong khóa AI Copywriting 6 tuần, bạn sẽ học cách xây prompt theo 5 lớp: mục tiêu, đối tượng, insight, cấu trúc đầu ra và tiêu chí đánh giá.',
+        '',
+        'CTA: Xem buổi học mẫu 12 phút.',
+      ].join('\n'),
+      type: 'email',
+      tone: 'friendly',
+      modelUsed: 'demo-seed',
+      tags: ['education', 'email', 'lead-nurturing'],
+    },
+    {
+      ...shared,
+      projectId: projects.saas?._id || null,
       title: 'Email Marketing - Ra Mắt SaaS V2',
       prompt: 'Viết email marketing thông báo ra mắt phiên bản SaaS V2 cho khách hàng hiện tại.',
       outputText: [
@@ -175,8 +314,228 @@ async function seedDemoContents(user, project) {
       ].join('\n'),
       type: 'email',
       tone: 'friendly',
-      modelUsed: 'fallback-mvp',
+      modelUsed: 'demo-seed',
       tags: ['saas', 'email'],
+    },
+    {
+      ...shared,
+      projectId: projects.saas?._id || null,
+      title: 'Landing Page - OmniCRM V2',
+      prompt: 'Viết landing page cho sản phẩm OmniCRM V2 dành cho đội sales B2B.',
+      outputText: [
+        '# CRM gọn hơn cho đội sales đang tăng trưởng',
+        '',
+        'OmniCRM V2 giúp đội sales gom lead từ website, form quảng cáo và inbox về một pipeline duy nhất. Mỗi cơ hội bán hàng có lịch sử tương tác, nhắc việc tự động và báo cáo trạng thái rõ ràng cho quản lý.',
+        '',
+        'Lợi ích chính:',
+        '- Không bỏ sót lead nóng vì dữ liệu phân tán.',
+        '- Theo dõi từng deal theo giai đoạn và người phụ trách.',
+        '- Tạo báo cáo tuần trong vài phút thay vì tổng hợp thủ công.',
+        '',
+        'CTA: Đặt lịch demo 15 phút.',
+      ].join('\n'),
+      type: 'landing',
+      tone: 'professional',
+      modelUsed: 'demo-seed',
+      tags: ['saas', 'b2b', 'crm'],
+    },
+    {
+      ...shared,
+      projectId: projects.saas?._id || null,
+      title: 'Case Study - Đội Sales Tăng Tỷ Lệ Follow-up',
+      prompt: 'Viết case study ngắn cho OmniCRM V2 về cải thiện follow-up lead.',
+      outputText: [
+        '# Case study: Từ bảng tính rời rạc đến pipeline sales rõ ràng',
+        '',
+        'Một công ty tư vấn B2B có 12 nhân sự sales từng quản lý lead bằng nhiều file Google Sheet. Sau khi chuyển sang OmniCRM V2, toàn bộ lead mới được tự động phân người phụ trách và nhắc follow-up theo SLA.',
+        '',
+        'Kết quả sau 8 tuần thử nghiệm nội bộ: thời gian tổng hợp báo cáo giảm từ 3 giờ xuống dưới 30 phút mỗi tuần, tỷ lệ lead được follow-up trong 24 giờ tăng rõ rệt.',
+        '',
+        'CTA: Xem quy trình triển khai CRM mẫu.',
+      ].join('\n'),
+      type: 'review',
+      tone: 'professional',
+      modelUsed: 'demo-seed',
+      tags: ['saas', 'case-study', 'sales'],
+    },
+    {
+      ...shared,
+      projectId: projects.realEstate?._id || null,
+      title: 'Facebook Lead Ads - The Grand Riverside',
+      prompt: 'Viết bộ copy Facebook Lead Ads cho dự án căn hộ The Grand Riverside.',
+      outputText: [
+        '# Primary text',
+        'The Grand Riverside dành cho khách hàng muốn sống gần trung tâm nhưng vẫn có không gian ven sông yên tĩnh. Dự án có căn hộ 1-3 phòng ngủ, tiện ích nội khu đầy đủ và chính sách thanh toán linh hoạt theo từng giai đoạn.',
+        '',
+        'Headline: Nhận bảng giá The Grand Riverside Q2',
+        'Description: Cập nhật mặt bằng, chính sách thanh toán và lịch tham quan nhà mẫu.',
+        '',
+        'CTA: Đăng ký nhận tư vấn.',
+      ].join('\n'),
+      type: 'headline',
+      tone: 'professional',
+      modelUsed: 'demo-seed',
+      tags: ['realestate', 'lead-ads', 'riverside'],
+    },
+    {
+      ...shared,
+      projectId: projects.realEstate?._id || null,
+      title: 'Landing Page - Nhận Bảng Giá The Grand Riverside',
+      prompt: 'Viết landing page thu lead cho người quan tâm căn hộ The Grand Riverside.',
+      outputText: [
+        '# Nhận bảng giá và lịch tham quan The Grand Riverside',
+        '',
+        'The Grand Riverside là lựa chọn cho gia đình trẻ và nhà đầu tư đang tìm căn hộ ven sông có kết nối thuận tiện đến trung tâm. Landing page cần giúp khách hàng hiểu nhanh vị trí, loại căn, tiện ích và bước tiếp theo để được tư vấn.',
+        '',
+        'Thông tin nổi bật:',
+        '- Căn hộ 1-3 phòng ngủ, phù hợp ở thật hoặc cho thuê.',
+        '- Tiện ích nội khu gồm hồ bơi, khu trẻ em, lounge cư dân và shophouse.',
+        '- Chính sách thanh toán theo tiến độ, cần tư vấn cụ thể theo từng căn.',
+        '',
+        'CTA: Nhận bảng giá mới nhất.',
+      ].join('\n'),
+      type: 'landing',
+      tone: 'professional',
+      modelUsed: 'demo-seed',
+      tags: ['realestate', 'landing', 'lead'],
+    },
+    {
+      ...shared,
+      projectId: projects.realEstate?._id || null,
+      title: 'Email Tư Vấn - Lịch Tham Quan Nhà Mẫu',
+      prompt: 'Viết email gửi lead bất động sản đã đăng ký nhận bảng giá.',
+      outputText: [
+        '# Subject: Lịch tham quan nhà mẫu The Grand Riverside tuần này',
+        '',
+        'Chào anh/chị, cảm ơn anh/chị đã quan tâm The Grand Riverside. Đội ngũ tư vấn có thể hỗ trợ anh/chị xem mặt bằng căn 1-3 phòng ngủ, chính sách thanh toán và lịch tham quan nhà mẫu trong tuần này.',
+        '',
+        'Nếu anh/chị đang so sánh để ở thật, chúng tôi sẽ ưu tiên thông tin về hướng căn, tiện ích gia đình và kết nối di chuyển. Nếu anh/chị quan tâm đầu tư, đội ngũ sẽ gửi thêm dữ liệu tham khảo về nguồn cung khu vực và tiềm năng cho thuê.',
+        '',
+        'CTA: Chọn khung giờ tư vấn.',
+      ].join('\n'),
+      type: 'email',
+      tone: 'professional',
+      modelUsed: 'demo-seed',
+      tags: ['realestate', 'email', 'consulting'],
+    },
+    {
+      ...shared,
+      projectId: projects.fnb?._id || null,
+      title: 'Menu Copy - Salad Gà Áp Chảo Sốt Chanh Dây',
+      prompt: 'Viết mô tả menu cho món salad gà áp chảo sốt chanh dây của nhà hàng healthy.',
+      outputText: [
+        '# Salad gà áp chảo sốt chanh dây',
+        '',
+        'Ức gà áp chảo mềm, rau xanh giòn, cà chua bi và hạt điều rang được trộn cùng sốt chanh dây chua ngọt nhẹ. Món ăn đủ no cho bữa trưa văn phòng nhưng vẫn giữ cảm giác thanh, không nặng bụng.',
+        '',
+        'Gợi ý dùng kèm: trà ô long lạnh hoặc nước ép táo cần tây.',
+        'CTA: Thêm vào combo trưa healthy.',
+      ].join('\n'),
+      type: 'description',
+      tone: 'friendly',
+      modelUsed: 'demo-seed',
+      tags: ['fnb', 'menu', 'healthy'],
+    },
+    {
+      ...shared,
+      projectId: projects.fnb?._id || null,
+      title: 'Caption - Combo Trưa Văn Phòng Nhà Bếp Lá',
+      prompt: 'Viết caption Facebook cho combo trưa văn phòng của Nhà Bếp Lá.',
+      outputText: [
+        '# Trưa nay ăn gọn mà vẫn đủ chất',
+        '',
+        'Combo trưa Nhà Bếp Lá có salad/protein, một phần tinh bột vừa đủ và đồ uống ít đường. Phù hợp cho ngày bận họp liên tục nhưng bạn vẫn muốn ăn tử tế.',
+        '',
+        'Đặt trước 10:30 để bếp chuẩn bị đúng giờ giao trưa.',
+        '',
+        '#NhaBepLa #ComboTrua #HealthyLunch',
+      ].join('\n'),
+      type: 'social',
+      tone: 'friendly',
+      modelUsed: 'demo-seed',
+      tags: ['fnb', 'social', 'lunch'],
+    },
+    {
+      ...shared,
+      projectId: projects.fnb?._id || null,
+      title: 'Email - Mời Khách Thân Thiết Thử Menu Hè',
+      prompt: 'Viết email mời khách thân thiết thử menu hè mới.',
+      outputText: [
+        '# Subject: Mời bạn thử menu hè mới tại Nhà Bếp Lá',
+        '',
+        'Chào bạn, menu hè của Nhà Bếp Lá đã có mặt với các món nhẹ, nhiều rau xanh và sốt trái cây tươi. Tuần này, khách thân thiết được tặng một phần nước ép khi đặt combo trưa bất kỳ.',
+        '',
+        'Một vài món mới: salad gà sốt chanh dây, cơm gạo lứt cá hồi áp chảo và bowl đậu hũ mè rang.',
+        '',
+        'CTA: Xem menu hè.',
+      ].join('\n'),
+      type: 'email',
+      tone: 'friendly',
+      modelUsed: 'demo-seed',
+      tags: ['fnb', 'email', 'loyalty'],
+    },
+    {
+      ...shared,
+      projectId: projects.beauty?._id || null,
+      title: 'PDP - Serum Trà Xanh An Nhiên',
+      prompt: 'Viết mô tả sản phẩm serum trà xanh theo hướng an toàn claim mỹ phẩm.',
+      outputText: [
+        '# Serum Trà Xanh An Nhiên',
+        '',
+        'Serum Trà Xanh An Nhiên phù hợp với làn da dầu, da dễ bóng nhờn hoặc da cần cảm giác dịu nhẹ sau một ngày dài. Công thức tập trung vào chiết xuất trà xanh, niacinamide nồng độ vừa phải và panthenol để hỗ trợ da trông cân bằng, mịn hơn.',
+        '',
+        'Lợi ích:',
+        '- Hỗ trợ làm dịu cảm giác khó chịu trên da.',
+        '- Giúp bề mặt da trông ít bóng dầu hơn khi dùng đều đặn.',
+        '- Kết cấu mỏng nhẹ, dễ dùng trước kem dưỡng.',
+        '',
+        'Lưu ý: Đây là sản phẩm mỹ phẩm, không thay thế tư vấn da liễu.',
+      ].join('\n'),
+      type: 'description',
+      tone: 'professional',
+      modelUsed: 'demo-seed',
+      tags: ['beauty', 'skincare', 'pdp'],
+    },
+    {
+      ...shared,
+      projectId: projects.beauty?._id || null,
+      title: 'Social Launch - Serum Trà Xanh',
+      prompt: 'Viết bài social launch cho serum trà xanh dành cho da dầu.',
+      outputText: [
+        '# Da dầu cũng cần được chăm sóc dịu nhẹ',
+        '',
+        'Serum Trà Xanh An Nhiên ra đời cho những ngày da dễ bóng, bí và cần một bước chăm sóc mỏng nhẹ. Công thức có trà xanh, niacinamide và panthenol giúp da trông cân bằng hơn mà không tạo cảm giác nặng mặt.',
+        '',
+        'Phù hợp dùng buổi sáng trước kem chống nắng hoặc buổi tối trước kem dưỡng.',
+        '',
+        'CTA: Xem bảng thành phần đầy đủ.',
+      ].join('\n'),
+      type: 'social',
+      tone: 'friendly',
+      modelUsed: 'demo-seed',
+      tags: ['beauty', 'social', 'launch'],
+    },
+    {
+      ...shared,
+      projectId: projects.beauty?._id || null,
+      title: 'FAQ - Cách Dùng Serum Trà Xanh',
+      prompt: 'Viết FAQ ngắn cho trang sản phẩm serum trà xanh.',
+      outputText: [
+        '# Câu hỏi thường gặp',
+        '',
+        'Serum phù hợp với loại da nào?',
+        'Sản phẩm phù hợp với da dầu, da hỗn hợp thiên dầu hoặc da muốn routine mỏng nhẹ.',
+        '',
+        'Dùng serum vào bước nào?',
+        'Sau toner và trước kem dưỡng. Ban ngày nên dùng thêm kem chống nắng.',
+        '',
+        'Có dùng chung với BHA/AHA được không?',
+        'Có thể dùng trong cùng routine nếu da đã quen hoạt chất, nhưng nên bắt đầu chậm và theo dõi phản ứng của da.',
+      ].join('\n'),
+      type: 'review',
+      tone: 'professional',
+      modelUsed: 'demo-seed',
+      tags: ['beauty', 'faq', 'skincare'],
     },
   ];
 
@@ -186,6 +545,64 @@ async function seedDemoContents(user, project) {
   }
 
   return seeded;
+}
+
+async function upsertDemoNotification(user, data) {
+  const notification = await Notification.findOneAndUpdate(
+    {
+      userId: user._id,
+      title: data.title,
+    },
+    {
+      userId: user._id,
+      title: data.title,
+      message: data.message,
+      type: data.type,
+      isRead: Boolean(data.isRead),
+      readAt: data.isRead ? (data.readAt || new Date()) : null,
+      actionUrl: data.actionUrl || '',
+      createdAt: data.createdAt || new Date(),
+    },
+    {
+      upsert: true,
+      new: true,
+      setDefaultsOnInsert: true,
+    },
+  );
+
+  return notification;
+}
+
+async function seedDemoNotifications(user) {
+  const now = Date.now();
+  const notifications = [
+    {
+      title: 'Chào mừng bạn đến với CopyPro',
+      message: 'Tài khoản demo đã sẵn sàng. Bạn có thể tạo nội dung, lưu vào dự án và theo dõi kết quả ngay trong dashboard.',
+      type: 'account',
+      isRead: false,
+      actionUrl: '/dashboard',
+      createdAt: new Date(now - 10 * 60 * 1000),
+    },
+    {
+      title: 'Thư viện template đã được cập nhật',
+      message: 'CopyPro đã bổ sung thêm template theo ngành để bạn tạo headline, email, landing page và social post chuyên nghiệp hơn.',
+      type: 'system',
+      isRead: false,
+      actionUrl: '/templates',
+      createdAt: new Date(now - 2 * 60 * 60 * 1000),
+    },
+    {
+      title: 'Nội dung mẫu đã được tạo thành công',
+      message: 'Một bản copy demo đã được lưu trong thư viện nội dung để bạn dùng thử luồng xem chi tiết và quản lý dự án.',
+      type: 'ai',
+      isRead: true,
+      actionUrl: '/contents',
+      createdAt: new Date(now - 24 * 60 * 60 * 1000),
+    },
+  ];
+
+  return Promise.all(notifications.map((notification) => upsertDemoNotification(user, notification)));
 }
 
 async function upsertCategory(data) {
@@ -711,19 +1128,21 @@ async function seedTemplates() {
 async function seed() {
   await connectDB();
   const [user, admin] = await Promise.all([upsertUser(), upsertAdmin()]);
-  const project = await upsertDemoProject(user);
+  const projects = await seedDemoProjects(user);
   const [categories, templates, contents] = await Promise.all([
     seedCategories(),
     seedTemplates(),
-    seedDemoContents(user, project),
+    seedDemoContents(user, projects),
   ]);
+  const notifications = await seedDemoNotifications(user);
 
   console.log(`Seeded AccountUser: ${user.email}`);
   console.log(`Seeded AccountAdmin: ${admin.email}`);
-  console.log(`Seeded Project: ${project.name}`);
+  console.log(`Seeded Project: ${Object.keys(projects).length}`);
   console.log(`Seeded Category: ${categories.length}`);
   console.log(`Seeded Template: ${templates.length}`);
   console.log(`Seeded Content: ${contents.length}`);
+  console.log(`Seeded Notification: ${notifications.length}`);
 }
 
 seed()

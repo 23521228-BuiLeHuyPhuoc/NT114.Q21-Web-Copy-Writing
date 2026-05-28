@@ -10,12 +10,14 @@ export interface ProjectListParams {
 export interface CreateProjectPayload {
   name: string;
   description?: string;
+  industry?: string;
   color?: string;
 }
 
 export interface UpdateProjectPayload {
   name?: string;
   description?: string;
+  industry?: string;
   isArchived?: boolean;
   color?: string;
 }

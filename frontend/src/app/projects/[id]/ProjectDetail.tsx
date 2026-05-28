@@ -1,8 +1,10 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Layout } from '@/app/components/Layout';
 import { Card } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
 import { Badge } from '@/app/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/app/components/ui/dialog';
+import { Input } from '@/app/components/ui/input';
 import { Progress } from '@/app/components/ui/progress';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -12,15 +14,17 @@ import {
   BarChart3,
   Star,
   Clock,
+  Search,
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { DataPagination } from '@/app/components/common/DataPagination';
 import { usePagination } from '@/hooks/usePagination';
-import { useContents } from '@/hooks/queries/useContents';
+import { useContents, useUpdateContent } from '@/hooks/queries/useContents';
 import { useProject } from '@/hooks/queries/useProjects';
 
 const TYPE_LABELS: Record<string, string> = {
   headline: 'Headline',
-  description: 'Mo ta',
+  description: 'Mô tả',
   social: 'Social',
   email: 'Email',
   cta: 'CTA',
@@ -32,8 +36,12 @@ const TYPE_LABELS: Record<string, string> = {
 export function CustomerProjectDetail() {
   const { id = '' } = useParams();
   const navigate = useNavigate();
+  const [showAddContent, setShowAddContent] = useState(false);
+  const [contentSearch, setContentSearch] = useState('');
   const { data: project, isLoading: isProjectLoading } = useProject(id);
   const { data: contents = [], isLoading: isContentsLoading } = useContents({ projectId: id, limit: 50 });
+  const { data: allContents = [], isLoading: isAllContentsLoading } = useContents({ limit: 100 });
+  const updateContent = useUpdateContent();
 
   const stats = useMemo(() => {
     const total = contents.length;
@@ -57,11 +65,41 @@ export function CustomerProjectDetail() {
     resetKey: id,
   });
 
+  const availableContents = useMemo(() => {
+    const currentIds = new Set(contents.map(item => item.id));
+    const keyword = contentSearch.trim().toLowerCase();
+
+    return allContents
+      .filter(item => !currentIds.has(item.id))
+      .filter((item) => {
+        if (!keyword) return true;
+        return [
+          item.title,
+          item.type,
+          item.model,
+          item.tags.join(' '),
+        ].join(' ').toLowerCase().includes(keyword);
+      });
+  }, [allContents, contentSearch, contents]);
+
+  const handleAddContent = async (contentId: string) => {
+    try {
+      await updateContent.mutateAsync({
+        id: contentId,
+        payload: { projectId: id },
+      });
+      toast.success('Đã thêm nội dung vào dự án');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Không thể thêm nội dung vào dự án';
+      toast.error(message);
+    }
+  };
+
   if (isProjectLoading) {
     return (
       <Layout>
         <div className="p-6 max-w-6xl mx-auto">
-          <Card className="p-6 text-sm text-muted-foreground">Dang tai du an...</Card>
+          <Card className="p-6 text-sm text-muted-foreground">Đang tải dự án...</Card>
         </div>
       </Layout>
     );
@@ -72,9 +110,9 @@ export function CustomerProjectDetail() {
       <Layout>
         <div className="p-6 max-w-6xl mx-auto">
           <Button variant="ghost" className="mb-4 text-foreground/70" onClick={() => navigate('/projects')}>
-            <ArrowLeft className="w-4 h-4 mr-2" /> Quay lai du an
+            <ArrowLeft className="w-4 h-4 mr-2" /> Quay lại dự án
           </Button>
-          <Card className="p-6 text-sm text-muted-foreground">Khong tim thay du an.</Card>
+          <Card className="p-6 text-sm text-muted-foreground">Không tìm thấy dự án.</Card>
         </div>
       </Layout>
     );
@@ -100,7 +138,7 @@ export function CustomerProjectDetail() {
           </div>
           <Button
             className="bg-gradient-to-r from-green-600 to-emerald-600 text-white"
-            onClick={() => navigate(`/generate?projectId=${project.id}`)}
+            onClick={() => setShowAddContent(true)}
           >
             <Plus className="w-4 h-4 mr-2" /> Thêm nội dung
           </Button>
@@ -108,10 +146,10 @@ export function CustomerProjectDetail() {
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {[
-            { label: 'Tong noi dung', value: stats.total, icon: FileText, color: 'text-primary bg-primary/5' },
-            { label: 'Da xuat ban', value: stats.published, icon: Star, color: 'text-primary bg-primary/5' },
-            { label: 'Ban nhap', value: stats.draft, icon: Clock, color: 'text-amber-600 bg-warning/10' },
-            { label: 'Chat luong TB', value: `${stats.avgQuality}%`, icon: BarChart3, color: 'text-emerald-600 bg-emerald-50' },
+            { label: 'Tổng nội dung', value: stats.total, icon: FileText, color: 'text-primary bg-primary/5' },
+            { label: 'Đã xuất bản', value: stats.published, icon: Star, color: 'text-primary bg-primary/5' },
+            { label: 'Bản nháp', value: stats.draft, icon: Clock, color: 'text-amber-600 bg-warning/10' },
+            { label: 'Chất lượng TB', value: `${stats.avgQuality}%`, icon: BarChart3, color: 'text-emerald-600 bg-emerald-50' },
           ].map((s, i) => {
             const Icon = s.icon;
             return (
@@ -137,10 +175,10 @@ export function CustomerProjectDetail() {
 
         <h2 className="text-lg font-bold text-foreground mb-4">Nội dung trong dự án</h2>
         {isContentsLoading && (
-          <Card className="p-6 text-sm text-muted-foreground">Dang tai noi dung...</Card>
+          <Card className="p-6 text-sm text-muted-foreground">Đang tải nội dung...</Card>
         )}
         {!isContentsLoading && contents.length === 0 && (
-          <Card className="p-6 text-sm text-muted-foreground">Du an nay chua co noi dung.</Card>
+          <Card className="p-6 text-sm text-muted-foreground">Dự án này chưa có nội dung.</Card>
         )}
         <div className="space-y-3">
           {contentPagination.pageItems.map(item => (
@@ -176,6 +214,62 @@ export function CustomerProjectDetail() {
           onPageSizeChange={contentPagination.setPageSize}
           itemLabel="nội dung"
         />
+
+        <Dialog open={showAddContent} onOpenChange={setShowAddContent}>
+          <DialogContent className="flex max-h-[calc(100vh-2rem)] flex-col overflow-hidden p-0 sm:max-w-3xl">
+            <DialogHeader className="px-5 pb-0 pt-5 pr-12 sm:px-6 sm:pr-12 sm:pt-6">
+              <DialogTitle>Thêm nội dung vào dự án</DialogTitle>
+            </DialogHeader>
+
+            <div className="flex min-h-0 flex-col gap-4 px-5 pb-5 sm:px-6 sm:pb-6">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/80" />
+                <Input
+                  placeholder="Tìm nội dung theo tiêu đề, loại hoặc tag..."
+                  value={contentSearch}
+                  onChange={event => setContentSearch(event.target.value)}
+                  className="pl-9"
+                />
+              </div>
+
+              {isAllContentsLoading && (
+                <Card className="p-4 text-sm text-muted-foreground">Đang tải bảng nội dung...</Card>
+              )}
+
+              {!isAllContentsLoading && availableContents.length === 0 && (
+                <Card className="p-4 text-sm text-muted-foreground">
+                  Không còn nội dung nào để thêm. Bạn có thể tạo nội dung mới từ trang Generate và chọn dự án này.
+                </Card>
+              )}
+
+              {!isAllContentsLoading && availableContents.length > 0 && (
+                <div className="max-h-[calc(100vh-16rem)] overflow-y-auto rounded-md border sm:max-h-[420px]">
+                  {availableContents.map(item => (
+                    <div key={item.id} className="flex flex-col gap-3 border-b p-4 last:border-b-0 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0 flex-1">
+                        <h3 className="truncate text-sm font-semibold text-foreground">{item.title}</h3>
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <Badge className="bg-muted text-foreground/70 border-0 text-xs">{TYPE_LABELS[item.type] || item.type}</Badge>
+                          <Badge className="bg-primary/10 text-primary border-0 text-xs">{item.model}</Badge>
+                          <span className="text-xs text-muted-foreground">{item.createdAt}</span>
+                        </div>
+                        <p className="mt-2 line-clamp-2 break-words text-xs text-muted-foreground">{item.content}</p>
+                      </div>
+                      <Button
+                        size="sm"
+                        className="w-full shrink-0 bg-gradient-to-r from-green-600 to-emerald-600 text-white sm:w-auto"
+                        disabled={updateContent.isPending}
+                        onClick={() => handleAddContent(item.id)}
+                      >
+                        <Plus className="w-4 h-4 mr-2" /> Thêm
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
   );

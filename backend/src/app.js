@@ -11,6 +11,7 @@ const adminAuthRoutes = require('./routes/admin/authRoutes');
 const adminCategoryRoutes = require('./routes/admin/categoryRoutes');
 const adminUserRoutes = require('./routes/admin/userRoutes');
 const contentRoutes = require('./routes/user/contentRoutes');
+const notificationRoutes = require('./routes/user/notificationRoutes');
 const projectRoutes = require('./routes/user/projectRoutes');
 const userAuthRoutes = require('./routes/user/authRoutes');
 const templateRoutes = require('./routes/user/templateRoutes');
@@ -53,6 +54,7 @@ app.use('/api/auth/admin', adminAuthRoutes);
 app.use('/api/admin/users', adminUserRoutes);
 app.use('/api/admin/categories', adminCategoryRoutes);
 app.use('/api/contents', contentRoutes);
+app.use('/api/notifications', notificationRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/templates', templateRoutes);
 
