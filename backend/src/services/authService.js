@@ -79,25 +79,6 @@ async function registerUser(payload) {
   return serializeAccount(account, 'user');
 }
 
-async function registerAdmin(payload) {
-  const expectedInviteCode = process.env.ADMIN_INVITE_CODE || 'ADMIN2026';
-  if (payload.inviteCode.trim().toUpperCase() !== expectedInviteCode.toUpperCase()) {
-    throw createError(403, 'Invalid admin invite code');
-  }
-
-  await ensureEmailAvailable('admin', payload.email);
-
-  const account = await AccountAdmin.create({
-    name: payload.name,
-    email: payload.email,
-    password: payload.password,
-    adminRole: payload.adminRole || 'analyst',
-    status: 'pending',
-  });
-
-  return serializeAccount(account, 'admin');
-}
-
 async function loginUser(email, password) {
   const account = await findAccountForLogin('user', email);
   if (!account || !(await account.comparePassword(password))) {
@@ -120,12 +101,6 @@ async function loginAdmin(email, password) {
     throw createError(401, 'Email or password is incorrect');
   }
 
-  if (account.status === 'pending') {
-    throw createError(403, '__PENDING__');
-  }
-  if (account.status === 'rejected') {
-    throw createError(403, 'Admin account has been rejected');
-  }
   if (account.status === 'locked') {
     throw createError(403, 'Admin account is locked');
   }
@@ -264,7 +239,6 @@ async function resetPassword(accountType, email, otp, newPassword) {
 module.exports = {
   serializeAccount,
   registerUser,
-  registerAdmin,
   loginUser,
   loginAdmin,
   forgotPassword,

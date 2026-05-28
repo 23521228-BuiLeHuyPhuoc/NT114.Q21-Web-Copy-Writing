@@ -1,7 +1,7 @@
 import type { AdminRole } from '@/lib/permissions';
 
 export type UserRole = 'admin' | 'customer';
-export type UserStatus = 'active' | 'pending' | 'rejected' | 'locked';
+export type UserStatus = 'active' | 'locked';
 
 export interface User {
   id: string;
@@ -19,9 +19,6 @@ export interface RegisterData {
   email: string;
   password: string;
   name: string;
-  role: UserRole;
-  adminRole?: AdminRole;
-  inviteCode?: string;
 }
 
 export interface StoredUser {
@@ -35,5 +32,3 @@ export interface StoredUser {
   createdAt: string;
   password?: string;
 }
-
-export const ADMIN_INVITE_CODE = 'ADMIN2026';

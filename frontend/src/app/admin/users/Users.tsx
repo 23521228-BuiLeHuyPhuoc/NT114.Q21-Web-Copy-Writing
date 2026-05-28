@@ -10,16 +10,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/app/componen
 import { TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/components/ui/table';
 import {
   Calendar,
-  CheckCircle2,
-  Clock,
   Edit2,
   Lock,
   Mail,
   RotateCcw,
   Trash2,
   UserPlus,
-  Users as UsersIcon,
-  XCircle,
 } from 'lucide-react';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { getAdminRoleDef, getAdminRoles, type AdminRole } from '@/lib/permissions';
@@ -33,15 +29,10 @@ import { usePagination } from '@/hooks/usePagination';
 import toast from 'react-hot-toast';
 import type { UserRole, UserStatus } from '@/types/auth';
 
-type Tab = 'all' | 'pending';
-
 const CUSTOMER_STATUS_OPTIONS: UserStatus[] = ['active', 'locked'];
-const ADMIN_STATUS_OPTIONS: UserStatus[] = ['pending', 'active', 'rejected', 'locked'];
 const STATUS_LABELS: Record<UserStatus, string> = {
   active: 'Đang hoạt động',
   locked: 'Đã khóa',
-  pending: 'Chờ duyệt',
-  rejected: 'Từ chối',
 };
 
 function getErrorMessage(error: unknown, fallback: string) {
@@ -66,11 +57,8 @@ export function AdminUsers() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [trashUsers, setTrashUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<Tab>('all');
   const [search, setSearch] = useState('');
 
-  const [approvingId, setApprovingId] = useState<string | null>(null);
-  const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [processingTrashId, setProcessingTrashId] = useState<string | null>(null);
 
   const [addOpen, setAddOpen] = useState(false);
@@ -121,11 +109,6 @@ export function AdminUsers() {
     setAddStatus('active');
   };
 
-  const pendingUsers = useMemo(
-    () => users.filter((item) => item.role === 'admin' && item.status === 'pending'),
-    [users],
-  );
-
   const filteredUsers = useMemo(() => {
     const keyword = search.trim().toLowerCase();
     if (!keyword) return users;
@@ -135,10 +118,6 @@ export function AdminUsers() {
     );
   }, [search, users]);
 
-  const pendingPagination = usePagination(pendingUsers, {
-    initialPageSize: 5,
-    resetKey: `${pendingUsers.length}`,
-  });
   const usersPagination = usePagination(filteredUsers, {
     initialPageSize: 10,
     resetKey: search,
@@ -150,32 +129,6 @@ export function AdminUsers() {
     setEditEmail(item.email);
     setEditRole(item.adminRole || 'analyst');
     setEditStatus(item.status);
-  };
-
-  const handleApprove = async (id: string, name: string) => {
-    setApprovingId(id);
-    try {
-      await adminUserService.approve(id);
-      await loadUsers();
-      toast.success(`Đã phê duyệt tài khoản "${name}"`);
-    } catch (error) {
-      toast.error(getErrorMessage(error, 'Không phê duyệt được tài khoản'));
-    } finally {
-      setApprovingId(null);
-    }
-  };
-
-  const handleReject = async (id: string, name: string) => {
-    setRejectingId(id);
-    try {
-      await adminUserService.reject(id);
-      await loadUsers();
-      toast.success(`Đã từ chối tài khoản "${name}"`);
-    } catch (error) {
-      toast.error(getErrorMessage(error, 'Không từ chối được tài khoản'));
-    } finally {
-      setRejectingId(null);
-    }
   };
 
   const handleSaveEdit = async () => {
@@ -221,7 +174,6 @@ export function AdminUsers() {
       const createdName = addName.trim();
       resetAddForm();
       setAddOpen(false);
-      setTab('all');
       await loadUsers();
       toast.success(`Đã tạo tài khoản "${createdName}"`);
     } catch (error) {
@@ -280,8 +232,6 @@ export function AdminUsers() {
 
   const statusBadge = (status: UserStatus) => {
     if (status === 'active') return <Badge className="bg-primary/10 text-primary border-0 gap-1"><span className="w-1.5 h-1.5 bg-primary/50 rounded-full" />{STATUS_LABELS[status]}</Badge>;
-    if (status === 'pending') return <Badge className="bg-warning/15 text-amber-800 border-0 gap-1"><span className="w-1.5 h-1.5 bg-warning/100 rounded-full animate-pulse" />{STATUS_LABELS[status]}</Badge>;
-    if (status === 'rejected') return <Badge className="bg-destructive/10 text-destructive border-0 gap-1"><span className="w-1.5 h-1.5 bg-destructive/100 rounded-full" />{STATUS_LABELS[status]}</Badge>;
     return <Badge className="bg-muted text-foreground/80 border-0 gap-1"><Lock className="w-3 h-3" />{STATUS_LABELS[status]}</Badge>;
   };
 
@@ -297,7 +247,7 @@ export function AdminUsers() {
     );
   };
 
-  const statusOptions = (role: UserRole) => role === 'admin' ? ADMIN_STATUS_OPTIONS : CUSTOMER_STATUS_OPTIONS;
+  const statusOptions = () => CUSTOMER_STATUS_OPTIONS;
 
   return (
     <Layout>
@@ -308,12 +258,6 @@ export function AdminUsers() {
             <p className="text-muted-foreground text-sm">Dữ liệu được đọc trực tiếp từ MongoDB qua API admin.</p>
           </div>
           <div className="flex items-center gap-2">
-            {pendingUsers.length > 0 && (
-              <div className="flex items-center gap-1.5 bg-warning/10 border border-amber-200 text-amber-700 rounded-xl px-3 py-1.5 text-xs font-semibold">
-                <span className="w-2 h-2 bg-warning/100 rounded-full animate-pulse" />
-                {pendingUsers.length} chờ duyệt
-              </div>
-            )}
             <button
               onClick={() => setTrashOpen(true)}
               className="relative flex items-center gap-1.5 border border-border hover:border-red-300 hover:bg-destructive/10 text-muted-foreground hover:text-red-600 rounded-xl px-3 py-2 text-sm font-semibold transition-all"
@@ -337,92 +281,8 @@ export function AdminUsers() {
           </div>
         </div>
 
-        <div className="flex gap-1 mb-5 bg-muted p-1 rounded-xl w-fit">
-          <button onClick={() => setTab('pending')} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${tab === 'pending' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground/80'}`}>
-            <Clock className="w-4 h-4" />
-            Chờ duyệt
-            {pendingUsers.length > 0 && (
-              <span className="bg-warning/100 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">{pendingUsers.length}</span>
-            )}
-          </button>
-          <button onClick={() => setTab('all')} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${tab === 'all' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground/80'}`}>
-            <UsersIcon className="w-4 h-4" />
-            Tất cả người dùng
-          </button>
-        </div>
-
         {loading ? (
           <Card className="p-16 text-center text-sm text-muted-foreground">Đang tải dữ liệu MongoDB...</Card>
-        ) : tab === 'pending' ? (
-          pendingUsers.length === 0 ? (
-            <Card className="p-16 text-center">
-              <div className="w-16 h-16 bg-primary/5 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <CheckCircle2 className="w-8 h-8 text-primary" />
-              </div>
-              <h3 className="font-semibold text-foreground mb-1">Không có yêu cầu nào</h3>
-              <p className="text-muted-foreground/80 text-sm">Tất cả tài khoản Admin đã được xem xét.</p>
-            </Card>
-          ) : (
-            <>
-              <div className="space-y-3">
-              {pendingPagination.pageItems.map((item) => {
-                const roleDef = item.adminRole ? getAdminRoleDef(item.adminRole) : null;
-                const isApproving = approvingId === item.id;
-                const isRejecting = rejectingId === item.id;
-                return (
-                  <Card key={item.id} className="p-5 border-2 border-amber-100 bg-warning/10 hover:border-amber-200 transition-colors">
-                    <div className="flex items-center gap-4">
-                      <div className="w-11 h-11 bg-gradient-to-br from-amber-400 to-amber-600 rounded-xl flex items-center justify-center text-white font-bold text-base flex-shrink-0 shadow-md shadow-amber-200">
-                        {item.name.charAt(0).toUpperCase()}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <p className="font-semibold text-foreground text-sm">{item.name}</p>
-                          {roleDef && (
-                            <span className={`inline-flex items-center gap-1 ${roleDef.color} border ${roleDef.borderColor} rounded-full px-2 py-0.5 text-[11px] font-semibold ${roleDef.textColor}`}>
-                              <span className={`w-1.5 h-1.5 rounded-full ${roleDef.dotColor}`} />
-                              {roleDef.label}
-                            </span>
-                          )}
-                          {statusBadge(item.status)}
-                        </div>
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1"><Mail className="w-3 h-3" />{item.email}</span>
-                          <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />Đăng ký {formatDate(item.createdAt)}</span>
-                        </div>
-                      </div>
-                      {isSuperAdmin ? (
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          <button onClick={() => handleReject(item.id, item.name)} disabled={isApproving || isRejecting} className="flex items-center gap-1.5 border border-red-200 text-red-600 hover:bg-destructive/10 disabled:opacity-40 rounded-xl px-4 py-2 text-sm font-semibold transition-all">
-                            {isRejecting ? <div className="w-3.5 h-3.5 border-2 border-red-400 border-t-transparent rounded-full animate-spin" /> : <XCircle className="w-3.5 h-3.5" />}
-                            Từ chối
-                          </button>
-                          <button onClick={() => handleApprove(item.id, item.name)} disabled={isApproving || isRejecting} className="flex items-center gap-1.5 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:opacity-40 text-white rounded-xl px-4 py-2 text-sm font-semibold transition-all shadow-sm shadow-primary/20">
-                            {isApproving ? <div className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
-                            Phê duyệt
-                          </button>
-                        </div>
-                      ) : (
-                        <span className="text-xs text-muted-foreground/80 italic flex-shrink-0">Chỉ Super Admin mới có thể duyệt</span>
-                      )}
-                    </div>
-                  </Card>
-                );
-              })}
-              </div>
-              <DataPagination
-                page={pendingPagination.page}
-                pageSize={pendingPagination.pageSize}
-                totalItems={pendingPagination.totalItems}
-                totalPages={pendingPagination.totalPages}
-                startIndex={pendingPagination.startIndex}
-                endIndex={pendingPagination.endIndex}
-                onPageChange={pendingPagination.setPage}
-                onPageSizeChange={pendingPagination.setPageSize}
-                itemLabel="yêu cầu"
-              />
-            </>
-          )
         ) : (
           <>
             <AdminFilterBar
@@ -446,7 +306,7 @@ export function AdminUsers() {
               </TableHeader>
               <TableBody>
                 {usersPagination.pageItems.map((item) => (
-                  <TableRow key={item.id} className={item.status === 'pending' ? 'bg-warning/15' : item.status === 'rejected' ? 'bg-destructive/10' : ''}>
+                  <TableRow key={item.id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0 ${item.role === 'admin' ? 'bg-gradient-to-br from-green-500 to-green-700' : 'bg-gradient-to-br from-green-500 to-emerald-700'}`}>
@@ -463,12 +323,6 @@ export function AdminUsers() {
                     <TableCell><span className="text-sm text-foreground/70 flex items-center gap-1"><Calendar className="w-3.5 h-3.5 text-muted-foreground/80" />{formatDate(item.createdAt)}</span></TableCell>
                     <TableCell>
                       <div className="flex gap-1 justify-end">
-                        {isSuperAdmin && item.role === 'admin' && item.status === 'pending' && (
-                          <>
-                            <button onClick={() => handleReject(item.id, item.name)} className="text-xs text-red-600 hover:text-red-700 font-semibold border border-red-200 hover:bg-destructive/10 rounded-lg px-2.5 py-1 transition-all">Từ chối</button>
-                            <button onClick={() => handleApprove(item.id, item.name)} className="text-xs text-primary hover:text-primary/80 font-semibold border border-primary/20 hover:bg-primary/5 rounded-lg px-2.5 py-1 transition-all">Duyệt</button>
-                          </>
-                        )}
                         <button onClick={() => openEdit(item)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-primary/5 text-muted-foreground/80 hover:text-primary transition-colors">
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
@@ -524,7 +378,7 @@ export function AdminUsers() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Vai trò</Label>
-                <Select value={addRole} onValueChange={(value: UserRole) => { setAddRole(value); setAddStatus(value === 'admin' ? 'pending' : 'active'); }}>
+                <Select value={addRole} onValueChange={(value: UserRole) => { setAddRole(value); setAddStatus('active'); }}>
                   <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="customer">Khách hàng</SelectItem>
@@ -537,7 +391,7 @@ export function AdminUsers() {
                 <Select value={addStatus} onValueChange={(value: UserStatus) => setAddStatus(value)}>
                   <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {statusOptions(addRole).map((status) => (
+                    {statusOptions().map((status) => (
                       <SelectItem key={status} value={status}>{STATUS_LABELS[status]}</SelectItem>
                     ))}
                   </SelectContent>
@@ -615,7 +469,7 @@ export function AdminUsers() {
                 <Select value={editStatus} onValueChange={(value: UserStatus) => setEditStatus(value)}>
                   <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {statusOptions(editUser.role).map((status) => (
+                    {statusOptions().map((status) => (
                       <SelectItem key={status} value={status}>{STATUS_LABELS[status]}</SelectItem>
                     ))}
                   </SelectContent>

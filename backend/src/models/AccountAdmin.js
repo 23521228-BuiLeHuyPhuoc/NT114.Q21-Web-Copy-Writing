@@ -39,8 +39,8 @@ const accountAdminSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['pending', 'active', 'rejected', 'locked'],
-      default: 'pending',
+      enum: ['active', 'locked'],
+      default: 'active',
       index: true,
     },
     avatar: {

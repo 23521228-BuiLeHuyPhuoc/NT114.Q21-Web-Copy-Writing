@@ -121,23 +121,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   register: async (data) => {
-    const accountType: AccountType = data.role === 'admin' ? 'admin' : 'user';
-    const payload = accountType === 'admin'
-      ? {
-          name: data.name,
-          email: data.email,
-          password: data.password,
-          adminRole: data.adminRole,
-          inviteCode: data.inviteCode,
-        }
-      : {
-          name: data.name,
-          email: data.email,
-          password: data.password,
-        };
-
     try {
-      await api.post<AuthApiResponse>(`/auth/${accountType}/register`, payload);
+      await api.post<AuthApiResponse>('/auth/user/register', {
+        name: data.name,
+        email: data.email,
+        password: data.password,
+      });
     } catch (error) {
       throw new Error(getErrorMessage(error, 'Dang ky that bai'));
     }

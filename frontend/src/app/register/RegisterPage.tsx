@@ -53,7 +53,6 @@ export function RegisterPage() {
         name: values.name.trim(),
         email: values.email.trim().toLowerCase(),
         password: values.password,
-        role: 'customer',
       });
       toast.success('Đăng ký thành công! Vui lòng đăng nhập.');
       navigate('/login');

@@ -8,7 +8,7 @@ import { Label } from '@/app/components/ui/label';
 import { BrandLogo } from '@/app/components/BrandLogo';
 import {
   Shield, Eye, EyeOff, Mail, Lock, AlertTriangle,
-  BarChart3, Users, Brain, Activity, UserPlus,
+  BarChart3, Users, Brain, Activity,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -25,7 +25,6 @@ export function AdminLoginPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [showPass, setShowPass] = useState(false);
-  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
@@ -40,82 +39,9 @@ export function AdminLoginPage() {
       toast.success('Chào mừng trở lại, Admin!');
       navigate('/admin');
     } catch (err: any) {
-      if (err.message === '__PENDING__') {
-        setPendingEmail(data.email);
-      } else {
-        toast.error(err.message || 'Sai thông tin đăng nhập hoặc không có quyền Admin.');
-      }
+      toast.error(err.message || 'Sai thông tin đăng nhập hoặc không có quyền Admin.');
     }
   };
-
-  // ── Pending approval screen ────────────────────────────────────
-  if (pendingEmail) {
-    return (
-      <div className="dark min-h-screen flex items-center justify-center bg-gray-950 px-5">
-        <div className="text-center max-w-sm">
-          {/* Icon */}
-          <div className="relative w-24 h-24 mx-auto mb-7">
-            <div className="absolute inset-0 rounded-full border-4 border-amber-500/20 border-t-amber-500 animate-spin" style={{ animationDuration: '2.5s' }} />
-            <div className="absolute inset-3 rounded-full bg-warning/10 flex items-center justify-center">
-              <div className="w-11 h-11 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center shadow-lg shadow-amber-900/50">
-                <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <circle cx="12" cy="12" r="10" strokeOpacity="0.3" />
-                  <path strokeLinecap="round" d="M12 6v6l4 2" />
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          <div className="inline-flex items-center gap-2 bg-amber-950/50 border border-amber-700/40 rounded-full px-4 py-1.5 mb-5">
-            <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-pulse" />
-            <span className="text-amber-400 text-xs font-semibold">Tài khoản đang chờ duyệt</span>
-          </div>
-
-          <h2 className="text-white mb-3">Chưa được phê duyệt</h2>
-          <p className="text-muted-foreground/80 text-sm leading-relaxed mb-6">
-            Tài khoản <span className="text-primary font-semibold">{pendingEmail}</span> đã đăng ký thành công nhưng chưa được Super Admin phê duyệt.
-          </p>
-
-          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4 mb-6 text-left space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="w-6 h-6 bg-primary/50 rounded-full flex items-center justify-center flex-shrink-0">
-                <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-              </div>
-              <p className="text-sm text-white">Đăng ký thành công</p>
-            </div>
-            <div className="ml-3 w-px h-3 bg-gray-700" />
-            <div className="flex items-center gap-3">
-              <div className="w-6 h-6 bg-warning/20 border-2 border-amber-500 rounded-full flex items-center justify-center flex-shrink-0 animate-pulse">
-                <div className="w-2 h-2 bg-amber-400 rounded-full" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-amber-300">Chờ Super Admin duyệt</p>
-                <p className="text-xs text-foreground/70">Có thể mất 24–48 giờ</p>
-              </div>
-            </div>
-            <div className="ml-3 w-px h-3 bg-gray-800" />
-            <div className="flex items-center gap-3 opacity-40">
-              <div className="w-6 h-6 bg-gray-800 border-2 border-gray-700 rounded-full flex items-center justify-center flex-shrink-0">
-                <Shield className="w-3 h-3 text-foreground/70" />
-              </div>
-              <p className="text-sm text-muted-foreground/80">Kích hoạt & đăng nhập</p>
-            </div>
-          </div>
-
-          <p className="text-foreground/70 text-xs mb-6">
-            Liên hệ <span className="text-muted-foreground/80">admin@copypro.vn</span> để được hỗ trợ nhanh hơn.
-          </p>
-
-          <button
-            onClick={() => setPendingEmail(null)}
-            className="w-full h-11 border border-gray-800 hover:border-gray-700 text-muted-foreground/80 hover:text-gray-200 hover:bg-gray-900 rounded-xl font-semibold text-sm transition-all"
-          >
-            ← Quay lại đăng nhập
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="dark min-h-screen flex bg-gray-950">
@@ -302,24 +228,7 @@ export function AdminLoginPage() {
             <p className="text-muted-foreground text-xs font-mono">admin@copypro.vn / admin123</p>
           </div>
 
-          {/* Register link */}
           <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-800" />
-            </div>
-            <div className="relative flex justify-center">
-              <span className="bg-gray-950 px-3 text-xs text-foreground/70">Chưa có tài khoản?</span>
-            </div>
-          </div>
-
-          <Link to="/admin/register">
-            <button className="w-full h-11 border border-amber-700/60 hover:border-amber-500 text-amber-300 hover:text-amber-200 rounded-xl font-semibold text-sm transition-all hover:bg-amber-950/30 flex items-center justify-center gap-2">
-              <UserPlus className="w-4 h-4" />
-              Đăng ký tài khoản Admin mới
-            </button>
-          </Link>
-
-          <div className="relative mt-4 mb-4">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-gray-800" />
             </div>

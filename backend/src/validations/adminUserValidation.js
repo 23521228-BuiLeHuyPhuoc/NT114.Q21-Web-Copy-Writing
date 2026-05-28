@@ -3,14 +3,10 @@ const { adminRoles } = require('./authValidation');
 
 const objectId = Joi.string().hex().length(24).required();
 const accountType = Joi.string().valid('user', 'admin').required();
-const status = Joi.string().valid('active', 'pending', 'rejected', 'locked');
+const status = Joi.string().valid('active', 'locked');
 
 const paramsWithAccountType = Joi.object({
   accountType,
-  id: objectId,
-});
-
-const paramsWithId = Joi.object({
   id: objectId,
 });
 
@@ -36,7 +32,6 @@ const updateAdminUserSchema = Joi.object({
 
 module.exports = {
   paramsWithAccountType,
-  paramsWithId,
   createAdminUserSchema,
   updateAdminUserSchema,
 };

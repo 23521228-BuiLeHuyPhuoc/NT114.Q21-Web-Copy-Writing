@@ -2,16 +2,6 @@ const asyncHandler = require('../../utils/asyncHandler');
 const authService = require('../../services/authService');
 const { clearAuthCookie, setAuthCookie } = require('../../utils/authCookie');
 
-const register = asyncHandler(async (req, res) => {
-  const user = await authService.registerAdmin(req.body);
-
-  return res.status(201).json({
-    success: true,
-    message: 'Admin registration submitted',
-    data: { user },
-  });
-});
-
 const login = asyncHandler(async (req, res) => {
   const data = await authService.loginAdmin(req.body.email, req.body.password);
   setAuthCookie(res, data.token);
@@ -73,7 +63,6 @@ const resetPassword = asyncHandler(async (req, res) => {
 });
 
 module.exports = {
-  register,
   login,
   me,
   logout,

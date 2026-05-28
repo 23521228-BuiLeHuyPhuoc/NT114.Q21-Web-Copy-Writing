@@ -6,7 +6,6 @@ const validate = require('../../middlewares/validation/validate');
 const {
   createAdminUserSchema,
   paramsWithAccountType,
-  paramsWithId,
   updateAdminUserSchema,
 } = require('../../validations/adminUserValidation');
 
@@ -17,8 +16,6 @@ router.use(protect('admin'));
 router.get('/', userController.listUsers);
 router.get('/trash', userController.listTrash);
 router.post('/', validate(createAdminUserSchema), userController.createUser);
-router.patch('/:id/approve', validate(paramsWithId, 'params'), userController.approveAdmin);
-router.patch('/:id/reject', validate(paramsWithId, 'params'), userController.rejectAdmin);
 router.patch('/:accountType/:id', validate({ params: paramsWithAccountType, body: updateAdminUserSchema }), userController.updateUser);
 router.delete('/:accountType/:id', validate(paramsWithAccountType, 'params'), userController.softDelete);
 router.patch('/:accountType/:id/restore', validate(paramsWithAccountType, 'params'), userController.restore);

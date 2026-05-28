@@ -61,16 +61,6 @@ export const adminUserService = {
     return response.data.data?.user as AdminUser;
   },
 
-  async approve(id: string) {
-    const response = await api.patch(`/admin/users/${id}/approve`);
-    return response.data.data?.user as AdminUser;
-  },
-
-  async reject(id: string) {
-    const response = await api.patch(`/admin/users/${id}/reject`);
-    return response.data.data?.user as AdminUser;
-  },
-
   async remove(accountType: AdminUserAccountType, id: string) {
     const response = await api.delete(`/admin/users/${accountType}/${id}`);
     return response.data.data?.user as AdminUser;

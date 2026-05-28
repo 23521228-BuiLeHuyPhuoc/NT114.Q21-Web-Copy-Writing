@@ -35,19 +35,8 @@ export function LoginPage() {
   const onSubmit = async (data: LoginFormData) => {
     try {
       await login(data.email, data.password, 'user');
-      // AuthContext throws if admin tries to log in here — allow customer only
-      const saved = localStorage.getItem('user');
-      if (saved) {
-        const u = JSON.parse(saved);
-        if (u.role === 'admin') {
-          // Redirect admin away
-          toast('Tài khoản Admin — chuyển hướng đến Admin Console');
-          navigate('/admin');
-        } else {
-          toast.success('Đăng nhập thành công! Chào mừng trở lại 👋');
-          navigate('/dashboard');
-        }
-      }
+      toast.success('Đăng nhập thành công! Chào mừng trở lại');
+      navigate('/dashboard');
     } catch {
       toast.error('Email hoặc mật khẩu không đúng.');
     }

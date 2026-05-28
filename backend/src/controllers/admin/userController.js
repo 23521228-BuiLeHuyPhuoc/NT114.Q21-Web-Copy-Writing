@@ -37,24 +37,6 @@ const updateUser = asyncHandler(async (req, res) => {
   });
 });
 
-const approveAdmin = asyncHandler(async (req, res) => {
-  const user = await adminUserService.approveAdmin(req.params.id);
-  return res.status(200).json({
-    success: true,
-    message: 'Admin approved',
-    data: { user },
-  });
-});
-
-const rejectAdmin = asyncHandler(async (req, res) => {
-  const user = await adminUserService.rejectAdmin(req.params.id);
-  return res.status(200).json({
-    success: true,
-    message: 'Admin rejected',
-    data: { user },
-  });
-});
-
 const softDelete = asyncHandler(async (req, res) => {
   const user = await adminUserService.softDelete(req.params.accountType, req.params.id);
   return res.status(200).json({
@@ -86,8 +68,6 @@ module.exports = {
   listTrash,
   createUser,
   updateUser,
-  approveAdmin,
-  rejectAdmin,
   softDelete,
   restore,
   permanentDelete,

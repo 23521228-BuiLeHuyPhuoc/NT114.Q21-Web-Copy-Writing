@@ -71,19 +71,6 @@ const userRegisterSchema = Joi.object({
   password: strongPassword,
 });
 
-const adminRegisterSchema = Joi.object({
-  name,
-  email,
-  password: strongPassword,
-  adminRole: Joi.string().valid(...adminRoles).default('analyst'),
-  inviteCode: Joi.string().trim().min(4).max(64).required().messages({
-    'any.required': 'Invite code is required',
-    'string.empty': 'Invite code is required',
-    'string.min': 'Invite code must be at least 4 characters',
-    'string.max': 'Invite code must be at most 64 characters',
-  }),
-});
-
 const loginSchema = Joi.object({
   email,
   password: loginPassword,
@@ -106,7 +93,6 @@ const resetPasswordSchema = Joi.object({
 
 module.exports = {
   userRegisterSchema,
-  adminRegisterSchema,
   loginSchema,
   forgotPasswordSchema,
   verifyOtpSchema,

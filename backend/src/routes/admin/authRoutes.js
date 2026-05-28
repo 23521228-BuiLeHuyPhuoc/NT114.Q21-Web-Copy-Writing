@@ -5,7 +5,6 @@ const { protect } = require('../../middlewares/auth/authMiddleware');
 const { loginLimiter, otpLimiter } = require('../../middlewares/rateLimit/authRateLimiter');
 const validate = require('../../middlewares/validation/validate');
 const {
-  adminRegisterSchema,
   forgotPasswordSchema,
   loginSchema,
   resetPasswordSchema,
@@ -14,7 +13,6 @@ const {
 
 const router = express.Router();
 
-router.post('/register', validate(adminRegisterSchema), authController.register);
 router.post('/login', loginLimiter, validate(loginSchema), authController.login);
 router.get('/me', protect('admin'), authController.me);
 router.post('/logout', authController.logout);

@@ -56,6 +56,14 @@ async function upsertAdmin() {
   return account;
 }
 
+async function cleanupAdminRegistrationData() {
+  const result = await AccountAdmin.deleteMany({
+    status: { $in: ['pending', 'rejected'] },
+  });
+
+  return result.deletedCount || 0;
+}
+
 async function upsertDemoProject(user, data) {
   const project = await Project.findOneAndUpdate(
     {
@@ -1127,6 +1135,7 @@ async function seedTemplates() {
 
 async function seed() {
   await connectDB();
+  const deletedPendingAdmins = await cleanupAdminRegistrationData();
   const [user, admin] = await Promise.all([upsertUser(), upsertAdmin()]);
   const projects = await seedDemoProjects(user);
   const [categories, templates, contents] = await Promise.all([
@@ -1138,6 +1147,7 @@ async function seed() {
 
   console.log(`Seeded AccountUser: ${user.email}`);
   console.log(`Seeded AccountAdmin: ${admin.email}`);
+  console.log(`Deleted PendingAdmin: ${deletedPendingAdmins}`);
   console.log(`Seeded Project: ${Object.keys(projects).length}`);
   console.log(`Seeded Category: ${categories.length}`);
   console.log(`Seeded Template: ${templates.length}`);

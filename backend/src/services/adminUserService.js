@@ -52,9 +52,13 @@ function sortNewestFirst(items) {
 
 async function listUsers({ deleted = false } = {}) {
   const filter = deleted ? { isDeleted: true } : { isDeleted: { $ne: true } };
+  const adminFilter = {
+    ...filter,
+    status: { $in: ['active', 'locked'] },
+  };
   const [users, admins] = await Promise.all([
     AccountUser.find(filter).sort({ createdAt: -1 }),
-    AccountAdmin.find(filter).sort({ createdAt: -1 }),
+    AccountAdmin.find(adminFilter).sort({ createdAt: -1 }),
   ]);
 
   return sortNewestFirst([
@@ -79,9 +83,9 @@ function normalizeUserStatus(status) {
 }
 
 function normalizeAdminStatus(status) {
-  if (!status) return 'pending';
-  if (!['pending', 'active', 'rejected', 'locked'].includes(status)) {
-    throw createError(400, 'Invalid admin status');
+  if (!status) return 'active';
+  if (!['active', 'locked'].includes(status)) {
+    throw createError(400, 'Admin status must be active or locked');
   }
   return status;
 }
@@ -140,20 +144,6 @@ async function updateUser(accountType, id, payload) {
   return serializeAccount(account, type);
 }
 
-async function approveAdmin(id) {
-  const account = await findAccountOrThrow('admin', id);
-  account.status = 'active';
-  await account.save();
-  return serializeAdmin(account);
-}
-
-async function rejectAdmin(id) {
-  const account = await findAccountOrThrow('admin', id);
-  account.status = 'rejected';
-  await account.save();
-  return serializeAdmin(account);
-}
-
 async function softDelete(accountType, id) {
   const type = toAccountType(accountType);
   const account = await findAccountOrThrow(type, id);
@@ -183,8 +173,6 @@ module.exports = {
   listUsers,
   createUser,
   updateUser,
-  approveAdmin,
-  rejectAdmin,
   softDelete,
   restore,
   permanentDelete,

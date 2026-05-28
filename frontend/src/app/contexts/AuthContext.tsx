@@ -7,7 +7,6 @@ import { useShallow } from 'zustand/react/shallow';
 import { useAuthStore } from '@/stores/authStore';
 
 export {
-  ADMIN_INVITE_CODE,
   type User,
   type UserRole,
   type UserStatus,
