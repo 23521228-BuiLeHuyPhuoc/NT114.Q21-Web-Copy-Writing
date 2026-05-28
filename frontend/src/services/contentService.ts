@@ -15,6 +15,7 @@ export interface GenerateContentPayload {
   language: string;
   model: string;
   length?: 'short' | 'medium' | 'long';
+  variations?: number;
   maxOutputTokens?: number;
   templateId?: string | null;
   projectId?: string | null;
@@ -25,7 +26,13 @@ export interface CreateContentPayload {
   prompt: string;
   outputText: string;
   type: string;
+  tone?: string;
+  language?: string;
+  model?: string;
+  modelUsed?: string;
   tags?: string[];
+  projectId?: string | null;
+  templateId?: string | null;
 }
 
 export interface UpdateContentPayload {

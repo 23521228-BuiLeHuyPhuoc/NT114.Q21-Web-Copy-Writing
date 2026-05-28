@@ -1,9 +1,37 @@
 const BLOCK_LABELS = [
+  'Headline',
+  'Subheadline',
+  'Mô tả ngắn',
+  'Lợi ích chính',
+  'Đặc điểm nổi bật',
+  'Hook',
+  'Caption',
+  'Hashtags',
   'Chủ đề',
   'Subject',
   'Preview text',
-  'CTA',
+  'Lời chào',
+  'Nội dung chính',
+  'Lời kêu gọi hành động',
+  'Lời kêu gọi hành động chính',
+  'Microcopy',
+  'Ngữ cảnh dùng',
   'P.S.',
+  'Hero headline',
+  'Pain point',
+  'Bằng chứng',
+  'Offer',
+  'SEO title',
+  'Meta description',
+  'Slug',
+  'Heading gợi ý',
+  'Outline',
+  'Mở bài',
+  'Quote',
+  'Người đánh giá',
+  'Bối cảnh',
+  'Kết quả',
+  'Lời kêu gọi hành động mềm',
   'Lưu ý',
   'Ưu đãi',
   'Mã giảm giá',
@@ -157,6 +185,12 @@ export function formatGeneratedCopyForTinyMce(text: string) {
     const label = line.match(/^([A-Za-zÀ-ỹĐđ. ]{2,32})\s*:\s*(.+)$/);
     if (label && BLOCK_LABELS.some(item => item.toLowerCase() === label[1].trim().toLowerCase())) {
       html.push(`<p><strong>${escapeHtml(label[1].trim())}:</strong> ${renderInlineMarkdown(label[2])}</p>`);
+      return;
+    }
+
+    const labelOnly = line.match(/^([A-Za-zÀ-ỹĐđ. ]{2,32})\s*:\s*$/);
+    if (labelOnly && BLOCK_LABELS.some(item => item.toLowerCase() === labelOnly[1].trim().toLowerCase())) {
+      html.push(`<p><strong>${escapeHtml(labelOnly[1].trim())}:</strong></p>`);
       return;
     }
 

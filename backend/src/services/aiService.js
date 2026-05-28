@@ -3,7 +3,7 @@ const TYPE_LABELS = {
   description: 'mô tả sản phẩm',
   social: 'bài đăng mạng xã hội',
   email: 'email marketing',
-  cta: 'call-to-action',
+  cta: 'lời kêu gọi hành động',
   landing: 'landing page',
   seo: 'nội dung SEO',
   review: 'review/testimonial',
@@ -35,32 +35,32 @@ const LENGTH_INSTRUCTIONS = {
   headline: {
     short: 'Mỗi phiên bản là 1 headline ngắn, khoảng 8-12 từ.',
     medium: 'Mỗi phiên bản gồm 1 headline và 1 câu phụ, khoảng 20-35 từ.',
-    long: 'Mỗi phiên bản gồm headline, subheadline, 2 lợi ích chính và CTA, khoảng 60-90 từ.',
+    long: 'Mỗi phiên bản gồm headline, subheadline, 2 lợi ích chính và lời kêu gọi hành động, khoảng 60-90 từ.',
   },
   description: {
     short: 'Mỗi phiên bản khoảng 50-80 từ, tập trung vào lợi ích chính.',
-    medium: 'Mỗi phiên bản khoảng 120-180 từ, có lợi ích, đặc điểm và CTA.',
-    long: 'Mỗi phiên bản khoảng 250-350 từ, có mở bài, lợi ích, bằng chứng thuyết phục và CTA.',
+    medium: 'Mỗi phiên bản khoảng 120-180 từ, có lợi ích, đặc điểm và lời kêu gọi hành động.',
+    long: 'Mỗi phiên bản khoảng 250-350 từ, có mở bài, lợi ích, bằng chứng thuyết phục và lời kêu gọi hành động.',
   },
   social: {
     short: 'Mỗi phiên bản khoảng 40-70 từ, dễ đọc trên mạng xã hội.',
-    medium: 'Mỗi phiên bản khoảng 100-150 từ, có hook, lợi ích, CTA và hashtag nếu phù hợp.',
-    long: 'Mỗi phiên bản khoảng 180-260 từ, có hook, storytelling ngắn, lợi ích, CTA và hashtag.',
+    medium: 'Mỗi phiên bản khoảng 100-150 từ, có hook, lợi ích, lời kêu gọi hành động và hashtag nếu phù hợp.',
+    long: 'Mỗi phiên bản khoảng 180-260 từ, có hook, storytelling ngắn, lợi ích, lời kêu gọi hành động và hashtag.',
   },
   email: {
     short: 'Mỗi phiên bản khoảng 80-120 từ, gồm subject và nội dung email ngắn.',
-    medium: 'Mỗi phiên bản khoảng 180-260 từ, gồm subject, mở bài, thân bài và CTA.',
-    long: 'Mỗi phiên bản khoảng 320-450 từ, gồm subject, preview text, nội dung thuyết phục và CTA rõ.',
+    medium: 'Mỗi phiên bản khoảng 180-260 từ, gồm subject, mở bài, thân bài và lời kêu gọi hành động.',
+    long: 'Mỗi phiên bản khoảng 320-450 từ, gồm subject, preview text, nội dung thuyết phục và lời kêu gọi hành động rõ.',
   },
   cta: {
-    short: 'Mỗi phiên bản là 1 CTA rất ngắn, khoảng 3-8 từ.',
-    medium: 'Mỗi phiên bản gồm CTA chính và 1 câu hỗ trợ, khoảng 15-25 từ.',
-    long: 'Mỗi phiên bản gồm CTA chính, microcopy hỗ trợ và lý do hành động, khoảng 35-60 từ.',
+    short: 'Mỗi phiên bản là 1 lời kêu gọi hành động rất ngắn, khoảng 3-8 từ.',
+    medium: 'Mỗi phiên bản gồm lời kêu gọi hành động chính và 1 câu hỗ trợ, khoảng 15-25 từ.',
+    long: 'Mỗi phiên bản gồm lời kêu gọi hành động chính, microcopy hỗ trợ và lý do hành động, khoảng 35-60 từ.',
   },
   landing: {
-    short: 'Mỗi phiên bản khoảng 120-180 từ, gồm headline, subheadline, lợi ích và CTA.',
-    medium: 'Mỗi phiên bản khoảng 300-450 từ, gồm hero, lợi ích, bằng chứng và CTA.',
-    long: 'Mỗi phiên bản khoảng 600-850 từ, gồm hero, pain point, benefits, proof, offer và CTA.',
+    short: 'Mỗi phiên bản khoảng 120-180 từ, gồm headline, subheadline, lợi ích và lời kêu gọi hành động.',
+    medium: 'Mỗi phiên bản khoảng 300-450 từ, gồm hero, lợi ích, bằng chứng và lời kêu gọi hành động.',
+    long: 'Mỗi phiên bản khoảng 600-850 từ, gồm hero, pain point, benefits, proof, offer và lời kêu gọi hành động.',
   },
   seo: {
     short: 'Mỗi phiên bản gồm SEO title và meta description ngắn.',
@@ -78,6 +78,93 @@ const LENGTH_INSTRUCTIONS = {
     long: 'Mỗi phiên bản khoảng 250-400 từ, có cấu trúc rõ và đủ luận điểm.',
   },
 };
+
+function getTypeFormatInstruction(payload) {
+  const length = getLengthLevel(payload.length);
+
+  switch (payload.type) {
+    case 'headline':
+      return [
+        'Format bắt buộc cho từng phiên bản headline:',
+        'Headline: một câu chính sắc, dễ đọc, có lợi ích hoặc điểm khác biệt.',
+        length !== 'short' ? 'Subheadline: một câu phụ làm rõ lời hứa của headline.' : '',
+        length === 'long' ? 'Lợi ích chính:\n- Lợi ích 1\n- Lợi ích 2' : '',
+        length !== 'short' ? 'Lời kêu gọi hành động: một câu ngắn thúc đẩy người đọc hành động.' : '',
+        'Không viết thành email, bài social, mô tả sản phẩm hoặc landing page đầy đủ.',
+      ].filter(Boolean).join('\n');
+    case 'description':
+      return [
+        'Format bắt buộc cho từng phiên bản mô tả sản phẩm:',
+        'Mô tả ngắn: đoạn mở đầu giới thiệu sản phẩm/dịch vụ.',
+        'Lợi ích chính:\n- Lợi ích 1\n- Lợi ích 2',
+        'Đặc điểm nổi bật:\n- Đặc điểm 1\n- Đặc điểm 2',
+        'Lời kêu gọi hành động: lời kêu gọi mua, đăng ký hoặc liên hệ.',
+        'Không dùng format email, SEO metadata hoặc caption mạng xã hội.',
+      ].join('\n');
+    case 'social':
+      return [
+        'Format bắt buộc cho từng phiên bản social post:',
+        'Hook: câu mở đầu kéo chú ý.',
+        'Caption: nội dung chính dễ đọc trên mạng xã hội, có thể xuống dòng.',
+        'Lời kêu gọi hành động: hành động mong muốn.',
+        'Hashtags: 3-6 hashtag liên quan.',
+        'Không thêm Subject, Preview text, SEO title hoặc Meta description.',
+      ].join('\n');
+    case 'email':
+      return [
+        'Format bắt buộc cho từng phiên bản email:',
+        'Subject: dòng tiêu đề email.',
+        'Preview text: đoạn xem trước ngắn.',
+        'Lời chào: lời chào phù hợp người nhận.',
+        'Nội dung chính: tách thành các đoạn ngắn, có thể có bullet nếu cần.',
+        'Lời kêu gọi hành động: hành động chính trong email.',
+        length === 'long' ? 'P.S.: lời nhắc hoặc ưu đãi cuối email nếu phù hợp.' : '',
+        'Không viết như social caption, landing page hoặc SEO snippet.',
+      ].filter(Boolean).join('\n');
+    case 'cta':
+      return [
+        'Format bắt buộc cho từng phiên bản lời kêu gọi hành động:',
+        'Lời kêu gọi hành động chính: câu/nút kêu gọi hành động.',
+        length !== 'short' ? 'Microcopy: một câu hỗ trợ ngay dưới lời kêu gọi hành động.' : '',
+        length === 'long' ? 'Ngữ cảnh dùng: vị trí nên đặt lời kêu gọi hành động hoặc tình huống sử dụng.' : '',
+        'Chỉ viết lời kêu gọi hành động, không thêm bài quảng cáo dài.',
+      ].filter(Boolean).join('\n');
+    case 'landing':
+      return [
+        'Format bắt buộc cho từng phiên bản landing page:',
+        'Hero headline: tiêu đề chính của hero section.',
+        'Subheadline: câu phụ làm rõ giá trị.',
+        length === 'long' ? 'Pain point: vấn đề khách hàng đang gặp.' : '',
+        'Lợi ích chính:\n- Lợi ích 1\n- Lợi ích 2\n- Lợi ích 3',
+        'Bằng chứng: review, số liệu, cam kết hoặc social proof.',
+        length !== 'short' ? 'Offer: ưu đãi hoặc lý do hành động ngay.' : '',
+        'Lời kêu gọi hành động: nút hoặc lời kêu gọi hành động chính.',
+        'Không viết thành email, SEO metadata hoặc một caption social ngắn.',
+      ].filter(Boolean).join('\n');
+    case 'seo':
+      return [
+        'Format bắt buộc cho từng phiên bản SEO:',
+        'SEO title: tối đa khoảng 60 ký tự, có từ khóa chính.',
+        'Meta description: tối đa khoảng 155 ký tự, có lợi ích và lời kêu gọi hành động nhẹ.',
+        'Slug: URL slug ngắn, không dấu, dùng dấu gạch ngang.',
+        'Heading gợi ý:\n- H2: ...\n- H2: ...\n- H3: ...',
+        length === 'long' ? 'Mở bài: đoạn mở đầu khoảng 100-140 từ, tự nhiên và có từ khóa.' : '',
+        'Không thêm lời chào email, hashtag social hoặc testimonial.',
+      ].filter(Boolean).join('\n');
+    case 'review':
+      return [
+        'Format bắt buộc cho từng phiên bản review/testimonial:',
+        'Quote: lời nhận xét tự nhiên ở ngôi thứ nhất.',
+        'Người đánh giá: chân dung khách hàng phù hợp, có thể dùng placeholder.',
+        'Bối cảnh: tình huống trước khi dùng sản phẩm/dịch vụ.',
+        'Kết quả: thay đổi hoặc lợi ích sau khi sử dụng.',
+        'Lời kêu gọi hành động mềm: lời khuyến nghị tự nhiên, không bán hàng quá đà.',
+        'Không viết thành mô tả sản phẩm, email hoặc SEO metadata.',
+      ].join('\n');
+    default:
+      return 'Format bắt buộc: chia thành các đoạn ngắn, có nhãn rõ, có lời kêu gọi hành động phù hợp và không trộn format của loại nội dung khác.';
+  }
+}
 
 const GEMINI_MODEL_MAP = {
   'gemini-flash': 'gemini-2.5-flash',
@@ -118,11 +205,39 @@ const GROQ_MODEL_MAP = {
 };
 
 const FORMAT_BOUNDARY_LABELS = [
+  'Headline',
+  'Subheadline',
+  'Mô tả ngắn',
+  'Lợi ích chính',
+  'Đặc điểm nổi bật',
+  'Hook',
+  'Caption',
+  'Hashtags',
   'Chủ đề',
   'Subject',
   'Preview text',
-  'CTA',
+  'Lời chào',
+  'Nội dung chính',
+  'Lời kêu gọi hành động',
+  'Lời kêu gọi hành động chính',
+  'Microcopy',
+  'Ngữ cảnh dùng',
   'P.S.',
+  'Hero headline',
+  'Pain point',
+  'Bằng chứng',
+  'Offer',
+  'SEO title',
+  'Meta description',
+  'Slug',
+  'Heading gợi ý',
+  'Outline',
+  'Mở bài',
+  'Quote',
+  'Người đánh giá',
+  'Bối cảnh',
+  'Kết quả',
+  'Lời kêu gọi hành động mềm',
   'Lưu ý',
   'Ưu đãi',
   'Mã giảm giá',
@@ -134,13 +249,6 @@ const INLINE_BULLET_PATTERN = /\s[-*]\s+(?=[A-ZÀ-ỴĐ0-9])/g;
 
 function estimateTokens(text) {
   return Math.max(1, Math.ceil(String(text || '').length / 4));
-}
-
-function compactPrompt(prompt) {
-  return String(prompt || '')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, 500);
 }
 
 function labelFromMap(map, value, fallback) {
@@ -171,6 +279,25 @@ function getMaxOutputTokens(payload) {
   };
 
   return tokenMap[length];
+}
+
+function getVariationCount(payload) {
+  const requested = Number(payload.variations);
+  const fromPrompt = Number(String(payload.prompt || '').match(/Tạo đúng\s*(\d+)\s*phiên bản/i)?.[1]);
+  const count = Number.isFinite(requested) ? requested : fromPrompt;
+
+  if (!Number.isFinite(count)) return 1;
+  return Math.min(5, Math.max(1, Math.round(count)));
+}
+
+function getVariationInstruction(payload) {
+  const count = getVariationCount(payload);
+  if (count <= 1) {
+    return 'Tạo đúng 1 phiên bản hoàn chỉnh.';
+  }
+
+  const labels = Array.from({ length: count }, (_, index) => `"Phiên bản ${index + 1}:"`).join(', ');
+  return `Tạo đúng ${count} phiên bản riêng biệt, tách rõ bằng nhãn ${labels}. Mỗi phiên bản phải tự đứng độc lập và dùng đúng format của loại nội dung đã chọn.`;
 }
 
 function splitLongParagraph(block) {
@@ -239,12 +366,22 @@ function cleanupMarkdownAsterisks(text) {
     .replace(/\*[ \t]+/g, ' ');
 }
 
+function expandActionAcronym(text) {
+  return String(text || '')
+    .replace(/(^|\n)(\s*)[Cc][Tt][Aa]\s+chính\s*:/g, '$1$2Lời kêu gọi hành động chính:')
+    .replace(/(^|\n)(\s*)[Cc][Tt][Aa]\s+mềm\s*:/g, '$1$2Lời kêu gọi hành động mềm:')
+    .replace(/(^|\n)(\s*)[Cc][Tt][Aa]\s*:/g, '$1$2Lời kêu gọi hành động:')
+    .replace(/\b[Cc][Tt][Aa]\s+chính\b/g, 'lời kêu gọi hành động chính')
+    .replace(/\b[Cc][Tt][Aa]\s+mềm\b/g, 'lời kêu gọi hành động mềm')
+    .replace(/\b[Cc][Tt][Aa]\b/g, 'lời kêu gọi hành động');
+}
+
 function normalizeCopyFormatting(outputText) {
   const labelPattern = FORMAT_BOUNDARY_LABELS
     .map((label) => label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
     .join('|');
 
-  return cleanupMarkdownAsterisks(outputText)
+  return expandActionAcronym(cleanupMarkdownAsterisks(outputText))
     .replace(/\r\n/g, '\n')
     .replace(/[ \t]+/g, ' ')
     .replace(/\s*(Phiên bản\s*\d+\s*:)/gi, '\n\n$1\n')
@@ -273,11 +410,14 @@ function buildProviderPrompt(payload) {
     `Độ dài bắt buộc: ${getLengthInstruction(payload)}`,
     `Giới hạn output tối đa: ${getMaxOutputTokens(payload)} tokens.`,
     'Định dạng cho TinyMCE: tách mỗi đoạn bằng một dòng trống, dùng "- " cho danh sách, không dùng dấu * hoặc ** để nhấn mạnh vì editor đã xử lý định dạng.',
-    'Không gộp toàn bộ nội dung thành một đoạn dài. Với email, tách riêng Chủ đề, lời chào, từng đoạn thân bài, danh sách ưu đãi và CTA.',
+    'Không gộp toàn bộ nội dung thành một đoạn dài; tách theo đúng các nhãn của format riêng bên dưới.',
     'Không dùng dấu gạch ngang "-" trong dòng Chủ đề/Subject để tách vế; nếu cần hãy dùng dấu hai chấm hoặc dấu chấm phẩy để tránh bị hiểu nhầm là bullet list.',
+    getVariationInstruction(payload),
+    'Format riêng theo loại nội dung:',
+    getTypeFormatInstruction(payload),
+    'Không trộn format của loại nội dung khác vào kết quả.',
     'Chỉ trả về nội dung copy cuối cùng, không giải thích quy trình, không lặp lại role/task, không phân tích bằng tiếng Anh.',
     'Không tự đổi sản phẩm/dịch vụ trong yêu cầu gốc sang sản phẩm khác.',
-    'Nếu tạo nhiều phương án, tách rõ bằng nhãn "Phiên bản 1:", "Phiên bản 2:", "Phiên bản 3:".',
     'Không bọc kết quả trong markdown code block.',
     '',
     'Yêu cầu gốc:',
@@ -298,33 +438,109 @@ function cleanProviderOutput(outputText) {
   return normalizeCopyFormatting(text.replace(/\n{3,}/g, '\n\n').trim());
 }
 
-function buildFallbackOutput(payload) {
-  const type = labelFromMap(TYPE_LABELS, payload.type, 'nội dung marketing');
+function extractPromptValue(prompt, label) {
+  const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const match = String(prompt || '').match(new RegExp(`${escapedLabel}:\\s*([^\\n]+)`, 'i'));
+  const value = match?.[1]?.replace(/\.$/, '').trim();
+
+  if (!value || /chưa được cung cấp/i.test(value)) return '';
+  return value;
+}
+
+function buildFallbackVersion(payload, index) {
   const tone = labelFromMap(TONE_LABELS, payload.tone, 'rõ ràng');
   const industry = labelFromMap(INDUSTRY_LABELS, payload.industry, '');
-  const prompt = compactPrompt(payload.prompt);
-  const language = payload.language === 'en' ? 'English' : 'Tiếng Việt';
+  const length = getLengthLevel(payload.length);
+  const product = extractPromptValue(payload.prompt, 'Sản phẩm/dịch vụ') || 'giải pháp của bạn';
+  const audience = extractPromptValue(payload.prompt, 'Đối tượng mục tiêu') || 'khách hàng mục tiêu';
+  const keyword = extractPromptValue(payload.prompt, 'Từ khóa chính') || product;
+  const angle = [
+    'lợi ích rõ ràng',
+    'niềm tin và bằng chứng',
+    'ưu đãi hành động nhanh',
+    'trải nghiệm khác biệt',
+    'giá trị dài hạn',
+  ][index % 5];
 
-  return [
-    `# Bản nháp ${type}`,
-    '',
-    `**Ngôn ngữ:** ${language}`,
-    industry ? `**Ngành nghề:** ${industry}` : '',
-    `**Tone:** ${tone}`,
-    '',
-    '## Phiên bản đề xuất',
-    `Khám phá giải pháp nổi bật dành cho nhu cầu của bạn. Nội dung được viết theo phong cách ${tone}, tập trung vào lợi ích rõ ràng, tạo niềm tin nhanh và thúc đẩy người đọc hành động.`,
-    '',
-    '## Điểm nhấn',
-    '- Lợi ích chính được trình bày ngắn gọn, dễ hiểu.',
-    '- Thông điệp có thể dùng cho quảng cáo, landing page hoặc social post.',
-    '- CTA rõ ràng để tăng tỷ lệ chuyển đổi.',
-    '',
-    '## CTA',
-    'Bắt đầu ngay hôm nay để nhận tư vấn và ưu đãi phù hợp nhất.',
-    '',
-    prompt ? `> Gợi ý đã dùng: ${prompt}` : '',
-  ].filter(Boolean).join('\n');
+  switch (payload.type) {
+    case 'headline':
+      return [
+        `Headline: ${product} giúp ${audience} nhận ngay ${angle}.`,
+        length !== 'short' ? `Subheadline: Thông điệp ${tone} làm rõ lý do nên chọn ${product} trong ngành ${industry || 'phù hợp'}.` : '',
+        length === 'long' ? `Lợi ích chính:\n- Dễ hiểu, dễ nhớ và tập trung vào nhu cầu thật.\n- Có điểm nhấn khác biệt để tăng tỷ lệ nhấp.` : '',
+        length !== 'short' ? 'Lời kêu gọi hành động: Khám phá ngay hôm nay.' : '',
+      ].filter(Boolean).join('\n\n');
+    case 'description':
+      return [
+        `Mô tả ngắn: ${product} được thiết kế để giúp ${audience} giải quyết nhu cầu quan trọng với phong cách ${tone}, tập trung vào ${angle}.`,
+        'Lợi ích chính:\n- Trình bày giá trị cốt lõi rõ ràng, dễ hiểu.\n- Tạo niềm tin bằng cam kết và trải nghiệm thực tế.',
+        'Đặc điểm nổi bật:\n- Phù hợp với nhiều tình huống sử dụng.\n- Dễ bắt đầu, dễ ra quyết định.',
+        'Lời kêu gọi hành động: Liên hệ ngay để nhận tư vấn và ưu đãi phù hợp.',
+      ].join('\n\n');
+    case 'social':
+      return [
+        `Hook: Bạn đang tìm ${product} thật sự đáng thử?`,
+        `Caption: Đây là lựa chọn dành cho ${audience} muốn có ${angle} mà không mất quá nhiều thời gian so sánh. Thông điệp ${tone}, dễ đọc, dễ chia sẻ và tập trung vào điều khách hàng quan tâm nhất.`,
+        'Lời kêu gọi hành động: Nhắn tin ngay để được gợi ý lựa chọn phù hợp.',
+        `Hashtags: #${keyword.replace(/\s+/g, '')} #UuDai #GiaiPhapTot #TraiNghiemMoi`,
+      ].join('\n\n');
+    case 'email':
+      return [
+        `Subject: ${product}: ưu đãi mới dành cho bạn`,
+        `Preview text: Khám phá ${angle} với thông điệp ${tone}, dễ hành động ngay hôm nay.`,
+        'Lời chào: Chào bạn,',
+        `Nội dung chính: Nếu bạn đang cân nhắc một lựa chọn phù hợp hơn cho nhu cầu hiện tại, ${product} có thể là điểm bắt đầu đáng thử.`,
+        `Nội dung chính: Giải pháp này tập trung vào ${angle}, giúp ${audience} hiểu nhanh giá trị và ra quyết định tự tin hơn.`,
+        'Lời kêu gọi hành động: Xem ưu đãi và nhận tư vấn ngay.',
+        length === 'long' ? 'P.S.: Ưu đãi có thể thay đổi theo từng thời điểm, nên hãy kiểm tra sớm để không bỏ lỡ.' : '',
+      ].filter(Boolean).join('\n\n');
+    case 'cta':
+      return [
+        `Lời kêu gọi hành động chính: Khám phá ${product} ngay`,
+        length !== 'short' ? `Microcopy: Nhận tư vấn nhanh để chọn giải pháp phù hợp với ${audience}.` : '',
+        length === 'long' ? 'Ngữ cảnh dùng: Phù hợp đặt dưới hero section, cuối mô tả sản phẩm hoặc sau bảng giá.' : '',
+      ].filter(Boolean).join('\n\n');
+    case 'landing':
+      return [
+        `Hero headline: ${product} cho ${audience} muốn ${angle}`,
+        `Subheadline: Một lời hứa ${tone}, dễ hiểu và tập trung vào kết quả khách hàng mong đợi.`,
+        length === 'long' ? `Pain point: ${audience} thường mất thời gian so sánh, thiếu niềm tin và chưa thấy rõ giá trị trước khi hành động.` : '',
+        'Lợi ích chính:\n- Nắm nhanh giá trị cốt lõi ngay từ phần đầu.\n- Có lý do tin tưởng trước khi ra quyết định.\n- Lời kêu gọi hành động rõ để chuyển từ quan tâm sang hành động.',
+        'Bằng chứng: Được xây dựng dựa trên nhu cầu thực tế, cam kết minh bạch và trải nghiệm khách hàng.',
+        length !== 'short' ? 'Offer: Nhận tư vấn nhanh hoặc ưu đãi dùng thử trong thời gian giới hạn.' : '',
+        'Lời kêu gọi hành động: Bắt đầu ngay hôm nay.',
+      ].filter(Boolean).join('\n\n');
+    case 'seo':
+      return [
+        `SEO title: ${keyword} uy tín, dễ chọn cho ${audience}`,
+        `Meta description: Tìm hiểu ${product} với lợi ích rõ ràng, thông tin dễ hiểu và lời kêu gọi hành động nhẹ để bạn chọn giải pháp phù hợp.`,
+        `Slug: ${keyword.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`,
+        'Heading gợi ý:\n- H2: Vì sao nên chọn giải pháp này?\n- H2: Lợi ích nổi bật cho khách hàng\n- H3: Cách bắt đầu nhanh',
+        length === 'long' ? `Mở bài: Khi tìm kiếm ${keyword}, khách hàng thường cần thông tin rõ ràng, đáng tin và dễ áp dụng. Nội dung này giúp bạn hiểu nhanh giá trị của ${product}, các lợi ích chính và bước tiếp theo để ra quyết định tự tin hơn.` : '',
+      ].filter(Boolean).join('\n\n');
+    case 'review':
+      return [
+        `Quote: "Tôi chọn ${product} vì thông điệp rõ ràng và đúng nhu cầu. Trải nghiệm thực tế giúp tôi thấy ${angle} chứ không chỉ là lời quảng cáo."`,
+        `Người đánh giá: Khách hàng trong nhóm ${audience}`,
+        `Bối cảnh: Trước đó khách hàng cần một lựa chọn đáng tin trong lĩnh vực ${industry || 'liên quan'}.`,
+        'Kết quả: Quyết định nhanh hơn, hiểu rõ lợi ích hơn và sẵn sàng giới thiệu cho người khác.',
+        'Lời kêu gọi hành động mềm: Rất đáng thử nếu bạn cũng đang tìm một lựa chọn rõ ràng và dễ bắt đầu.',
+      ].join('\n\n');
+    default:
+      return [
+        `Mô tả ngắn: ${product} dành cho ${audience}, tập trung vào ${angle}.`,
+        'Lời kêu gọi hành động: Bắt đầu ngay hôm nay.',
+      ].join('\n\n');
+  }
+}
+
+function buildFallbackOutput(payload) {
+  const count = getVariationCount(payload);
+
+  return Array.from({ length: count }, (_, index) => [
+    `Phiên bản ${index + 1}:`,
+    buildFallbackVersion(payload, index),
+  ].join('\n')).join('\n\n');
 }
 
 function getGeminiModel(model) {
@@ -338,6 +554,10 @@ function getOpenAIModel(model) {
   };
 
   return process.env.OPENAI_MODEL || modelMap[model] || model || 'gpt-4o-mini';
+}
+
+function getOpenAIBaseUrl() {
+  return (process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1').replace(/\/+$/, '');
 }
 
 function getOpenRouterModel(model) {
@@ -454,7 +674,7 @@ async function callOpenAI(payload) {
   try {
     const model = getOpenAIModel(payload.model);
     const providerPrompt = buildProviderPrompt(payload);
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch(`${getOpenAIBaseUrl()}/chat/completions`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,

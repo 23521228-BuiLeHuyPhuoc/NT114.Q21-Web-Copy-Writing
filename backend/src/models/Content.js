@@ -17,6 +17,7 @@ const contentSchema = new mongoose.Schema(
     },
     projectId: {
       type: mongoose.Schema.Types.ObjectId,
+      ref: 'Project',
       default: null,
       index: true,
     },
@@ -35,7 +36,7 @@ const contentSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
-      maxlength: 6000,
+      maxlength: 14000,
     },
     outputText: {
       type: String,

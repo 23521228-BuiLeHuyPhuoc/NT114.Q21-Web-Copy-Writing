@@ -24,6 +24,7 @@ import { looksLikeHtml, sanitizeHtml } from '@/lib/richText';
 
 interface Props {
   isGenerating: boolean;
+  isSaving?: boolean;
   streamText: string;
   results: string[];
   selectedResult: number;
@@ -49,6 +50,7 @@ function countWords(text: string) {
 
 export function GeneratorResults({
   isGenerating,
+  isSaving = false,
   streamText,
   results,
   selectedResult,
@@ -196,8 +198,8 @@ export function GeneratorResults({
                   <Button size="sm" variant="outline" onClick={() => onCopy(activeResult)}>
                     <Copy className="w-4 h-4 mr-1" /> Sao chép
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => onSave(activeResult)}>
-                    <Save className="w-4 h-4 mr-1" /> Lưu
+                  <Button size="sm" variant="outline" disabled={isSaving} onClick={() => onSave(activeResult)}>
+                    <Save className="w-4 h-4 mr-1" /> {isSaving ? 'Đang lưu...' : 'Lưu'}
                   </Button>
                   <Button size="sm" variant="outline" onClick={() => onDownload(activeResult)}>
                     <Download className="w-4 h-4 mr-1" /> Tải xuống
@@ -227,7 +229,7 @@ export function GeneratorResults({
         {[
           { icon: Zap, label: 'Tạo nhanh', color: 'text-amber-600 bg-warning/10' },
           { icon: Star, label: 'Chỉnh sửa rich text', color: 'text-primary bg-primary/5' },
-          { icon: History, label: 'Lưu tự động', color: 'text-primary bg-primary/5' },
+          { icon: History, label: 'Lưu thủ công', color: 'text-primary bg-primary/5' },
           { icon: CheckCircle2, label: 'Đa phiên bản', color: 'text-primary bg-primary/5' },
         ].map(f => {
           const Icon = f.icon;

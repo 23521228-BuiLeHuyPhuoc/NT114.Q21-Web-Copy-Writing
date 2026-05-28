@@ -54,7 +54,7 @@ const deleteContent = asyncHandler(async (req, res) => {
 const generateContent = asyncHandler(async (req, res) => {
   const data = await contentService.generateContent(req.user._id, req.body);
 
-  return res.status(201).json({
+  return res.status(200).json({
     success: true,
     message: data.fallback ? 'Content generated with fallback' : 'Content generated',
     data,

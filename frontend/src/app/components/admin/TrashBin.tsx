@@ -1,4 +1,4 @@
-import { Trash2, RotateCcw, X, Flame } from 'lucide-react';
+import { Flame, RotateCcw, Trash2, X } from 'lucide-react';
 import { DataPagination } from '@/app/components/common/DataPagination';
 import { usePagination } from '@/hooks/usePagination';
 
@@ -16,12 +16,17 @@ interface TrashBinProps {
   onRestore: (id: number | string) => void;
   onPermanentDelete: (id: number | string) => void;
   entityName?: string;
-  loading?: string | null; // id being processed
+  loading?: string | null;
 }
 
 export function TrashBin({
-  open, onClose, items, onRestore, onPermanentDelete,
-  entityName = 'mục', loading,
+  open,
+  onClose,
+  items,
+  onRestore,
+  onPermanentDelete,
+  entityName = 'mục',
+  loading,
 }: TrashBinProps) {
   const pagination = usePagination(items, {
     initialPageSize: 5,
@@ -32,12 +37,9 @@ export function TrashBin({
 
   return (
     <div className="fixed inset-0 z-[90] flex items-center justify-end">
-      {/* Backdrop */}
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
 
-      {/* Drawer */}
       <div className="relative bg-card w-full max-w-md h-full flex flex-col shadow-2xl">
-        {/* Header */}
         <div className="flex items-center justify-between p-5 border-b bg-surface-muted">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 bg-destructive/10 rounded-xl flex items-center justify-center">
@@ -45,7 +47,7 @@ export function TrashBin({
             </div>
             <div>
               <p className="font-bold text-foreground">Thùng rác</p>
-              <p className="text-xs text-muted-foreground">{items.length} {entityName} đã xoá</p>
+              <p className="text-xs text-muted-foreground">{items.length} {entityName} đã xóa</p>
             </div>
           </div>
           <button
@@ -56,17 +58,15 @@ export function TrashBin({
           </button>
         </div>
 
-        {/* Auto-delete notice */}
         {items.length > 0 && (
           <div className="mx-4 mt-4 bg-warning/10 border border-amber-200 rounded-xl p-3 flex gap-2.5 items-start">
             <Flame className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
             <p className="text-xs text-amber-700 leading-relaxed">
-              Các mục trong thùng rác sẽ bị <span className="font-semibold">xoá vĩnh viễn sau 30 ngày</span>.
+              Các mục trong thùng rác sẽ bị <span className="font-semibold">xóa vĩnh viễn sau 30 ngày</span>.
             </p>
           </div>
         )}
 
-        {/* List */}
         <div className="flex-1 overflow-y-auto p-4 space-y-2">
           {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-center">
@@ -74,10 +74,10 @@ export function TrashBin({
                 <Trash2 className="w-8 h-8 text-muted-foreground/60" />
               </div>
               <p className="font-semibold text-muted-foreground/80">Thùng rác trống</p>
-              <p className="text-xs text-muted-foreground/80 mt-1">Không có {entityName} nào bị xoá</p>
+              <p className="text-xs text-muted-foreground/80 mt-1">Không có {entityName} nào bị xóa</p>
             </div>
           ) : (
-            pagination.pageItems.map(item => {
+            pagination.pageItems.map((item) => {
               const isLoading = loading === String(item.id);
               return (
                 <div
@@ -91,7 +91,7 @@ export function TrashBin({
                         <p className="text-xs text-muted-foreground/80 mt-0.5 truncate">{item.subLabel}</p>
                       )}
                       <p className="text-[11px] text-muted-foreground/80 mt-1">
-                        Đã xoá lúc <span className="font-medium">{item.deletedAt}</span>
+                        Đã xóa lúc <span className="font-medium">{item.deletedAt}</span>
                       </p>
                     </div>
                   </div>
@@ -116,7 +116,7 @@ export function TrashBin({
                       className="flex-1 flex items-center justify-center gap-1.5 h-8 border border-red-200 text-red-600 hover:bg-destructive/10 rounded-lg text-xs font-semibold transition-colors disabled:opacity-40"
                     >
                       <Flame className="w-3.5 h-3.5" />
-                      Xoá vĩnh viễn
+                      Xóa vĩnh viễn
                     </button>
                   </div>
                 </div>

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { contentService, type ContentListParams } from '@/services/contentService';
+import { contentService, type ContentListParams, type CreateContentPayload } from '@/services/contentService';
+import { templateKeys } from '@/hooks/queries/useTemplates';
 
 export const contentKeys = {
   all: ['contents'] as const,
@@ -29,8 +30,23 @@ export function useGenerateContent() {
     mutationFn: contentService.generate,
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: contentKeys.all });
+      queryClient.invalidateQueries({ queryKey: templateKeys.all });
       if (result.content.id) {
         queryClient.setQueryData(contentKeys.detail(result.content.id), result.content);
+      }
+    },
+  });
+}
+
+export function useCreateContent() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: CreateContentPayload) => contentService.create(payload),
+    onSuccess: (content) => {
+      queryClient.invalidateQueries({ queryKey: contentKeys.all });
+      if (content.id) {
+        queryClient.setQueryData(contentKeys.detail(content.id), content);
       }
     },
   });

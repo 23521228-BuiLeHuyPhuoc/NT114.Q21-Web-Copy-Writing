@@ -1,6 +1,8 @@
 const Content = require('../models/Content');
 const UsageLog = require('../models/UsageLog');
 const aiService = require('./aiService');
+const projectService = require('./projectService');
+const templateService = require('./templateService');
 const createError = require('../utils/createError');
 
 function escapeRegExp(value) {
@@ -124,6 +126,8 @@ async function getContent(userId, id) {
 }
 
 async function createContent(userId, payload) {
+  await projectService.ensureProjectBelongsToUser(userId, payload.projectId);
+
   const content = await Content.create({
     userId,
     projectId: payload.projectId || null,
@@ -143,6 +147,10 @@ async function createContent(userId, payload) {
 
 async function updateContent(userId, id, payload) {
   const content = await findContentOrThrow(userId, id);
+
+  if (payload.projectId !== undefined) {
+    await projectService.ensureProjectBelongsToUser(userId, payload.projectId);
+  }
 
   if (payload.title !== undefined) content.title = payload.title;
   if (payload.tags !== undefined) content.tags = payload.tags;
@@ -174,18 +182,45 @@ function buildTitleFromOutput(type, outputText) {
   return `${type || 'content'} - ${new Date().toLocaleString('vi-VN')}`;
 }
 
+function buildPromptWithTemplate(prompt, template) {
+  if (!template) return prompt;
+
+  return [
+    `Template: ${template.name}`,
+    '',
+    'System prompt:',
+    template.systemPrompt,
+    '',
+    'User input:',
+    prompt,
+  ].join('\n');
+}
+
 async function generateContent(userId, payload) {
-  const aiResult = await aiService.generateCopy(payload);
-  const generatedTags = payload.industry ? [payload.industry] : (payload.tags || []);
+  await projectService.ensureProjectBelongsToUser(userId, payload.projectId);
+
+  const template = await templateService.getTemplateForGenerate(userId, payload.templateId);
+  const effectivePrompt = buildPromptWithTemplate(payload.prompt, template);
+  const aiPayload = {
+    ...payload,
+    prompt: effectivePrompt,
+    type: payload.type || template?.type,
+  };
+  const aiResult = await aiService.generateCopy(aiPayload);
+  const generatedTags = [
+    ...(payload.industry ? [payload.industry] : []),
+    ...(template?.category ? [template.category] : []),
+    ...(payload.tags || []),
+  ].filter((tag, index, list) => tag && list.indexOf(tag) === index);
 
   const content = await Content.create({
     userId,
     projectId: payload.projectId || null,
-    templateId: payload.templateId || null,
-    title: buildTitleFromOutput(payload.type, aiResult.outputText),
-    prompt: payload.prompt,
+    templateId: template?._id || null,
+    title: buildTitleFromOutput(aiPayload.type, aiResult.outputText),
+    prompt: effectivePrompt,
     outputText: aiResult.outputText,
-    type: payload.type,
+    type: aiPayload.type,
     tone: payload.tone,
     language: payload.language,
     modelUsed: aiResult.modelUsed,
@@ -203,9 +238,12 @@ async function generateContent(userId, payload) {
     status: aiResult.status,
   });
 
+  await templateService.incrementTemplateUsage(template?._id);
+
   return {
     item: serializeContent(content),
     usage: serializeUsage(usage),
+    template: template ? templateService.serializeTemplate(template) : null,
     fallback: aiResult.fallback,
   };
 }

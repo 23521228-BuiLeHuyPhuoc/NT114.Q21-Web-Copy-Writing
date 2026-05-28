@@ -20,7 +20,7 @@ export const COPY_TYPES = [
   { id: 'description', name: 'Mô Tả Sản Phẩm', icon: FileText, desc: 'Mô tả chi tiết, thuyết phục' },
   { id: 'social', name: 'Social Media Post', icon: MessageSquare, desc: 'Facebook, Instagram, TikTok' },
   { id: 'email', name: 'Email Marketing', icon: Mail, desc: 'Subject line + nội dung email' },
-  { id: 'cta', name: 'Call-to-Action', icon: Target, desc: 'Nút bấm và lời kêu gọi' },
+  { id: 'cta', name: 'Lời Kêu Gọi Hành Động', icon: Target, desc: 'Nút bấm và lời kêu gọi' },
   { id: 'landing', name: 'Landing Page', icon: Globe, desc: 'Hero section toàn bộ' },
   { id: 'seo', name: 'SEO Content', icon: BarChart3, desc: 'Tiêu đề & meta SEO' },
   { id: 'review', name: 'Review/Testimonial', icon: Star, desc: 'Đánh giá sản phẩm' },

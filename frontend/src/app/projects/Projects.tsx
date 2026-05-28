@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-import { useProjects } from '@/hooks/queries/useProjects';
+import { useCreateProject, useProjects } from '@/hooks/queries/useProjects';
 import { DataPagination } from '@/app/components/common/DataPagination';
 import { usePagination } from '@/hooks/usePagination';
 
@@ -24,13 +24,35 @@ export function CustomerProjects() {
   const [showNew, setShowNew] = useState(false);
   const [newName, setNewName] = useState('');
   const [newDesc, setNewDesc] = useState('');
-  const { data: projects = [] } = useProjects();
+  const { data: projects = [], isLoading } = useProjects({ limit: 50 });
+  const createProject = useCreateProject();
 
   const filtered = projects.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
   const pagination = usePagination(filtered, {
     initialPageSize: 6,
     resetKey: search,
   });
+
+  const handleCreateProject = async () => {
+    const name = newName.trim();
+    const description = newDesc.trim();
+
+    if (!name) {
+      toast.error('Vui long nhap ten du an');
+      return;
+    }
+
+    try {
+      await createProject.mutateAsync({ name, description });
+      toast.success('Da tao du an');
+      setNewName('');
+      setNewDesc('');
+      setShowNew(false);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Khong the tao du an';
+      toast.error(message);
+    }
+  };
 
   return (
     <Layout>
@@ -50,6 +72,14 @@ export function CustomerProjects() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/80" />
           <Input placeholder="Tìm dự án..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 max-w-md" />
         </div>
+
+        {isLoading && (
+          <Card className="p-6 text-sm text-muted-foreground">Dang tai danh sach du an...</Card>
+        )}
+
+        {!isLoading && filtered.length === 0 && (
+          <Card className="p-6 text-sm text-muted-foreground">Chua co du an nao phu hop.</Card>
+        )}
 
         {/* Projects grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -103,8 +133,12 @@ export function CustomerProjects() {
                 <Label>Mô tả</Label>
                 <Textarea placeholder="Mô tả ngắn về dự án..." value={newDesc} onChange={e => setNewDesc(e.target.value)} className="mt-1" />
               </div>
-              <Button className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white" onClick={() => { toast.success('Đã tạo dự án!'); setShowNew(false); }}>
-                <Plus className="w-4 h-4 mr-2" /> Tạo dự án
+              <Button
+                className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white"
+                onClick={handleCreateProject}
+                disabled={createProject.isPending}
+              >
+                <Plus className="w-4 h-4 mr-2" /> {createProject.isPending ? 'Dang tao...' : 'Tạo dự án'}
               </Button>
             </div>
           </DialogContent>

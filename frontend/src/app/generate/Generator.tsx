@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Copy,
+  FileText,
+  FolderOpen,
   History,
   RefreshCw,
   ShoppingBag,
@@ -21,7 +23,9 @@ import { ModelPicker } from '@/app/components/generator/ModelPicker';
 import { ProductInfoForm } from '@/app/components/generator/ProductInfoForm';
 import { AdvancedSettings, type ContentLength } from '@/app/components/generator/AdvancedSettings';
 import { GeneratorResults } from '@/app/components/generator/GeneratorResults';
-import { useGenerateContent } from '@/hooks/queries/useContents';
+import { useCreateContent, useGenerateContent } from '@/hooks/queries/useContents';
+import { useProjects } from '@/hooks/queries/useProjects';
+import { useTemplates } from '@/hooks/queries/useTemplates';
 import { formatGeneratedCopyForTinyMce, htmlToPlainText } from '@/lib/richText';
 
 function splitGeneratedVariations(text: string, expectedCount: number) {
@@ -58,9 +62,122 @@ const LENGTH_TOKEN_LIMITS: Record<ContentLength, number> = {
   long: 3200,
 };
 
+function buildTitleFromText(type: string, text: string) {
+  const firstLine = text
+    .split('\n')
+    .map(line => line.replace(/^#+\s*/, '').replace(/\*\*/g, '').trim())
+    .find(Boolean);
+
+  if (firstLine) return firstLine.slice(0, 120);
+  return `${type || 'content'} - ${new Date().toLocaleString('vi-VN')}`;
+}
+
+const TEMPLATE_CATEGORY_LABELS: Record<string, string> = {
+  seo: 'Blog SEO',
+  product: 'Mô tả sản phẩm',
+  social: 'Mạng xã hội',
+  email: 'Email marketing',
+  ads: 'Quảng cáo',
+  landing: 'Landing page',
+  review: 'Review & proof',
+  b2b: 'B2B sales',
+  industry: 'Chuyên ngành',
+};
+
+const TEMPLATE_TYPE_LABELS: Record<string, string> = {
+  headline: 'Headline',
+  description: 'Mô tả',
+  social: 'Social',
+  email: 'Email',
+  cta: 'CTA',
+  landing: 'Landing page',
+  seo: 'SEO',
+  review: 'Review',
+};
+
+function getCopyTypeFormatPrompt(type: string, length: ContentLength) {
+  switch (type) {
+    case 'headline':
+      return [
+        'Headline: một câu chính sắc, dễ đọc, có lợi ích hoặc điểm khác biệt.',
+        length !== 'short' ? 'Subheadline: một câu phụ làm rõ lời hứa của headline.' : '',
+        length === 'long' ? 'Lợi ích chính: 2 bullet ngắn.' : '',
+        length !== 'short' ? 'Lời kêu gọi hành động: một câu ngắn thúc đẩy người đọc hành động.' : '',
+        'Không viết thành email, social post, mô tả sản phẩm hoặc landing page đầy đủ.',
+      ].filter(Boolean).join('\n');
+    case 'description':
+      return [
+        'Mô tả ngắn: đoạn mở đầu giới thiệu sản phẩm/dịch vụ.',
+        'Lợi ích chính: 2-3 bullet.',
+        'Đặc điểm nổi bật: 2-3 bullet.',
+        'Lời kêu gọi hành động: lời kêu gọi mua, đăng ký hoặc liên hệ.',
+        'Không dùng format email, SEO metadata hoặc caption mạng xã hội.',
+      ].join('\n');
+    case 'social':
+      return [
+        'Hook: câu mở đầu kéo chú ý.',
+        'Caption: nội dung chính dễ đọc trên mạng xã hội.',
+        'Lời kêu gọi hành động: hành động mong muốn.',
+        'Hashtags: 3-6 hashtag liên quan.',
+        'Không thêm Subject, Preview text, SEO title hoặc Meta description.',
+      ].join('\n');
+    case 'email':
+      return [
+        'Subject: dòng tiêu đề email.',
+        'Preview text: đoạn xem trước ngắn.',
+        'Lời chào: lời chào phù hợp người nhận.',
+        'Nội dung chính: tách thành các đoạn ngắn, có thể có bullet nếu cần.',
+        'Lời kêu gọi hành động: hành động chính trong email.',
+        length === 'long' ? 'P.S.: lời nhắc hoặc ưu đãi cuối email nếu phù hợp.' : '',
+        'Không viết như social caption, landing page hoặc SEO snippet.',
+      ].filter(Boolean).join('\n');
+    case 'cta':
+      return [
+        'Lời kêu gọi hành động chính: câu/nút kêu gọi hành động.',
+        length !== 'short' ? 'Microcopy: một câu hỗ trợ ngay dưới lời kêu gọi hành động.' : '',
+        length === 'long' ? 'Ngữ cảnh dùng: vị trí nên đặt lời kêu gọi hành động hoặc tình huống sử dụng.' : '',
+        'Chỉ viết lời kêu gọi hành động, không thêm bài quảng cáo dài.',
+      ].filter(Boolean).join('\n');
+    case 'landing':
+      return [
+        'Hero headline: tiêu đề chính của hero section.',
+        'Subheadline: câu phụ làm rõ giá trị.',
+        length === 'long' ? 'Pain point: vấn đề khách hàng đang gặp.' : '',
+        'Lợi ích chính: 3 bullet.',
+        'Bằng chứng: review, số liệu, cam kết hoặc social proof.',
+        length !== 'short' ? 'Offer: ưu đãi hoặc lý do hành động ngay.' : '',
+        'Lời kêu gọi hành động: nút hoặc lời kêu gọi hành động chính.',
+        'Không viết thành email, SEO metadata hoặc một caption social ngắn.',
+      ].filter(Boolean).join('\n');
+    case 'seo':
+      return [
+        'SEO title: tối đa khoảng 60 ký tự, có từ khóa chính.',
+        'Meta description: tối đa khoảng 155 ký tự, có lợi ích và lời kêu gọi hành động nhẹ.',
+        'Slug: URL slug ngắn, không dấu, dùng dấu gạch ngang.',
+        'Heading gợi ý: 2 H2 và 1 H3.',
+        length === 'long' ? 'Mở bài: đoạn mở đầu khoảng 100-140 từ, tự nhiên và có từ khóa.' : '',
+        'Không thêm lời chào email, hashtag social hoặc testimonial.',
+      ].filter(Boolean).join('\n');
+    case 'review':
+      return [
+        'Quote: lời nhận xét tự nhiên ở ngôi thứ nhất.',
+        'Người đánh giá: chân dung khách hàng phù hợp, có thể dùng placeholder.',
+        'Bối cảnh: tình huống trước khi dùng sản phẩm/dịch vụ.',
+        'Kết quả: thay đổi hoặc lợi ích sau khi sử dụng.',
+        'Lời kêu gọi hành động mềm: lời khuyến nghị tự nhiên, không bán hàng quá đà.',
+        'Không viết thành mô tả sản phẩm, email hoặc SEO metadata.',
+      ].join('\n');
+    default:
+      return 'Chia thành các đoạn ngắn, có nhãn rõ, có lời kêu gọi hành động phù hợp và không trộn format của loại nội dung khác.';
+  }
+}
+
 export function CustomerGenerator() {
   const navigate = useNavigate();
   const generateContent = useGenerateContent();
+  const createContent = useCreateContent();
+  const { data: templates = [], isLoading: templatesLoading } = useTemplates();
+  const { data: projects = [], isLoading: projectsLoading } = useProjects({ limit: 50 });
   const [industry, setIndustry] = useState('ecommerce');
   const [copyType, setCopyType] = useState('headline');
   const [model, setModel] = useState('gemini-flash');
@@ -83,29 +200,55 @@ export function CustomerGenerator() {
   const [latency, setLatency] = useState(0);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [savedItems, setSavedItems] = useState<string[]>([]);
-  const [generatedContentId, setGeneratedContentId] = useState<string | null>(null);
+  const [savedContentId, setSavedContentId] = useState<string | null>(null);
+  const [selectedTemplateId, setSelectedTemplateId] = useState('');
+  const [selectedProjectId, setSelectedProjectId] = useState('');
 
   const selectedModel = MODELS.find(m => m.id === model) ?? MODELS[0];
   const selectedIndustry = INDUSTRIES.find(i => i.id === industry) ?? INDUSTRIES[0];
   const selectedType = COPY_TYPES.find(t => t.id === copyType) ?? COPY_TYPES[0];
   const selectedTone = TONES.find(t => t.id === tone);
+  const selectedTemplate = useMemo(
+    () => templates.find(template => template.id === selectedTemplateId) ?? null,
+    [templates, selectedTemplateId],
+  );
+  const selectedProject = useMemo(
+    () => projects.find(project => project.id === selectedProjectId) ?? null,
+    [projects, selectedProjectId],
+  );
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const templateId = params.get('templateId');
+    const projectId = params.get('projectId');
+    if (templateId) setSelectedTemplateId(templateId);
+    if (projectId) setSelectedProjectId(projectId);
+  }, []);
+
+  useEffect(() => {
+    if (!selectedTemplate) return;
+    if (selectedTemplate.type && selectedTemplate.type !== copyType) {
+      setCopyType(selectedTemplate.type);
+    }
+  }, [copyType, selectedTemplate]);
 
   const buildPrompt = () => [
     `Bạn là chuyên gia copywriting cho ngành ${selectedIndustry?.name || industry}.`,
     `Hãy viết ${selectedType?.name || copyType} với tone ${selectedTone?.name || tone}.`,
     productName ? `Sản phẩm/dịch vụ: ${productName}.` : 'Sản phẩm/dịch vụ: chưa được cung cấp, hãy tự giả định hợp lý theo ngành đã chọn.',
-    keywords ? `Từ khóa chính: ${keywords}.` : 'Từ khóa chính: chưa được cung cấp, ưu tiên lợi ích rõ ràng và CTA mạnh.',
+    keywords ? `Từ khóa chính: ${keywords}.` : 'Từ khóa chính: chưa được cung cấp, ưu tiên lợi ích rõ ràng và lời kêu gọi hành động mạnh.',
     targetAudience ? `Đối tượng mục tiêu: ${targetAudience}.` : 'Đối tượng mục tiêu: khách hàng tiềm năng phổ thông.',
     additionalContext ? `Thông tin bổ sung: ${additionalContext}.` : '',
     `Độ dài mong muốn: ${CONTENT_LENGTH_LABELS[contentLength]}.`,
     `Giới hạn output tối đa: ${maxOutputTokens} tokens.`,
     `Tạo đúng ${variations} phiên bản riêng biệt.`,
     'Định dạng bắt buộc:',
-    'Phiên bản 1: ...',
-    'Phiên bản 2: ...',
-    variations >= 3 ? 'Phiên bản 3: ...' : '',
+    ...Array.from({ length: variations }, (_, index) => `Phiên bản ${index + 1}: ...`),
     'Mỗi phiên bản phải tự đứng độc lập, không gom chung thành một đoạn lớn.',
-    'Dùng tiếng Việt tự nhiên, đầy đủ dấu, có CTA rõ ràng.',
+    'Format riêng theo loại nội dung:',
+    getCopyTypeFormatPrompt(copyType, contentLength),
+    'Dùng tiếng Việt tự nhiên, đầy đủ dấu, có lời kêu gọi hành động rõ ràng.',
     `Temperature tham khảo: ${temperature[0]}.`,
   ].filter(Boolean).join('\n');
 
@@ -113,7 +256,7 @@ export function CustomerGenerator() {
     setIsGenerating(true);
     setResults([]);
     setStreamText('');
-    setGeneratedContentId(null);
+    setSavedContentId(null);
 
     const startTime = Date.now();
 
@@ -126,7 +269,10 @@ export function CustomerGenerator() {
         language: 'vi',
         model,
         length: contentLength,
+        variations,
         maxOutputTokens,
+        templateId: selectedTemplateId || null,
+        projectId: selectedProjectId || null,
       });
 
       const splitResults = splitGeneratedVariations(result.content.content, variations)
@@ -136,7 +282,7 @@ export function CustomerGenerator() {
       setSelectedResult(0);
       setTokensUsed(result.usage?.totalTokens || result.content.tokens || 0);
       setLatency(Math.round((Date.now() - startTime) / 100) / 10);
-      setGeneratedContentId(result.content.id);
+      setSavedContentId(result.content.id || null);
       toast.success(result.fallback ? 'Đã tạo nội dung bằng fallback MVP!' : 'Tạo copy thành công!');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Không thể tạo nội dung';
@@ -156,10 +302,42 @@ export function CustomerGenerator() {
     toast.success('Đã sao chép!');
   };
 
-  const handleSave = (text: string) => {
-    setSavedItems(prev => [...prev, htmlToPlainText(text)]);
-    toast.success('Nội dung đã được lưu trong DB!');
-    if (generatedContentId) navigate(`/contents/${generatedContentId}`);
+  const handleSave = async (text: string) => {
+    if (savedContentId) {
+      setSavedItems(prev => [...prev, htmlToPlainText(text)]);
+      toast.success('Nội dung đã được lưu trong DB!');
+      navigate(`/contents/${savedContentId}`);
+      return;
+    }
+
+    const plainText = htmlToPlainText(text).trim();
+
+    if (!plainText) {
+      toast.error('Không có nội dung để lưu');
+      return;
+    }
+
+    try {
+      const saved = await createContent.mutateAsync({
+        title: buildTitleFromText(copyType, plainText),
+        prompt: buildPrompt(),
+        outputText: plainText,
+        type: copyType,
+        tone,
+        language: 'vi',
+        modelUsed: model,
+        tags: [industry].filter(Boolean),
+        templateId: selectedTemplateId || null,
+        projectId: selectedProjectId || null,
+      });
+
+      setSavedItems(prev => [...prev, plainText]);
+      setSavedContentId(saved.id || null);
+      toast.success('Nội dung đã được lưu vào DB!');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Không thể lưu nội dung';
+      toast.error(message);
+    }
   };
 
   const handleDownload = (text: string) => {
@@ -194,13 +372,70 @@ export function CustomerGenerator() {
       <div className="p-4 md:p-6 max-w-7xl mx-auto">
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-foreground mb-1">AI Copywriting Engine</h1>
-          <p className="text-foreground/70">Tạo copy marketing chuyên nghiệp và lưu trực tiếp vào thư viện nội dung.</p>
+          <p className="text-foreground/70">Tạo nhiều phiên bản copy và chỉ lưu phiên bản bạn chọn vào thư viện nội dung.</p>
         </div>
 
         <div className="grid lg:grid-cols-5 gap-6">
           <div className="lg:col-span-2 space-y-4">
             <IndustryPicker value={industry} onChange={setIndustry} />
             <CopyTypePicker value={copyType} onChange={setCopyType} />
+            <Card className="p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <FileText className="w-4 h-4 text-primary" />
+                <p className="text-sm font-semibold text-foreground/80">Template prompt</p>
+              </div>
+              <select
+                value={selectedTemplateId}
+                onChange={(event) => setSelectedTemplateId(event.target.value)}
+                disabled={templatesLoading}
+                className="w-full h-10 rounded border border-border bg-card px-3 text-sm text-foreground outline-none focus:border-primary"
+              >
+                <option value="">{templatesLoading ? 'Đang tải templates...' : 'Không dùng template'}</option>
+                {templates.map((template) => (
+                  <option key={template.id} value={template.id}>
+                    {template.name} - {TEMPLATE_TYPE_LABELS[template.type] || template.type}
+                  </option>
+                ))}
+              </select>
+              {selectedTemplate ? (
+                <div className="mt-3 space-y-2">
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="outline">{TEMPLATE_CATEGORY_LABELS[selectedTemplate.category] || selectedTemplate.category}</Badge>
+                    <Badge variant="outline">{TEMPLATE_TYPE_LABELS[selectedTemplate.type] || selectedTemplate.type}</Badge>
+                    <Badge className="bg-primary/10 text-primary border-0">
+                      {selectedTemplate.isSystem ? 'System' : 'Cá nhân'}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground line-clamp-3">{selectedTemplate.description}</p>
+                </div>
+              ) : (
+                <p className="mt-2 text-xs text-muted-foreground">Backend sẽ generate bằng prompt thủ công nếu không chọn template.</p>
+              )}
+            </Card>
+            <Card className="p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <FolderOpen className="w-4 h-4 text-primary" />
+                <p className="text-sm font-semibold text-foreground/80">Dự án</p>
+              </div>
+              <select
+                value={selectedProjectId}
+                onChange={(event) => setSelectedProjectId(event.target.value)}
+                disabled={projectsLoading}
+                className="w-full h-10 rounded border border-border bg-card px-3 text-sm text-foreground outline-none focus:border-primary"
+              >
+                <option value="">{projectsLoading ? 'Dang tai du an...' : 'Khong gan du an'}</option>
+                {projects.map((project) => (
+                  <option key={project.id} value={project.id}>
+                    {project.name}
+                  </option>
+                ))}
+              </select>
+              {selectedProject ? (
+                <p className="mt-2 text-xs text-muted-foreground line-clamp-2">{selectedProject.desc || 'No description'}</p>
+              ) : (
+                <p className="mt-2 text-xs text-muted-foreground">Nội dung sinh ra sẽ được gắn vào dự án đã chọn.</p>
+              )}
+            </Card>
             <TonePicker value={tone} onChange={setTone} />
             <ModelPicker value={model} onChange={setModel} />
             <ProductInfoForm
@@ -248,6 +483,12 @@ export function CustomerGenerator() {
                 <span className="text-muted-foreground/60">·</span>
                 <Badge className="bg-muted text-foreground/80 border-0">{selectedType?.name}</Badge>
                 <Badge className="bg-primary/10 text-primary border-0">{selectedModel?.name}</Badge>
+                {selectedTemplate && (
+                  <Badge className="bg-emerald-50 text-emerald-700 border-0">{selectedTemplate.name}</Badge>
+                )}
+                {selectedProject && (
+                  <Badge className="bg-teal-50 text-teal-700 border-0">{selectedProject.name}</Badge>
+                )}
                 {results.length > 0 && (
                   <>
                     <Badge className="bg-primary/10 text-primary border-0">{tokensUsed} tokens</Badge>
@@ -256,8 +497,17 @@ export function CustomerGenerator() {
                 )}
               </div>
 
+              {selectedTemplate && (
+                <Card className="p-4 bg-surface-muted">
+                  <p className="text-xs font-semibold text-foreground/70 mb-2">Template system prompt sẽ được backend ghép vào:</p>
+                  <p className="text-xs text-foreground/80 font-mono bg-card rounded border p-3 whitespace-pre-wrap">
+                    {selectedTemplate.systemPrompt}
+                  </p>
+                </Card>
+              )}
+
               <Card className="p-4 bg-surface-muted">
-                <p className="text-xs font-semibold text-foreground/70 mb-2">Prompt gửi đến {selectedModel?.name}:</p>
+                <p className="text-xs font-semibold text-foreground/70 mb-2">Prompt user gửi đến API {selectedModel?.name}:</p>
                 <p className="text-xs text-foreground/80 font-mono bg-card rounded border p-3 whitespace-pre-wrap">
                   {buildPrompt()}
                 </p>
@@ -265,6 +515,7 @@ export function CustomerGenerator() {
 
               <GeneratorResults
                 isGenerating={isGenerating}
+                isSaving={createContent.isPending}
                 streamText={streamText}
                 results={results}
                 selectedResult={selectedResult}
@@ -278,13 +529,13 @@ export function CustomerGenerator() {
                 onRegenerate={handleGenerate}
               />
 
-              {generatedContentId && !isGenerating && (
+              {savedContentId && !isGenerating && (
                 <Card className="p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div>
                     <p className="font-semibold text-sm text-foreground">Nội dung đã được lưu</p>
                     <p className="text-xs text-muted-foreground">Bạn có thể xem lại trong thư viện nội dung.</p>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => navigate(`/contents/${generatedContentId}`)}>
+                  <Button variant="outline" size="sm" onClick={() => navigate(`/contents/${savedContentId}`)}>
                     Xem chi tiết
                   </Button>
                 </Card>

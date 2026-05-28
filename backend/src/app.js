@@ -8,9 +8,12 @@ const createError = require('./utils/createError');
 const errorHandler = require('./middlewares/error/errorHandler');
 const notFound = require('./middlewares/error/notFound');
 const adminAuthRoutes = require('./routes/admin/authRoutes');
+const adminCategoryRoutes = require('./routes/admin/categoryRoutes');
 const adminUserRoutes = require('./routes/admin/userRoutes');
 const contentRoutes = require('./routes/user/contentRoutes');
+const projectRoutes = require('./routes/user/projectRoutes');
 const userAuthRoutes = require('./routes/user/authRoutes');
+const templateRoutes = require('./routes/user/templateRoutes');
 
 const app = express();
 
@@ -48,7 +51,10 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth/user', userAuthRoutes);
 app.use('/api/auth/admin', adminAuthRoutes);
 app.use('/api/admin/users', adminUserRoutes);
+app.use('/api/admin/categories', adminCategoryRoutes);
 app.use('/api/contents', contentRoutes);
+app.use('/api/projects', projectRoutes);
+app.use('/api/templates', templateRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
