@@ -8,7 +8,7 @@ import { Label } from '@/app/components/ui/label';
 import { BrandLogo } from '@/app/components/BrandLogo';
 import {
   Eye, EyeOff, Mail, Lock,
-  ArrowLeft, CheckCircle2,
+  ArrowLeft, CheckCircle2, Shield,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -246,6 +246,23 @@ export function LoginPage() {
             </div>
             <span className="text-xs text-primary font-semibold opacity-0 group-hover:opacity-100 transition-opacity">Điền →</span>
           </button>
+
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-border" />
+            </div>
+            <div className="relative flex justify-center">
+              <span className="bg-card px-3 text-xs text-muted-foreground/80 font-medium">DÃ nh cho quáº£n trá»‹ viÃªn?</span>
+            </div>
+          </div>
+
+          <Link
+            to="/admin/login"
+            className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-border bg-card/80 text-sm font-semibold text-muted-foreground transition-all hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+          >
+            <Shield className="h-4 w-4" />
+            ÄÄƒng nháº­p Admin
+          </Link>
 
           <p className="text-center text-sm text-muted-foreground mt-7">
             Chưa có tài khoản?{' '}

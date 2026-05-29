@@ -1,4 +1,5 @@
 import { api } from '@/lib/axios';
+import { getProjectGradientClass } from '@/lib/projectColors';
 
 export interface ProjectListParams {
   page?: number;
@@ -69,9 +70,10 @@ function normalizeProject(item: BackendProject): UiProject {
   const description = item.description || item.desc || '';
   const isArchived = Boolean(item.isArchived || item.status === 'archived');
   const contentCount = item.contentCount ?? item.contents ?? 0;
+  const id = item.id || item._id || '';
 
   return {
-    id: item.id || item._id || '',
+    id,
     name: item.name || 'Untitled project',
     desc: description,
     description,
@@ -82,7 +84,7 @@ function normalizeProject(item: BackendProject): UiProject {
     updatedAt: formatDate(item.updatedAt),
     status: isArchived ? 'archived' : 'active',
     isArchived,
-    color: item.color || 'from-green-500 to-emerald-600',
+    color: getProjectGradientClass(item.color, id || item.name || ''),
   };
 }
 
