@@ -1,14 +1,24 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Layout } from '@/app/components/Layout';
 import { Card } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
 import { Badge } from '@/app/components/ui/badge';
 import { Progress } from '@/app/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs';
+import { api } from '@/lib/axios';
 import {
-  Crown, Zap, Building2, CheckCircle2, X,
-  Download, FileText, Banknote, Landmark,
-  Wallet, Smartphone, Copy, QrCode,
+  Crown,
+  Zap,
+  Building2,
+  CheckCircle2,
+  X,
+  Download,
+  FileText,
+  Banknote,
+  Landmark,
+  Smartphone,
+  Copy,
+  CreditCard,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { DataPagination } from '@/app/components/common/DataPagination';
@@ -78,19 +88,19 @@ const PAYMENT_METHODS = [
     id: 'zalo',
     name: 'ZaloPay',
     shortName: 'ZaloPay',
-    desc: 'Quét QR hoặc mở ứng dụng ZaloPay để thanh toán nhanh.',
+    desc: 'Thanh toán trực tiếp qua cổng ZaloPay sandbox.',
     icon: Smartphone,
     color: 'bg-primary/10 text-primary',
-    guide: 'Sau khi bấm thanh toán, hệ thống sẽ tạo mã QR ZaloPay cho hóa đơn đang chọn.',
+    guide: 'Sau khi bấm thanh toán, hệ thống sẽ tạo link ZaloPay và chuyển sang cổng thanh toán.',
   },
   {
-    id: 'momo',
-    name: 'MoMo',
-    shortName: 'MoMo',
-    desc: 'Thanh toán qua ví MoMo, hỗ trợ xác nhận gần như tức thì.',
-    icon: Wallet,
-    color: 'bg-warning/15 text-amber-800',
-    guide: 'Sau khi bấm thanh toán, hệ thống sẽ tạo mã QR MoMo và tự cập nhật trạng thái hóa đơn.',
+    id: 'vnpay',
+    name: 'VNPAY',
+    shortName: 'VNPAY',
+    desc: 'Thanh toán qua cổng VNPAY sandbox.',
+    icon: CreditCard,
+    color: 'bg-emerald-100 text-emerald-700',
+    guide: 'Sau khi bấm thanh toán, hệ thống sẽ tạo link VNPAY và chuyển sang trang thanh toán.',
   },
 ];
 
@@ -100,13 +110,103 @@ const INVOICES = [
   { id: 'INV-2026-001', date: '23/01/2026', amount: 199000, status: 'paid', plan: 'Pro ưu đãi', method: 'ZaloPay' },
 ];
 
+interface BillingMeResponse {
+  currentPlan?: {
+    name?: string;
+    price?: number;
+    renewDate?: string;
+    copyUsed?: number;
+    copyLimit?: number;
+    apiCalls?: number;
+    apiLimit?: number;
+  };
+  invoices?: typeof INVOICES;
+}
+
+interface BillingCheckoutResponse {
+  paymentUrl?: string | null;
+  gateway?: string | null;
+  status?: string;
+  message?: string;
+  payment?: { status?: string };
+}
+
 function formatCurrency(value: number) {
   return `${value.toLocaleString('vi-VN')}₫`;
 }
 
+function getPaymentNotice(payment: string | null) {
+  if (!payment) return null;
+  if (payment.includes('success')) return { type: 'success' as const, message: 'Thanh toán đã được ghi nhận.' };
+  if (payment.includes('pending')) return { type: 'info' as const, message: 'Giao dịch đang chờ xác nhận từ cổng thanh toán.' };
+  return { type: 'info' as const, message: 'Đang xử lý phiên thanh toán.' };
+}
+
 export function CustomerBilling() {
-  const [selectedMethod, setSelectedMethod] = useState(PAYMENT_METHODS[3]);
-  const invoicePagination = usePagination(INVOICES, {
+  const [currentPlan, setCurrentPlan] = useState(CURRENT_PLAN);
+  const [invoices, setInvoices] = useState(INVOICES);
+  const [selectedMethod, setSelectedMethod] = useState(
+    PAYMENT_METHODS.find((method) => method.id === 'vnpay') ?? PAYMENT_METHODS[0],
+  );
+  const [checkoutPlanId, setCheckoutPlanId] = useState<string | null>(null);
+
+  const loadBilling = useCallback(async () => {
+    try {
+      const response = await api.get<{ data?: BillingMeResponse }>('/billing/me');
+      const data = response.data.data;
+      if (!data) return;
+
+      const currentPlanData = data.currentPlan;
+      if (currentPlanData) {
+        setCurrentPlan((prev) => ({
+          ...prev,
+          ...currentPlanData,
+          price: currentPlanData.price ?? prev.price,
+          renewDate: currentPlanData.renewDate || prev.renewDate,
+          copyUsed: currentPlanData.copyUsed ?? prev.copyUsed,
+          copyLimit: currentPlanData.copyLimit ?? prev.copyLimit,
+          apiCalls: currentPlanData.apiCalls ?? prev.apiCalls,
+          apiLimit: currentPlanData.apiLimit ?? prev.apiLimit,
+        }));
+      }
+
+      if (Array.isArray(data.invoices) && data.invoices.length > 0) {
+        setInvoices(data.invoices);
+      }
+    } catch {
+      // Giữ fallback demo nếu backend billing chưa sẵn sàng.
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadBilling();
+  }, [loadBilling]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const payment = params.get('payment');
+    const notice = getPaymentNotice(payment);
+    let timer: number | undefined;
+
+    if (notice) {
+      if (notice.type === 'success') toast.success(notice.message);
+      else toast(notice.message);
+      void loadBilling();
+      if (payment?.includes('return') || payment?.includes('pending')) {
+        timer = window.setTimeout(() => {
+          void loadBilling();
+        }, 3000);
+      }
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+
+    return () => {
+      if (timer) window.clearTimeout(timer);
+    };
+  }, [loadBilling]);
+
+  const invoicePagination = usePagination(invoices, {
     initialPageSize: 5,
   });
 
@@ -115,7 +215,7 @@ export function CustomerBilling() {
     toast.success('Đã copy thông tin chuyển khoản');
   };
 
-  const handlePlanAction = (plan: typeof PLANS[number]) => {
+  const handlePlanAction = async (plan: typeof PLANS[number]) => {
     if (plan.popular) {
       toast.success('Đây là gói hiện tại!');
       return;
@@ -126,7 +226,38 @@ export function CustomerBilling() {
       return;
     }
 
-    toast.success(`Đã chọn thanh toán gói ${plan.name} bằng ${selectedMethod.shortName}`);
+    setCheckoutPlanId(plan.id);
+    try {
+      const response = await api.post<{ data?: BillingCheckoutResponse }>('/billing/checkout', {
+        planSlug: plan.id,
+        billingCycle: 'monthly',
+        method: selectedMethod.id,
+      });
+
+      const data = response.data.data;
+      if (!data) {
+        toast.error('Không nhận được phản hồi thanh toán');
+        return;
+      }
+
+      if (data.paymentUrl) {
+        window.location.assign(data.paymentUrl);
+        return;
+      }
+
+      if (data.payment?.status === 'success') {
+        toast.success(data.message || `Thanh toán thành công qua ${selectedMethod.shortName}`);
+      } else {
+        toast.success(data.message || 'Đã tạo hóa đơn thanh toán');
+      }
+
+      await loadBilling();
+    } catch (error) {
+      const err = error as { response?: { data?: { message?: string } }; message?: string };
+      toast.error(err.response?.data?.message || err.message || 'Không tạo được thanh toán');
+    } finally {
+      setCheckoutPlanId(null);
+    }
   };
 
   return (
@@ -153,12 +284,12 @@ export function CustomerBilling() {
                     <Crown className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold text-foreground">Gói {CURRENT_PLAN.name}</h2>
-                    <p className="text-sm text-foreground/70">Gia hạn ngày {CURRENT_PLAN.renewDate}</p>
+                    <h2 className="text-xl font-bold text-foreground">Gói {currentPlan.name}</h2>
+                    <p className="text-sm text-foreground/70">Gia hạn ngày {currentPlan.renewDate}</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-2xl font-bold text-amber-700">{formatCurrency(CURRENT_PLAN.price)}</p>
+                  <p className="text-2xl font-bold text-amber-700">{formatCurrency(currentPlan.price)}</p>
                   <p className="text-xs text-muted-foreground">/tháng</p>
                 </div>
               </div>
@@ -167,29 +298,18 @@ export function CustomerBilling() {
                 <div>
                   <div className="mb-1 flex justify-between text-sm">
                     <span className="text-foreground/70">Copy đã tạo</span>
-                    <span className="font-semibold">{CURRENT_PLAN.copyUsed}/{CURRENT_PLAN.copyLimit}</span>
+                    <span className="font-semibold">{currentPlan.copyUsed}/{currentPlan.copyLimit}</span>
                   </div>
-                  <Progress value={(CURRENT_PLAN.copyUsed / CURRENT_PLAN.copyLimit) * 100} className="h-2" />
+                  <Progress value={currentPlan.copyLimit > 0 ? (currentPlan.copyUsed / currentPlan.copyLimit) * 100 : 0} className="h-2" />
                 </div>
                 <div>
                   <div className="mb-1 flex justify-between text-sm">
                     <span className="text-foreground/70">API calls</span>
-                    <span className="font-semibold">{CURRENT_PLAN.apiCalls.toLocaleString()}/{CURRENT_PLAN.apiLimit.toLocaleString()}</span>
+                    <span className="font-semibold">{currentPlan.apiCalls.toLocaleString()}/{currentPlan.apiLimit.toLocaleString()}</span>
                   </div>
-                  <Progress value={(CURRENT_PLAN.apiCalls / CURRENT_PLAN.apiLimit) * 100} className="h-2" />
+                  <Progress value={currentPlan.apiLimit > 0 ? (currentPlan.apiCalls / currentPlan.apiLimit) * 100 : 0} className="h-2" />
                 </div>
               </div>
-            </Card>
-
-            <Card className="p-5">
-              <div className="mb-4 flex items-center justify-between gap-4">
-                <div>
-                  <h3 className="font-semibold text-foreground">Phương thức thanh toán đang chọn</h3>
-                  <p className="text-sm text-muted-foreground">Áp dụng cho lần gia hạn hoặc nâng cấp tiếp theo</p>
-                </div>
-                <Badge className="border-0 bg-warning/15 text-amber-800">{selectedMethod.name}</Badge>
-              </div>
-              <PaymentMethodGrid selectedId={selectedMethod.id} onSelect={setSelectedMethod} />
             </Card>
           </TabsContent>
 
@@ -197,7 +317,7 @@ export function CustomerBilling() {
             <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
               <Card className="p-5">
                 <h3 className="mb-2 font-semibold text-foreground">Chọn phương thức thanh toán</h3>
-                <p className="mb-5 text-sm text-muted-foreground">Hỗ trợ tiền mặt, chuyển khoản ngân hàng, ZaloPay và MoMo.</p>
+                <p className="mb-5 text-sm text-muted-foreground">Hỗ trợ tiền mặt, chuyển khoản ngân hàng, ZaloPay và VNPAY.</p>
                 <PaymentMethodGrid selectedId={selectedMethod.id} onSelect={setSelectedMethod} />
               </Card>
 
@@ -224,12 +344,9 @@ export function CustomerBilling() {
                   </Button>
                 )}
 
-                {(selectedMethod.id === 'momo' || selectedMethod.id === 'zalo') && (
-                  <div className="mt-4 flex items-center justify-center rounded-lg border border-dashed border-border bg-card p-6">
-                    <div className="text-center">
-                      <QrCode className="mx-auto mb-2 h-12 w-12 text-muted-foreground/60" />
-                      <p className="text-xs text-muted-foreground">QR sẽ được tạo khi xác nhận thanh toán</p>
-                    </div>
+                {(selectedMethod.id === 'zalo' || selectedMethod.id === 'vnpay') && (
+                  <div className="mt-4 rounded-lg border border-dashed border-border bg-card p-4 text-sm text-muted-foreground">
+                    Khi bạn bấm thanh toán ở tab Nâng cấp, hệ thống sẽ tạo link cổng thanh toán và điều hướng sang VNPAY hoặc ZaloPay.
                   </div>
                 )}
               </Card>
@@ -244,8 +361,10 @@ export function CustomerBilling() {
             </div>
 
             <div className="grid gap-6 md:grid-cols-3">
-              {PLANS.map(plan => {
+              {PLANS.map((plan) => {
                 const Icon = plan.icon;
+                const isLoading = checkoutPlanId === plan.id;
+
                 return (
                   <Card key={plan.id} className={`relative p-6 ${plan.color}`}>
                     {plan.popular && (
@@ -262,13 +381,13 @@ export function CustomerBilling() {
                       </p>
                     </div>
                     <div className="mb-6 space-y-2">
-                      {plan.features.map(feature => (
+                      {plan.features.map((feature) => (
                         <div key={feature} className="flex items-center gap-2 text-sm">
                           <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-primary" />
                           <span className="text-foreground/80">{feature}</span>
                         </div>
                       ))}
-                      {plan.limits.map(limit => (
+                      {plan.limits.map((limit) => (
                         <div key={limit} className="flex items-center gap-2 text-sm">
                           <X className="h-4 w-4 flex-shrink-0 text-muted-foreground/60" />
                           <span className="text-muted-foreground/80">{limit}</span>
@@ -278,9 +397,15 @@ export function CustomerBilling() {
                     <Button
                       className={`w-full ${plan.popular ? 'bg-warning/100 text-white hover:bg-amber-600' : ''}`}
                       variant={plan.popular ? 'default' : 'outline'}
-                      onClick={() => handlePlanAction(plan)}
+                      onClick={() => void handlePlanAction(plan)}
+                      disabled={isLoading}
                     >
-                      {plan.popular ? 'Gói hiện tại' : plan.price === 0 ? 'Chọn miễn phí' : `Thanh toán bằng ${selectedMethod.shortName}`}
+                      {isLoading ? (
+                        <span className="flex items-center gap-2">
+                          <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                          Đang tạo thanh toán...
+                        </span>
+                      ) : plan.popular ? 'Gói hiện tại' : plan.price === 0 ? 'Chọn miễn phí' : `Thanh toán bằng ${selectedMethod.shortName}`}
                     </Button>
                   </Card>
                 );
@@ -292,7 +417,7 @@ export function CustomerBilling() {
             <Card className="p-5">
               <h3 className="mb-4 font-semibold text-foreground">Lịch sử hóa đơn</h3>
               <div className="space-y-3">
-                {invoicePagination.pageItems.map(invoice => (
+                {invoicePagination.pageItems.map((invoice) => (
                   <div key={invoice.id} className="flex items-center gap-4 rounded-lg border bg-surface-muted p-3">
                     <div className="rounded-lg bg-primary/10 p-2"><FileText className="h-4 w-4 text-primary" /></div>
                     <div className="flex-1">
@@ -333,7 +458,7 @@ function PaymentMethodGrid({
 }) {
   return (
     <div className="grid gap-3 sm:grid-cols-2">
-      {PAYMENT_METHODS.map(method => {
+      {PAYMENT_METHODS.map((method) => {
         const Icon = method.icon;
         const active = selectedId === method.id;
 

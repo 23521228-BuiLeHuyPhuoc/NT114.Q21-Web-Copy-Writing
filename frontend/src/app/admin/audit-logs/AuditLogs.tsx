@@ -17,13 +17,22 @@ import { usePagination } from '@/hooks/usePagination';
 export function AdminAuditLogs() {
   const [search, setSearch] = useState('');
   const [filterLevel, setFilterLevel] = useState('all');
-  const { data: logs = [] } = useAuditLogs();
+  const { data: logs = [], isLoading } = useAuditLogs();
 
   const filtered = logs.filter(log => {
-    const matchSearch = log.action.includes(search.toLowerCase()) || log.user.includes(search.toLowerCase()) || log.details.toLowerCase().includes(search.toLowerCase());
+    const keyword = search.trim().toLowerCase();
+    const haystack = [log.action, log.user, log.details, log.ip].join(' ').toLowerCase();
+    const matchSearch = !keyword || haystack.includes(keyword);
     const matchLevel = filterLevel === 'all' || log.level === filterLevel;
     return matchSearch && matchLevel;
   });
+
+  const summary = {
+    total: logs.length,
+    warnings: logs.filter(log => log.level === 'warning').length,
+    errors: logs.filter(log => log.level === 'error').length,
+  };
+
   const pagination = usePagination(filtered, {
     initialPageSize: 10,
     resetKey: `${search}|${filterLevel}`,
@@ -43,9 +52,9 @@ export function AdminAuditLogs() {
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4 mb-6">
           {[
-            { label: 'Tổng events hôm nay', value: '1,247', color: 'text-primary bg-primary/5', icon: Shield },
-            { label: 'Warnings', value: '23', color: 'text-amber-600 bg-warning/10', icon: AlertTriangle },
-            { label: 'Errors', value: '5', color: 'text-red-600 bg-destructive/10', icon: AlertTriangle },
+            { label: 'Tổng events', value: summary.total.toLocaleString('vi-VN'), color: 'text-primary bg-primary/5', icon: Shield },
+            { label: 'Warnings', value: summary.warnings.toLocaleString('vi-VN'), color: 'text-amber-600 bg-warning/10', icon: AlertTriangle },
+            { label: 'Errors', value: summary.errors.toLocaleString('vi-VN'), color: 'text-red-600 bg-destructive/10', icon: AlertTriangle },
           ].map((s, i) => {
             const Icon = s.icon;
             return (
@@ -93,7 +102,11 @@ export function AdminAuditLogs() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {pagination.pageItems.map(log => {
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-12 text-sm text-muted-foreground">Đang tải audit logs...</TableCell>
+                </TableRow>
+              ) : pagination.pageItems.map(log => {
                 const level = LEVEL_MAP[log.level] || LEVEL_MAP.info;
                 const LevelIcon = level.icon;
                 const ActionIcon = ACTION_ICONS[log.action] || Shield;

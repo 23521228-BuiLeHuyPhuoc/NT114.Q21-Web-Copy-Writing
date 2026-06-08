@@ -5,8 +5,12 @@ const AccountAdmin = require('../models/AccountAdmin');
 const AccountUser = require('../models/AccountUser');
 const Category = require('../models/Category');
 const Content = require('../models/Content');
+const AuditLog = require('../models/AuditLog');
 const Notification = require('../models/Notification');
+const Payment = require('../models/Payment');
+const Plan = require('../models/Plan');
 const Project = require('../models/Project');
+const Subscription = require('../models/Subscription');
 const Template = require('../models/Template');
 const UsageLog = require('../models/UsageLog');
 
@@ -613,6 +617,251 @@ async function seedDemoNotifications(user) {
   return Promise.all(notifications.map((notification) => upsertDemoNotification(user, notification)));
 }
 
+async function seedDemoAuditLogs(user, admin, contents) {
+  const entries = [
+    ['admin.account.created', 'account_user', user._id, 'info', 'Created account "' + user.email + '"'],
+    ['admin.content.updated', 'content', contents[0]?._id || null, 'info', 'Updated content "' + (contents[0]?.title || 'demo') + '"'],
+    ['admin.content.deleted', 'content', contents[1]?._id || null, 'warning', 'Moved content "' + (contents[1]?.title || 'demo') + '" to trash'],
+    ['system.seed.completed', 'system', null, 'info', 'Seed completed for demo admin logs'],
+  ].map(([action, targetType, targetId, level, details]) => ({
+    actorId: admin._id,
+    actorType: 'admin',
+    actorEmail: admin.email,
+    actorRole: admin.adminRole,
+    action,
+    targetType,
+    targetId,
+    level,
+    metadata: { details },
+    ip: '127.0.0.1',
+  }));
+
+  await AuditLog.deleteMany({ actorEmail: admin.email, action: { $in: entries.map((entry) => entry.action) } });
+  return AuditLog.insertMany(entries, { ordered: false });
+}
+
+async function upsertPlan(data) {
+  return Plan.findOneAndUpdate(
+    { slug: data.slug },
+    { $set: data },
+    { upsert: true, new: true, setDefaultsOnInsert: true },
+  );
+}
+
+async function seedBillingPlans() {
+  const plans = [
+    {
+      slug: 'free',
+      name: 'Miễn Phí',
+      description: 'Dành cho cá nhân mới bắt đầu khám phá AI copywriting.',
+      priceMonthly: 0,
+      priceYearly: 0,
+      currency: 'VND',
+      limits: { copyMonthly: 30, apiCallsMonthly: 0, fineTuneModels: 0, plagiarismChecks: 0, seats: 1, historyDays: 7 },
+      features: ['30 copy/tháng', '5 ngành nghề cơ bản', '20 template', 'GPT-3.5 Turbo'],
+      excludedFeatures: ['GPT-4o', 'Fine-tuning Studio', 'API Access', 'Xuất file (.docx, .pdf)'],
+      isPopular: false,
+      isActive: true,
+      sortOrder: 1,
+    },
+    {
+      slug: 'pro',
+      name: 'Pro',
+      description: 'Dành cho freelancer và marketer chuyên nghiệp.',
+      priceMonthly: 299000,
+      priceYearly: 2990000,
+      currency: 'VND',
+      limits: { copyMonthly: 500, apiCallsMonthly: 5000, fineTuneModels: 3, plagiarismChecks: 100, seats: 3, historyDays: 30 },
+      features: ['500 copy/tháng', '100+ template', 'GPT-4o + GPT-3.5 + Llama 3.1', 'Fine-tuning Studio (3 models)', 'API Access (5.000 calls/tháng)'],
+      excludedFeatures: ['Dedicated CSM'],
+      isPopular: true,
+      isActive: true,
+      sortOrder: 2,
+    },
+    {
+      slug: 'business',
+      name: 'Business',
+      description: 'Giải pháp cho team và doanh nghiệp muốn scale nhanh.',
+      priceMonthly: 799000,
+      priceYearly: 7990000,
+      currency: 'VND',
+      limits: { copyMonthly: -1, apiCallsMonthly: 50000, fineTuneModels: -1, plagiarismChecks: -1, seats: 10, historyDays: 90 },
+      features: ['Không giới hạn copy', 'Tất cả template', 'Tất cả model AI', 'API Access (50.000 calls/tháng)', 'Dedicated support'],
+      excludedFeatures: [],
+      isPopular: false,
+      isActive: true,
+      sortOrder: 3,
+    },
+    {
+      slug: 'enterprise',
+      name: 'Enterprise',
+      description: 'Gói tùy chỉnh cho doanh nghiệp lớn.',
+      priceMonthly: -1,
+      priceYearly: -1,
+      currency: 'VND',
+      limits: { copyMonthly: -1, apiCallsMonthly: -1, fineTuneModels: -1, plagiarismChecks: -1, seats: -1, historyDays: -1 },
+      features: ['SSO', 'Private deployment', 'SLA riêng', 'Dedicated support team'],
+      excludedFeatures: [],
+      isPopular: false,
+      isActive: true,
+      sortOrder: 4,
+    },
+  ];
+
+  return Promise.all(plans.map((plan) => upsertPlan(plan)));
+}
+
+async function upsertSubscription(user, plan, data) {
+  return Subscription.findOneAndUpdate(
+    { userId: user._id },
+    {
+      $set: {
+        userId: user._id,
+        planId: plan._id,
+        status: data.status || 'active',
+        billingCycle: data.billingCycle || 'monthly',
+        currentPeriodStart: data.currentPeriodStart,
+        currentPeriodEnd: data.currentPeriodEnd,
+        cancelAtPeriodEnd: Boolean(data.cancelAtPeriodEnd),
+        provider: data.provider || 'mock',
+        providerSubscriptionId: data.providerSubscriptionId || '',
+      },
+    },
+    { upsert: true, new: true, setDefaultsOnInsert: true },
+  );
+}
+
+async function upsertPayment(data) {
+  return Payment.findOneAndUpdate(
+    { invoiceNo: data.invoiceNo },
+    {
+      $set: {
+        invoiceNo: data.invoiceNo,
+        userId: data.userId,
+        planId: data.planId,
+        subscriptionId: data.subscriptionId || null,
+        amount: data.amount,
+        currency: data.currency || 'VND',
+        method: data.method || 'manual',
+        provider: data.provider || 'mock',
+        status: data.status || 'pending',
+        paidAt: data.paidAt || null,
+        periodStart: data.periodStart || null,
+        periodEnd: data.periodEnd || null,
+        metadata: data.metadata || {},
+      },
+    },
+    { upsert: true, new: true, setDefaultsOnInsert: true },
+  );
+}
+
+async function seedBilling(user) {
+  const [free, pro, business, enterprise] = await seedBillingPlans();
+
+  const subscription = await upsertSubscription(user, pro, {
+    status: 'active',
+    billingCycle: 'monthly',
+    currentPeriodStart: new Date('2026-05-23T00:00:00.000Z'),
+    currentPeriodEnd: new Date('2026-06-23T00:00:00.000Z'),
+    provider: 'mock',
+  });
+
+  const payments = await Promise.all([
+    upsertPayment({
+      invoiceNo: 'PAY-001',
+      userId: user._id,
+      planId: pro._id,
+      subscriptionId: subscription._id,
+      amount: 299000,
+      currency: 'VND',
+      method: 'visa',
+      provider: 'mock',
+      status: 'success',
+      paidAt: new Date('2026-03-23T14:30:00.000Z'),
+      periodStart: new Date('2026-03-23T00:00:00.000Z'),
+      periodEnd: new Date('2026-04-23T00:00:00.000Z'),
+      metadata: { note: 'Demo payment for Pro plan' },
+    }),
+    upsertPayment({
+      invoiceNo: 'PAY-002',
+      userId: user._id,
+      planId: business._id,
+      subscriptionId: null,
+      amount: 799000,
+      currency: 'VND',
+      method: 'momo',
+      provider: 'mock',
+      status: 'success',
+      paidAt: new Date('2026-03-23T11:15:00.000Z'),
+      periodStart: new Date('2026-03-23T00:00:00.000Z'),
+      periodEnd: new Date('2026-04-23T00:00:00.000Z'),
+      metadata: { note: 'Business plan payment demo' },
+    }),
+    upsertPayment({
+      invoiceNo: 'PAY-003',
+      userId: user._id,
+      planId: pro._id,
+      subscriptionId: subscription._id,
+      amount: 299000,
+      currency: 'VND',
+      method: 'vnpay',
+      provider: 'mock',
+      status: 'pending',
+      paidAt: null,
+      periodStart: null,
+      periodEnd: null,
+      metadata: { note: 'Pending payment demo' },
+    }),
+    upsertPayment({
+      invoiceNo: 'PAY-004',
+      userId: user._id,
+      planId: pro._id,
+      subscriptionId: subscription._id,
+      amount: 299000,
+      currency: 'VND',
+      method: 'visa',
+      provider: 'mock',
+      status: 'failed',
+      paidAt: new Date('2026-03-22T09:20:00.000Z'),
+      periodStart: null,
+      periodEnd: null,
+      metadata: { note: 'Failed payment demo' },
+    }),
+    upsertPayment({
+      invoiceNo: 'PAY-005',
+      userId: user._id,
+      planId: business._id,
+      subscriptionId: null,
+      amount: 799000,
+      currency: 'VND',
+      method: 'bank',
+      provider: 'mock',
+      status: 'success',
+      paidAt: new Date('2026-03-21T18:00:00.000Z'),
+      periodStart: new Date('2026-03-21T00:00:00.000Z'),
+      periodEnd: new Date('2026-04-21T00:00:00.000Z'),
+      metadata: { note: 'Bank transfer demo' },
+    }),
+    upsertPayment({
+      invoiceNo: 'PAY-006',
+      userId: user._id,
+      planId: pro._id,
+      subscriptionId: subscription._id,
+      amount: 299000,
+      currency: 'VND',
+      method: 'momo',
+      provider: 'mock',
+      status: 'success',
+      paidAt: new Date('2026-03-20T10:30:00.000Z'),
+      periodStart: new Date('2026-03-20T00:00:00.000Z'),
+      periodEnd: new Date('2026-04-20T00:00:00.000Z'),
+      metadata: { note: 'MoMo demo' },
+    }),
+  ]);
+
+  return { plans: [free, pro, business, enterprise], subscription, payments };
+}
+
 async function upsertCategory(data) {
   return Category.findOneAndUpdate(
     { slug: data.slug },
@@ -1144,6 +1393,8 @@ async function seed() {
     seedDemoContents(user, projects),
   ]);
   const notifications = await seedDemoNotifications(user);
+  const auditLogs = await seedDemoAuditLogs(user, admin, contents);
+  const billing = await seedBilling(user);
 
   console.log(`Seeded AccountUser: ${user.email}`);
   console.log(`Seeded AccountAdmin: ${admin.email}`);
@@ -1153,6 +1404,9 @@ async function seed() {
   console.log(`Seeded Template: ${templates.length}`);
   console.log(`Seeded Content: ${contents.length}`);
   console.log(`Seeded Notification: ${notifications.length}`);
+  console.log(`Seeded AuditLog: ${auditLogs.length}`);
+  console.log(`Seeded Plan: ${billing.plans.length}`);
+  console.log(`Seeded Payment: ${billing.payments.length}`);
 }
 
 seed()

@@ -26,6 +26,11 @@ export const ACTION_ICONS: Record<string, any> = {
   'user.login': LogIn, 'user.logout': LogOut, 'user.password.reset': Key,
   'content.generate': FileText, 'payment.success': CreditCard,
   'admin.user.update': Edit2, 'admin.template.delete': Trash2,
+  'admin.account.created': Plus, 'admin.account.updated': Edit2,
+  'admin.account.deleted': Trash2, 'admin.account.restored': CheckCircle2,
+  'admin.content.updated': Edit2, 'admin.content.deleted': Trash2,
+  'admin.content.restored': CheckCircle2, 'admin.content.permanent_delete': Trash2,
   'admin.settings.update': Settings, 'model.finetune.start': Settings,
   'api.rate_limit': AlertTriangle, 'api.key.create': Plus,
+  'system.seed.completed': Settings,
 };
