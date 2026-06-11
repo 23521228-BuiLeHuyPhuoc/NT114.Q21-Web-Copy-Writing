@@ -2,17 +2,17 @@ export const MOCK_MODELS = [
   {
     id: 'm1', name: 'Brand Voice - Thương Mại Điện Tử', industry: 'ecommerce',
     status: 'ready', accuracy: 94, trainedOn: 120, createdAt: '15/03/2026',
-    baseModel: 'GPT-4o', desc: 'Được fine-tune với 120 mẫu copy e-commerce, tập trung vào tone khẩn cấp và giảm giá.',
+    baseModel: 'Configured fine-tune model', desc: 'Được fine-tune với 120 mẫu copy e-commerce, tập trung vào tone khẩn cấp và giảm giá.',
   },
   {
     id: 'm2', name: 'Luxury Real Estate Voice', industry: 'realestate',
     status: 'training', accuracy: 0, trainedOn: 85, createdAt: '22/03/2026',
-    baseModel: 'Llama 3.1 70B', desc: 'Fine-tune cho bất động sản cao cấp, tone sang trọng và chuyên nghiệp.',
+    baseModel: 'Configured fine-tune model', desc: 'Fine-tune cho bất động sản cao cấp, tone sang trọng và chuyên nghiệp.',
   },
   {
     id: 'm3', name: 'Healthcare Compassionate', industry: 'healthcare',
     status: 'ready', accuracy: 91, trainedOn: 95, createdAt: '10/03/2026',
-    baseModel: 'GPT-4o', desc: 'Tone nhẹ nhàng, đồng cảm và chuyên nghiệp cho ngành y tế.',
+    baseModel: 'Configured fine-tune model', desc: 'Tone nhẹ nhàng, đồng cảm và chuyên nghiệp cho ngành y tế.',
   },
 ];
 

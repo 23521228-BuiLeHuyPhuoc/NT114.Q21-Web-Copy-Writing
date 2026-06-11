@@ -1,146 +1,112 @@
 import { useState } from 'react';
 import { Layout } from '@/app/components/Layout';
-import { Card } from '@/app/components/ui/card';
-import { Button } from '@/app/components/ui/button';
-import { Textarea } from '@/app/components/ui/textarea';
 import { Badge } from '@/app/components/ui/badge';
+import { Button } from '@/app/components/ui/button';
+import { Card } from '@/app/components/ui/card';
 import { Progress } from '@/app/components/ui/progress';
-import {
-  FileCheck, Search, Shield, CheckCircle2, AlertTriangle,
-  Clock, BarChart3, Copy, RefreshCw, FileText, Sparkles,
-} from 'lucide-react';
+import { Textarea } from '@/app/components/ui/textarea';
+import { AlertTriangle, CheckCircle2, Clock, Database, FileCheck, FileText, RefreshCw, Search, Shield } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-import { usePlagiarismResults } from '@/hooks/queries/usePlagiarism';
+import { useCheckPlagiarism, usePlagiarismHistory } from '@/hooks/queries/usePlagiarism';
+import type { PlagiarismReport, PlagiarismRiskLevel } from '@/services/plagiarismService';
+
+const RISK: Record<PlagiarismRiskLevel, { label: string; cls: string }> = {
+  safe: { label: 'An toàn', cls: 'bg-primary/10 text-primary border-primary/20' },
+  review: { label: 'Cần rà soát', cls: 'bg-amber-100 text-amber-800 border-amber-200' },
+  high: { label: 'Rủi ro cao', cls: 'bg-orange-100 text-orange-800 border-orange-200' },
+  critical: { label: 'Trùng lặp cao', cls: 'bg-red-100 text-red-800 border-red-200' },
+};
+
+function countWords(text: string) {
+  return text.trim().split(/\s+/).filter(Boolean).length;
+}
+
+function scoreClass(score: number, similarity = false) {
+  if (similarity) return score >= 45 ? 'text-red-600' : score >= 20 ? 'text-amber-600' : 'text-primary';
+  return score >= 80 ? 'text-primary' : score >= 60 ? 'text-amber-600' : 'text-red-600';
+}
+
+function errorMessage(error: unknown) {
+  if (typeof error === 'object' && error && 'response' in error) {
+    return (error as { response?: { data?: { message?: string } } }).response?.data?.message || 'Không thể kiểm tra đạo văn';
+  }
+  return error instanceof Error ? error.message : 'Không thể kiểm tra đạo văn';
+}
+
+function dateLabel(value?: string) {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).format(date);
+}
 
 export function CustomerPlagiarismCheck() {
-  const { data: results = [] } = usePlagiarismResults();
   const [text, setText] = useState('');
-  const [isChecking, setIsChecking] = useState(false);
-  const [result, setResult] = useState<null | { originality: number; sources: typeof results }>(null);
+  const [result, setResult] = useState<PlagiarismReport | null>(null);
+  const { data: history } = usePlagiarismHistory({ limit: 5 });
+  const check = useCheckPlagiarism();
+  const words = countWords(text);
+  const historyItems = history?.items || [];
 
-  const handleCheck = async () => {
-    if (!text.trim()) { toast.error('Vui lòng nhập nội dung cần kiểm tra'); return; }
-    setIsChecking(true);
-    await new Promise(r => setTimeout(r, 2500));
-    setResult({ originality: 85, sources: results });
-    setIsChecking(false);
-    toast.success('Kiểm tra hoàn tất!');
+  const handleCheck = () => {
+    const trimmed = text.trim();
+    if (trimmed.length < 20 || words < 5) {
+      toast.error('Vui lòng nhập ít nhất 20 ký tự và 5 từ để kiểm tra');
+      return;
+    }
+    check.mutate({ text: trimmed, threshold: 35, includeReferences: true }, {
+      onSuccess: (report) => { setResult(report); toast.success('Kiểm tra đạo văn hoàn tất'); },
+      onError: (error) => toast.error(errorMessage(error)),
+    });
   };
-
-  const getScoreColor = (score: number) => score >= 80 ? 'text-primary' : score >= 60 ? 'text-amber-600' : 'text-red-600';
-  const getScoreBg = (score: number) => score >= 80 ? 'from-green-100 to-emerald-100' : score >= 60 ? 'from-amber-100 to-amber-100' : 'from-red-100 to-amber-100';
 
   return (
     <Layout>
-      <div className="p-6 max-w-5xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-1">Kiểm Tra Đạo Văn</h1>
-          <p className="text-foreground/70">Plagiarism Detection — kiểm tra tính độc đáo của nội dung AI</p>
-        </div>
-
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Input */}
-          <div className="lg:col-span-2 space-y-4">
-            <Card className="p-5">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold text-foreground">Nội dung cần kiểm tra</h3>
-                <span className="text-xs text-muted-foreground/80">{text.split(/\s+/).filter(Boolean).length} từ</span>
-              </div>
-              <Textarea
-                placeholder="Dán nội dung AI đã tạo vào đây để kiểm tra đạo văn..."
-                value={text}
-                onChange={e => setText(e.target.value)}
-                className="min-h-[200px] text-sm"
-              />
-              <div className="flex gap-3 mt-4">
-                <Button
-                  className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 text-white h-11"
-                  onClick={handleCheck}
-                  disabled={isChecking}
-                >
-                  {isChecking ? (
-                    <><RefreshCw className="w-4 h-4 mr-2 animate-spin" /> Đang kiểm tra...</>
-                  ) : (
-                    <><FileCheck className="w-4 h-4 mr-2" /> Kiểm tra đạo văn</>
-                  )}
-                </Button>
-                <Button variant="outline" onClick={() => { setText(''); setResult(null); }}>Xóa</Button>
-              </div>
-            </Card>
-
-            {/* Results */}
-            {result && (
-              <Card className="p-5">
-                <h3 className="font-semibold text-foreground mb-4">Kết quả chi tiết</h3>
-
-                {/* Originality score */}
-                <div className={`text-center py-6 rounded-xl bg-gradient-to-r ${getScoreBg(result.originality)} mb-6`}>
-                  <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-card shadow-lg mb-3">
-                    <span className={`text-3xl font-bold ${getScoreColor(result.originality)}`}>{result.originality}%</span>
-                  </div>
-                  <p className="font-semibold text-foreground">Tính độc đáo</p>
-                  <p className="text-sm text-foreground/70 mt-1">
-                    {result.originality >= 80 ? 'Nội dung có tính độc đáo cao' : 'Cần chỉnh sửa để tăng tính độc đáo'}
-                  </p>
-                </div>
-
-                {/* Sources found */}
-                <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-amber-500" />
-                  Nguồn tương tự ({result.sources.length})
-                </h4>
-                <div className="space-y-3">
-                  {result.sources.map((source, i) => (
-                    <div key={i} className="p-3 bg-surface-muted rounded-lg border">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-foreground truncate flex-1">{source.source}</span>
-                        <Badge className={`border-0 text-xs ml-2 ${source.similarity > 10 ? 'bg-warning/15 text-amber-800' : 'bg-primary/10 text-primary'}`}>
-                          {source.similarity}% tương tự
-                        </Badge>
-                      </div>
-                      <p className="text-xs text-muted-foreground italic">"{source.snippet}"</p>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            )}
+      <div className='mx-auto max-w-6xl space-y-6 p-6'>
+        <h1 className='text-3xl font-bold text-foreground'>Kiểm tra đạo văn AI</h1>
+        <Card className='p-5'>
+          <div className='mb-3 flex items-center justify-between gap-3'>
+            <div><h2 className='font-semibold text-foreground'>Nội dung cần kiểm tra</h2><p className='text-xs text-muted-foreground'>So khớp với nội dung đã lưu và nguồn tham chiếu demo.</p></div>
+            <Badge variant='outline'>{words} từ</Badge>
           </div>
-
-          {/* Sidebar */}
-          <div className="space-y-4">
-            <Card className="p-5">
-              <h3 className="font-semibold text-foreground mb-4">Thống kê</h3>
-              <div className="space-y-3">
-                {[
-                  { label: 'Tổng lượt kiểm tra', value: '47', icon: Search },
-                  { label: 'TB tính độc đáo', value: '89%', icon: Shield },
-                  { label: 'Nội dung an toàn', value: '42/47', icon: CheckCircle2 },
-                  { label: 'Quota còn lại', value: '53/100', icon: BarChart3 },
-                ].map((s, i) => {
-                  const Icon = s.icon;
-                  return (
-                    <div key={i} className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-primary/5 text-primary"><Icon className="w-4 h-4" /></div>
-                      <div>
-                        <p className="text-sm font-semibold text-foreground">{s.value}</p>
-                        <p className="text-xs text-muted-foreground">{s.label}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </Card>
-
-            <Card className="p-5 bg-gradient-to-br from-green-50 to-emerald-50 border-primary/20">
-              <Sparkles className="w-5 h-5 text-primary mb-2" />
-              <h4 className="font-semibold text-foreground mb-1">Mẹo hay</h4>
-              <p className="text-xs text-foreground/70 leading-relaxed">
-                Nội dung AI thường có tính độc đáo cao (85-95%). Nếu điểm thấp hơn 70%, hãy thử tạo lại với temperature cao hơn hoặc thêm context cụ thể hơn.
-              </p>
-            </Card>
+          <Textarea className='min-h-[220px] text-sm leading-6' placeholder='Dán nội dung AI hoặc bản nháp quảng cáo vào đây...' value={text} onChange={(event) => setText(event.target.value)} />
+          <div className='mt-4 flex gap-3'>
+            <Button className='h-11 flex-1 text-white' onClick={handleCheck} disabled={check.isPending}>{check.isPending ? <><RefreshCw className='mr-2 h-4 w-4 animate-spin' /> Đang kiểm tra...</> : <><FileCheck className='mr-2 h-4 w-4' /> Kiểm tra đạo văn</>}</Button>
+            <Button variant='outline' onClick={() => { setText(''); setResult(null); }}>Xóa</Button>
           </div>
-        </div>
+        </Card>
+        {result && (
+          <Card className='p-5'>
+            <div className='mb-4 flex items-start justify-between gap-4'>
+              <div><h2 className='font-semibold text-foreground'>Kết quả phân tích</h2><p className='text-sm text-muted-foreground'>{result.summary}</p></div>
+              <Badge variant='outline' className={RISK[result.riskLevel].cls}>{RISK[result.riskLevel].label}</Badge>
+            </div>
+            <div className='grid gap-4 md:grid-cols-3'>
+              <div className='rounded-lg border p-4'><p className='text-xs uppercase text-muted-foreground'>Tính độc đáo</p><p className={`mt-2 text-3xl font-bold ${scoreClass(result.originalityScore)}`}>{result.originalityScore}%</p><Progress value={result.originalityScore} className='mt-3' /></div>
+              <div className='rounded-lg border p-4'><p className='text-xs uppercase text-muted-foreground'>Độ tương đồng</p><p className={`mt-2 text-3xl font-bold ${scoreClass(result.similarityScore, true)}`}>{result.similarityScore}%</p><Progress value={result.similarityScore} className='mt-3' /></div>
+              <div className='rounded-lg border p-4'><p className='text-xs uppercase text-muted-foreground'>Đoạn nghi vấn</p><p className='mt-2 text-3xl font-bold text-foreground'>{result.matches.length}</p><p className='mt-3 text-xs text-muted-foreground'>{result.modelUsed}</p></div>
+            </div>
+          </Card>
+        )}
+        {result && (
+          <Card className='p-5'>
+            <h2 className='mb-4 flex items-center gap-2 font-semibold text-foreground'><FileText className='h-4 w-4 text-primary' /> Văn bản đã kiểm tra</h2>
+            <div className='max-h-[300px] overflow-auto whitespace-pre-wrap rounded-lg border bg-background p-4 text-sm leading-7 text-foreground'>{result.checkText}</div>
+            {result.matches[0] && <p className='mt-3 rounded-lg bg-amber-100 p-3 text-sm text-amber-900'>Đoạn nghi vấn nổi bật: {result.matches[0].matchedText}</p>}
+          </Card>
+        )}
+        {result && (
+          <Card className='p-5'>
+            <h2 className='mb-4 flex items-center gap-2 font-semibold text-foreground'><AlertTriangle className='h-4 w-4 text-amber-600' /> Nguồn tương đồng ({result.sources.length})</h2>
+            <div className='space-y-3'>{result.sources.length === 0 ? <p className='rounded-lg border border-dashed p-4 text-sm text-muted-foreground'>Không tìm thấy nguồn tương đồng đáng kể.</p> : result.sources.map((source, index) => <div key={`${source.source}-${index}`} className='rounded-lg border p-4'><div className='mb-2 flex items-center justify-between gap-2'><div className='min-w-0'><p className='truncate text-sm font-semibold text-foreground'>{source.sourceTitle || source.source}</p><p className='mt-1 flex items-center gap-1 text-xs text-muted-foreground'><Database className='h-3.5 w-3.5' /> {source.sourceType}</p></div><Badge className='border-0 bg-amber-100 text-amber-800'>{source.similarity}%</Badge></div><p className='text-sm italic text-muted-foreground'>{source.snippet}</p></div>)}</div>
+          </Card>
+        )}
+        <Card className='p-5'>
+          <h2 className='mb-4 flex items-center gap-2 font-semibold text-foreground'><Clock className='h-4 w-4 text-primary' /> Lịch sử gần đây</h2>
+          <div className='mb-4 grid gap-3 sm:grid-cols-3'><div className='flex items-center gap-2 text-sm'><Search className='h-4 w-4 text-primary' /> {history?.pagination.totalItems || historyItems.length} lượt kiểm tra</div><div className='flex items-center gap-2 text-sm'><Shield className='h-4 w-4 text-primary' /> local-ngram-v1</div><div className='flex items-center gap-2 text-sm'><CheckCircle2 className='h-4 w-4 text-primary' /> ngưỡng 35%</div></div>
+          {historyItems.length === 0 ? <p className='text-sm text-muted-foreground'>Chưa có report nào.</p> : <div className='space-y-3'>{historyItems.map((item) => <button key={item.id} type='button' onClick={() => setResult(item)} className='w-full rounded-lg border p-3 text-left hover:border-primary/50'><div className='mb-2 flex items-center justify-between gap-2'><span className='text-sm font-semibold text-foreground'>{item.originalityScore}% độc đáo</span><Badge variant='outline' className={RISK[item.riskLevel].cls}>{RISK[item.riskLevel].label}</Badge></div><p className='line-clamp-2 text-xs text-muted-foreground'>{item.checkText}</p><p className='mt-2 text-[11px] text-muted-foreground'>{dateLabel(item.createdAt)}</p></button>)}</div>}
+        </Card>
       </div>
     </Layout>
   );

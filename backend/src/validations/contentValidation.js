@@ -65,6 +65,8 @@ const generateContentSchema = Joi.object({
   tone: Joi.string().valid(...generateTones).required(),
   language: Joi.string().trim().min(1).max(40).required(),
   model: Joi.string().trim().min(1).max(80).required(),
+  modelMode: Joi.string().valid('base', 'fine-tuned').default('base'),
+  fineTunedModelId: optionalObjectId,
   length: Joi.string().valid('short', 'medium', 'long').default('medium'),
   variations: Joi.number().integer().min(1).max(5).optional(),
   maxOutputTokens: Joi.number().integer().min(500).max(6000).optional(),

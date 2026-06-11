@@ -4,19 +4,30 @@ import { Badge } from '@/app/components/ui/badge';
 import { Cpu } from 'lucide-react';
 import { MODELS } from '@/mocks/generator';
 
+export type GeneratorModelOption = {
+  id: string;
+  name: string;
+  badge: string;
+  color: string;
+  desc: string;
+  latency: string;
+  tokens: string;
+};
+
 interface Props {
   value: string;
   onChange: (id: string) => void;
+  models?: GeneratorModelOption[];
 }
 
-export function ModelPicker({ value, onChange }: Props) {
+export function ModelPicker({ value, onChange, models = MODELS }: Props) {
   return (
     <Card className="p-4">
       <Label className="text-sm font-semibold text-foreground/80 mb-3 block flex items-center gap-2">
         <Cpu className="w-4 h-4 text-primary" /> Model AI
       </Label>
       <div className="space-y-2">
-        {MODELS.map(m => (
+        {models.map(m => (
           <button
             key={m.id}
             onClick={() => onChange(m.id)}

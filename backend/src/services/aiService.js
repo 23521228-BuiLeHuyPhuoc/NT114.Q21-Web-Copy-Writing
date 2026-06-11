@@ -1,3 +1,10 @@
+const { GoogleAuth } = require('google-auth-library');
+const createError = require('../utils/createError');
+
+const GOOGLE_CLOUD_SCOPE = 'https://www.googleapis.com/auth/cloud-platform';
+const DEFAULT_VERTEX_LOCATION = 'us-central1';
+let googleAuth;
+
 const TYPE_LABELS = {
   headline: 'tiêu đề quảng cáo',
   description: 'mô tả sản phẩm',
@@ -202,6 +209,12 @@ const GROQ_MODEL_MAP = {
   'groq-llama-3-1-8b': 'llama-3.1-8b-instant',
   llama3: 'llama-3.3-70b-versatile',
   'llama3-8b': 'llama-3.1-8b-instant',
+};
+
+const FREEGPT4_MODEL_MAP = {
+  'freegpt4-gpt-4': 'gpt-4',
+  'freegpt4-gpt-4o': 'gpt-4o',
+  'freegpt4-gpt-4o-mini': 'gpt-4o-mini',
 };
 
 const FORMAT_BOUNDARY_LABELS = [
@@ -553,7 +566,7 @@ function getOpenAIModel(model) {
     gpt35: 'gpt-4o-mini',
   };
 
-  return process.env.OPENAI_MODEL || modelMap[model] || model || 'gpt-4o-mini';
+  return modelMap[model] || model || process.env.OPENAI_MODEL || 'gpt-4o-mini';
 }
 
 function getOpenAIBaseUrl() {
@@ -566,6 +579,47 @@ function getOpenRouterModel(model) {
 
 function getGroqModel(model) {
   return process.env.GROQ_MODEL || GROQ_MODEL_MAP[model] || model || 'llama-3.3-70b-versatile';
+}
+
+function getFreeGPT4BaseUrl() {
+  return (process.env.FREEGPT4_BASE_URL || 'http://127.0.0.1:5500').replace(/\/+$/, '');
+}
+
+function getFreeGPT4Model(model) {
+  return process.env.FREEGPT4_MODEL || FREEGPT4_MODEL_MAP[model] || model || 'gpt-4';
+}
+
+function getVertexLocation() {
+  return String(process.env.GOOGLE_CLOUD_LOCATION || process.env.VERTEX_LOCATION || DEFAULT_VERTEX_LOCATION).trim();
+}
+
+function normalizeVertexResourceName(model) {
+  const value = String(model || '').trim();
+  if (!value) return '';
+  if (value.startsWith('projects/')) return value;
+  if (value.includes('/projects/')) return value.replace(/^https?:\/\/[^/]+\/v\d+\//, '');
+  return value;
+}
+
+async function getGoogleAccessToken() {
+  googleAuth = googleAuth || new GoogleAuth({ scopes: [GOOGLE_CLOUD_SCOPE] });
+  const client = await googleAuth.getClient();
+  const tokenResponse = await client.getAccessToken();
+  const token = typeof tokenResponse === 'string' ? tokenResponse : tokenResponse?.token;
+  if (!token) throw createError(503, 'Could not read Google ADC access token. Run gcloud auth application-default login.');
+  return token;
+}
+
+function cleanFreeGPT4Text(text) {
+  return String(text || '')
+    .replace(/<br\s*\/?\s*>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .trim();
 }
 
 function extractGeminiText(data) {
@@ -663,6 +717,89 @@ async function callGeminiFlashBackup(payload) {
   });
 }
 
+async function callVertexGemini(payload) {
+  if (typeof fetch !== 'function') {
+    return null;
+  }
+
+  const resourceName = normalizeVertexResourceName(payload.model);
+  if (!resourceName) return null;
+
+  const resourceLocation = resourceName.match(/\/locations\/([^/]+)/)?.[1] || getVertexLocation();
+  const providerPrompt = buildProviderPrompt(payload);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 90000);
+
+  try {
+    const token = await getGoogleAccessToken();
+    const response = await fetch(
+      `https://${resourceLocation}-aiplatform.googleapis.com/v1/${resourceName}:generateContent`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        signal: controller.signal,
+        body: JSON.stringify({
+          systemInstruction: {
+            parts: [{
+              text: 'You are a senior Vietnamese marketing copywriter. Follow the requested length, keep the copy structured, and write natural Vietnamese with full diacritics.',
+            }],
+          },
+          contents: [{
+            role: 'user',
+            parts: [{ text: providerPrompt }],
+          }],
+          generationConfig: {
+            temperature: 0.75,
+            topP: 0.9,
+            maxOutputTokens: getMaxOutputTokens(payload),
+          },
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const message = errorData.error?.message || response.statusText;
+      console.warn('Vertex Gemini tuned generateContent failed', { status: response.status, model: resourceName, message });
+      if (payload.requireProviderSuccess) {
+        throw createError(response.status, `Vertex tuned model generateContent failed: ${message}`);
+      }
+      return null;
+    }
+
+    const data = await response.json();
+    const outputText = cleanProviderOutput(extractGeminiText(data));
+    if (!outputText) return null;
+
+    const promptTokens = Number(data.usageMetadata?.promptTokenCount || estimateTokens(providerPrompt));
+    const completionTokens = Number(data.usageMetadata?.candidatesTokenCount || estimateTokens(outputText));
+
+    return {
+      outputText,
+      modelUsed: resourceName,
+      usage: {
+        promptTokens,
+        completionTokens,
+        totalTokens: Number(data.usageMetadata?.totalTokenCount || promptTokens + completionTokens),
+      },
+      status: 'success',
+      fallback: false,
+    };
+  } catch (error) {
+    console.warn('Vertex Gemini tuned generateContent failed', { model: resourceName, message: error.message });
+    if (payload.requireProviderSuccess) {
+      if (error.statusCode) throw error;
+      throw createError(502, `Vertex tuned model generateContent failed: ${error.message}`);
+    }
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function callOpenAI(payload) {
   if (!process.env.OPENAI_API_KEY || typeof fetch !== 'function') {
     return null;
@@ -698,7 +835,15 @@ async function callOpenAI(payload) {
       }),
     });
 
-    if (!response.ok) return null;
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const message = errorData.error?.message || response.statusText;
+      console.warn('OpenAI chat completion failed', { status: response.status, model, message });
+      if (payload.requireProviderSuccess) {
+        throw createError(response.status, `OpenAI fine-tuned model request failed: ${message}`);
+      }
+      return null;
+    }
 
     const data = await response.json();
     const outputText = cleanProviderOutput(data.choices?.[0]?.message?.content);
@@ -718,7 +863,11 @@ async function callOpenAI(payload) {
       status: 'success',
       fallback: false,
     };
-  } catch {
+  } catch (error) {
+    if (payload.requireProviderSuccess) {
+      if (error.statusCode) throw error;
+      throw createError(502, `OpenAI fine-tuned model request failed: ${error.message}`);
+    }
     return null;
   } finally {
     clearTimeout(timeout);
@@ -877,8 +1026,70 @@ async function callGroq(payload) {
   }
 }
 
+async function callFreeGPT4(payload) {
+  if (typeof fetch !== 'function') {
+    return null;
+  }
+
+  const model = getFreeGPT4Model(payload.model);
+  const providerPrompt = buildProviderPrompt(payload);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), Number(process.env.FREEGPT4_TIMEOUT_MS || 90000));
+
+  try {
+    const url = new URL(getFreeGPT4BaseUrl());
+    url.searchParams.set(process.env.FREEGPT4_KEYWORD || 'text', providerPrompt);
+    if (process.env.FREEGPT4_TOKEN) url.searchParams.set('token', process.env.FREEGPT4_TOKEN);
+
+    const response = await fetch(url, {
+      method: 'GET',
+      signal: controller.signal,
+      headers: {
+        Accept: 'text/plain, text/html, */*',
+      },
+    });
+
+    const rawText = await response.text().catch(() => '');
+    if (!response.ok) {
+      console.warn('FreeGPT4 request failed', {
+        status: response.status,
+        model,
+        message: rawText.slice(0, 200) || response.statusText,
+      });
+      return null;
+    }
+
+    const outputText = cleanProviderOutput(cleanFreeGPT4Text(rawText));
+    if (!outputText || /please enter a question/i.test(outputText) || /^error:/i.test(outputText)) return null;
+
+    const promptTokens = estimateTokens(providerPrompt);
+    const completionTokens = estimateTokens(outputText);
+
+    return {
+      outputText,
+      modelUsed: `freegpt4:${model}`,
+      usage: {
+        promptTokens,
+        completionTokens,
+        totalTokens: promptTokens + completionTokens,
+      },
+      status: 'success',
+      fallback: false,
+    };
+  } catch (error) {
+    console.warn('FreeGPT4 request failed', {
+      model,
+      message: error.message,
+    });
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function generateCopy(payload) {
-  const provider = (process.env.AI_PROVIDER || 'gemini').toLowerCase();
+  const forcedProvider = String(payload.forceProvider || '').toLowerCase();
+  const provider = forcedProvider || (process.env.AI_PROVIDER || 'gemini').toLowerCase();
   const selectedModel = payload.model || '';
   const isGroqModel = selectedModel.startsWith('groq-')
     || selectedModel.startsWith('llama-')
@@ -886,6 +1097,8 @@ async function generateCopy(payload) {
     || selectedModel === 'llama3-8b';
   const providersBySelectedModel = isGroqModel
     ? [callGroq]
+    : selectedModel.startsWith('freegpt4-')
+      ? [callFreeGPT4]
     : selectedModel.startsWith('openrouter-')
     ? [callOpenRouter]
     : selectedModel.startsWith('gemma-') || selectedModel.includes('pro')
@@ -895,16 +1108,22 @@ async function generateCopy(payload) {
         : null;
   const providersByEnv = {
     gemini: [callGemini],
+    'vertex-gemini': [callVertexGemini],
     openrouter: [callOpenRouter],
     openai: [callOpenAI],
     groq: [callGroq],
-    auto: [callGemini, callGroq, callOpenRouter, callOpenAI],
+    freegpt4: [callFreeGPT4],
+    auto: [callGemini, callGroq, callOpenRouter, callOpenAI, callFreeGPT4],
   }[provider] || [callGemini];
-  const providers = providersBySelectedModel || providersByEnv;
+  const providers = forcedProvider ? providersByEnv : (providersBySelectedModel || providersByEnv);
 
   for (const callProvider of providers) {
     const result = await callProvider(payload);
     if (result) return result;
+  }
+
+  if (payload.requireProviderSuccess) {
+    throw createError(502, `Selected model ${payload.model || 'unknown'} could not be reached by its provider`);
   }
 
   const outputText = buildFallbackOutput(payload);

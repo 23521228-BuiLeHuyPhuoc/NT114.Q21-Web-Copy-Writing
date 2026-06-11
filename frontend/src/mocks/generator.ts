@@ -13,6 +13,8 @@ export const MODELS = [
   { id: 'gemini-3-1-flash-lite', name: 'Gemini 3.1 Flash Lite', badge: 'Free', color: 'text-cyan-600', desc: 'Model free/lite mới, hợp nội dung ngắn và phản hồi nhanh', latency: '~5-15s', tokens: '1M' },
   { id: 'gemma-4-26b', name: 'Gemma 4 26B', badge: 'Free', color: 'text-orange-600', desc: 'Gemma qua Gemini API, miễn phí nhưng có thể chậm hơn dòng Flash', latency: '~30-90s', tokens: '262K' },
   { id: 'openrouter-free', name: 'OpenRouter Free Router', badge: 'Free', color: 'text-blue-600', desc: 'Tự chọn model free khả dụng trên OpenRouter; dùng khi Gemini lỗi/quota', latency: '~3s', tokens: '200K' },
+  { id: 'freegpt4-gpt-4', name: 'GPT-4 Free Local API', badge: 'Local', color: 'text-indigo-600', desc: 'Goi server Free-GPT4-WEB-API dang chay o localhost:5500, khong can OpenAI key', latency: '~5-30s', tokens: 'provider' },
+  { id: 'freegpt4-gpt-4o', name: 'GPT-4o Free Local API', badge: 'Local', color: 'text-violet-600', desc: 'Dung FreeGPT4 local voi model gpt-4o neu provider phia sau ho tro', latency: '~5-30s', tokens: 'provider' },
 ];
 
 export const COPY_TYPES = [

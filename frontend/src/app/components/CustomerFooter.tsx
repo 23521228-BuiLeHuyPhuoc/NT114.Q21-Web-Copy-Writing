@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link } from '@/lib/next-router-compat';
 import { BrandLogo } from '@/app/components/BrandLogo';
 import {
   LifeBuoy, FileText, Wand2, Brain,

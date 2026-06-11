@@ -14,6 +14,8 @@ export interface GenerateContentPayload {
   tone: string;
   language: string;
   model: string;
+  modelMode?: 'base' | 'fine-tuned';
+  fineTunedModelId?: string;
   length?: 'short' | 'medium' | 'long';
   variations?: number;
   maxOutputTokens?: number;

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from '@/lib/next-router-compat';
 import { Button } from '@/app/components/ui/button';
 import { BrandLogo } from '@/app/components/BrandLogo';
 import {

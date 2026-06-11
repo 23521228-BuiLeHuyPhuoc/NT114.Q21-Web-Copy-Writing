@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from '@/lib/next-router-compat';
 import { useForm } from 'react-hook-form';
 import { api } from '@/lib/axios';
 import {

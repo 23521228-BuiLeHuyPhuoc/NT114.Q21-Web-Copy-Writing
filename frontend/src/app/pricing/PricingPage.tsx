@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link } from '@/lib/next-router-compat';
 import { PublicNavbar } from '@/app/components/public/PublicNavbar';
 import { PublicFooter } from '@/app/components/public/PublicFooter';
 import { Badge } from '@/app/components/ui/badge';
@@ -148,6 +148,10 @@ export function PricingPage() {
               {yearly && <Badge className="bg-primary/10 text-primary border-0 text-xs">-17%</Badge>}
               {!yearly && <span className="text-xs bg-primary/20 text-primary rounded-md px-2 py-0.5">-17%</span>}
             </button>
+          </div>
+
+          <div className="mx-auto mt-6 max-w-2xl rounded-xl border border-amber-300/30 bg-amber-950/25 px-4 py-3 text-sm leading-relaxed text-amber-100">
+            MVP demo: cac goi hien chi dung de chon luong dang ky hoac lien he tu van. He thong chua ket noi thanh toan tu dong hay Stripe production.
           </div>
         </div>
       </section>

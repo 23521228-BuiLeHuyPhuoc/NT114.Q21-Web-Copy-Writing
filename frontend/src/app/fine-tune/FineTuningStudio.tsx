@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { Layout } from '@/app/components/Layout';
 import { Card } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
@@ -16,15 +16,86 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ImageWithFallback } from '@/app/components/figma/ImageWithFallback';
+import { useNavigate } from '@/lib/next-router-compat';
 
-import { useFineTuningModels, useTrainingLog, useExamplePairs } from '@/hooks/queries/useFineTuning';
+import {
+  useCreateFineTuneJob,
+  useFineTuneJobs,
+  useFineTuneMetrics,
+  useFineTuneProviders,
+  useFineTuneQuotas,
+  useFineTuningModels,
+  useSetFineTunedModelActive,
+  useTrainingLog,
+  useExamplePairs,
+} from '@/hooks/queries/useFineTuning';
 import { DataPagination } from '@/app/components/common/DataPagination';
 import { usePagination } from '@/hooks/usePagination';
+import { MODELS as GENERATOR_MODELS } from '@/mocks/generator';
+
+type ImportedFineTuneExample = {
+  id: string;
+  input: string;
+  output: string;
+  industry: string;
+  tone: string;
+};
+
+type BaseModelOption = {
+  id: string;
+  name: string;
+  description?: string;
+  default?: boolean;
+};
+
+const BASE_MODEL_OPTIONS: BaseModelOption[] = GENERATOR_MODELS.map((model, index) => ({
+  id: model.id,
+  name: model.name,
+  description: model.desc,
+  default: index === 0,
+}));
+
+function clampProgressValue(value?: number | null) {
+  const numeric = Number(value ?? 0);
+  if (!Number.isFinite(numeric)) return 0;
+  return Math.min(100, Math.max(0, Math.round(numeric)));
+}
+
+function parseFineTuneCsv(text: string): ImportedFineTuneExample[] {
+  const lines = text.replace(/^\uFEFF/, '').split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+  if (lines.length < 2) return [];
+
+  const headers = lines[0].split(',').map(header => header.trim().toLowerCase());
+  const inputIndex = headers.indexOf('input');
+  const outputIndex = headers.indexOf('output');
+  const industryIndex = headers.indexOf('industry');
+  const toneIndex = headers.indexOf('tone');
+  if (inputIndex < 0 || outputIndex < 0) return [];
+
+  return lines.slice(1).map((line, index) => {
+    const cells = line.split(',').map(cell => cell.trim());
+    return {
+      id: `csv-${Date.now()}-${index}`,
+      input: cells[inputIndex] || '',
+      output: cells[outputIndex] || '',
+      industry: industryIndex >= 0 ? cells[industryIndex] || 'general' : 'general',
+      tone: toneIndex >= 0 ? cells[toneIndex] || '' : '',
+    };
+  }).filter(item => item.input.length >= 10 && item.output.length >= 20);
+}
 
 export function CustomerFineTuningStudio() {
+  const navigate = useNavigate();
   const { data: modelsData } = useFineTuningModels();
+  const { data: jobsData = [] } = useFineTuneJobs();
   const { data: examplesData } = useExamplePairs();
-  const { data: trainingLog = [] } = useTrainingLog();
+  const { data: providers = [] } = useFineTuneProviders();
+  const { data: quotas } = useFineTuneQuotas();
+  const activeTrainingJob = jobsData.find(job => job.status === 'training') || jobsData.find(job => job.status === 'pending') || jobsData[0];
+  const { data: trainingLog = [] } = useTrainingLog(activeTrainingJob?.id);
+  const { data: metrics = [] } = useFineTuneMetrics(activeTrainingJob?.id);
+  const createFineTuneJob = useCreateFineTuneJob();
+  const setFineTunedModelActive = useSetFineTunedModelActive();
   const [models, setModels] = useState<NonNullable<typeof modelsData>>([] as any);
   const [examples, setExamples] = useState<NonNullable<typeof examplesData>>([] as any);
   useEffect(() => { if (modelsData) setModels(modelsData); }, [modelsData]);
@@ -33,12 +104,49 @@ export function CustomerFineTuningStudio() {
   const [newOutput, setNewOutput] = useState('');
   const [newModelName, setNewModelName] = useState('');
   const [newModelIndustry, setNewModelIndustry] = useState('ecommerce');
-  const [newModelBase, setNewModelBase] = useState('gpt4o');
+  const [newModelBase, setNewModelBase] = useState('');
+  const [newModelProvider, setNewModelProvider] = useState('');
   const [newModelDesc, setNewModelDesc] = useState('');
-  const [trainProgress, setTrainProgress] = useState(55); // training epoch 3
+  const [activeTab, setActiveTab] = useState('models');
+  const csvInputRef = useRef<HTMLInputElement | null>(null);
+  const activeProvider = providers.find(provider => provider.id === newModelProvider);
+  const providerBaseModelOptions = activeProvider?.baseModels?.length
+    ? activeProvider.baseModels
+    : BASE_MODEL_OPTIONS;
+  const baseModelOptions = providerBaseModelOptions.length > 0 ? providerBaseModelOptions : BASE_MODEL_OPTIONS;
+  const selectedProviderCanCreateTrainingJob = Boolean(activeProvider?.supportsFineTuning);
+  const providerHint = activeProvider
+    ? activeProvider.message || (activeProvider.supportsFineTuning
+      ? 'Provider n\u00e0y upload JSONL v\u00e0 t\u1ea1o job fine-tuning th\u1eadt qua provider.'
+      : activeProvider.status === 'active'
+        ? 'Provider API n\u00e0y \u0111ang d\u00f9ng cho generate, ch\u01b0a c\u00f3 adapter fine-tuning th\u1eadt trong backend.'
+        : 'Provider n\u00e0y ch\u01b0a c\u00f3 API key trong backend.')
+    : '';
+  useEffect(() => {
+    if (providers.length === 0) return;
+    const currentProvider = providers.find(provider => provider.id === newModelProvider);
+    if (currentProvider?.status === 'active') return;
+
+    const preferredProvider = providers.find(provider => provider.status === 'active' && provider.isDefault)
+      || providers.find(provider => provider.status === 'active' && provider.productionReady)
+      || providers.find(provider => provider.status === 'active')
+      || providers[0];
+    if (preferredProvider) setNewModelProvider(preferredProvider.id);
+  }, [providers, newModelProvider]);
+  useEffect(() => {
+    if (baseModelOptions.length === 0) return;
+    if (baseModelOptions.some(model => model.id === newModelBase)) return;
+    const defaultModel = baseModelOptions.find(model => model.default) || baseModelOptions[0];
+    setNewModelBase(defaultModel.id);
+  }, [baseModelOptions, newModelBase]);
+  const trainProgress = clampProgressValue(activeTrainingJob?.progress);
   const modelPagination = usePagination(models, {
     initialPageSize: 5,
     resetKey: models.length,
+  });
+  const jobPagination = usePagination(jobsData, {
+    initialPageSize: 5,
+    resetKey: jobsData.length,
   });
   const examplePagination = usePagination(examples, {
     initialPageSize: 5,
@@ -57,14 +165,87 @@ export function CustomerFineTuningStudio() {
     toast.success('Đã thêm cặp ví dụ!');
   };
 
-  const startTraining = () => {
-    if (!newModelName) { toast.error('Nhập tên model'); return; }
-    if (examples.length < 10) { toast.error(`Cần ít nhất 10 ví dụ (hiện có ${examples.length})`); return; }
-    toast.success('Đã bắt đầu training! Quá trình mất khoảng 30-60 phút.');
+  const importCsvExamples = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const imported = parseFineTuneCsv(await file.text());
+    event.target.value = '';
+
+    if (imported.length === 0) {
+      toast.error('CSV cần có cột input và output hợp lệ');
+      return;
+    }
+
+    setExamples(prev => [...prev, ...imported]);
+    toast.success(`Đã import ${imported.length} ví dụ từ CSV`);
   };
 
+  const startTraining = async () => {
+    if (!newModelName) { toast.error('Nhập tên model'); return; }
+    if (!newModelProvider) { toast.error('Chưa có provider training khả dụng'); return; }
+    if (!newModelBase) { toast.error('Chưa có model nền khả dụng'); return; }
+    if (activeProvider?.status && activeProvider.status !== 'active') { toast.error('Provider training chưa sẵn sàng'); return; }
+    if (!selectedProviderCanCreateTrainingJob) { toast.error('Provider này chưa hỗ trợ fine-tuning thật trong backend'); return; }
+    if (examples.length < 10) { toast.error(`Cần ít nhất 10 ví dụ (hiện có ${examples.length})`); return; }
+
+    try {
+      const job = await createFineTuneJob.mutateAsync({
+        name: newModelName,
+        industry: newModelIndustry,
+        baseModel: newModelBase,
+        provider: newModelProvider,
+        description: newModelDesc,
+        samples: examples.length,
+        epochs: 5,
+        examples: examples.map(ex => ({
+          input: ex.input,
+          output: ex.output,
+          industry: ex.industry || newModelIndustry,
+          tone: newModelProvider === 'openai' ? 'professional' : '',
+        })),
+      });
+      setNewModelName('');
+      setNewModelDesc('');
+      setActiveTab('training');
+      toast.success(`Đã tạo job fine-tuning "${job.name}"`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Không thể tạo job fine-tuning';
+      toast.error(message);
+    }
+  };
+
+  const applyModel = async (modelItem: NonNullable<typeof modelsData>[number]) => {
+    const registryModelId = modelItem.registryModelId;
+    if (!registryModelId) {
+      toast.error('Model này chưa được đăng ký để sử dụng trong AI Generator');
+      return;
+    }
+
+    try {
+      await setFineTunedModelActive.mutateAsync({ modelId: registryModelId, isActive: true });
+      navigate(`/generate?model=${encodeURIComponent(`fine-tuned:${registryModelId}`)}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Không thể áp dụng model';
+      toast.error(message);
+    }
+  };
   const statusColor = (s: string) => ({ ready: 'bg-primary/10 text-primary', training: 'bg-primary/10 text-primary', failed: 'bg-destructive/10 text-destructive', pending: 'bg-muted text-foreground/70' }[s] ?? 'bg-muted text-foreground/70');
   const statusLabel = (s: string) => ({ ready: 'Sẵn sàng', training: 'Đang training', failed: 'Thất bại', pending: 'Chờ xử lý' }[s] ?? s);
+
+  const latestMetric = metrics[metrics.length - 1];
+  const firstMetric = metrics[0];
+  const metricCards = latestMetric ? [
+    { label: 'Training Loss', value: latestMetric.trainLoss.toFixed(3), prev: (firstMetric?.trainLoss ?? latestMetric.trainLoss).toFixed(3), trend: 'down', good: true },
+    { label: 'Validation Loss', value: latestMetric.validationLoss.toFixed(3), prev: (firstMetric?.validationLoss ?? latestMetric.validationLoss).toFixed(3), trend: 'down', good: true },
+    { label: 'Accuracy', value: `${latestMetric.accuracy.toFixed(1)}%`, prev: `${(firstMetric?.accuracy ?? latestMetric.accuracy).toFixed(1)}%`, trend: 'up', good: true },
+    { label: 'Token Usage', value: `${latestMetric.tokenUsage}`, prev: `${firstMetric?.tokenUsage ?? latestMetric.tokenUsage}`, trend: 'up', good: true },
+  ] : [
+    { label: 'Training Loss', value: '0.342', prev: '1.245', trend: 'down', good: true },
+    { label: 'Validation Loss', value: '0.389', prev: '1.312', trend: 'down', good: true },
+    { label: 'Accuracy', value: '78.3%', prev: '45.2%', trend: 'up', good: true },
+    { label: 'Token Usage', value: '0', prev: '0', trend: 'up', good: true },
+  ];
 
   return (
     <Layout>
@@ -84,14 +265,14 @@ export function CustomerFineTuningStudio() {
             <div>
               <h3 className="font-semibold text-green-900 mb-1">Fine-tuning là gì?</h3>
               <p className="text-sm text-primary">
-                Fine-tuning cho phép bạn tinh chỉnh model AI (GPT-4o hoặc Llama 3.1) để viết copy đúng phong cách, tone giọng 
+                Fine-tuning cho phép bạn tinh chỉnh model AI đang cấu hình để viết copy đúng phong cách, tone giọng 
                 và đặc thù ngành nghề của thương hiệu bạn. Cung cấp càng nhiều ví dụ tốt, model càng chính xác.
               </p>
             </div>
           </div>
         </Card>
 
-        <Tabs defaultValue="models">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-6">
             <TabsTrigger value="models"><Brain className="w-4 h-4 mr-2" />Models của tôi</TabsTrigger>
             <TabsTrigger value="create"><Plus className="w-4 h-4 mr-2" />Tạo Model Mới</TabsTrigger>
@@ -119,16 +300,16 @@ export function CustomerFineTuningStudio() {
                       <div className="mt-3">
                         <div className="flex justify-between text-xs text-foreground/70 mb-1">
                           <span>Đang training...</span>
-                          <span>55%</span>
+                          <span>{clampProgressValue(m.progress)}%</span>
                         </div>
-                        <Progress value={55} className="h-2" />
+                        <Progress value={clampProgressValue(m.progress)} className="h-2" />
                       </div>
                     )}
                   </div>
                   <div className="flex flex-col gap-2 flex-shrink-0">
                     {m.status === 'ready' && (
-                      <Button size="sm" className="bg-primary hover:bg-green-700 text-white" onClick={() => toast.success(`Đang áp dụng ${m.name}!`)}>
-                        <Zap className="w-4 h-4 mr-1" /> Áp dụng
+                      <Button size="sm" className="bg-primary hover:bg-green-700 text-white" onClick={() => applyModel(m)} disabled={setFineTunedModelActive.isPending}>
+                        <Zap className="w-4 h-4 mr-1" /> Dùng trong Generator
                       </Button>
                     )}
                     <Button size="sm" variant="outline" onClick={() => toast.success('Mở chi tiết model...')}>
@@ -183,14 +364,33 @@ export function CustomerFineTuningStudio() {
                   </Select>
                 </div>
                 <div>
-                  <Label>Model nền (Base model)</Label>
-                  <Select value={newModelBase} onValueChange={setNewModelBase}>
-                    <SelectTrigger className="mt-2"><SelectValue /></SelectTrigger>
+                  <Label>Provider training</Label>
+                  <Select value={newModelProvider} onValueChange={setNewModelProvider} disabled={providers.length === 0}>
+                    <SelectTrigger className="mt-2"><SelectValue placeholder={'Ch\u1ecdn provider'} /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="gpt4o">GPT-4o (Khuyên dùng)</SelectItem>
-                      <SelectItem value="gpt35">GPT-3.5-turbo (Nhanh hơn)</SelectItem>
-                      <SelectItem value="llama3">Llama 3.1 70B (Open source)</SelectItem>
-                      <SelectItem value="llama3-8b">Llama 3.1 8B (Nhẹ hơn)</SelectItem>
+                      {providers.map(provider => (
+                        <SelectItem key={provider.id} value={provider.id} disabled={provider.status !== 'active'}>
+                          {provider.name}{provider.supportsFineTuning ? ' (fine-tune th\u1eadt)' : provider.apiConfigured ? ' (API)' : ''}{provider.status !== 'active' ? ` - ${provider.status}` : ''}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {providerHint && (
+                    <p className={`mt-2 text-xs ${activeProvider?.status === 'active' ? 'text-muted-foreground' : 'text-amber-700'}`}>
+                      {providerHint}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <Label>Model nền (Base model)</Label>
+                  <Select value={newModelBase} onValueChange={setNewModelBase} disabled={baseModelOptions.length === 0}>
+                    <SelectTrigger className="mt-2"><SelectValue placeholder={'Ch\u1ecdn model n\u1ec1n'} /></SelectTrigger>
+                    <SelectContent>
+                      {baseModelOptions.map(model => (
+                        <SelectItem key={model.id} value={model.id}>
+                          {model.name}{model.default ? ' (default)' : ''}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -263,7 +463,8 @@ export function CustomerFineTuningStudio() {
                   <Input placeholder="Input: Thông tin sản phẩm, ngữ cảnh..." value={newInput} onChange={e => setNewInput(e.target.value)} className="text-sm" />
                   <Textarea placeholder="Output: Copy lý tưởng bạn muốn AI học theo..." value={newOutput} onChange={e => setNewOutput(e.target.value)} className="text-sm min-h-16" />
                   <div className="flex gap-2">
-                    <Button size="sm" variant="outline" className="flex-1" onClick={() => toast.success('Tính năng import file sẽ sớm có!')}>
+                    <input ref={csvInputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={importCsvExamples} />
+                    <Button size="sm" variant="outline" className="flex-1" onClick={() => csvInputRef.current?.click()}>
                       <Upload className="w-4 h-4 mr-1" /> Import CSV
                     </Button>
                     <Button size="sm" className="flex-1 bg-primary hover:bg-green-700 text-white" onClick={addExample}>
@@ -276,8 +477,8 @@ export function CustomerFineTuningStudio() {
 
             {/* Start training */}
             <div className="flex justify-end">
-              <Button size="lg" className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-10" onClick={startTraining}>
-                <Play className="w-5 h-5 mr-2" /> Bắt đầu Fine-tuning
+              <Button size="lg" className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-10" onClick={startTraining} disabled={createFineTuneJob.isPending || !activeProvider || activeProvider.status !== 'active' || !selectedProviderCanCreateTrainingJob}>
+                <Play className="w-5 h-5 mr-2" /> {activeProvider?.supportsFineTuning ? 'Bắt đầu Fine-tuning' : 'Provider chưa hỗ trợ fine-tuning'}
               </Button>
             </div>
           </TabsContent>
@@ -287,9 +488,20 @@ export function CustomerFineTuningStudio() {
             <div className="grid lg:grid-cols-2 gap-6">
               <Card className="p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-bold text-foreground">Luxury Real Estate Voice</h3>
-                  <Badge className="bg-primary/10 text-primary border-0">Đang training</Badge>
+                  <h3 className="font-bold text-foreground">{activeTrainingJob?.name || 'Chưa có job training'}</h3>
+                  {activeTrainingJob && (
+                    <Badge className={`${statusColor(activeTrainingJob.status)} border-0`}>
+                      {statusLabel(activeTrainingJob.status)}
+                    </Badge>
+                  )}
                 </div>
+                {activeTrainingJob && (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    <Badge className="bg-muted text-foreground/70 border-0 text-xs">{activeTrainingJob.provider}</Badge>
+                    <Badge className="bg-primary/10 text-primary border-0 text-xs">{activeTrainingJob.baseModel}</Badge>
+                    <Badge className="bg-muted text-foreground/70 border-0 text-xs">{activeTrainingJob.trainedOn} ví dụ</Badge>
+                  </div>
+                )}
 
                 <div className="mb-6">
                   <div className="flex justify-between text-sm mb-2">
@@ -298,7 +510,7 @@ export function CustomerFineTuningStudio() {
                   </div>
                   <Progress value={trainProgress} className="h-3" />
                   <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-                    <Clock className="w-3 h-3" /> Ước tính hoàn thành: ~25 phút nữa
+                    <Clock className="w-3 h-3" /> {activeTrainingJob ? `Tạo: ${activeTrainingJob.createdAt}` : 'Tạo job mới để xem tiến trình'}
                   </p>
                 </div>
 
@@ -336,12 +548,7 @@ export function CustomerFineTuningStudio() {
               <Card className="p-6">
                 <h3 className="font-bold text-foreground mb-4">Chỉ số training</h3>
                 <div className="space-y-4">
-                  {[
-                    { label: 'Training Loss', value: '0.342', prev: '1.245', trend: 'down', good: true },
-                    { label: 'Validation Loss', value: '0.389', prev: '1.312', trend: 'down', good: true },
-                    { label: 'Accuracy', value: '78.3%', prev: '45.2%', trend: 'up', good: true },
-                    { label: 'BLEU Score', value: '0.72', prev: '0.41', trend: 'up', good: true },
-                  ].map(m => (
+                  {metricCards.map(m => (
                     <div key={m.label} className="flex items-center justify-between p-3 bg-surface-muted rounded-lg">
                       <span className="text-sm text-foreground/80">{m.label}</span>
                       <div className="text-right">
@@ -363,6 +570,57 @@ export function CustomerFineTuningStudio() {
                 </div>
               </Card>
             </div>
+            <Card className="p-6 mt-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold text-foreground">Danh sách job fine-tuning</h3>
+                <Badge className="bg-muted text-foreground/70 border-0">{jobsData.length} job</Badge>
+              </div>
+
+              {jobPagination.pageItems.length > 0 ? (
+                <div className="space-y-3">
+                  {jobPagination.pageItems.map(job => (
+                    <div key={job.id} className="border rounded-lg p-3 bg-surface-muted">
+                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2 mb-1">
+                            <h4 className="font-semibold text-foreground truncate">{job.name}</h4>
+                            <Badge className={`${statusColor(job.status)} border-0 text-xs`}>{statusLabel(job.status)}</Badge>
+                          </div>
+                          <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                            <span>Provider: {job.provider}</span>
+                            <span>Model: {job.baseModel}</span>
+                            <span>Ví dụ: {job.trainedOn}</span>
+                            <span>Tạo: {job.createdAt}</span>
+                          </div>
+                        </div>
+                        <div className="w-full md:w-40">
+                          <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                            <span>Tiến trình</span>
+                            <span>{clampProgressValue(job.progress)}%</span>
+                          </div>
+                          <Progress value={clampProgressValue(job.progress)} className="h-2" />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">Chưa có job fine-tuning nào.</p>
+              )}
+
+              <DataPagination
+                page={jobPagination.page}
+                pageSize={jobPagination.pageSize}
+                totalItems={jobPagination.totalItems}
+                totalPages={jobPagination.totalPages}
+                startIndex={jobPagination.startIndex}
+                endIndex={jobPagination.endIndex}
+                onPageChange={jobPagination.setPage}
+                onPageSizeChange={jobPagination.setPageSize}
+                itemLabel="job"
+                pageSizeOptions={[5, 10, 20]}
+              />
+            </Card>
           </TabsContent>
         </Tabs>
       </div>

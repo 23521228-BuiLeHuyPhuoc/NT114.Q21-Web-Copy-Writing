@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from '@/lib/next-router-compat';
 import { useForm } from 'react-hook-form';
 import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';

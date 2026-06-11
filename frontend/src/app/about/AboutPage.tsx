@@ -2,7 +2,7 @@ import { PublicNavbar } from '@/app/components/public/PublicNavbar';
 import { PublicFooter } from '@/app/components/public/PublicFooter';
 import { Badge } from '@/app/components/ui/badge';
 import { ImageWithFallback } from '@/app/components/figma/ImageWithFallback';
-import { Link } from 'react-router-dom';
+import { Link } from '@/lib/next-router-compat';
 import {
   Target, Eye, Heart, Zap, Users, Award,
   TrendingUp, Globe, Shield, ArrowRight,

@@ -7,6 +7,8 @@ node_modules/
 # Logs
 logs
 *.log
+__pycache__/
+*.pyc
 npm-debug.log*
 pnpm-debug.log*
 yarn-debug.log*
@@ -19,6 +21,19 @@ lerna-debug.log*
 .env.test
 .env.production
 
+# Local cloud/service-account credentials
+secrets/
+backend/secrets/
+*.service-account.json
+*service-account*.json
+
 # temp directory
 .temp
 .tmp
+
+# Local Llama fine-tuning artifacts
+training/llama/outputs/
+training/llama/.cache/
+training/llama/**/*.log
+training/llama/**/*.safetensors
+training/llama/**/*.bin

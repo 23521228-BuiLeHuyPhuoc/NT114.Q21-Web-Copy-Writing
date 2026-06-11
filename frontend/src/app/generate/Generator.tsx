@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@/lib/next-router-compat';
 import {
+  Brain,
   Copy,
+  Cpu,
   FileText,
   FolderOpen,
   History,
@@ -19,13 +21,14 @@ import { MODELS, COPY_TYPES, TONES, INDUSTRIES } from '@/mocks/generator';
 import { IndustryPicker } from '@/app/components/generator/IndustryPicker';
 import { CopyTypePicker } from '@/app/components/generator/CopyTypePicker';
 import { TonePicker } from '@/app/components/generator/TonePicker';
-import { ModelPicker } from '@/app/components/generator/ModelPicker';
+import { ModelPicker, type GeneratorModelOption } from '@/app/components/generator/ModelPicker';
 import { ProductInfoForm } from '@/app/components/generator/ProductInfoForm';
 import { AdvancedSettings, type ContentLength } from '@/app/components/generator/AdvancedSettings';
 import { GeneratorResults } from '@/app/components/generator/GeneratorResults';
 import { useCreateContent, useGenerateContent } from '@/hooks/queries/useContents';
 import { useProjects } from '@/hooks/queries/useProjects';
 import { useTemplates } from '@/hooks/queries/useTemplates';
+import { useFineTuningModels } from '@/hooks/queries/useFineTuning';
 import { formatGeneratedCopyForTinyMce, htmlToPlainText } from '@/lib/richText';
 
 function splitGeneratedVariations(text: string, expectedCount: number) {
@@ -61,6 +64,14 @@ const LENGTH_TOKEN_LIMITS: Record<ContentLength, number> = {
   medium: 1800,
   long: 3200,
 };
+
+type ModelMode = 'base' | 'fine-tuned';
+
+const FINE_TUNED_MODEL_PREFIX = 'fine-tuned:';
+
+function getFineTunedRegistryModelId(modelId: string) {
+  return modelId.startsWith(FINE_TUNED_MODEL_PREFIX) ? modelId.slice(FINE_TUNED_MODEL_PREFIX.length) : '';
+}
 
 function buildTitleFromText(type: string, text: string) {
   const firstLine = text
@@ -178,9 +189,12 @@ export function CustomerGenerator() {
   const createContent = useCreateContent();
   const { data: templates = [], isLoading: templatesLoading } = useTemplates();
   const { data: projects = [], isLoading: projectsLoading } = useProjects({ limit: 50 });
+  const { data: fineTunedModels = [] } = useFineTuningModels();
   const [industry, setIndustry] = useState('ecommerce');
   const [copyType, setCopyType] = useState('headline');
   const [model, setModel] = useState('gemini-flash');
+  const [modelMode, setModelMode] = useState<ModelMode>('base');
+  const [fineTunedModelId, setFineTunedModelId] = useState('');
   const [tone, setTone] = useState('urgent');
   const [variations, setVariations] = useState(3);
   const [temperature, setTemperature] = useState([0.7]);
@@ -204,7 +218,27 @@ export function CustomerGenerator() {
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
   const [selectedProjectId, setSelectedProjectId] = useState('');
 
-  const selectedModel = MODELS.find(m => m.id === model) ?? MODELS[0];
+  const fineTunedGeneratorModels = useMemo<GeneratorModelOption[]>(() => {
+    return fineTunedModels
+      .filter(item => item.status === 'ready' && item.registryModelId && item.isActive !== false)
+      .map(item => ({
+        id: `${FINE_TUNED_MODEL_PREFIX}${item.registryModelId}`,
+        name: item.name,
+        badge: 'Fine-tuned',
+        color: 'text-primary',
+        desc: `${item.industry} - ${item.trainedOn} ví dụ, base ${item.baseModel}`,
+        latency: '~2-30s',
+        tokens: item.fineTunedModelId ? 'custom' : 'base',
+      }));
+  }, [fineTunedModels]);
+
+  const fineTunedModelPickerValue = fineTunedModelId ? `${FINE_TUNED_MODEL_PREFIX}${fineTunedModelId}` : '';
+  const selectedFineTunedModel = fineTunedGeneratorModels.find(m => m.id === fineTunedModelPickerValue) ?? fineTunedGeneratorModels[0] ?? null;
+  const effectiveModel = modelMode === 'fine-tuned' ? (selectedFineTunedModel?.id || '') : model;
+  const selectedModel = modelMode === 'fine-tuned'
+    ? selectedFineTunedModel
+    : MODELS.find(m => m.id === model) ?? MODELS[0];
+  const hasFineTunedModels = fineTunedGeneratorModels.length > 0;
   const selectedIndustry = INDUSTRIES.find(i => i.id === industry) ?? INDUSTRIES[0];
   const selectedType = COPY_TYPES.find(t => t.id === copyType) ?? COPY_TYPES[0];
   const selectedTone = TONES.find(t => t.id === tone);
@@ -222,9 +256,31 @@ export function CustomerGenerator() {
     const params = new URLSearchParams(window.location.search);
     const templateId = params.get('templateId');
     const projectId = params.get('projectId');
+    const modelId = params.get('model');
     if (templateId) setSelectedTemplateId(templateId);
     if (projectId) setSelectedProjectId(projectId);
+    if (modelId?.startsWith(FINE_TUNED_MODEL_PREFIX)) {
+      setModelMode('fine-tuned');
+      setFineTunedModelId(getFineTunedRegistryModelId(modelId));
+    } else if (modelId) {
+      setModelMode('base');
+      setModel(modelId);
+    }
   }, []);
+
+  useEffect(() => {
+    if (modelMode !== 'fine-tuned') return;
+
+    if (!hasFineTunedModels) {
+      if (fineTunedModelId) setFineTunedModelId('');
+      return;
+    }
+
+    const hasSelectedModel = fineTunedGeneratorModels.some(item => item.id === fineTunedModelPickerValue);
+    if (!hasSelectedModel) {
+      setFineTunedModelId(getFineTunedRegistryModelId(fineTunedGeneratorModels[0].id));
+    }
+  }, [fineTunedGeneratorModels, fineTunedModelId, fineTunedModelPickerValue, hasFineTunedModels, modelMode]);
 
   useEffect(() => {
     if (!selectedTemplate) return;
@@ -252,7 +308,23 @@ export function CustomerGenerator() {
     `Temperature tham khảo: ${temperature[0]}.`,
   ].filter(Boolean).join('\n');
 
+  const handleModelModeChange = (nextMode: ModelMode) => {
+    setModelMode(nextMode);
+    if (nextMode === 'fine-tuned' && !fineTunedModelId && fineTunedGeneratorModels[0]) {
+      setFineTunedModelId(getFineTunedRegistryModelId(fineTunedGeneratorModels[0].id));
+    }
+  };
+
+  const handleFineTunedModelChange = (nextModelId: string) => {
+    setFineTunedModelId(getFineTunedRegistryModelId(nextModelId));
+  };
+
   const handleGenerate = async () => {
+    if (modelMode === 'fine-tuned' && !effectiveModel) {
+      toast.error('Chưa có model fine-tuned khả dụng. Hãy promote hoặc bật active model trước.');
+      return;
+    }
+
     setIsGenerating(true);
     setResults([]);
     setStreamText('');
@@ -267,7 +339,9 @@ export function CustomerGenerator() {
         industry,
         tone,
         language: 'vi',
-        model,
+        model: effectiveModel,
+        modelMode,
+        fineTunedModelId: modelMode === 'fine-tuned' ? fineTunedModelId : undefined,
         length: contentLength,
         variations,
         maxOutputTokens,
@@ -325,7 +399,7 @@ export function CustomerGenerator() {
         type: copyType,
         tone,
         language: 'vi',
-        modelUsed: model,
+        modelUsed: effectiveModel || model,
         tags: [industry].filter(Boolean),
         templateId: selectedTemplateId || null,
         projectId: selectedProjectId || null,
@@ -437,7 +511,30 @@ export function CustomerGenerator() {
               )}
             </Card>
             <TonePicker value={tone} onChange={setTone} />
-            <ModelPicker value={model} onChange={setModel} />
+            <Card className="p-4">
+              <div className="grid grid-cols-2 gap-2">
+                <Button type="button" variant={modelMode === 'base' ? 'default' : 'outline'} onClick={() => handleModelModeChange('base')}>
+                  <Cpu className="w-4 h-4 mr-2" /> Model goc
+                </Button>
+                <Button type="button" variant={modelMode === 'fine-tuned' ? 'default' : 'outline'} onClick={() => handleModelModeChange('fine-tuned')}>
+                  <Brain className="w-4 h-4 mr-2" /> Fine-tuned
+                </Button>
+              </div>
+            </Card>
+            {modelMode === 'base' ? (
+              <ModelPicker value={model} onChange={setModel} models={MODELS} />
+            ) : hasFineTunedModels ? (
+              <ModelPicker value={fineTunedModelPickerValue} onChange={handleFineTunedModelChange} models={fineTunedGeneratorModels} />
+            ) : (
+              <Card className="p-4 border-dashed">
+                <div className="flex items-center gap-2 mb-2">
+                  <Brain className="w-4 h-4 text-primary" />
+                  <p className="text-sm font-semibold text-foreground/80">Chua co model fine-tuned kha dung</p>
+                </div>
+                <p className="text-xs text-muted-foreground mb-3">Promote job fine-tuning va bat active de dung model tai generator.</p>
+                <Button variant="outline" size="sm" onClick={() => navigate('/fine-tune')}>Mo fine-tuning</Button>
+              </Card>
+            )}
             <ProductInfoForm
               productName={productName}
               keywords={keywords}

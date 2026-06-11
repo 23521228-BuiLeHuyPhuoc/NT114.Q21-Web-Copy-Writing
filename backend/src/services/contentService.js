@@ -1,4 +1,6 @@
 const Content = require('../models/Content');
+const FineTunedModel = require('../models/FineTunedModel');
+const FineTuneJob = require('../models/FineTuneJob');
 const UsageLog = require('../models/UsageLog');
 const aiService = require('./aiService');
 const notificationService = require('./notificationService');
@@ -197,19 +199,88 @@ function buildPromptWithTemplate(prompt, template) {
   ].join('\n');
 }
 
+function getFineTunedRegistryId(model) {
+  const value = String(model || '').trim();
+  return value.startsWith('fine-tuned:') ? value.slice('fine-tuned:'.length) : '';
+}
+
+function getFineTunedRegistryIdFromPayload(payload) {
+  const explicitId = payload.modelMode === 'fine-tuned' ? String(payload.fineTunedModelId || '').trim() : '';
+  return explicitId || getFineTunedRegistryId(payload.model);
+}
+
+async function resolveFineTunedModelForGenerate(userId, payload) {
+  const registryId = getFineTunedRegistryIdFromPayload(payload);
+  if (!registryId) return { payload, model: null, modelUsed: payload.model };
+
+  const model = await FineTunedModel.findOne({ _id: registryId, userId, isDeprecated: { $ne: true } });
+  if (!model) throw createError(404, 'Fine-tuned model not found');
+  if (!model.isActive) throw createError(409, 'Fine-tuned model is not active');
+
+  const job = await FineTuneJob.findOne({ _id: model.jobId, userId });
+  if (!job || job.provider === 'mock') throw createError(404, 'Fine-tuned model not found');
+  const provider = job?.provider || '';
+  const modelUsed = `fine-tuned:${model._id.toString()}`;
+  const fineTunedPrompt = [
+    `Fine-tuned model selected: ${model.name}.`,
+    `Industry: ${model.industry || payload.industry || 'general'}.`,
+    `Brand voice source: ${model.performance?.sampleCount || 0} curated training examples.`,
+    'Apply this model voice consistently: keep wording, rhythm, tone, and domain vocabulary close to the training examples where relevant.',
+    '',
+    payload.prompt,
+  ].join('\n');
+
+  if (provider === 'openai') {
+    return {
+      model,
+      modelUsed,
+      payload: {
+        ...payload,
+        prompt: fineTunedPrompt,
+        model: model.providerModelId,
+        forceProvider: 'openai',
+        requireProviderSuccess: true,
+      },
+    };
+  }
+
+  if (provider === 'vertex-gemini') {
+    if (!model.providerModelId) {
+      throw createError(409, 'Vertex fine-tuned model has no tuned endpoint id yet');
+    }
+
+    return {
+      model,
+      modelUsed,
+      payload: {
+        ...payload,
+        prompt: fineTunedPrompt,
+        model: model.providerModelId,
+        forceProvider: 'vertex-gemini',
+        requireProviderSuccess: true,
+      },
+    };
+  }
+
+  throw createError(409, `Provider ${provider || 'unknown'} does not expose a real fine-tuned inference endpoint in this app yet`);
+}
+
 async function generateContent(userId, payload) {
   await projectService.ensureProjectBelongsToUser(userId, payload.projectId);
 
   const template = await templateService.getTemplateForGenerate(userId, payload.templateId);
-  const effectivePrompt = buildPromptWithTemplate(payload.prompt, template);
+  const resolvedFineTune = await resolveFineTunedModelForGenerate(userId, payload);
+  const effectivePrompt = buildPromptWithTemplate(resolvedFineTune.payload.prompt, template);
   const aiPayload = {
-    ...payload,
+    ...resolvedFineTune.payload,
     prompt: effectivePrompt,
-    type: payload.type || template?.type,
+    type: resolvedFineTune.payload.type || template?.type,
   };
   const aiResult = await aiService.generateCopy(aiPayload);
+  const modelUsed = resolvedFineTune.modelUsed || aiResult.modelUsed;
   const generatedTags = [
     ...(payload.industry ? [payload.industry] : []),
+    ...(resolvedFineTune.model ? ['fine-tuned'] : []),
     ...(template?.category ? [template.category] : []),
     ...(payload.tags || []),
   ].filter((tag, index, list) => tag && list.indexOf(tag) === index);
@@ -224,14 +295,14 @@ async function generateContent(userId, payload) {
     type: aiPayload.type,
     tone: payload.tone,
     language: payload.language,
-    modelUsed: aiResult.modelUsed,
+    modelUsed,
     tags: generatedTags,
   });
 
   const usage = await UsageLog.create({
     userId,
     contentId: content._id,
-    model: aiResult.modelUsed,
+    model: modelUsed,
     promptTokens: aiResult.usage.promptTokens,
     completionTokens: aiResult.usage.completionTokens,
     totalTokens: aiResult.usage.totalTokens,

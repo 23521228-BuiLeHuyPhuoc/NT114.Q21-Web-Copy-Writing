@@ -5,6 +5,7 @@ import { Button } from '@/app/components/ui/button';
 import { Badge } from '@/app/components/ui/badge';
 import { Progress } from '@/app/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/app/components/ui/dialog';
 import { api } from '@/lib/axios';
 import {
   Crown,
@@ -14,10 +15,7 @@ import {
   X,
   Download,
   FileText,
-  Banknote,
-  Landmark,
   Smartphone,
-  Copy,
   CreditCard,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -67,22 +65,13 @@ const PLANS = [
 
 const PAYMENT_METHODS = [
   {
-    id: 'cash',
-    name: 'Tiền mặt',
-    shortName: 'Tiền mặt',
-    desc: 'Thanh toán tại văn phòng hoặc khi nhân viên hỗ trợ thu phí.',
-    icon: Banknote,
-    color: 'bg-primary/10 text-primary',
-    guide: 'CopyPro sẽ ghi nhận thanh toán sau khi thu tiền và kích hoạt gói trong giờ làm việc.',
-  },
-  {
-    id: 'bank',
-    name: 'Chuyển khoản ngân hàng',
-    shortName: 'Ngân hàng',
-    desc: 'Chuyển khoản qua số tài khoản doanh nghiệp CopyPro.',
-    icon: Landmark,
-    color: 'bg-primary/10 text-primary',
-    guide: 'Ngân hàng: Vietcombank · STK: 0123456789 · Nội dung: COPYPRO + email tài khoản.',
+    id: 'vnpay',
+    name: 'VNPAY',
+    shortName: 'VNPAY',
+    desc: 'Thanh toán qua cổng VNPAY sandbox.',
+    icon: CreditCard,
+    color: 'bg-emerald-100 text-emerald-700',
+    guide: 'Sau khi bấm thanh toán, hệ thống sẽ tạo link VNPAY và chuyển sang trang thanh toán.',
   },
   {
     id: 'zalo',
@@ -92,15 +81,6 @@ const PAYMENT_METHODS = [
     icon: Smartphone,
     color: 'bg-primary/10 text-primary',
     guide: 'Sau khi bấm thanh toán, hệ thống sẽ tạo link ZaloPay và chuyển sang cổng thanh toán.',
-  },
-  {
-    id: 'vnpay',
-    name: 'VNPAY',
-    shortName: 'VNPAY',
-    desc: 'Thanh toán qua cổng VNPAY sandbox.',
-    icon: CreditCard,
-    color: 'bg-emerald-100 text-emerald-700',
-    guide: 'Sau khi bấm thanh toán, hệ thống sẽ tạo link VNPAY và chuyển sang trang thanh toán.',
   },
 ];
 
@@ -145,9 +125,8 @@ function getPaymentNotice(payment: string | null) {
 export function CustomerBilling() {
   const [currentPlan, setCurrentPlan] = useState(CURRENT_PLAN);
   const [invoices, setInvoices] = useState(INVOICES);
-  const [selectedMethod, setSelectedMethod] = useState(
-    PAYMENT_METHODS.find((method) => method.id === 'vnpay') ?? PAYMENT_METHODS[0],
-  );
+  const [checkoutMethod, setCheckoutMethod] = useState<(typeof PAYMENT_METHODS)[number]>(PAYMENT_METHODS[0]);
+  const [checkoutPlan, setCheckoutPlan] = useState<(typeof PLANS)[number] | null>(null);
   const [checkoutPlanId, setCheckoutPlanId] = useState<string | null>(null);
 
   const loadBilling = useCallback(async () => {
@@ -210,12 +189,7 @@ export function CustomerBilling() {
     initialPageSize: 5,
   });
 
-  const handleCopyBankInfo = () => {
-    navigator.clipboard.writeText('Vietcombank - 0123456789 - COPYPRO + email tài khoản').catch(() => {});
-    toast.success('Đã copy thông tin chuyển khoản');
-  };
-
-  const handlePlanAction = async (plan: typeof PLANS[number]) => {
+  const openCheckout = (plan: typeof PLANS[number]) => {
     if (plan.popular) {
       toast.success('Đây là gói hiện tại!');
       return;
@@ -226,12 +200,19 @@ export function CustomerBilling() {
       return;
     }
 
-    setCheckoutPlanId(plan.id);
+    setCheckoutMethod(PAYMENT_METHODS[0]);
+    setCheckoutPlan(plan);
+  };
+
+  const handleCheckout = async () => {
+    if (!checkoutPlan) return;
+
+    setCheckoutPlanId(checkoutPlan.id);
     try {
       const response = await api.post<{ data?: BillingCheckoutResponse }>('/billing/checkout', {
-        planSlug: plan.id,
+        planSlug: checkoutPlan.id,
         billingCycle: 'monthly',
-        method: selectedMethod.id,
+        method: checkoutMethod.id,
       });
 
       const data = response.data.data;
@@ -246,12 +227,13 @@ export function CustomerBilling() {
       }
 
       if (data.payment?.status === 'success') {
-        toast.success(data.message || `Thanh toán thành công qua ${selectedMethod.shortName}`);
+        toast.success(data.message || `Thanh toán thành công qua ${checkoutMethod.shortName}`);
       } else {
         toast.success(data.message || 'Đã tạo hóa đơn thanh toán');
       }
 
       await loadBilling();
+      setCheckoutPlan(null);
     } catch (error) {
       const err = error as { response?: { data?: { message?: string } }; message?: string };
       toast.error(err.response?.data?.message || err.message || 'Không tạo được thanh toán');
@@ -265,13 +247,12 @@ export function CustomerBilling() {
       <div className="mx-auto max-w-6xl p-6">
         <div className="mb-8">
           <h1 className="mb-1 text-3xl font-bold text-foreground">Gói dịch vụ & Thanh toán</h1>
-          <p className="text-foreground/70">Quản lý gói đăng ký, phương thức thanh toán và hóa đơn</p>
+          <p className="text-foreground/70">Quản lý gói đăng ký, nâng cấp gói và hóa đơn</p>
         </div>
 
         <Tabs defaultValue="plan">
           <TabsList className="mb-6">
             <TabsTrigger value="plan">Gói hiện tại</TabsTrigger>
-            <TabsTrigger value="payment">Thanh toán</TabsTrigger>
             <TabsTrigger value="plans">Nâng cấp</TabsTrigger>
             <TabsTrigger value="invoices">Hóa đơn</TabsTrigger>
           </TabsList>
@@ -313,50 +294,10 @@ export function CustomerBilling() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="payment">
-            <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
-              <Card className="p-5">
-                <h3 className="mb-2 font-semibold text-foreground">Chọn phương thức thanh toán</h3>
-                <p className="mb-5 text-sm text-muted-foreground">Hỗ trợ tiền mặt, chuyển khoản ngân hàng, ZaloPay và VNPAY.</p>
-                <PaymentMethodGrid selectedId={selectedMethod.id} onSelect={setSelectedMethod} />
-              </Card>
-
-              <Card className="p-5">
-                <div className="mb-4 flex items-start gap-3">
-                  <div className={`rounded-lg p-2 ${selectedMethod.color}`}>
-                    <selectedMethod.icon className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-foreground">{selectedMethod.name}</h3>
-                    <p className="text-sm text-muted-foreground">{selectedMethod.desc}</p>
-                  </div>
-                </div>
-
-                <div className="rounded-lg border border-border bg-surface-muted p-4">
-                  <p className="mb-2 text-xs font-bold uppercase tracking-widest text-muted-foreground/80">Hướng dẫn</p>
-                  <p className="text-sm leading-relaxed text-foreground/80">{selectedMethod.guide}</p>
-                </div>
-
-                {selectedMethod.id === 'bank' && (
-                  <Button variant="outline" className="mt-4 w-full" onClick={handleCopyBankInfo}>
-                    <Copy className="mr-2 h-4 w-4" />
-                    Copy thông tin chuyển khoản
-                  </Button>
-                )}
-
-                {(selectedMethod.id === 'zalo' || selectedMethod.id === 'vnpay') && (
-                  <div className="mt-4 rounded-lg border border-dashed border-border bg-card p-4 text-sm text-muted-foreground">
-                    Khi bạn bấm thanh toán ở tab Nâng cấp, hệ thống sẽ tạo link cổng thanh toán và điều hướng sang VNPAY hoặc ZaloPay.
-                  </div>
-                )}
-              </Card>
-            </div>
-          </TabsContent>
-
           <TabsContent value="plans">
-            <div className="mb-5 rounded-lg border border-amber-100 bg-warning/10 p-4">
-              <p className="text-sm text-amber-800">
-                Phương thức thanh toán đang chọn: <strong>{selectedMethod.name}</strong>. Bạn có thể đổi trong tab Thanh toán trước khi nâng cấp.
+            <div className="mb-5 rounded-lg border border-border bg-surface-muted p-4">
+              <p className="text-sm text-foreground/70">
+                Chọn gói trả phí để mở bước thanh toán VNPAY hoặc ZaloPay.
               </p>
             </div>
 
@@ -397,15 +338,15 @@ export function CustomerBilling() {
                     <Button
                       className={`w-full ${plan.popular ? 'bg-warning/100 text-white hover:bg-amber-600' : ''}`}
                       variant={plan.popular ? 'default' : 'outline'}
-                      onClick={() => void handlePlanAction(plan)}
-                      disabled={isLoading}
+                      onClick={() => openCheckout(plan)}
+                      disabled={checkoutPlanId !== null || plan.popular}
                     >
                       {isLoading ? (
                         <span className="flex items-center gap-2">
                           <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                           Đang tạo thanh toán...
                         </span>
-                      ) : plan.popular ? 'Gói hiện tại' : plan.price === 0 ? 'Chọn miễn phí' : `Thanh toán bằng ${selectedMethod.shortName}`}
+                      ) : plan.popular ? 'Gói hiện tại' : plan.price === 0 ? 'Chọn miễn phí' : 'Chọn gói'}
                     </Button>
                   </Card>
                 );
@@ -444,6 +385,73 @@ export function CustomerBilling() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        <Dialog
+          open={Boolean(checkoutPlan)}
+          onOpenChange={(open) => {
+            if (!open && checkoutPlanId === null) {
+              setCheckoutPlan(null);
+            }
+          }}
+        >
+          <DialogContent className="sm:max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Thanh toán gói {checkoutPlan?.name || ''}</DialogTitle>
+            </DialogHeader>
+
+            {checkoutPlan && (
+              <div className="space-y-5">
+                <div className="rounded-lg border border-border bg-surface-muted p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Gói đã chọn</p>
+                      <p className="mt-1 text-lg font-semibold text-foreground">{checkoutPlan.name}</p>
+                      <p className="text-sm text-muted-foreground">Thanh toán theo chu kỳ tháng</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-foreground">{formatCurrency(checkoutPlan.price)}</p>
+                      <p className="text-xs text-muted-foreground">/tháng</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="mb-3 text-sm font-semibold text-foreground">Chọn phương thức thanh toán</p>
+                  <PaymentMethodGrid selectedId={checkoutMethod.id} onSelect={setCheckoutMethod} />
+                </div>
+
+                <div className="rounded-lg border border-border bg-surface-muted p-4">
+                  <div className="mb-3 flex items-start gap-3">
+                    <div className={`rounded-lg p-2 ${checkoutMethod.color}`}>
+                      <checkoutMethod.icon className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground">{checkoutMethod.name}</h3>
+                      <p className="text-sm text-muted-foreground">{checkoutMethod.desc}</p>
+                    </div>
+                  </div>
+                  <p className="text-sm leading-relaxed text-foreground/80">{checkoutMethod.guide}</p>
+                </div>
+              </div>
+            )}
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setCheckoutPlan(null)} disabled={checkoutPlanId !== null}>
+                Đóng
+              </Button>
+              <Button onClick={() => void handleCheckout()} disabled={!checkoutPlan || checkoutPlanId !== null}>
+                {checkoutPlanId ? (
+                  <span className="flex items-center gap-2">
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                    Đang tạo thanh toán...
+                  </span>
+                ) : (
+                  `Tiếp tục với ${checkoutMethod.shortName}`
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
   );

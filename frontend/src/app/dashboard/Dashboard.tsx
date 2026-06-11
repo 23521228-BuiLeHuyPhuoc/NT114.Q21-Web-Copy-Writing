@@ -3,7 +3,7 @@ import { Card } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
 import { Badge } from '@/app/components/ui/badge';
 import { Progress } from '@/app/components/ui/progress';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@/lib/next-router-compat';
 import { useAuth } from '@/app/contexts/AuthContext';
 import {
   Wand2, FileText, TrendingUp, Clock, Sparkles, ArrowRight,

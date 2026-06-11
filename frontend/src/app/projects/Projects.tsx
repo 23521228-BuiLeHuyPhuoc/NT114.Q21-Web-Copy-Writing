@@ -7,7 +7,7 @@ import { Badge } from '@/app/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/app/components/ui/dialog';
 import { Label } from '@/app/components/ui/label';
 import { Textarea } from '@/app/components/ui/textarea';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@/lib/next-router-compat';
 import {
   FolderOpen, Plus, FileText, Calendar, Users, MoreHorizontal,
   Search, ArrowRight, Edit2, Trash2, Star,

@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@/lib/next-router-compat';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { getAdminRoleDef } from '@/lib/permissions';
 import { ShieldOff, ArrowLeft, Home } from 'lucide-react';
