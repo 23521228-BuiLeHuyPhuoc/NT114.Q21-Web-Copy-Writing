@@ -260,6 +260,8 @@ const MODEL_LABELS: Record<string, string> = {
   'meta/llama3-3@llama-3.3-70b-instruct': 'Llama 3.3 70B Instruct (Vertex)',
 };
 
+const FINE_TUNE_JOB_REQUEST_TIMEOUT_MS = 300000;
+
 function getStatusCode(error: unknown) {
   return (error as { response?: { status?: number } }).response?.status;
 }
@@ -511,7 +513,9 @@ export const fineTuningService = {
     };
 
     try {
-      const response = await api.post<ApiResponse<ApiItem<BackendFineTuneJob>>>('/fine-tune/jobs', apiPayload);
+      const response = await api.post<ApiResponse<ApiItem<BackendFineTuneJob>>>('/fine-tune/jobs', apiPayload, {
+        timeout: FINE_TUNE_JOB_REQUEST_TIMEOUT_MS,
+      });
       const item = response.data.data?.item;
       if (!item) throw new Error('Invalid fine-tune job response');
       return normalizeJob(item);

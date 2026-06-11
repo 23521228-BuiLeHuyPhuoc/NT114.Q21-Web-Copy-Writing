@@ -61,19 +61,62 @@ function clampProgressValue(value?: number | null) {
   return Math.min(100, Math.max(0, Math.round(numeric)));
 }
 
-function parseFineTuneCsv(text: string): ImportedFineTuneExample[] {
-  const lines = text.replace(/^\uFEFF/, '').split(/\r?\n/).map(line => line.trim()).filter(Boolean);
-  if (lines.length < 2) return [];
+function parseCsvRows(text: string): string[][] {
+  const rows: string[][] = [];
+  const quote = String.fromCharCode(34);
+  let row: string[] = [];
+  let cell = '';
+  let inQuotes = false;
 
-  const headers = lines[0].split(',').map(header => header.trim().toLowerCase());
+  for (let index = 0; index < text.length; index += 1) {
+    const char = text[index];
+    const next = text[index + 1];
+
+    if (char === quote) {
+      if (inQuotes && next === quote) {
+        cell += quote;
+        index += 1;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+
+    if (char === ',' && !inQuotes) {
+      row.push(cell.trim());
+      cell = '';
+      continue;
+    }
+
+    if ((char === '\n' || char === '\r') && !inQuotes) {
+      if (char === '\r' && next === '\n') index += 1;
+      row.push(cell.trim());
+      if (row.some(value => value.length > 0)) rows.push(row);
+      row = [];
+      cell = '';
+      continue;
+    }
+
+    cell += char;
+  }
+
+  row.push(cell.trim());
+  if (row.some(value => value.length > 0)) rows.push(row);
+  return rows;
+}
+
+function parseFineTuneCsv(text: string): ImportedFineTuneExample[] {
+  const rows = parseCsvRows(text.replace(/^\uFEFF/, ''));
+  if (rows.length < 2) return [];
+
+  const headers = rows[0].map(header => header.trim().toLowerCase());
   const inputIndex = headers.indexOf('input');
   const outputIndex = headers.indexOf('output');
   const industryIndex = headers.indexOf('industry');
   const toneIndex = headers.indexOf('tone');
   if (inputIndex < 0 || outputIndex < 0) return [];
 
-  return lines.slice(1).map((line, index) => {
-    const cells = line.split(',').map(cell => cell.trim());
+  return rows.slice(1).map((cells, index) => {
     return {
       id: `csv-${Date.now()}-${index}`,
       input: cells[inputIndex] || '',
