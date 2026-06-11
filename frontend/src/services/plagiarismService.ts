@@ -271,9 +271,13 @@ function normalizeMatch(match: BackendPlagiarismMatch): PlagiarismMatch {
 function normalizeReport(report: BackendPlagiarismReport): PlagiarismReport {
   const sourceConfig = { ...DEFAULT_SOURCE_CONFIG, ...(report.sourceConfig || {}) };
   const backendAnalysis = report.analysis || {};
+  const unavailableSourceTypes = (backendAnalysis.unavailableSourceTypes || []).filter(
+    (sourceType) => sourceType !== 'web',
+  );
   const analysis = {
     ...DEFAULT_ANALYSIS,
     ...backendAnalysis,
+    unavailableSourceTypes,
     commonCrawl: {
       ...DEFAULT_ANALYSIS.commonCrawl,
       ...(backendAnalysis.commonCrawl || {}),

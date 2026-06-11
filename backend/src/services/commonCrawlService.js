@@ -13,7 +13,7 @@ const MAX_QUERY_PATTERNS = Number(process.env.COMMON_CRAWL_MAX_QUERY_PATTERNS ||
 const MAX_RECORDS_PER_QUERY = Number(process.env.COMMON_CRAWL_MAX_RECORDS_PER_QUERY || 3);
 const MAX_FETCHES = Number(process.env.COMMON_CRAWL_MAX_FETCHES || 6);
 const MAX_RECORD_BYTES = Number(process.env.COMMON_CRAWL_MAX_RECORD_BYTES || 1200000);
-const MIN_TEXT_WORDS = Number(process.env.COMMON_CRAWL_MIN_TEXT_WORDS || 40);
+const MIN_TEXT_WORDS = Number(process.env.COMMON_CRAWL_MIN_TEXT_WORDS || 18);
 const CACHE_TTL_MS = 30 * 60 * 1000;
 
 const STOPWORDS = new Set([
@@ -118,9 +118,19 @@ function extractUrls(text) {
 function toCdxUrlPattern(rawUrl) {
   try {
     const parsed = new URL(rawUrl);
-    return `${parsed.hostname}${parsed.pathname || '/'}`;
+    const path = parsed.pathname && parsed.pathname !== '/' ? parsed.pathname : '';
+    const host = parsed.hostname.toLowerCase();
+    const patterns = [
+      `${host}${path}`,
+    ];
+
+    if (host.startsWith('www.')) {
+      patterns.push(`${host.slice(4)}${path}`);
+    }
+
+    return patterns;
   } catch (error) {
-    return rawUrl;
+    return [rawUrl];
   }
 }
 
@@ -155,7 +165,7 @@ function buildKeywordPatterns(text) {
 }
 
 function buildQueryPatterns(text) {
-  const urlPatterns = extractUrls(text).map(toCdxUrlPattern);
+  const urlPatterns = extractUrls(text).flatMap(toCdxUrlPattern);
   const keywordPatterns = buildKeywordPatterns(text);
   return unique([...urlPatterns, ...keywordPatterns]).slice(0, MAX_QUERY_PATTERNS);
 }
@@ -181,7 +191,7 @@ async function queryCollection(collection, pattern) {
   endpoint.searchParams.set('output', 'json');
   endpoint.searchParams.set('fl', 'url,timestamp,mime,mime-detected,status,digest,length,offset,filename,languages,encoding');
   endpoint.searchParams.append('filter', 'status:200');
-  endpoint.searchParams.append('filter', 'mime:.*html.*');
+  endpoint.searchParams.append('filter', 'mime:text/html');
   endpoint.searchParams.set('limit', String(clampNumber(MAX_RECORDS_PER_QUERY, 1, 10)));
 
   try {
