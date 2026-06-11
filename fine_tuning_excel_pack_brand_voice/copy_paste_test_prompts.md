@@ -1,76 +1,798 @@
-# Prompt test copy-paste sau fine-tuning
+## Prompt 1
 
-## T-001 - headline / beauty
-```text
-TYPE=headline | INDUSTRY=beauty | TONE=urgent | PRODUCT=kem ch?ng n?ng cho da d?u | AUDIENCE=ng??i ?i l?m hay ng?i v?n ph?ng | FEATURES=r?o m?t, kh?ng n?ng t?ng qu? nhi?u, SPF50 | OFFER=t?ng sample t?y trang | BRAND_RULES=vi?t r? r?ng, c? d?u, kh?ng b?a s? li?u, kh?ng ph?ng ??i, CTA m?m | EXTRA=h?y vi?t ??ng format brand voice ?? h?c
-```
+Bạn là chuyên gia copywriting cho ngành Thương Mại Điện Tử.
+Hãy viết Tiêu Đề Quảng Cáo với tone Khẩn cấp.
+Sản phẩm/dịch vụ: bình giữ nhiệt thép 316.
+Từ khóa chính: giữ nóng 8 giờ; nắp chống tràn; dễ vệ sinh.
+Đối tượng mục tiêu: dân văn phòng mang cà phê đi làm.
+Thông tin bổ sung: freeship cho đơn từ 2 sản phẩm.
+Độ dài mong muốn: vừa đủ chi tiết.
+Giới hạn output tối đa: 1800 tokens.
+Tạo đúng 3 phiên bản riêng biệt.
+Định dạng bắt buộc:
+Phiên bản 1: ...
+Phiên bản 2: ...
+Phiên bản 3: ...
+Mỗi phiên bản phải tự đứng độc lập, không gom chung thành một đoạn lớn.
+Format riêng theo loại nội dung:
+Headline: một câu chính sắc, dễ đọc, có lợi ích hoặc điểm khác biệt.
+Subheadline: một câu phụ làm rõ lời hứa của headline.
+Lời kêu gọi hành động: một câu ngắn thúc đẩy người đọc hành động.
+Không viết thành email, social post, mô tả sản phẩm hoặc landing page đầy đủ.
+Dùng tiếng Việt tự nhiên, đầy đủ dấu, có lời kêu gọi hành động rõ ràng.
+Temperature tham khảo: 0.7.
 
-## T-002 - social / beauty
-```text
-TYPE=social | INDUSTRY=beauty | TONE=emotional | PRODUCT=kem ch?ng n?ng cho da d?u | AUDIENCE=ng??i ?i l?m hay ng?i v?n ph?ng | FEATURES=r?o m?t, kh?ng n?ng t?ng qu? nhi?u, SPF50 | OFFER=t?ng sample t?y trang | BRAND_RULES=vi?t r? r?ng, c? d?u, kh?ng b?a s? li?u, kh?ng ph?ng ??i, CTA m?m | EXTRA=h?y vi?t ??ng format brand voice ?? h?c
-```
+Expected: Keep Vietnamese diacritics, follow Generator UI format, return exactly 3 separate versions, and avoid invented claims.
 
-## T-003 - email / beauty
-```text
-TYPE=email | INDUSTRY=beauty | TONE=friendly | PRODUCT=kem ch?ng n?ng cho da d?u | AUDIENCE=ng??i ?i l?m hay ng?i v?n ph?ng | FEATURES=r?o m?t, kh?ng n?ng t?ng qu? nhi?u, SPF50 | OFFER=t?ng sample t?y trang | BRAND_RULES=vi?t r? r?ng, c? d?u, kh?ng b?a s? li?u, kh?ng ph?ng ??i, CTA m?m | EXTRA=h?y vi?t ??ng format brand voice ?? h?c
-```
+## Prompt 2
 
-## T-004 - landing / beauty
-```text
-TYPE=landing | INDUSTRY=beauty | TONE=professional | PRODUCT=kem ch?ng n?ng cho da d?u | AUDIENCE=ng??i ?i l?m hay ng?i v?n ph?ng | FEATURES=r?o m?t, kh?ng n?ng t?ng qu? nhi?u, SPF50 | OFFER=t?ng sample t?y trang | BRAND_RULES=vi?t r? r?ng, c? d?u, kh?ng b?a s? li?u, kh?ng ph?ng ??i, CTA m?m | EXTRA=h?y vi?t ??ng format brand voice ?? h?c
-```
+Bạn là chuyên gia copywriting cho ngành Thương Mại Điện Tử.
+Hãy viết Tiêu Đề Quảng Cáo với tone Thân thiện.
+Sản phẩm/dịch vụ: bình giữ nhiệt thép 316.
+Từ khóa chính: giữ nóng 8 giờ; nắp chống tràn; dễ vệ sinh.
+Đối tượng mục tiêu: dân văn phòng mang cà phê đi làm.
+Thông tin bổ sung: freeship cho đơn từ 2 sản phẩm.
+Độ dài mong muốn: vừa đủ chi tiết.
+Giới hạn output tối đa: 1800 tokens.
+Tạo đúng 3 phiên bản riêng biệt.
+Định dạng bắt buộc:
+Phiên bản 1: ...
+Phiên bản 2: ...
+Phiên bản 3: ...
+Mỗi phiên bản phải tự đứng độc lập, không gom chung thành một đoạn lớn.
+Format riêng theo loại nội dung:
+Headline: một câu chính sắc, dễ đọc, có lợi ích hoặc điểm khác biệt.
+Subheadline: một câu phụ làm rõ lời hứa của headline.
+Lời kêu gọi hành động: một câu ngắn thúc đẩy người đọc hành động.
+Không viết thành email, social post, mô tả sản phẩm hoặc landing page đầy đủ.
+Dùng tiếng Việt tự nhiên, đầy đủ dấu, có lời kêu gọi hành động rõ ràng.
+Temperature tham khảo: 0.7.
 
-## T-005 - seo / beauty
-```text
-TYPE=seo | INDUSTRY=beauty | TONE=luxury | PRODUCT=kem ch?ng n?ng cho da d?u | AUDIENCE=ng??i ?i l?m hay ng?i v?n ph?ng | FEATURES=r?o m?t, kh?ng n?ng t?ng qu? nhi?u, SPF50 | OFFER=t?ng sample t?y trang | BRAND_RULES=vi?t r? r?ng, c? d?u, kh?ng b?a s? li?u, kh?ng ph?ng ??i, CTA m?m | EXTRA=h?y vi?t ??ng format brand voice ?? h?c
-```
+Expected: Keep Vietnamese diacritics, follow Generator UI format, return exactly 3 separate versions, and avoid invented claims.
 
-## T-006 - headline / finance
-```text
-TYPE=headline | INDUSTRY=finance | TONE=urgent | PRODUCT=?ng d?ng qu?n l? chi ti?u c? nh?n | AUDIENCE=ng??i m?i ?i l?m | FEATURES=ph?n lo?i giao d?ch, nh?c h?n h?a ??n, b?o c?o tu?n | OFFER=d?ng th? mi?n ph? 14 ng?y | BRAND_RULES=vi?t r? r?ng, c? d?u, kh?ng b?a s? li?u, kh?ng ph?ng ??i, CTA m?m | EXTRA=h?y vi?t ??ng format brand voice ?? h?c
-```
+## Prompt 3
 
-## T-007 - social / finance
-```text
-TYPE=social | INDUSTRY=finance | TONE=emotional | PRODUCT=?ng d?ng qu?n l? chi ti?u c? nh?n | AUDIENCE=ng??i m?i ?i l?m | FEATURES=ph?n lo?i giao d?ch, nh?c h?n h?a ??n, b?o c?o tu?n | OFFER=d?ng th? mi?n ph? 14 ng?y | BRAND_RULES=vi?t r? r?ng, c? d?u, kh?ng b?a s? li?u, kh?ng ph?ng ??i, CTA m?m | EXTRA=h?y vi?t ??ng format brand voice ?? h?c
-```
+Bạn là chuyên gia copywriting cho ngành Thương Mại Điện Tử.
+Hãy viết Mô Tả Sản Phẩm với tone Cảm xúc.
+Sản phẩm/dịch vụ: bình giữ nhiệt thép 316.
+Từ khóa chính: giữ nóng 8 giờ; nắp chống tràn; dễ vệ sinh.
+Đối tượng mục tiêu: dân văn phòng mang cà phê đi làm.
+Thông tin bổ sung: freeship cho đơn từ 2 sản phẩm.
+Độ dài mong muốn: vừa đủ chi tiết.
+Giới hạn output tối đa: 1800 tokens.
+Tạo đúng 3 phiên bản riêng biệt.
+Định dạng bắt buộc:
+Phiên bản 1: ...
+Phiên bản 2: ...
+Phiên bản 3: ...
+Mỗi phiên bản phải tự đứng độc lập, không gom chung thành một đoạn lớn.
+Format riêng theo loại nội dung:
+Mô tả ngắn: đoạn mở đầu giới thiệu sản phẩm/dịch vụ.
+Lợi ích chính: 2-3 bullet.
+Đặc điểm nổi bật: 2-3 bullet.
+Lời kêu gọi hành động: lời kêu gọi mua, đăng ký hoặc liên hệ.
+Không dùng format email, SEO metadata hoặc caption mạng xã hội.
+Dùng tiếng Việt tự nhiên, đầy đủ dấu, có lời kêu gọi hành động rõ ràng.
+Temperature tham khảo: 0.7.
 
-## T-008 - email / finance
-```text
-TYPE=email | INDUSTRY=finance | TONE=friendly | PRODUCT=?ng d?ng qu?n l? chi ti?u c? nh?n | AUDIENCE=ng??i m?i ?i l?m | FEATURES=ph?n lo?i giao d?ch, nh?c h?n h?a ??n, b?o c?o tu?n | OFFER=d?ng th? mi?n ph? 14 ng?y | BRAND_RULES=vi?t r? r?ng, c? d?u, kh?ng b?a s? li?u, kh?ng ph?ng ??i, CTA m?m | EXTRA=h?y vi?t ??ng format brand voice ?? h?c
-```
+Expected: Keep Vietnamese diacritics, follow Generator UI format, return exactly 3 separate versions, and avoid invented claims.
 
-## T-009 - landing / finance
-```text
-TYPE=landing | INDUSTRY=finance | TONE=professional | PRODUCT=?ng d?ng qu?n l? chi ti?u c? nh?n | AUDIENCE=ng??i m?i ?i l?m | FEATURES=ph?n lo?i giao d?ch, nh?c h?n h?a ??n, b?o c?o tu?n | OFFER=d?ng th? mi?n ph? 14 ng?y | BRAND_RULES=vi?t r? r?ng, c? d?u, kh?ng b?a s? li?u, kh?ng ph?ng ??i, CTA m?m | EXTRA=h?y vi?t ??ng format brand voice ?? h?c
-```
+## Prompt 4
 
-## T-010 - seo / finance
-```text
-TYPE=seo | INDUSTRY=finance | TONE=luxury | PRODUCT=?ng d?ng qu?n l? chi ti?u c? nh?n | AUDIENCE=ng??i m?i ?i l?m | FEATURES=ph?n lo?i giao d?ch, nh?c h?n h?a ??n, b?o c?o tu?n | OFFER=d?ng th? mi?n ph? 14 ng?y | BRAND_RULES=vi?t r? r?ng, c? d?u, kh?ng b?a s? li?u, kh?ng ph?ng ??i, CTA m?m | EXTRA=h?y vi?t ??ng format brand voice ?? h?c
-```
+Bạn là chuyên gia copywriting cho ngành Thương Mại Điện Tử.
+Hãy viết Mô Tả Sản Phẩm với tone Chuyên nghiệp.
+Sản phẩm/dịch vụ: bình giữ nhiệt thép 316.
+Từ khóa chính: giữ nóng 8 giờ; nắp chống tràn; dễ vệ sinh.
+Đối tượng mục tiêu: dân văn phòng mang cà phê đi làm.
+Thông tin bổ sung: freeship cho đơn từ 2 sản phẩm.
+Độ dài mong muốn: vừa đủ chi tiết.
+Giới hạn output tối đa: 1800 tokens.
+Tạo đúng 3 phiên bản riêng biệt.
+Định dạng bắt buộc:
+Phiên bản 1: ...
+Phiên bản 2: ...
+Phiên bản 3: ...
+Mỗi phiên bản phải tự đứng độc lập, không gom chung thành một đoạn lớn.
+Format riêng theo loại nội dung:
+Mô tả ngắn: đoạn mở đầu giới thiệu sản phẩm/dịch vụ.
+Lợi ích chính: 2-3 bullet.
+Đặc điểm nổi bật: 2-3 bullet.
+Lời kêu gọi hành động: lời kêu gọi mua, đăng ký hoặc liên hệ.
+Không dùng format email, SEO metadata hoặc caption mạng xã hội.
+Dùng tiếng Việt tự nhiên, đầy đủ dấu, có lời kêu gọi hành động rõ ràng.
+Temperature tham khảo: 0.7.
 
-## T-011 - headline / home
-```text
-TYPE=headline | INDUSTRY=home | TONE=urgent | PRODUCT=b?n n?ng h? l?m vi?c | AUDIENCE=ng??i l?m remote | FEATURES=ch?nh chi?u cao, khung ch?c, l?u 3 m?c | OFFER=l?p ??t mi?n ph? n?i th?nh | BRAND_RULES=vi?t r? r?ng, c? d?u, kh?ng b?a s? li?u, kh?ng ph?ng ??i, CTA m?m | EXTRA=h?y vi?t ??ng format brand voice ?? h?c
-```
+Expected: Keep Vietnamese diacritics, follow Generator UI format, return exactly 3 separate versions, and avoid invented claims.
 
-## T-012 - social / home
-```text
-TYPE=social | INDUSTRY=home | TONE=emotional | PRODUCT=b?n n?ng h? l?m vi?c | AUDIENCE=ng??i l?m remote | FEATURES=ch?nh chi?u cao, khung ch?c, l?u 3 m?c | OFFER=l?p ??t mi?n ph? n?i th?nh | BRAND_RULES=vi?t r? r?ng, c? d?u, kh?ng b?a s? li?u, kh?ng ph?ng ??i, CTA m?m | EXTRA=h?y vi?t ??ng format brand voice ?? h?c
-```
+## Prompt 5
 
-## T-013 - email / home
-```text
-TYPE=email | INDUSTRY=home | TONE=friendly | PRODUCT=b?n n?ng h? l?m vi?c | AUDIENCE=ng??i l?m remote | FEATURES=ch?nh chi?u cao, khung ch?c, l?u 3 m?c | OFFER=l?p ??t mi?n ph? n?i th?nh | BRAND_RULES=vi?t r? r?ng, c? d?u, kh?ng b?a s? li?u, kh?ng ph?ng ??i, CTA m?m | EXTRA=h?y vi?t ??ng format brand voice ?? h?c
-```
+Bạn là chuyên gia copywriting cho ngành Thương Mại Điện Tử.
+Hãy viết Social Media Post với tone Thân thiện.
+Sản phẩm/dịch vụ: bình giữ nhiệt thép 316.
+Từ khóa chính: giữ nóng 8 giờ; nắp chống tràn; dễ vệ sinh.
+Đối tượng mục tiêu: dân văn phòng mang cà phê đi làm.
+Thông tin bổ sung: freeship cho đơn từ 2 sản phẩm.
+Độ dài mong muốn: vừa đủ chi tiết.
+Giới hạn output tối đa: 1800 tokens.
+Tạo đúng 3 phiên bản riêng biệt.
+Định dạng bắt buộc:
+Phiên bản 1: ...
+Phiên bản 2: ...
+Phiên bản 3: ...
+Mỗi phiên bản phải tự đứng độc lập, không gom chung thành một đoạn lớn.
+Format riêng theo loại nội dung:
+Hook: câu mở đầu kéo chú ý.
+Caption: nội dung chính dễ đọc trên mạng xã hội.
+Lời kêu gọi hành động: hành động mong muốn.
+Hashtags: 3-6 hashtag liên quan.
+Không thêm Subject, Preview text, SEO title hoặc Meta description.
+Dùng tiếng Việt tự nhiên, đầy đủ dấu, có lời kêu gọi hành động rõ ràng.
+Temperature tham khảo: 0.7.
 
-## T-014 - landing / home
-```text
-TYPE=landing | INDUSTRY=home | TONE=professional | PRODUCT=b?n n?ng h? l?m vi?c | AUDIENCE=ng??i l?m remote | FEATURES=ch?nh chi?u cao, khung ch?c, l?u 3 m?c | OFFER=l?p ??t mi?n ph? n?i th?nh | BRAND_RULES=vi?t r? r?ng, c? d?u, kh?ng b?a s? li?u, kh?ng ph?ng ??i, CTA m?m | EXTRA=h?y vi?t ??ng format brand voice ?? h?c
-```
+Expected: Keep Vietnamese diacritics, follow Generator UI format, return exactly 3 separate versions, and avoid invented claims.
 
-## T-015 - seo / home
-```text
-TYPE=seo | INDUSTRY=home | TONE=luxury | PRODUCT=b?n n?ng h? l?m vi?c | AUDIENCE=ng??i l?m remote | FEATURES=ch?nh chi?u cao, khung ch?c, l?u 3 m?c | OFFER=l?p ??t mi?n ph? n?i th?nh | BRAND_RULES=vi?t r? r?ng, c? d?u, kh?ng b?a s? li?u, kh?ng ph?ng ??i, CTA m?m | EXTRA=h?y vi?t ??ng format brand voice ?? h?c
-```
+## Prompt 6
+
+Bạn là chuyên gia copywriting cho ngành Thương Mại Điện Tử.
+Hãy viết Social Media Post với tone Khẩn cấp.
+Sản phẩm/dịch vụ: bình giữ nhiệt thép 316.
+Từ khóa chính: giữ nóng 8 giờ; nắp chống tràn; dễ vệ sinh.
+Đối tượng mục tiêu: dân văn phòng mang cà phê đi làm.
+Thông tin bổ sung: freeship cho đơn từ 2 sản phẩm.
+Độ dài mong muốn: vừa đủ chi tiết.
+Giới hạn output tối đa: 1800 tokens.
+Tạo đúng 3 phiên bản riêng biệt.
+Định dạng bắt buộc:
+Phiên bản 1: ...
+Phiên bản 2: ...
+Phiên bản 3: ...
+Mỗi phiên bản phải tự đứng độc lập, không gom chung thành một đoạn lớn.
+Format riêng theo loại nội dung:
+Hook: câu mở đầu kéo chú ý.
+Caption: nội dung chính dễ đọc trên mạng xã hội.
+Lời kêu gọi hành động: hành động mong muốn.
+Hashtags: 3-6 hashtag liên quan.
+Không thêm Subject, Preview text, SEO title hoặc Meta description.
+Dùng tiếng Việt tự nhiên, đầy đủ dấu, có lời kêu gọi hành động rõ ràng.
+Temperature tham khảo: 0.7.
+
+Expected: Keep Vietnamese diacritics, follow Generator UI format, return exactly 3 separate versions, and avoid invented claims.
+
+## Prompt 7
+
+Bạn là chuyên gia copywriting cho ngành Thương Mại Điện Tử.
+Hãy viết Email Marketing với tone Chuyên nghiệp.
+Sản phẩm/dịch vụ: bình giữ nhiệt thép 316.
+Từ khóa chính: giữ nóng 8 giờ; nắp chống tràn; dễ vệ sinh.
+Đối tượng mục tiêu: dân văn phòng mang cà phê đi làm.
+Thông tin bổ sung: freeship cho đơn từ 2 sản phẩm.
+Độ dài mong muốn: vừa đủ chi tiết.
+Giới hạn output tối đa: 1800 tokens.
+Tạo đúng 3 phiên bản riêng biệt.
+Định dạng bắt buộc:
+Phiên bản 1: ...
+Phiên bản 2: ...
+Phiên bản 3: ...
+Mỗi phiên bản phải tự đứng độc lập, không gom chung thành một đoạn lớn.
+Format riêng theo loại nội dung:
+Subject: dòng tiêu đề email.
+Preview text: đoạn xem trước ngắn.
+Lời chào: lời chào phù hợp người nhận.
+Nội dung chính: tách thành các đoạn ngắn, có thể có bullet nếu cần.
+Lời kêu gọi hành động: hành động chính trong email.
+Không viết như social caption, landing page hoặc SEO snippet.
+Dùng tiếng Việt tự nhiên, đầy đủ dấu, có lời kêu gọi hành động rõ ràng.
+Temperature tham khảo: 0.7.
+
+Expected: Keep Vietnamese diacritics, follow Generator UI format, return exactly 3 separate versions, and avoid invented claims.
+
+## Prompt 8
+
+Bạn là chuyên gia copywriting cho ngành Thương Mại Điện Tử.
+Hãy viết Lời Kêu Gọi Hành Động với tone Thân thiện.
+Sản phẩm/dịch vụ: bình giữ nhiệt thép 316.
+Từ khóa chính: giữ nóng 8 giờ; nắp chống tràn; dễ vệ sinh.
+Đối tượng mục tiêu: dân văn phòng mang cà phê đi làm.
+Thông tin bổ sung: freeship cho đơn từ 2 sản phẩm.
+Độ dài mong muốn: vừa đủ chi tiết.
+Giới hạn output tối đa: 1800 tokens.
+Tạo đúng 3 phiên bản riêng biệt.
+Định dạng bắt buộc:
+Phiên bản 1: ...
+Phiên bản 2: ...
+Phiên bản 3: ...
+Mỗi phiên bản phải tự đứng độc lập, không gom chung thành một đoạn lớn.
+Format riêng theo loại nội dung:
+Lời kêu gọi hành động chính: câu/nút kêu gọi hành động.
+Microcopy: một câu hỗ trợ ngay dưới lời kêu gọi hành động.
+Chỉ viết lời kêu gọi hành động, không thêm bài quảng cáo dài.
+Dùng tiếng Việt tự nhiên, đầy đủ dấu, có lời kêu gọi hành động rõ ràng.
+Temperature tham khảo: 0.7.
+
+Expected: Keep Vietnamese diacritics, follow Generator UI format, return exactly 3 separate versions, and avoid invented claims.
+
+## Prompt 9
+
+Bạn là chuyên gia copywriting cho ngành Thương Mại Điện Tử.
+Hãy viết Tiêu Đề Quảng Cáo với tone Khẩn cấp.
+Sản phẩm/dịch vụ: đèn bàn LED chống chói.
+Từ khóa chính: 3 mức sáng; cổ đèn linh hoạt; tiết kiệm điện.
+Đối tượng mục tiêu: sinh viên học khuya và làm việc tại nhà.
+Thông tin bổ sung: giảm 10 phần trăm cho khách mới.
+Độ dài mong muốn: vừa đủ chi tiết.
+Giới hạn output tối đa: 1800 tokens.
+Tạo đúng 3 phiên bản riêng biệt.
+Định dạng bắt buộc:
+Phiên bản 1: ...
+Phiên bản 2: ...
+Phiên bản 3: ...
+Mỗi phiên bản phải tự đứng độc lập, không gom chung thành một đoạn lớn.
+Format riêng theo loại nội dung:
+Headline: một câu chính sắc, dễ đọc, có lợi ích hoặc điểm khác biệt.
+Subheadline: một câu phụ làm rõ lời hứa của headline.
+Lời kêu gọi hành động: một câu ngắn thúc đẩy người đọc hành động.
+Không viết thành email, social post, mô tả sản phẩm hoặc landing page đầy đủ.
+Dùng tiếng Việt tự nhiên, đầy đủ dấu, có lời kêu gọi hành động rõ ràng.
+Temperature tham khảo: 0.7.
+
+Expected: Keep Vietnamese diacritics, follow Generator UI format, return exactly 3 separate versions, and avoid invented claims.
+
+## Prompt 10
+
+Bạn là chuyên gia copywriting cho ngành Thương Mại Điện Tử.
+Hãy viết Tiêu Đề Quảng Cáo với tone Thân thiện.
+Sản phẩm/dịch vụ: đèn bàn LED chống chói.
+Từ khóa chính: 3 mức sáng; cổ đèn linh hoạt; tiết kiệm điện.
+Đối tượng mục tiêu: sinh viên học khuya và làm việc tại nhà.
+Thông tin bổ sung: giảm 10 phần trăm cho khách mới.
+Độ dài mong muốn: vừa đủ chi tiết.
+Giới hạn output tối đa: 1800 tokens.
+Tạo đúng 3 phiên bản riêng biệt.
+Định dạng bắt buộc:
+Phiên bản 1: ...
+Phiên bản 2: ...
+Phiên bản 3: ...
+Mỗi phiên bản phải tự đứng độc lập, không gom chung thành một đoạn lớn.
+Format riêng theo loại nội dung:
+Headline: một câu chính sắc, dễ đọc, có lợi ích hoặc điểm khác biệt.
+Subheadline: một câu phụ làm rõ lời hứa của headline.
+Lời kêu gọi hành động: một câu ngắn thúc đẩy người đọc hành động.
+Không viết thành email, social post, mô tả sản phẩm hoặc landing page đầy đủ.
+Dùng tiếng Việt tự nhiên, đầy đủ dấu, có lời kêu gọi hành động rõ ràng.
+Temperature tham khảo: 0.7.
+
+Expected: Keep Vietnamese diacritics, follow Generator UI format, return exactly 3 separate versions, and avoid invented claims.
+
+## Prompt 11
+
+Bạn là chuyên gia copywriting cho ngành Thương Mại Điện Tử.
+Hãy viết Mô Tả Sản Phẩm với tone Cảm xúc.
+Sản phẩm/dịch vụ: đèn bàn LED chống chói.
+Từ khóa chính: 3 mức sáng; cổ đèn linh hoạt; tiết kiệm điện.
+Đối tượng mục tiêu: sinh viên học khuya và làm việc tại nhà.
+Thông tin bổ sung: giảm 10 phần trăm cho khách mới.
+Độ dài mong muốn: vừa đủ chi tiết.
+Giới hạn output tối đa: 1800 tokens.
+Tạo đúng 3 phiên bản riêng biệt.
+Định dạng bắt buộc:
+Phiên bản 1: ...
+Phiên bản 2: ...
+Phiên bản 3: ...
+Mỗi phiên bản phải tự đứng độc lập, không gom chung thành một đoạn lớn.
+Format riêng theo loại nội dung:
+Mô tả ngắn: đoạn mở đầu giới thiệu sản phẩm/dịch vụ.
+Lợi ích chính: 2-3 bullet.
+Đặc điểm nổi bật: 2-3 bullet.
+Lời kêu gọi hành động: lời kêu gọi mua, đăng ký hoặc liên hệ.
+Không dùng format email, SEO metadata hoặc caption mạng xã hội.
+Dùng tiếng Việt tự nhiên, đầy đủ dấu, có lời kêu gọi hành động rõ ràng.
+Temperature tham khảo: 0.7.
+
+Expected: Keep Vietnamese diacritics, follow Generator UI format, return exactly 3 separate versions, and avoid invented claims.
+
+## Prompt 12
+
+Bạn là chuyên gia copywriting cho ngành Thương Mại Điện Tử.
+Hãy viết Mô Tả Sản Phẩm với tone Chuyên nghiệp.
+Sản phẩm/dịch vụ: đèn bàn LED chống chói.
+Từ khóa chính: 3 mức sáng; cổ đèn linh hoạt; tiết kiệm điện.
+Đối tượng mục tiêu: sinh viên học khuya và làm việc tại nhà.
+Thông tin bổ sung: giảm 10 phần trăm cho khách mới.
+Độ dài mong muốn: vừa đủ chi tiết.
+Giới hạn output tối đa: 1800 tokens.
+Tạo đúng 3 phiên bản riêng biệt.
+Định dạng bắt buộc:
+Phiên bản 1: ...
+Phiên bản 2: ...
+Phiên bản 3: ...
+Mỗi phiên bản phải tự đứng độc lập, không gom chung thành một đoạn lớn.
+Format riêng theo loại nội dung:
+Mô tả ngắn: đoạn mở đầu giới thiệu sản phẩm/dịch vụ.
+Lợi ích chính: 2-3 bullet.
+Đặc điểm nổi bật: 2-3 bullet.
+Lời kêu gọi hành động: lời kêu gọi mua, đăng ký hoặc liên hệ.
+Không dùng format email, SEO metadata hoặc caption mạng xã hội.
+Dùng tiếng Việt tự nhiên, đầy đủ dấu, có lời kêu gọi hành động rõ ràng.
+Temperature tham khảo: 0.7.
+
+Expected: Keep Vietnamese diacritics, follow Generator UI format, return exactly 3 separate versions, and avoid invented claims.
+
+## Prompt 13
+
+Bạn là chuyên gia copywriting cho ngành Thương Mại Điện Tử.
+Hãy viết Social Media Post với tone Thân thiện.
+Sản phẩm/dịch vụ: đèn bàn LED chống chói.
+Từ khóa chính: 3 mức sáng; cổ đèn linh hoạt; tiết kiệm điện.
+Đối tượng mục tiêu: sinh viên học khuya và làm việc tại nhà.
+Thông tin bổ sung: giảm 10 phần trăm cho khách mới.
+Độ dài mong muốn: vừa đủ chi tiết.
+Giới hạn output tối đa: 1800 tokens.
+Tạo đúng 3 phiên bản riêng biệt.
+Định dạng bắt buộc:
+Phiên bản 1: ...
+Phiên bản 2: ...
+Phiên bản 3: ...
+Mỗi phiên bản phải tự đứng độc lập, không gom chung thành một đoạn lớn.
+Format riêng theo loại nội dung:
+Hook: câu mở đầu kéo chú ý.
+Caption: nội dung chính dễ đọc trên mạng xã hội.
+Lời kêu gọi hành động: hành động mong muốn.
+Hashtags: 3-6 hashtag liên quan.
+Không thêm Subject, Preview text, SEO title hoặc Meta description.
+Dùng tiếng Việt tự nhiên, đầy đủ dấu, có lời kêu gọi hành động rõ ràng.
+Temperature tham khảo: 0.7.
+
+Expected: Keep Vietnamese diacritics, follow Generator UI format, return exactly 3 separate versions, and avoid invented claims.
+
+## Prompt 14
+
+Bạn là chuyên gia copywriting cho ngành Thương Mại Điện Tử.
+Hãy viết Social Media Post với tone Khẩn cấp.
+Sản phẩm/dịch vụ: đèn bàn LED chống chói.
+Từ khóa chính: 3 mức sáng; cổ đèn linh hoạt; tiết kiệm điện.
+Đối tượng mục tiêu: sinh viên học khuya và làm việc tại nhà.
+Thông tin bổ sung: giảm 10 phần trăm cho khách mới.
+Độ dài mong muốn: vừa đủ chi tiết.
+Giới hạn output tối đa: 1800 tokens.
+Tạo đúng 3 phiên bản riêng biệt.
+Định dạng bắt buộc:
+Phiên bản 1: ...
+Phiên bản 2: ...
+Phiên bản 3: ...
+Mỗi phiên bản phải tự đứng độc lập, không gom chung thành một đoạn lớn.
+Format riêng theo loại nội dung:
+Hook: câu mở đầu kéo chú ý.
+Caption: nội dung chính dễ đọc trên mạng xã hội.
+Lời kêu gọi hành động: hành động mong muốn.
+Hashtags: 3-6 hashtag liên quan.
+Không thêm Subject, Preview text, SEO title hoặc Meta description.
+Dùng tiếng Việt tự nhiên, đầy đủ dấu, có lời kêu gọi hành động rõ ràng.
+Temperature tham khảo: 0.7.
+
+Expected: Keep Vietnamese diacritics, follow Generator UI format, return exactly 3 separate versions, and avoid invented claims.
+
+## Prompt 15
+
+Bạn là chuyên gia copywriting cho ngành Thương Mại Điện Tử.
+Hãy viết Email Marketing với tone Chuyên nghiệp.
+Sản phẩm/dịch vụ: đèn bàn LED chống chói.
+Từ khóa chính: 3 mức sáng; cổ đèn linh hoạt; tiết kiệm điện.
+Đối tượng mục tiêu: sinh viên học khuya và làm việc tại nhà.
+Thông tin bổ sung: giảm 10 phần trăm cho khách mới.
+Độ dài mong muốn: vừa đủ chi tiết.
+Giới hạn output tối đa: 1800 tokens.
+Tạo đúng 3 phiên bản riêng biệt.
+Định dạng bắt buộc:
+Phiên bản 1: ...
+Phiên bản 2: ...
+Phiên bản 3: ...
+Mỗi phiên bản phải tự đứng độc lập, không gom chung thành một đoạn lớn.
+Format riêng theo loại nội dung:
+Subject: dòng tiêu đề email.
+Preview text: đoạn xem trước ngắn.
+Lời chào: lời chào phù hợp người nhận.
+Nội dung chính: tách thành các đoạn ngắn, có thể có bullet nếu cần.
+Lời kêu gọi hành động: hành động chính trong email.
+Không viết như social caption, landing page hoặc SEO snippet.
+Dùng tiếng Việt tự nhiên, đầy đủ dấu, có lời kêu gọi hành động rõ ràng.
+Temperature tham khảo: 0.7.
+
+Expected: Keep Vietnamese diacritics, follow Generator UI format, return exactly 3 separate versions, and avoid invented claims.
+
+## Prompt 16
+
+Bạn là chuyên gia copywriting cho ngành Thương Mại Điện Tử.
+Hãy viết Lời Kêu Gọi Hành Động với tone Thân thiện.
+Sản phẩm/dịch vụ: đèn bàn LED chống chói.
+Từ khóa chính: 3 mức sáng; cổ đèn linh hoạt; tiết kiệm điện.
+Đối tượng mục tiêu: sinh viên học khuya và làm việc tại nhà.
+Thông tin bổ sung: giảm 10 phần trăm cho khách mới.
+Độ dài mong muốn: vừa đủ chi tiết.
+Giới hạn output tối đa: 1800 tokens.
+Tạo đúng 3 phiên bản riêng biệt.
+Định dạng bắt buộc:
+Phiên bản 1: ...
+Phiên bản 2: ...
+Phiên bản 3: ...
+Mỗi phiên bản phải tự đứng độc lập, không gom chung thành một đoạn lớn.
+Format riêng theo loại nội dung:
+Lời kêu gọi hành động chính: câu/nút kêu gọi hành động.
+Microcopy: một câu hỗ trợ ngay dưới lời kêu gọi hành động.
+Chỉ viết lời kêu gọi hành động, không thêm bài quảng cáo dài.
+Dùng tiếng Việt tự nhiên, đầy đủ dấu, có lời kêu gọi hành động rõ ràng.
+Temperature tham khảo: 0.7.
+
+Expected: Keep Vietnamese diacritics, follow Generator UI format, return exactly 3 separate versions, and avoid invented claims.
+
+## Prompt 17
+
+Bạn là chuyên gia copywriting cho ngành Thương Mại Điện Tử.
+Hãy viết Tiêu Đề Quảng Cáo với tone Khẩn cấp.
+Sản phẩm/dịch vụ: bộ chăm sóc da tối giản.
+Từ khóa chính: 3 bước dễ theo; kết cấu nhẹ; phù hợp dùng hằng ngày.
+Đối tượng mục tiêu: người mới bắt đầu skincare.
+Thông tin bổ sung: tặng túi du lịch mini.
+Độ dài mong muốn: vừa đủ chi tiết.
+Giới hạn output tối đa: 1800 tokens.
+Tạo đúng 3 phiên bản riêng biệt.
+Định dạng bắt buộc:
+Phiên bản 1: ...
+Phiên bản 2: ...
+Phiên bản 3: ...
+Mỗi phiên bản phải tự đứng độc lập, không gom chung thành một đoạn lớn.
+Format riêng theo loại nội dung:
+Headline: một câu chính sắc, dễ đọc, có lợi ích hoặc điểm khác biệt.
+Subheadline: một câu phụ làm rõ lời hứa của headline.
+Lời kêu gọi hành động: một câu ngắn thúc đẩy người đọc hành động.
+Không viết thành email, social post, mô tả sản phẩm hoặc landing page đầy đủ.
+Dùng tiếng Việt tự nhiên, đầy đủ dấu, có lời kêu gọi hành động rõ ràng.
+Temperature tham khảo: 0.7.
+
+Expected: Keep Vietnamese diacritics, follow Generator UI format, return exactly 3 separate versions, and avoid invented claims.
+
+## Prompt 18
+
+Bạn là chuyên gia copywriting cho ngành Thương Mại Điện Tử.
+Hãy viết Tiêu Đề Quảng Cáo với tone Thân thiện.
+Sản phẩm/dịch vụ: bộ chăm sóc da tối giản.
+Từ khóa chính: 3 bước dễ theo; kết cấu nhẹ; phù hợp dùng hằng ngày.
+Đối tượng mục tiêu: người mới bắt đầu skincare.
+Thông tin bổ sung: tặng túi du lịch mini.
+Độ dài mong muốn: vừa đủ chi tiết.
+Giới hạn output tối đa: 1800 tokens.
+Tạo đúng 3 phiên bản riêng biệt.
+Định dạng bắt buộc:
+Phiên bản 1: ...
+Phiên bản 2: ...
+Phiên bản 3: ...
+Mỗi phiên bản phải tự đứng độc lập, không gom chung thành một đoạn lớn.
+Format riêng theo loại nội dung:
+Headline: một câu chính sắc, dễ đọc, có lợi ích hoặc điểm khác biệt.
+Subheadline: một câu phụ làm rõ lời hứa của headline.
+Lời kêu gọi hành động: một câu ngắn thúc đẩy người đọc hành động.
+Không viết thành email, social post, mô tả sản phẩm hoặc landing page đầy đủ.
+Dùng tiếng Việt tự nhiên, đầy đủ dấu, có lời kêu gọi hành động rõ ràng.
+Temperature tham khảo: 0.7.
+
+Expected: Keep Vietnamese diacritics, follow Generator UI format, return exactly 3 separate versions, and avoid invented claims.
+
+## Prompt 19
+
+Bạn là chuyên gia copywriting cho ngành Thương Mại Điện Tử.
+Hãy viết Mô Tả Sản Phẩm với tone Cảm xúc.
+Sản phẩm/dịch vụ: bộ chăm sóc da tối giản.
+Từ khóa chính: 3 bước dễ theo; kết cấu nhẹ; phù hợp dùng hằng ngày.
+Đối tượng mục tiêu: người mới bắt đầu skincare.
+Thông tin bổ sung: tặng túi du lịch mini.
+Độ dài mong muốn: vừa đủ chi tiết.
+Giới hạn output tối đa: 1800 tokens.
+Tạo đúng 3 phiên bản riêng biệt.
+Định dạng bắt buộc:
+Phiên bản 1: ...
+Phiên bản 2: ...
+Phiên bản 3: ...
+Mỗi phiên bản phải tự đứng độc lập, không gom chung thành một đoạn lớn.
+Format riêng theo loại nội dung:
+Mô tả ngắn: đoạn mở đầu giới thiệu sản phẩm/dịch vụ.
+Lợi ích chính: 2-3 bullet.
+Đặc điểm nổi bật: 2-3 bullet.
+Lời kêu gọi hành động: lời kêu gọi mua, đăng ký hoặc liên hệ.
+Không dùng format email, SEO metadata hoặc caption mạng xã hội.
+Dùng tiếng Việt tự nhiên, đầy đủ dấu, có lời kêu gọi hành động rõ ràng.
+Temperature tham khảo: 0.7.
+
+Expected: Keep Vietnamese diacritics, follow Generator UI format, return exactly 3 separate versions, and avoid invented claims.
+
+## Prompt 20
+
+Bạn là chuyên gia copywriting cho ngành Thương Mại Điện Tử.
+Hãy viết Mô Tả Sản Phẩm với tone Chuyên nghiệp.
+Sản phẩm/dịch vụ: bộ chăm sóc da tối giản.
+Từ khóa chính: 3 bước dễ theo; kết cấu nhẹ; phù hợp dùng hằng ngày.
+Đối tượng mục tiêu: người mới bắt đầu skincare.
+Thông tin bổ sung: tặng túi du lịch mini.
+Độ dài mong muốn: vừa đủ chi tiết.
+Giới hạn output tối đa: 1800 tokens.
+Tạo đúng 3 phiên bản riêng biệt.
+Định dạng bắt buộc:
+Phiên bản 1: ...
+Phiên bản 2: ...
+Phiên bản 3: ...
+Mỗi phiên bản phải tự đứng độc lập, không gom chung thành một đoạn lớn.
+Format riêng theo loại nội dung:
+Mô tả ngắn: đoạn mở đầu giới thiệu sản phẩm/dịch vụ.
+Lợi ích chính: 2-3 bullet.
+Đặc điểm nổi bật: 2-3 bullet.
+Lời kêu gọi hành động: lời kêu gọi mua, đăng ký hoặc liên hệ.
+Không dùng format email, SEO metadata hoặc caption mạng xã hội.
+Dùng tiếng Việt tự nhiên, đầy đủ dấu, có lời kêu gọi hành động rõ ràng.
+Temperature tham khảo: 0.7.
+
+Expected: Keep Vietnamese diacritics, follow Generator UI format, return exactly 3 separate versions, and avoid invented claims.
+
+## Prompt 21
+
+Bạn là chuyên gia copywriting cho ngành Thương Mại Điện Tử.
+Hãy viết Social Media Post với tone Thân thiện.
+Sản phẩm/dịch vụ: bộ chăm sóc da tối giản.
+Từ khóa chính: 3 bước dễ theo; kết cấu nhẹ; phù hợp dùng hằng ngày.
+Đối tượng mục tiêu: người mới bắt đầu skincare.
+Thông tin bổ sung: tặng túi du lịch mini.
+Độ dài mong muốn: vừa đủ chi tiết.
+Giới hạn output tối đa: 1800 tokens.
+Tạo đúng 3 phiên bản riêng biệt.
+Định dạng bắt buộc:
+Phiên bản 1: ...
+Phiên bản 2: ...
+Phiên bản 3: ...
+Mỗi phiên bản phải tự đứng độc lập, không gom chung thành một đoạn lớn.
+Format riêng theo loại nội dung:
+Hook: câu mở đầu kéo chú ý.
+Caption: nội dung chính dễ đọc trên mạng xã hội.
+Lời kêu gọi hành động: hành động mong muốn.
+Hashtags: 3-6 hashtag liên quan.
+Không thêm Subject, Preview text, SEO title hoặc Meta description.
+Dùng tiếng Việt tự nhiên, đầy đủ dấu, có lời kêu gọi hành động rõ ràng.
+Temperature tham khảo: 0.7.
+
+Expected: Keep Vietnamese diacritics, follow Generator UI format, return exactly 3 separate versions, and avoid invented claims.
+
+## Prompt 22
+
+Bạn là chuyên gia copywriting cho ngành Thương Mại Điện Tử.
+Hãy viết Social Media Post với tone Khẩn cấp.
+Sản phẩm/dịch vụ: bộ chăm sóc da tối giản.
+Từ khóa chính: 3 bước dễ theo; kết cấu nhẹ; phù hợp dùng hằng ngày.
+Đối tượng mục tiêu: người mới bắt đầu skincare.
+Thông tin bổ sung: tặng túi du lịch mini.
+Độ dài mong muốn: vừa đủ chi tiết.
+Giới hạn output tối đa: 1800 tokens.
+Tạo đúng 3 phiên bản riêng biệt.
+Định dạng bắt buộc:
+Phiên bản 1: ...
+Phiên bản 2: ...
+Phiên bản 3: ...
+Mỗi phiên bản phải tự đứng độc lập, không gom chung thành một đoạn lớn.
+Format riêng theo loại nội dung:
+Hook: câu mở đầu kéo chú ý.
+Caption: nội dung chính dễ đọc trên mạng xã hội.
+Lời kêu gọi hành động: hành động mong muốn.
+Hashtags: 3-6 hashtag liên quan.
+Không thêm Subject, Preview text, SEO title hoặc Meta description.
+Dùng tiếng Việt tự nhiên, đầy đủ dấu, có lời kêu gọi hành động rõ ràng.
+Temperature tham khảo: 0.7.
+
+Expected: Keep Vietnamese diacritics, follow Generator UI format, return exactly 3 separate versions, and avoid invented claims.
+
+## Prompt 23
+
+Bạn là chuyên gia copywriting cho ngành Thương Mại Điện Tử.
+Hãy viết Email Marketing với tone Chuyên nghiệp.
+Sản phẩm/dịch vụ: bộ chăm sóc da tối giản.
+Từ khóa chính: 3 bước dễ theo; kết cấu nhẹ; phù hợp dùng hằng ngày.
+Đối tượng mục tiêu: người mới bắt đầu skincare.
+Thông tin bổ sung: tặng túi du lịch mini.
+Độ dài mong muốn: vừa đủ chi tiết.
+Giới hạn output tối đa: 1800 tokens.
+Tạo đúng 3 phiên bản riêng biệt.
+Định dạng bắt buộc:
+Phiên bản 1: ...
+Phiên bản 2: ...
+Phiên bản 3: ...
+Mỗi phiên bản phải tự đứng độc lập, không gom chung thành một đoạn lớn.
+Format riêng theo loại nội dung:
+Subject: dòng tiêu đề email.
+Preview text: đoạn xem trước ngắn.
+Lời chào: lời chào phù hợp người nhận.
+Nội dung chính: tách thành các đoạn ngắn, có thể có bullet nếu cần.
+Lời kêu gọi hành động: hành động chính trong email.
+Không viết như social caption, landing page hoặc SEO snippet.
+Dùng tiếng Việt tự nhiên, đầy đủ dấu, có lời kêu gọi hành động rõ ràng.
+Temperature tham khảo: 0.7.
+
+Expected: Keep Vietnamese diacritics, follow Generator UI format, return exactly 3 separate versions, and avoid invented claims.
+
+## Prompt 24
+
+Bạn là chuyên gia copywriting cho ngành Thương Mại Điện Tử.
+Hãy viết Lời Kêu Gọi Hành Động với tone Thân thiện.
+Sản phẩm/dịch vụ: bộ chăm sóc da tối giản.
+Từ khóa chính: 3 bước dễ theo; kết cấu nhẹ; phù hợp dùng hằng ngày.
+Đối tượng mục tiêu: người mới bắt đầu skincare.
+Thông tin bổ sung: tặng túi du lịch mini.
+Độ dài mong muốn: vừa đủ chi tiết.
+Giới hạn output tối đa: 1800 tokens.
+Tạo đúng 3 phiên bản riêng biệt.
+Định dạng bắt buộc:
+Phiên bản 1: ...
+Phiên bản 2: ...
+Phiên bản 3: ...
+Mỗi phiên bản phải tự đứng độc lập, không gom chung thành một đoạn lớn.
+Format riêng theo loại nội dung:
+Lời kêu gọi hành động chính: câu/nút kêu gọi hành động.
+Microcopy: một câu hỗ trợ ngay dưới lời kêu gọi hành động.
+Chỉ viết lời kêu gọi hành động, không thêm bài quảng cáo dài.
+Dùng tiếng Việt tự nhiên, đầy đủ dấu, có lời kêu gọi hành động rõ ràng.
+Temperature tham khảo: 0.7.
+
+Expected: Keep Vietnamese diacritics, follow Generator UI format, return exactly 3 separate versions, and avoid invented claims.
+
+## Prompt 25
+
+Bạn là chuyên gia copywriting cho ngành Thương Mại Điện Tử.
+Hãy viết Tiêu Đề Quảng Cáo với tone Khẩn cấp.
+Sản phẩm/dịch vụ: máy xay sinh tố mini.
+Từ khóa chính: cốc mang đi; sạc USB; lưỡi dao inox.
+Đối tượng mục tiêu: người bận rộn muốn chuẩn bị đồ uống nhanh.
+Thông tin bổ sung: đổi mới trong 7 ngày nếu lỗi kỹ thuật.
+Độ dài mong muốn: vừa đủ chi tiết.
+Giới hạn output tối đa: 1800 tokens.
+Tạo đúng 3 phiên bản riêng biệt.
+Định dạng bắt buộc:
+Phiên bản 1: ...
+Phiên bản 2: ...
+Phiên bản 3: ...
+Mỗi phiên bản phải tự đứng độc lập, không gom chung thành một đoạn lớn.
+Format riêng theo loại nội dung:
+Headline: một câu chính sắc, dễ đọc, có lợi ích hoặc điểm khác biệt.
+Subheadline: một câu phụ làm rõ lời hứa của headline.
+Lời kêu gọi hành động: một câu ngắn thúc đẩy người đọc hành động.
+Không viết thành email, social post, mô tả sản phẩm hoặc landing page đầy đủ.
+Dùng tiếng Việt tự nhiên, đầy đủ dấu, có lời kêu gọi hành động rõ ràng.
+Temperature tham khảo: 0.7.
+
+Expected: Keep Vietnamese diacritics, follow Generator UI format, return exactly 3 separate versions, and avoid invented claims.
+
+## Prompt 26
+
+Bạn là chuyên gia copywriting cho ngành Thương Mại Điện Tử.
+Hãy viết Tiêu Đề Quảng Cáo với tone Thân thiện.
+Sản phẩm/dịch vụ: máy xay sinh tố mini.
+Từ khóa chính: cốc mang đi; sạc USB; lưỡi dao inox.
+Đối tượng mục tiêu: người bận rộn muốn chuẩn bị đồ uống nhanh.
+Thông tin bổ sung: đổi mới trong 7 ngày nếu lỗi kỹ thuật.
+Độ dài mong muốn: vừa đủ chi tiết.
+Giới hạn output tối đa: 1800 tokens.
+Tạo đúng 3 phiên bản riêng biệt.
+Định dạng bắt buộc:
+Phiên bản 1: ...
+Phiên bản 2: ...
+Phiên bản 3: ...
+Mỗi phiên bản phải tự đứng độc lập, không gom chung thành một đoạn lớn.
+Format riêng theo loại nội dung:
+Headline: một câu chính sắc, dễ đọc, có lợi ích hoặc điểm khác biệt.
+Subheadline: một câu phụ làm rõ lời hứa của headline.
+Lời kêu gọi hành động: một câu ngắn thúc đẩy người đọc hành động.
+Không viết thành email, social post, mô tả sản phẩm hoặc landing page đầy đủ.
+Dùng tiếng Việt tự nhiên, đầy đủ dấu, có lời kêu gọi hành động rõ ràng.
+Temperature tham khảo: 0.7.
+
+Expected: Keep Vietnamese diacritics, follow Generator UI format, return exactly 3 separate versions, and avoid invented claims.
+
+## Prompt 27
+
+Bạn là chuyên gia copywriting cho ngành Thương Mại Điện Tử.
+Hãy viết Mô Tả Sản Phẩm với tone Cảm xúc.
+Sản phẩm/dịch vụ: máy xay sinh tố mini.
+Từ khóa chính: cốc mang đi; sạc USB; lưỡi dao inox.
+Đối tượng mục tiêu: người bận rộn muốn chuẩn bị đồ uống nhanh.
+Thông tin bổ sung: đổi mới trong 7 ngày nếu lỗi kỹ thuật.
+Độ dài mong muốn: vừa đủ chi tiết.
+Giới hạn output tối đa: 1800 tokens.
+Tạo đúng 3 phiên bản riêng biệt.
+Định dạng bắt buộc:
+Phiên bản 1: ...
+Phiên bản 2: ...
+Phiên bản 3: ...
+Mỗi phiên bản phải tự đứng độc lập, không gom chung thành một đoạn lớn.
+Format riêng theo loại nội dung:
+Mô tả ngắn: đoạn mở đầu giới thiệu sản phẩm/dịch vụ.
+Lợi ích chính: 2-3 bullet.
+Đặc điểm nổi bật: 2-3 bullet.
+Lời kêu gọi hành động: lời kêu gọi mua, đăng ký hoặc liên hệ.
+Không dùng format email, SEO metadata hoặc caption mạng xã hội.
+Dùng tiếng Việt tự nhiên, đầy đủ dấu, có lời kêu gọi hành động rõ ràng.
+Temperature tham khảo: 0.7.
+
+Expected: Keep Vietnamese diacritics, follow Generator UI format, return exactly 3 separate versions, and avoid invented claims.
+
+## Prompt 28
+
+Bạn là chuyên gia copywriting cho ngành Thương Mại Điện Tử.
+Hãy viết Mô Tả Sản Phẩm với tone Chuyên nghiệp.
+Sản phẩm/dịch vụ: máy xay sinh tố mini.
+Từ khóa chính: cốc mang đi; sạc USB; lưỡi dao inox.
+Đối tượng mục tiêu: người bận rộn muốn chuẩn bị đồ uống nhanh.
+Thông tin bổ sung: đổi mới trong 7 ngày nếu lỗi kỹ thuật.
+Độ dài mong muốn: vừa đủ chi tiết.
+Giới hạn output tối đa: 1800 tokens.
+Tạo đúng 3 phiên bản riêng biệt.
+Định dạng bắt buộc:
+Phiên bản 1: ...
+Phiên bản 2: ...
+Phiên bản 3: ...
+Mỗi phiên bản phải tự đứng độc lập, không gom chung thành một đoạn lớn.
+Format riêng theo loại nội dung:
+Mô tả ngắn: đoạn mở đầu giới thiệu sản phẩm/dịch vụ.
+Lợi ích chính: 2-3 bullet.
+Đặc điểm nổi bật: 2-3 bullet.
+Lời kêu gọi hành động: lời kêu gọi mua, đăng ký hoặc liên hệ.
+Không dùng format email, SEO metadata hoặc caption mạng xã hội.
+Dùng tiếng Việt tự nhiên, đầy đủ dấu, có lời kêu gọi hành động rõ ràng.
+Temperature tham khảo: 0.7.
+
+Expected: Keep Vietnamese diacritics, follow Generator UI format, return exactly 3 separate versions, and avoid invented claims.
+
+## Prompt 29
+
+Bạn là chuyên gia copywriting cho ngành Thương Mại Điện Tử.
+Hãy viết Social Media Post với tone Thân thiện.
+Sản phẩm/dịch vụ: máy xay sinh tố mini.
+Từ khóa chính: cốc mang đi; sạc USB; lưỡi dao inox.
+Đối tượng mục tiêu: người bận rộn muốn chuẩn bị đồ uống nhanh.
+Thông tin bổ sung: đổi mới trong 7 ngày nếu lỗi kỹ thuật.
+Độ dài mong muốn: vừa đủ chi tiết.
+Giới hạn output tối đa: 1800 tokens.
+Tạo đúng 3 phiên bản riêng biệt.
+Định dạng bắt buộc:
+Phiên bản 1: ...
+Phiên bản 2: ...
+Phiên bản 3: ...
+Mỗi phiên bản phải tự đứng độc lập, không gom chung thành một đoạn lớn.
+Format riêng theo loại nội dung:
+Hook: câu mở đầu kéo chú ý.
+Caption: nội dung chính dễ đọc trên mạng xã hội.
+Lời kêu gọi hành động: hành động mong muốn.
+Hashtags: 3-6 hashtag liên quan.
+Không thêm Subject, Preview text, SEO title hoặc Meta description.
+Dùng tiếng Việt tự nhiên, đầy đủ dấu, có lời kêu gọi hành động rõ ràng.
+Temperature tham khảo: 0.7.
+
+Expected: Keep Vietnamese diacritics, follow Generator UI format, return exactly 3 separate versions, and avoid invented claims.
+
+## Prompt 30
+
+Bạn là chuyên gia copywriting cho ngành Thương Mại Điện Tử.
+Hãy viết Social Media Post với tone Khẩn cấp.
+Sản phẩm/dịch vụ: máy xay sinh tố mini.
+Từ khóa chính: cốc mang đi; sạc USB; lưỡi dao inox.
+Đối tượng mục tiêu: người bận rộn muốn chuẩn bị đồ uống nhanh.
+Thông tin bổ sung: đổi mới trong 7 ngày nếu lỗi kỹ thuật.
+Độ dài mong muốn: vừa đủ chi tiết.
+Giới hạn output tối đa: 1800 tokens.
+Tạo đúng 3 phiên bản riêng biệt.
+Định dạng bắt buộc:
+Phiên bản 1: ...
+Phiên bản 2: ...
+Phiên bản 3: ...
+Mỗi phiên bản phải tự đứng độc lập, không gom chung thành một đoạn lớn.
+Format riêng theo loại nội dung:
+Hook: câu mở đầu kéo chú ý.
+Caption: nội dung chính dễ đọc trên mạng xã hội.
+Lời kêu gọi hành động: hành động mong muốn.
+Hashtags: 3-6 hashtag liên quan.
+Không thêm Subject, Preview text, SEO title hoặc Meta description.
+Dùng tiếng Việt tự nhiên, đầy đủ dấu, có lời kêu gọi hành động rõ ràng.
+Temperature tham khảo: 0.7.
+
+Expected: Keep Vietnamese diacritics, follow Generator UI format, return exactly 3 separate versions, and avoid invented claims.

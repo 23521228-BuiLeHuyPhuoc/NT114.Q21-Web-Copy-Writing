@@ -221,14 +221,7 @@ async function resolveFineTunedModelForGenerate(userId, payload) {
   if (!job || job.provider === 'mock') throw createError(404, 'Fine-tuned model not found');
   const provider = job?.provider || '';
   const modelUsed = `fine-tuned:${model._id.toString()}`;
-  const fineTunedPrompt = [
-    `Fine-tuned model selected: ${model.name}.`,
-    `Industry: ${model.industry || payload.industry || 'general'}.`,
-    `Brand voice source: ${model.performance?.sampleCount || 0} curated training examples.`,
-    'Apply this model voice consistently: keep wording, rhythm, tone, and domain vocabulary close to the training examples where relevant.',
-    '',
-    payload.prompt,
-  ].join('\n');
+  const fineTunedPrompt = String(payload.prompt || '').trim();
 
   if (provider === 'openai') {
     return {
@@ -237,6 +230,7 @@ async function resolveFineTunedModelForGenerate(userId, payload) {
       payload: {
         ...payload,
         prompt: fineTunedPrompt,
+        useRawPrompt: true,
         model: model.providerModelId,
         forceProvider: 'openai',
         requireProviderSuccess: true,
@@ -255,6 +249,7 @@ async function resolveFineTunedModelForGenerate(userId, payload) {
       payload: {
         ...payload,
         prompt: fineTunedPrompt,
+        useRawPrompt: true,
         model: model.providerModelId,
         forceProvider: 'vertex-gemini',
         requireProviderSuccess: true,
@@ -274,7 +269,9 @@ async function generateContent(userId, payload) {
 
   const template = await templateService.getTemplateForGenerate(userId, payload.templateId);
   const resolvedFineTune = await resolveFineTunedModelForGenerate(userId, payload);
-  const effectivePrompt = buildPromptWithTemplate(resolvedFineTune.payload.prompt, template);
+  const effectivePrompt = resolvedFineTune.payload.useRawPrompt
+    ? resolvedFineTune.payload.prompt
+    : buildPromptWithTemplate(resolvedFineTune.payload.prompt, template);
   const aiPayload = {
     ...resolvedFineTune.payload,
     prompt: effectivePrompt,

@@ -1,21 +1,3 @@
-# Fine-tuning Excel Pack - Brand Voice Commerce
+Fine-tuning Excel Pack - Generator UI Prompt Contract
 
-M?c ti?u: fine-tune ?? model vi?t copy ti?ng Vi?t b?m gi?ng th??ng hi?u h?n, kh?ng ph?i l?m model th?ng minh t?ng qu?t h?n.
-
-## Th? t? d?ng
-
-1. M? `01_train_examples_brand_voice.xlsx`.
-2. D?ng sheet `Training_Data`, ch? l?y 2 c?t `input` v? `output` ?? ??a v?o pipeline fine-tuning.
-3. Gi? `02_validation_holdout_brand_voice.xlsx` ?? ki?m tra kh?ch quan, kh?ng ??a v?o train.
-4. Sau khi job ho?n t?t, d?ng `03_test_prompts_after_finetune.xlsx` ?? ch?y c?ng prompt tr?n base model v? fine-tuned model.
-5. Ch?m b?ng `04_eval_scorecard.xlsx`.
-
-## ?i?u c?n k? v?ng
-
-Fine-tuned model n?n t?t h?n ? c?c ?i?m:
-- Format ?n ??nh theo lo?i content.
-- ?t b?a s? li?u, ch?ng nh?n, review.
-- Gi?ng r? r?ng, ?m, tin c?y, ?t hype.
-- CTA m?m v? ??ng ng? c?nh h?n.
-
-N?u b?n mu?n d?ng UI hi?n t?i ?ang import CSV: m? workbook training trong Excel v? Save As CSV UTF-8 v?i header `input,output,industry,tone`.
+UTF-8 Vietnamese data. Input uses Generator UI prompt, not TYPE schema.

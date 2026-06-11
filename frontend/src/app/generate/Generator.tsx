@@ -514,7 +514,7 @@ export function CustomerGenerator() {
             <Card className="p-4">
               <div className="grid grid-cols-2 gap-2">
                 <Button type="button" variant={modelMode === 'base' ? 'default' : 'outline'} onClick={() => handleModelModeChange('base')}>
-                  <Cpu className="w-4 h-4 mr-2" /> Model g?c
+                  <Cpu className="w-4 h-4 mr-2" /> Model gốc
                 </Button>
                 <Button type="button" variant={modelMode === 'fine-tuned' ? 'default' : 'outline'} onClick={() => handleModelModeChange('fine-tuned')}>
                   <Brain className="w-4 h-4 mr-2" /> Fine-tuned
@@ -529,10 +529,10 @@ export function CustomerGenerator() {
               <Card className="p-4 border-dashed">
                 <div className="flex items-center gap-2 mb-2">
                   <Brain className="w-4 h-4 text-primary" />
-                  <p className="text-sm font-semibold text-foreground/80">Ch?a c? model fine-tuned kh? d?ng</p>
+                  <p className="text-sm font-semibold text-foreground/80">Chưa có model fine-tuned khả dụng</p>
                 </div>
-                <p className="text-xs text-muted-foreground mb-3">Promote job fine-tuning v? b?t active ?? d?ng model t?i generator.</p>
-                <Button variant="outline" size="sm" onClick={() => navigate('/fine-tune')}>M? fine-tuning</Button>
+                <p className="text-xs text-muted-foreground mb-3">Promote job fine-tuning và bật active để dùng model tại generator.</p>
+                <Button variant="outline" size="sm" onClick={() => navigate('/fine-tune')}>Mở fine-tuning</Button>
               </Card>
             )}
             <ProductInfoForm

@@ -439,6 +439,11 @@ function buildProviderPrompt(payload) {
   ].filter(Boolean).join('\n');
 }
 
+function getProviderPrompt(payload) {
+  if (payload.useRawPrompt) return String(payload.prompt || '').trim();
+  return buildProviderPrompt(payload);
+}
+
 function cleanProviderOutput(outputText) {
   let text = String(outputText || '').trim();
   const versionMatches = [...text.matchAll(/Phiên bản\s*1\s*:/gi)];
@@ -680,7 +685,7 @@ async function callGemini(payload) {
   }
 
   const model = getGeminiModel(payload.model);
-  const providerPrompt = buildProviderPrompt(payload);
+  const providerPrompt = getProviderPrompt(payload);
   const controller = new AbortController();
   const timeoutMs = model.startsWith('gemma-') ? 90000 : 30000;
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -774,7 +779,7 @@ async function callVertexGemini(payload) {
   }
 
   const resourceLocation = resourceName.match(/\/locations\/([^/]+)/)?.[1] || getVertexLocation();
-  const providerPrompt = buildProviderPrompt(payload);
+  const providerPrompt = getProviderPrompt(payload);
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), Number(process.env.VERTEX_GEMINI_TIMEOUT_MS || 90000));
 
@@ -869,7 +874,7 @@ async function callVertexMaaS(payload) {
   }
 
   const location = getVertexMaaSLocation(model);
-  const providerPrompt = buildProviderPrompt(payload);
+  const providerPrompt = getProviderPrompt(payload);
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), Number(process.env.VERTEX_MAAS_TIMEOUT_MS || 120000));
 
@@ -879,7 +884,7 @@ async function callVertexMaaS(payload) {
       model,
       messages: [{
         role: 'user',
-        content: [
+        content: payload.useRawPrompt ? providerPrompt : [
           'You are a senior Vietnamese marketing copywriter. Write the final answer only, in natural Vietnamese with full diacritics. Do not reveal reasoning.',
           '',
           providerPrompt,
@@ -965,7 +970,7 @@ async function callOpenAI(payload) {
 
   try {
     const model = getOpenAIModel(payload.model);
-    const providerPrompt = buildProviderPrompt(payload);
+    const providerPrompt = getProviderPrompt(payload);
     const response = await fetch(`${getOpenAIBaseUrl()}/chat/completions`, {
       method: 'POST',
       headers: {
@@ -1035,7 +1040,7 @@ async function callOpenRouter(payload) {
   }
 
   const model = getOpenRouterModel(payload.model);
-  const providerPrompt = buildProviderPrompt(payload);
+  const providerPrompt = getProviderPrompt(payload);
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 60000);
 
@@ -1112,7 +1117,7 @@ async function callGroq(payload) {
   }
 
   const model = getGroqModel(payload.model);
-  const providerPrompt = buildProviderPrompt(payload);
+  const providerPrompt = getProviderPrompt(payload);
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 60000);
 
@@ -1187,7 +1192,7 @@ async function callFreeGPT4(payload) {
   }
 
   const model = getFreeGPT4Model(payload.model);
-  const providerPrompt = buildProviderPrompt(payload);
+  const providerPrompt = getProviderPrompt(payload);
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), Number(process.env.FREEGPT4_TIMEOUT_MS || 90000));
 

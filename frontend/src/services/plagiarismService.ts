@@ -1,13 +1,25 @@
 import { api } from '@/lib/axios';
 
 export type PlagiarismRiskLevel = 'safe' | 'review' | 'high' | 'critical';
-export type PlagiarismSourceType = 'database' | 'reference' | 'web';
+export type PlagiarismSourceType = 'database' | 'reference' | 'web' | 'uploads';
+export type PlagiarismSensitivity = 'lenient' | 'balanced' | 'strict';
+export type PlagiarismScoreBasis = 'exact' | 'phrase' | 'word' | 'none';
+
+export interface PlagiarismSourceConfig {
+  database: boolean;
+  references: boolean;
+  web: boolean;
+  uploads: boolean;
+}
 
 export interface CheckPlagiarismPayload {
   text?: string;
   contentId?: string | null;
   threshold?: number;
   includeReferences?: boolean;
+  sensitivity?: PlagiarismSensitivity;
+  ignoreCommonPhrases?: boolean;
+  sources?: Partial<PlagiarismSourceConfig>;
 }
 
 export interface PlagiarismHistoryParams {
@@ -26,6 +38,12 @@ export interface PlagiarismSource {
   snippet: string;
   matchedWords: number;
   totalWords: number;
+  exactMatchScore: number;
+  phraseOverlapScore: number;
+  wordOverlapScore: number;
+  scoreBasis: PlagiarismScoreBasis;
+  matchedPhrases: number;
+  totalPhrases: number;
 }
 
 export interface PlagiarismMatch {
@@ -37,6 +55,38 @@ export interface PlagiarismMatch {
   sourceTitle: string;
   sourceType: PlagiarismSourceType;
   score: number;
+  exactMatchScore: number;
+  phraseOverlapScore: number;
+  wordOverlapScore: number;
+  scoreBasis: PlagiarismScoreBasis;
+  matchedWords: number;
+  totalWords: number;
+  matchedPhrases: number;
+  totalPhrases: number;
+  phraseSize: number;
+}
+
+export interface PlagiarismAnalysis {
+  effectiveThreshold: number;
+  candidateCount: number;
+  sourceCount: number;
+  matchCount: number;
+  checkedSourceTypes: string[];
+  unavailableSourceTypes: string[];
+  exactMatchScore: number;
+  phraseOverlapScore: number;
+  wordOverlapScore: number;
+  commonCrawl: {
+    enabled: boolean;
+    status: 'skipped' | 'ok' | 'empty' | 'error';
+    indexes: string[];
+    queryCount: number;
+    recordCount: number;
+    fetchedCount: number;
+    candidateCount: number;
+    patterns: string[];
+    error: string;
+  };
 }
 
 export interface PlagiarismReport {
@@ -53,6 +103,10 @@ export interface PlagiarismReport {
   sources: PlagiarismSource[];
   modelUsed: string;
   threshold: number;
+  sensitivity: PlagiarismSensitivity;
+  ignoreCommonPhrases: boolean;
+  sourceConfig: PlagiarismSourceConfig;
+  analysis: PlagiarismAnalysis;
   summary: string;
   createdAt: string;
   updatedAt: string;
@@ -78,6 +132,12 @@ interface BackendPlagiarismSource {
   snippet?: string;
   matchedWords?: number;
   totalWords?: number;
+  exactMatchScore?: number;
+  phraseOverlapScore?: number;
+  wordOverlapScore?: number;
+  scoreBasis?: PlagiarismScoreBasis;
+  matchedPhrases?: number;
+  totalPhrases?: number;
 }
 
 interface BackendPlagiarismMatch {
@@ -89,6 +149,15 @@ interface BackendPlagiarismMatch {
   sourceTitle?: string;
   sourceType?: PlagiarismSourceType;
   score?: number;
+  exactMatchScore?: number;
+  phraseOverlapScore?: number;
+  wordOverlapScore?: number;
+  scoreBasis?: PlagiarismScoreBasis;
+  matchedWords?: number;
+  totalWords?: number;
+  matchedPhrases?: number;
+  totalPhrases?: number;
+  phraseSize?: number;
 }
 
 interface BackendPlagiarismReport {
@@ -106,6 +175,10 @@ interface BackendPlagiarismReport {
   sources?: BackendPlagiarismSource[];
   modelUsed?: string;
   threshold?: number;
+  sensitivity?: PlagiarismSensitivity;
+  ignoreCommonPhrases?: boolean;
+  sourceConfig?: Partial<PlagiarismSourceConfig>;
+  analysis?: Partial<PlagiarismAnalysis>;
   summary?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -116,6 +189,36 @@ const DEFAULT_PAGINATION = {
   limit: 10,
   totalItems: 0,
   totalPages: 1,
+};
+
+const DEFAULT_SOURCE_CONFIG: PlagiarismSourceConfig = {
+  database: true,
+  references: true,
+  web: false,
+  uploads: false,
+};
+
+const DEFAULT_ANALYSIS: PlagiarismAnalysis = {
+  effectiveThreshold: 35,
+  candidateCount: 0,
+  sourceCount: 0,
+  matchCount: 0,
+  checkedSourceTypes: [],
+  unavailableSourceTypes: [],
+  exactMatchScore: 0,
+  phraseOverlapScore: 0,
+  wordOverlapScore: 0,
+  commonCrawl: {
+    enabled: false,
+    status: 'skipped',
+    indexes: [],
+    queryCount: 0,
+    recordCount: 0,
+    fetchedCount: 0,
+    candidateCount: 0,
+    patterns: [],
+    error: '',
+  },
 };
 
 function asNumber(value: unknown, fallback = 0) {
@@ -134,6 +237,12 @@ function normalizeSource(source: BackendPlagiarismSource): PlagiarismSource {
     snippet: source.snippet || '',
     matchedWords: asNumber(source.matchedWords),
     totalWords: asNumber(source.totalWords),
+    exactMatchScore: asNumber(source.exactMatchScore),
+    phraseOverlapScore: asNumber(source.phraseOverlapScore),
+    wordOverlapScore: asNumber(source.wordOverlapScore),
+    scoreBasis: source.scoreBasis || 'none',
+    matchedPhrases: asNumber(source.matchedPhrases),
+    totalPhrases: asNumber(source.totalPhrases),
   };
 }
 
@@ -147,10 +256,30 @@ function normalizeMatch(match: BackendPlagiarismMatch): PlagiarismMatch {
     sourceTitle: match.sourceTitle || 'Nguồn tham chiếu',
     sourceType: match.sourceType || 'database',
     score: asNumber(match.score),
+    exactMatchScore: asNumber(match.exactMatchScore),
+    phraseOverlapScore: asNumber(match.phraseOverlapScore),
+    wordOverlapScore: asNumber(match.wordOverlapScore),
+    scoreBasis: match.scoreBasis || 'none',
+    matchedWords: asNumber(match.matchedWords),
+    totalWords: asNumber(match.totalWords),
+    matchedPhrases: asNumber(match.matchedPhrases),
+    totalPhrases: asNumber(match.totalPhrases),
+    phraseSize: asNumber(match.phraseSize),
   };
 }
 
 function normalizeReport(report: BackendPlagiarismReport): PlagiarismReport {
+  const sourceConfig = { ...DEFAULT_SOURCE_CONFIG, ...(report.sourceConfig || {}) };
+  const backendAnalysis = report.analysis || {};
+  const analysis = {
+    ...DEFAULT_ANALYSIS,
+    ...backendAnalysis,
+    commonCrawl: {
+      ...DEFAULT_ANALYSIS.commonCrawl,
+      ...(backendAnalysis.commonCrawl || {}),
+    },
+  };
+
   return {
     id: report.id || report._id || '',
     userId: report.userId || null,
@@ -165,6 +294,10 @@ function normalizeReport(report: BackendPlagiarismReport): PlagiarismReport {
     sources: (report.sources || []).map(normalizeSource),
     modelUsed: report.modelUsed || 'local-ngram-v1',
     threshold: asNumber(report.threshold, 35),
+    sensitivity: report.sensitivity || 'balanced',
+    ignoreCommonPhrases: report.ignoreCommonPhrases !== false,
+    sourceConfig,
+    analysis,
     summary: report.summary || '',
     createdAt: report.createdAt || '',
     updatedAt: report.updatedAt || '',

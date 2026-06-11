@@ -45,13 +45,61 @@ const matchSchema = new mongoose.Schema(
     },
     sourceType: {
       type: String,
-      enum: ['database', 'reference', 'web'],
+      enum: ['database', 'reference', 'web', 'uploads'],
       default: 'database',
     },
     score: {
       type: Number,
       min: 0,
       max: 100,
+      default: 0,
+    },
+    exactMatchScore: {
+      type: Number,
+      min: 0,
+      max: 100,
+      default: 0,
+    },
+    phraseOverlapScore: {
+      type: Number,
+      min: 0,
+      max: 100,
+      default: 0,
+    },
+    wordOverlapScore: {
+      type: Number,
+      min: 0,
+      max: 100,
+      default: 0,
+    },
+    scoreBasis: {
+      type: String,
+      enum: ['exact', 'phrase', 'word', 'none'],
+      default: 'none',
+    },
+    matchedWords: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
+    totalWords: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
+    matchedPhrases: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
+    totalPhrases: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
+    phraseSize: {
+      type: Number,
+      min: 0,
       default: 0,
     },
   },
@@ -80,7 +128,7 @@ const sourceSchema = new mongoose.Schema(
     },
     sourceType: {
       type: String,
-      enum: ['database', 'reference', 'web'],
+      enum: ['database', 'reference', 'web', 'uploads'],
       default: 'database',
     },
     contentId: {
@@ -109,6 +157,79 @@ const sourceSchema = new mongoose.Schema(
       type: Number,
       min: 0,
       default: 0,
+    },
+    exactMatchScore: {
+      type: Number,
+      min: 0,
+      max: 100,
+      default: 0,
+    },
+    phraseOverlapScore: {
+      type: Number,
+      min: 0,
+      max: 100,
+      default: 0,
+    },
+    wordOverlapScore: {
+      type: Number,
+      min: 0,
+      max: 100,
+      default: 0,
+    },
+    scoreBasis: {
+      type: String,
+      enum: ['exact', 'phrase', 'word', 'none'],
+      default: 'none',
+    },
+    matchedPhrases: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
+    totalPhrases: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
+  },
+  { _id: false },
+);
+
+const sourceConfigSchema = new mongoose.Schema(
+  {
+    database: { type: Boolean, default: true },
+    references: { type: Boolean, default: true },
+    web: { type: Boolean, default: false },
+    uploads: { type: Boolean, default: false },
+  },
+  { _id: false },
+);
+
+const analysisSchema = new mongoose.Schema(
+  {
+    effectiveThreshold: { type: Number, min: 0, max: 100, default: 35 },
+    candidateCount: { type: Number, min: 0, default: 0 },
+    sourceCount: { type: Number, min: 0, default: 0 },
+    matchCount: { type: Number, min: 0, default: 0 },
+    checkedSourceTypes: { type: [String], default: [] },
+    unavailableSourceTypes: { type: [String], default: [] },
+    exactMatchScore: { type: Number, min: 0, max: 100, default: 0 },
+    phraseOverlapScore: { type: Number, min: 0, max: 100, default: 0 },
+    wordOverlapScore: { type: Number, min: 0, max: 100, default: 0 },
+    commonCrawl: {
+      enabled: { type: Boolean, default: false },
+      status: {
+        type: String,
+        enum: ['skipped', 'ok', 'empty', 'error'],
+        default: 'skipped',
+      },
+      indexes: { type: [String], default: [] },
+      queryCount: { type: Number, min: 0, default: 0 },
+      recordCount: { type: Number, min: 0, default: 0 },
+      fetchedCount: { type: Number, min: 0, default: 0 },
+      candidateCount: { type: Number, min: 0, default: 0 },
+      patterns: { type: [String], default: [] },
+      error: { type: String, trim: true, maxlength: 500, default: '' },
     },
   },
   { _id: false },
@@ -183,6 +304,23 @@ const plagiarismReportSchema = new mongoose.Schema(
       min: 0,
       max: 100,
       default: 35,
+    },
+    sensitivity: {
+      type: String,
+      enum: ['lenient', 'balanced', 'strict'],
+      default: 'balanced',
+    },
+    ignoreCommonPhrases: {
+      type: Boolean,
+      default: true,
+    },
+    sourceConfig: {
+      type: sourceConfigSchema,
+      default: () => ({}),
+    },
+    analysis: {
+      type: analysisSchema,
+      default: () => ({}),
     },
     summary: {
       type: String,

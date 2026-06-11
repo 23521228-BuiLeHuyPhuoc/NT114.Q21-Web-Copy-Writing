@@ -24,15 +24,16 @@ def build_user_message(row):
     return '\n'.join(parts)
 
 
-def row_to_example(row, system_prompt):
+def row_to_example(row, system_prompt, wrap_brief=False):
+    user_content = build_user_message(row) if wrap_brief else normalize(row.get('input'))
     output = normalize(row.get('output'))
-    if not normalize(row.get('input')) or not output:
+    if not user_content or not output:
         return None
 
     return {
         'messages': [
             {'role': 'system', 'content': system_prompt},
-            {'role': 'user', 'content': build_user_message(row)},
+            {'role': 'user', 'content': user_content},
             {'role': 'assistant', 'content': output},
         ],
         'metadata': {
@@ -56,6 +57,7 @@ def main():
     parser.add_argument('--train-ratio', type=float, default=0.85)
     parser.add_argument('--seed', type=int, default=42)
     parser.add_argument('--system-prompt', default=DEFAULT_SYSTEM_PROMPT)
+    parser.add_argument('--wrap-brief', action='store_true', help='Use the legacy Brief/Ngành/Tone wrapper instead of the exact input column.')
     args = parser.parse_args()
 
     input_path = Path(args.input)
@@ -63,7 +65,7 @@ def main():
 
     with input_path.open('r', encoding='utf-8-sig', newline='') as handle:
         reader = csv.DictReader(handle)
-        examples = [row_to_example(row, args.system_prompt) for row in reader]
+        examples = [row_to_example(row, args.system_prompt, args.wrap_brief) for row in reader]
 
     examples = [example for example in examples if example]
     if len(examples) < 2:

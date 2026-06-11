@@ -1650,16 +1650,20 @@ async function seedInitialMetrics(userId, job) {
     .limit(200)
     .then((examples) => examples.reduce((sum, item) => sum + estimateTokens(item.inputText) + estimateTokens(item.outputText), 0));
 
-  return FineTuneMetric.create({
-    userId,
-    jobId: job._id,
-    epoch: 0,
-    trainLoss: 1.25,
-    validationLoss: 1.32,
-    accuracy: 45,
-    tokenUsage,
-    timestamp: new Date(),
-  });
+  return FineTuneMetric.findOneAndUpdate(
+    { userId, jobId: job._id, epoch: 0 },
+    {
+      userId,
+      jobId: job._id,
+      epoch: 0,
+      trainLoss: 0,
+      validationLoss: 0,
+      accuracy: 0,
+      tokenUsage,
+      timestamp: new Date(),
+    },
+    { upsert: true, new: true, setDefaultsOnInsert: true },
+  );
 }
 
 async function cancelFineTuneJob(userId, id) {

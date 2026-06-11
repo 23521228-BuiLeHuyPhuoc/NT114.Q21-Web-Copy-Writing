@@ -12,6 +12,14 @@ const checkPlagiarismSchema = Joi.object({
   contentId: optionalObjectId,
   threshold: Joi.number().integer().min(10).max(95).default(35),
   includeReferences: Joi.boolean().default(true),
+  sensitivity: Joi.string().valid('lenient', 'balanced', 'strict').default('balanced'),
+  ignoreCommonPhrases: Joi.boolean().default(true),
+  sources: Joi.object({
+    database: Joi.boolean().default(true),
+    references: Joi.boolean().default(true),
+    web: Joi.boolean().default(false),
+    uploads: Joi.boolean().default(false),
+  }).default(),
 }).or('text', 'contentId');
 
 const listReportsSchema = Joi.object({

@@ -48,6 +48,24 @@ type BaseModelOption = {
   default?: boolean;
 };
 
+type TrainingMetric = {
+  epoch: number;
+  trainLoss: number;
+  validationLoss: number;
+  accuracy: number;
+  tokenUsage: number;
+};
+
+type MetricTrend = 'down' | 'up' | 'flat' | 'pending' | 'estimated';
+
+type MetricCard = {
+  label: string;
+  value: string;
+  prev: string;
+  trend: MetricTrend;
+  good?: boolean;
+};
+
 const BASE_MODEL_OPTIONS: BaseModelOption[] = GENERATOR_MODELS.map((model, index) => ({
   id: model.id,
   name: model.name,
@@ -125,6 +143,65 @@ function parseFineTuneCsv(text: string): ImportedFineTuneExample[] {
       tone: toneIndex >= 0 ? cells[toneIndex] || '' : '',
     };
   }).filter(item => item.input.length >= 10 && item.output.length >= 20);
+}
+
+function isCloseNumber(value: number, expected: number) {
+  return Math.abs(Number(value || 0) - expected) < 0.0005;
+}
+
+function isSeedMetric(metric: TrainingMetric) {
+  const isEpochZero = Number(metric.epoch || 0) === 0;
+  const isLegacySeed = isCloseNumber(metric.trainLoss, 1.25)
+    && isCloseNumber(metric.validationLoss, 1.32)
+    && isCloseNumber(metric.accuracy, 45);
+  const isTokenOnlySeed = isCloseNumber(metric.trainLoss, 0)
+    && isCloseNumber(metric.validationLoss, 0)
+    && isCloseNumber(metric.accuracy, 0);
+
+  return isEpochZero && (isLegacySeed || isTokenOnlySeed);
+}
+
+function formatMetricValue(value: number, decimals = 3, suffix = '') {
+  return `${Number(value || 0).toFixed(decimals)}${suffix}`;
+}
+
+function formatTokenCount(value: number) {
+  return new Intl.NumberFormat('vi-VN').format(Math.max(0, Math.round(Number(value || 0))));
+}
+
+function buildMetricCard(label: string, current: number, previous: number | undefined, lowerIsBetter: boolean, decimals = 3, suffix = ''): MetricCard {
+  const currentValue = Number(current || 0);
+  const previousValue = Number(previous ?? currentValue);
+  const trend: MetricTrend = isCloseNumber(currentValue, previousValue)
+    ? 'flat'
+    : currentValue < previousValue
+      ? 'down'
+      : 'up';
+  const good = trend === 'flat' ? undefined : (trend === 'down' ? lowerIsBetter : !lowerIsBetter);
+
+  return {
+    label,
+    value: formatMetricValue(currentValue, decimals, suffix),
+    prev: formatMetricValue(previousValue, decimals, suffix),
+    trend,
+    good,
+  };
+}
+
+function getMetricTrendLabel(trend: MetricTrend) {
+  return {
+    down: '\u2193 gi\u1ea3m',
+    up: '\u2191 t\u0103ng',
+    flat: 'ch\u01b0a \u0111\u1ed5i',
+    pending: 'ch\u1edd d\u1eef li\u1ec7u',
+    estimated: '\u01b0\u1edbc t\u00ednh',
+  }[trend];
+}
+
+function getMetricBadgeClass(metric: MetricCard) {
+  if (metric.trend === 'estimated') return 'bg-warning/15 text-amber-800';
+  if (metric.trend === 'pending' || metric.trend === 'flat') return 'bg-muted text-foreground/70';
+  return metric.good ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive';
 }
 
 export function CustomerFineTuningStudio() {
@@ -276,19 +353,28 @@ export function CustomerFineTuningStudio() {
   const statusColor = (s: string) => ({ ready: 'bg-primary/10 text-primary', training: 'bg-primary/10 text-primary', failed: 'bg-destructive/10 text-destructive', pending: 'bg-muted text-foreground/70' }[s] ?? 'bg-muted text-foreground/70');
   const statusLabel = (s: string) => ({ ready: 'Sẵn sàng', training: 'Đang training', failed: 'Thất bại', pending: 'Chờ xử lý' }[s] ?? s);
 
-  const latestMetric = metrics[metrics.length - 1];
-  const firstMetric = metrics[0];
-  const metricCards = latestMetric ? [
-    { label: 'Training Loss', value: latestMetric.trainLoss.toFixed(3), prev: (firstMetric?.trainLoss ?? latestMetric.trainLoss).toFixed(3), trend: 'down', good: true },
-    { label: 'Validation Loss', value: latestMetric.validationLoss.toFixed(3), prev: (firstMetric?.validationLoss ?? latestMetric.validationLoss).toFixed(3), trend: 'down', good: true },
-    { label: 'Accuracy', value: `${latestMetric.accuracy.toFixed(1)}%`, prev: `${(firstMetric?.accuracy ?? latestMetric.accuracy).toFixed(1)}%`, trend: 'up', good: true },
-    { label: 'Token Usage', value: `${latestMetric.tokenUsage}`, prev: `${firstMetric?.tokenUsage ?? latestMetric.tokenUsage}`, trend: 'up', good: true },
+  const seedMetric = metrics.find(isSeedMetric);
+  const realMetrics = metrics.filter(metric => !isSeedMetric(metric));
+  const latestMetric = realMetrics[realMetrics.length - 1];
+  const firstMetric = realMetrics[0];
+  const waitingValue = '\u0110ang ch\u1edd';
+  const noProviderMetricText = 'Provider ch\u01b0a tr\u1ea3 metric th\u1eadt';
+  const metricCards: MetricCard[] = latestMetric ? [
+    buildMetricCard('Training Loss', latestMetric.trainLoss, firstMetric?.trainLoss, true),
+    buildMetricCard('Validation Loss', latestMetric.validationLoss, firstMetric?.validationLoss, true),
+    buildMetricCard('Accuracy', latestMetric.accuracy, firstMetric?.accuracy, false, 1, '%'),
+    buildMetricCard('Token Usage', latestMetric.tokenUsage, firstMetric?.tokenUsage, false, 0),
   ] : [
-    { label: 'Training Loss', value: '0.342', prev: '1.245', trend: 'down', good: true },
-    { label: 'Validation Loss', value: '0.389', prev: '1.312', trend: 'down', good: true },
-    { label: 'Accuracy', value: '78.3%', prev: '45.2%', trend: 'up', good: true },
-    { label: 'Token Usage', value: '0', prev: '0', trend: 'up', good: true },
+    { label: 'Training Loss', value: waitingValue, prev: noProviderMetricText, trend: 'pending' },
+    { label: 'Validation Loss', value: waitingValue, prev: noProviderMetricText, trend: 'pending' },
+    { label: 'Accuracy', value: waitingValue, prev: noProviderMetricText, trend: 'pending' },
+    seedMetric?.tokenUsage
+      ? { label: 'Token Usage', value: formatTokenCount(seedMetric.tokenUsage), prev: 'Token dataset \u01b0\u1edbc t\u00ednh', trend: 'estimated' }
+      : { label: 'Token Usage', value: waitingValue, prev: noProviderMetricText, trend: 'pending' },
   ];
+  const metricHelpText = latestMetric
+    ? 'Loss th\u1ea5p h\u01a1n v\u00e0 Accuracy cao h\u01a1n th\u01b0\u1eddng l\u00e0 d\u1ea5u hi\u1ec7u model \u0111ang h\u1ecdc t\u1ed1t. Ch\u1ec9 so s\u00e1nh khi provider \u0111\u00e3 tr\u1ea3 metric th\u1eadt.'
+    : 'Ch\u01b0a c\u00f3 loss/accuracy th\u1eadt t\u1eeb provider cho job n\u00e0y. UI kh\u00f4ng hi\u1ec3n th\u1ecb metric seed nh\u01b0 k\u1ebft qu\u1ea3 training.';
 
   return (
     <Layout>
@@ -596,10 +682,12 @@ export function CustomerFineTuningStudio() {
                       <span className="text-sm text-foreground/80">{m.label}</span>
                       <div className="text-right">
                         <span className="font-bold text-foreground">{m.value}</span>
-                        <p className="text-xs text-muted-foreground/80">trước: {m.prev}</p>
+                        <p className="text-xs text-muted-foreground/80">
+                          {m.trend === 'pending' || m.trend === 'estimated' ? m.prev : 'tr\u01b0\u1edbc: ' + m.prev}
+                        </p>
                       </div>
-                      <Badge className={`ml-3 border-0 text-xs ${m.good ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive'}`}>
-                        {m.trend === 'down' ? '↓ giảm' : '↑ tăng'}
+                      <Badge className={`ml-3 border-0 text-xs ${getMetricBadgeClass(m)}`}>
+                        {getMetricTrendLabel(m.trend)}
                       </Badge>
                     </div>
                   ))}
@@ -608,7 +696,7 @@ export function CustomerFineTuningStudio() {
                 <div className="mt-5 p-3 bg-primary/5 border border-primary/20 rounded-lg">
                   <p className="text-xs text-primary flex items-start gap-1.5">
                     <Info className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
-                    Loss thấp hơn và Accuracy cao hơn cho thấy model đang học tốt. BLEU Score đo mức độ tương đồng với output mẫu.
+                    {metricHelpText}
                   </p>
                 </div>
               </Card>

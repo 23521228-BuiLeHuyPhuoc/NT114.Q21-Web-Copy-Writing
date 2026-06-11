@@ -21,5 +21,7 @@
   "huggingface_space_note": "In-app Hugging Face Spaces with GPU require prepaid billing credits. Use the notebook for Kaggle/Colab free GPU training.",
   "recommended_free_notebook": "06_kaggle_colab_unsloth_free_llama.ipynb",
   "free_notebook_framework": "Unsloth",
-  "optional_notebook": "07_colab_llamafactory_free_llama.ipynb"
+  "optional_notebook": "07_colab_llamafactory_free_llama.ipynb",
+  "prompt_contract": "generator-ui-v1",
+  "generated_at": "2026-06-11T14:13:09.536085+00:00"
 }

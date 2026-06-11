@@ -1,46 +1,9 @@
 {
-  "output_dir": "E:\\baitap\\NT114\\NT114-Git\\NT114.Q21-Web-Copy-Writing\\fine_tuning_excel_pack_brand_voice",
+  "generated_at": "2026-06-11T16:22:44.619Z",
+  "source_dir": "fine_tuning_ready_vi_huggingface",
   "train_examples": 96,
   "validation_examples": 20,
   "test_prompts": 30,
-  "files": [
-    "01_train_examples_brand_voice.xlsx",
-    "02_validation_holdout_brand_voice.xlsx",
-    "03_test_prompts_after_finetune.xlsx",
-    "04_eval_scorecard.xlsx",
-    "README_FINE_TUNING.md",
-    "copy_paste_test_prompts.md",
-    "train_examples_for_app_import.csv"
-  ],
-  "xlsx_checks": [
-    {
-      "file": "01_train_examples_brand_voice.xlsx",
-      "missing": [],
-      "xml_errors": [],
-      "sheet_count": 3,
-      "size": 12976
-    },
-    {
-      "file": "02_validation_holdout_brand_voice.xlsx",
-      "missing": [],
-      "xml_errors": [],
-      "sheet_count": 2,
-      "size": 5878
-    },
-    {
-      "file": "03_test_prompts_after_finetune.xlsx",
-      "missing": [],
-      "xml_errors": [],
-      "sheet_count": 2,
-      "size": 5762
-    },
-    {
-      "file": "04_eval_scorecard.xlsx",
-      "missing": [],
-      "xml_errors": [],
-      "sheet_count": 2,
-      "size": 3925
-    }
-  ],
-  "csv_import_note": "train_examples_for_app_import.csv is single-line and comma-safe for the current UI parser."
+  "prompt_contract": "generator-ui-v1",
+  "encoding": "utf-8"
 }
