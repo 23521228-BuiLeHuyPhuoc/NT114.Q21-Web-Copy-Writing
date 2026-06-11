@@ -117,13 +117,13 @@ const fineTuneJobSchema = new mongoose.Schema(
     providerJobId: {
       type: String,
       trim: true,
-      maxlength: 160,
+      maxlength: 600,
       default: '',
     },
     fineTunedModelId: {
       type: String,
       trim: true,
-      maxlength: 160,
+      maxlength: 600,
       default: '',
     },
     startedAt: {

@@ -18,7 +18,7 @@ const usageLogSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
-      maxlength: 80,
+      maxlength: 600,
     },
     promptTokens: {
       type: Number,

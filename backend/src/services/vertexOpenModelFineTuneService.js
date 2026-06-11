@@ -76,6 +76,10 @@ function getSubmitScriptPath() {
   return configured || path.join(getRepoRoot(), 'training', 'vertex_open_model_tuning', 'submit_open_model_tuning.py');
 }
 
+function hasSubmitScript() {
+  return fs.existsSync(getSubmitScriptPath());
+}
+
 function getTuningMode() {
   return String(process.env.VERTEX_LLAMA_TUNING_MODE || process.env.VERTEX_OPEN_MODEL_TUNING_MODE || DEFAULT_TUNING_MODE).trim();
 }
@@ -98,7 +102,7 @@ function getBaseModelOptions() {
 }
 
 function isReady() {
-  return Boolean(getProject() && getLocation() && getBucket() && getOutputGcsUri() && fs.existsSync(getSubmitScriptPath()) && typeof fetch === 'function');
+  return Boolean(getProject() && getLocation() && getBucket() && getOutputGcsUri() && hasSubmitScript() && typeof fetch === 'function');
 }
 
 function ensureConfigured() {
@@ -106,7 +110,7 @@ function ensureConfigured() {
   if (!getLocation()) throw createError(503, 'Vertex Llama fine-tuning needs GOOGLE_CLOUD_LOCATION, for example us-central1.');
   if (!getBucket()) throw createError(503, 'Vertex Llama fine-tuning needs VERTEX_TUNING_BUCKET or VERTEX_LLAMA_TUNING_BUCKET.');
   if (!getOutputGcsUri()) throw createError(503, 'Vertex Llama fine-tuning needs a GCS output URI.');
-  if (!fs.existsSync(getSubmitScriptPath())) throw createError(503, `Vertex Llama tuning submit script was not found: ${getSubmitScriptPath()}`);
+  if (!hasSubmitScript()) throw createError(503, `Vertex Llama tuning submit script was not found: ${getSubmitScriptPath()}`);
   if (typeof fetch !== 'function') throw createError(500, 'Current Node.js runtime does not support fetch.');
 }
 
@@ -382,6 +386,7 @@ module.exports = {
   getBucket,
   getPythonCommand,
   getSubmitScriptPath,
+  hasSubmitScript,
   getOutputGcsUri,
   isReady,
   getBaseModelOptions,

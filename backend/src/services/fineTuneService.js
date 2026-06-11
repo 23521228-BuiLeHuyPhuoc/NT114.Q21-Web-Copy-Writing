@@ -2101,7 +2101,7 @@ function listProviders() {
   if (!vertexOpenModelFineTuneService.getLocation()) vertexLlamaMissing.push('GOOGLE_CLOUD_LOCATION');
   if (!vertexOpenModelFineTuneService.getBucket()) vertexLlamaMissing.push('VERTEX_TUNING_BUCKET');
   if (!vertexOpenModelFineTuneService.getOutputGcsUri()) vertexLlamaMissing.push('VERTEX_LLAMA_TUNING_OUTPUT_GCS_URI');
-  if (!vertexOpenModelFineTuneService.getSubmitScriptPath()) vertexLlamaMissing.push('Vertex Llama submit script');
+  if (!vertexOpenModelFineTuneService.hasSubmitScript()) vertexLlamaMissing.push('Vertex Llama submit script');
   const apiProviders = API_TRAINING_PROVIDERS.map((provider) => {
     const apiConfigured = Boolean(process.env[provider.key]);
     const supportsFineTuning = provider.id === 'openai' && openAIReady;
@@ -2156,7 +2156,7 @@ function listProviders() {
         mode: vertexLlamaReady ? 'real' : 'api',
         isDefault: currentProvider === VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id || (!currentProvider && !vertexReady && vertexLlamaReady),
         message: vertexLlamaReady
-          ? `Uses Google ADC, uploads chat JSONL to gs://${vertexOpenModelFineTuneService.getBucket()}, and submits Vertex managed open-model tuning through ${vertexOpenModelFineTuneService.getPythonCommand()}. Install Python SDK requirements before running.`
+          ? `Uses Google ADC, uploads chat JSONL to gs://${vertexOpenModelFineTuneService.getBucket()}, and submits Vertex managed open-model tuning through ${vertexOpenModelFineTuneService.getPythonCommand()}.`
           : `Missing ${vertexLlamaMissing.join(', ') || 'Vertex Llama tuning configuration'} for Vertex Llama fine-tuning.`,
         baseModels: vertexOpenModelFineTuneService.getBaseModelOptions(),
       },

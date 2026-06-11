@@ -20,6 +20,12 @@ api.interceptors.response.use(
       localStorage.removeItem('auth_token');
       localStorage.removeItem('user');
     }
+
+    const backendMessage = error.response?.data?.message;
+    if (backendMessage) {
+      error.message = backendMessage;
+    }
+
     return Promise.reject(error);
   },
 );

@@ -32,7 +32,7 @@ const fineTunedModelSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
-      maxlength: 180,
+      maxlength: 600,
     },
     baseModel: {
       type: String,

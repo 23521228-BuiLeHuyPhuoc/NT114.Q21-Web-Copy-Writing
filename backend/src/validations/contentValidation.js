@@ -16,6 +16,7 @@ const generateIndustries = [
   'business',
   'travel',
 ];
+const MODEL_ID_MAX_LENGTH = 600;
 
 const paramsWithId = Joi.object({
   id: objectId.required(),
@@ -44,8 +45,8 @@ const createContentSchema = Joi.object({
   type: Joi.string().trim().min(1).max(60).required(),
   tone: Joi.string().trim().max(60).allow('').default(''),
   language: Joi.string().trim().max(40).allow('').default('vi'),
-  model: Joi.string().trim().max(80).allow('').optional(),
-  modelUsed: Joi.string().trim().max(80).allow('').optional(),
+  model: Joi.string().trim().max(MODEL_ID_MAX_LENGTH).allow('').optional(),
+  modelUsed: Joi.string().trim().max(MODEL_ID_MAX_LENGTH).allow('').optional(),
   tags,
   projectId: optionalObjectId,
   templateId: optionalObjectId,
@@ -64,7 +65,7 @@ const generateContentSchema = Joi.object({
   industry: Joi.string().valid(...generateIndustries).optional(),
   tone: Joi.string().valid(...generateTones).required(),
   language: Joi.string().trim().min(1).max(40).required(),
-  model: Joi.string().trim().min(1).max(80).required(),
+  model: Joi.string().trim().min(1).max(MODEL_ID_MAX_LENGTH).required(),
   modelMode: Joi.string().valid('base', 'fine-tuned').default('base'),
   fineTunedModelId: optionalObjectId,
   length: Joi.string().valid('short', 'medium', 'long').default('medium'),

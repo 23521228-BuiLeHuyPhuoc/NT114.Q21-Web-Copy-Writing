@@ -66,7 +66,7 @@ const contentSchema = new mongoose.Schema(
     modelUsed: {
       type: String,
       trim: true,
-      maxlength: 80,
+      maxlength: 600,
       default: 'fallback-mvp',
     },
     tags: {

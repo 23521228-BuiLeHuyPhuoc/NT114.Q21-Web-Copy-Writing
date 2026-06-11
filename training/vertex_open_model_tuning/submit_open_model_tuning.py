@@ -14,7 +14,7 @@ from pathlib import Path
 
 
 def load_config(path: str) -> dict:
-    with Path(path).open("r", encoding="utf-8") as handle:
+    with Path(path).open("r", encoding="utf-8-sig") as handle:
         return json.load(handle)
 
 
@@ -33,13 +33,13 @@ def import_vertex_tuning():
     except Exception:
         SourceModel = getattr(sft, "SourceModel", None)
 
-    if SourceModel is None:
-        raise RuntimeError("Installed google-cloud-aiplatform does not expose vertexai.tuning.sft.SourceModel")
-
     return vertexai, sft, SourceModel
 
 
 def make_source_model(source_model_class, base_model: str, tuning_mode: str):
+    if source_model_class is None:
+        return base_model
+
     attempts = [
         {"base_model": base_model, "tuning_mode": tuning_mode},
         {"model_name": base_model, "tuning_mode": tuning_mode},
@@ -74,9 +74,13 @@ def call_sft_train(sft, source_model, config: dict):
     add_kwarg(kwargs, params, ["train_dataset", "training_dataset", "train_dataset_uri"], config["train_dataset_uri"])
     add_kwarg(kwargs, params, ["validation_dataset", "validation_dataset_uri"], config.get("validation_dataset_uri"))
     add_kwarg(kwargs, params, ["tuned_model_display_name", "display_name", "model_display_name"], config.get("display_name"))
+    add_kwarg(kwargs, params, ["tuning_mode"], config.get("tuning_mode"))
     add_kwarg(kwargs, params, ["epochs", "epoch_count"], int(config.get("epochs") or 3))
     add_kwarg(kwargs, params, ["output_gcs_uri", "output_uri", "output_dir"], config.get("output_gcs_uri"))
-    add_kwarg(kwargs, params, ["adapter_size"], config.get("adapter_size"))
+    adapter_size = config.get("adapter_size")
+    if isinstance(adapter_size, str) and adapter_size.isdigit():
+        adapter_size = int(adapter_size)
+    add_kwarg(kwargs, params, ["adapter_size"], adapter_size)
     add_kwarg(kwargs, params, ["labels"], config.get("labels"))
 
     missing_required = [

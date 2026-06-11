@@ -595,7 +595,7 @@ function getVertexLocation() {
 }
 
 function getVertexProject() {
-  return String(process.env.GOOGLE_CLOUD_PROJECT || process.env.GCLOUD_PROJECT || '').trim();
+  return String(process.env.GOOGLE_CLOUD_PROJECT || process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT || '').trim();
 }
 
 function getVertexMaaSModel(model) {
@@ -606,6 +606,15 @@ function isVertexMaaSModel(model) {
   return /^(?:openai|meta)\//.test(String(model || '').trim());
 }
 
+function isVertexResourceModel(model) {
+  const value = String(model || '').trim();
+  return value.startsWith('projects/') || value.includes('/projects/');
+}
+
+function isVertexProvider(provider) {
+  return provider === 'vertex-gemini' || provider === 'vertex-maas';
+}
+
 function getVertexMaaSLocation(model) {
   const configured = String(process.env.VERTEX_MAAS_LOCATION || '').trim();
   if (configured) return configured;
@@ -613,12 +622,26 @@ function getVertexMaaSLocation(model) {
   return getVertexLocation();
 }
 
+function stripVertexApiPrefix(value) {
+  return String(value || '').trim().replace(/^https?:\/\/[^/]+\/v\d+(?:beta\d*)?\//, '');
+}
+
 function normalizeVertexResourceName(model) {
-  const value = String(model || '').trim();
+  const value = stripVertexApiPrefix(model);
   if (!value) return '';
-  if (value.startsWith('projects/')) return value;
-  if (value.includes('/projects/')) return value.replace(/^https?:\/\/[^/]+\/v\d+\//, '');
-  return value;
+
+  const projectPathIndex = value.indexOf('projects/');
+  if (projectPathIndex >= 0) return value.slice(projectPathIndex);
+
+  const project = getVertexProject();
+  if (!project) return '';
+
+  const location = getVertexLocation();
+  if (value.startsWith('publishers/')) {
+    return `projects/${project}/locations/${location}/${value}`;
+  }
+
+  return `projects/${project}/locations/${location}/publishers/google/models/${getGeminiModel(value)}`;
 }
 
 async function getGoogleAccessToken() {
@@ -743,12 +766,17 @@ async function callVertexGemini(payload) {
   }
 
   const resourceName = normalizeVertexResourceName(payload.model);
-  if (!resourceName) return null;
+  if (!resourceName) {
+    const message = 'GOOGLE_CLOUD_PROJECT is required for Vertex Gemini generation.';
+    console.warn('Vertex Gemini generateContent skipped', { model: payload.model, message });
+    if (payload.requireProviderSuccess) throw createError(503, message);
+    return null;
+  }
 
   const resourceLocation = resourceName.match(/\/locations\/([^/]+)/)?.[1] || getVertexLocation();
   const providerPrompt = buildProviderPrompt(payload);
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 90000);
+  const timeout = setTimeout(() => controller.abort(), Number(process.env.VERTEX_GEMINI_TIMEOUT_MS || 90000));
 
   try {
     const token = await getGoogleAccessToken();
@@ -783,9 +811,9 @@ async function callVertexGemini(payload) {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       const message = errorData.error?.message || response.statusText;
-      console.warn('Vertex Gemini tuned generateContent failed', { status: response.status, model: resourceName, message });
+      console.warn('Vertex Gemini generateContent failed', { status: response.status, model: resourceName, message });
       if (payload.requireProviderSuccess) {
-        throw createError(response.status, `Vertex tuned model generateContent failed: ${message}`);
+        throw createError(response.status, `Vertex Gemini generateContent failed: ${message}`);
       }
       return null;
     }
@@ -809,10 +837,10 @@ async function callVertexGemini(payload) {
       fallback: false,
     };
   } catch (error) {
-    console.warn('Vertex Gemini tuned generateContent failed', { model: resourceName, message: error.message });
+    console.warn('Vertex Gemini generateContent failed', { model: resourceName, message: error.message });
     if (payload.requireProviderSuccess) {
       if (error.statusCode) throw error;
-      throw createError(502, `Vertex tuned model generateContent failed: ${error.message}`);
+      throw createError(502, `Vertex Gemini generateContent failed: ${error.message}`);
     }
     return null;
   } finally {
@@ -827,7 +855,18 @@ async function callVertexMaaS(payload) {
 
   const project = getVertexProject();
   const model = getVertexMaaSModel(payload.model);
-  if (!project || !model) return null;
+  if (!project) {
+    const message = 'GOOGLE_CLOUD_PROJECT is required for Vertex MaaS generation.';
+    console.warn('Vertex MaaS chat completion skipped', { model, message });
+    if (payload.requireProviderSuccess) throw createError(503, message);
+    return null;
+  }
+  if (!model) {
+    const message = 'Vertex MaaS model id is required.';
+    console.warn('Vertex MaaS chat completion skipped', { message });
+    if (payload.requireProviderSuccess) throw createError(400, message);
+    return null;
+  }
 
   const location = getVertexMaaSLocation(model);
   const providerPrompt = buildProviderPrompt(payload);
@@ -1208,12 +1247,18 @@ async function generateCopy(payload) {
   const provider = forcedProvider || (process.env.AI_PROVIDER || 'gemini').toLowerCase();
   const selectedModel = payload.model || '';
   const isMaaSModel = isVertexMaaSModel(selectedModel);
+  const isVertexGeminiModel = isVertexResourceModel(selectedModel);
+  const isGeminiFamilyModel = selectedModel.startsWith('gemini-')
+    || selectedModel.startsWith('gemma-')
+    || selectedModel.includes('pro');
   const isGroqModel = selectedModel.startsWith('groq-')
     || selectedModel.startsWith('llama-')
     || selectedModel === 'llama3'
     || selectedModel === 'llama3-8b';
   const providersBySelectedModel = isMaaSModel
     ? [callVertexMaaS]
+    : isVertexGeminiModel
+    ? [callVertexGemini]
     : isGroqModel
     ? [callGroq]
     : selectedModel.startsWith('freegpt4-')
@@ -1235,14 +1280,24 @@ async function generateCopy(payload) {
     freegpt4: [callFreeGPT4],
     auto: [callGemini, callGroq, callOpenRouter, callOpenAI, callFreeGPT4],
   }[provider] || [callGemini];
-  const providers = forcedProvider ? providersByEnv : (providersBySelectedModel || providersByEnv);
+  const shouldUseVertexGeminiProvider = !forcedProvider && provider === 'vertex-gemini' && isGeminiFamilyModel;
+  const providers = forcedProvider || shouldUseVertexGeminiProvider ? providersByEnv : (providersBySelectedModel || providersByEnv);
+  const shouldRequireSelectedProvider = payload.requireProviderSuccess
+    || isMaaSModel
+    || isVertexGeminiModel
+    || isVertexProvider(forcedProvider)
+    || shouldUseVertexGeminiProvider
+    || (!providersBySelectedModel && isVertexProvider(provider));
+  const providerPayload = shouldRequireSelectedProvider
+    ? { ...payload, requireProviderSuccess: true }
+    : payload;
 
   for (const callProvider of providers) {
-    const result = await callProvider(payload);
+    const result = await callProvider(providerPayload);
     if (result) return result;
   }
 
-  if (payload.requireProviderSuccess) {
+  if (providerPayload.requireProviderSuccess) {
     throw createError(502, `Selected model ${payload.model || 'unknown'} could not be reached by its provider`);
   }
 
