@@ -5,6 +5,8 @@ const FineTuneMetric = require('../models/FineTuneMetric');
 const FineTunedModel = require('../models/FineTunedModel');
 const createError = require('../utils/createError');
 const { GoogleAuth } = require('google-auth-library');
+const huggingFaceFineTuneService = require('./huggingFaceFineTuneService');
+const vertexOpenModelFineTuneService = require('./vertexOpenModelFineTuneService');
 
 const MIN_VALID_EXAMPLES = 10;
 const GOOGLE_CLOUD_SCOPE = 'https://www.googleapis.com/auth/cloud-platform';
@@ -12,6 +14,14 @@ const DEFAULT_VERTEX_LOCATION = 'us-central1';
 const VERTEX_FINE_TUNE_PROVIDER = {
   id: 'vertex-gemini',
   name: 'Vertex AI Gemini Fine-tuning',
+};
+const HUGGINGFACE_FINE_TUNE_PROVIDER = {
+  id: huggingFaceFineTuneService.PROVIDER_ID,
+  name: huggingFaceFineTuneService.PROVIDER_NAME,
+};
+const VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER = {
+  id: vertexOpenModelFineTuneService.PROVIDER_ID,
+  name: vertexOpenModelFineTuneService.PROVIDER_NAME,
 };
 let googleAuth;
 
@@ -167,18 +177,24 @@ function isOpenAIFineTuneProviderReady() {
 function getConfiguredAIProvider() {
   const provider = String(process.env.AI_PROVIDER || '').trim().toLowerCase();
   if (provider === VERTEX_FINE_TUNE_PROVIDER.id) return provider;
+  if (provider === VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id) return provider;
+  if (provider === HUGGINGFACE_FINE_TUNE_PROVIDER.id) return provider;
   return API_TRAINING_PROVIDERS.some((item) => item.id === provider) ? provider : '';
 }
 
 function getSupportedTrainingProviderIds() {
-  return [VERTEX_FINE_TUNE_PROVIDER.id, ...API_TRAINING_PROVIDERS.map((provider) => provider.id)];
+  return [VERTEX_FINE_TUNE_PROVIDER.id, VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id, HUGGINGFACE_FINE_TUNE_PROVIDER.id, ...API_TRAINING_PROVIDERS.map((provider) => provider.id)];
 }
 
 function getDefaultTrainingProvider() {
   const configuredProvider = getConfiguredAIProvider();
   if (configuredProvider === VERTEX_FINE_TUNE_PROVIDER.id && isVertexFineTuneProviderReady()) return configuredProvider;
+  if (configuredProvider === VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id && vertexOpenModelFineTuneService.isReady()) return configuredProvider;
+  if (configuredProvider === HUGGINGFACE_FINE_TUNE_PROVIDER.id && huggingFaceFineTuneService.isReady()) return configuredProvider;
   if (configuredProvider === 'openai' && isOpenAIFineTuneProviderReady()) return configuredProvider;
   if (isVertexFineTuneProviderReady()) return VERTEX_FINE_TUNE_PROVIDER.id;
+  if (vertexOpenModelFineTuneService.isReady()) return VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id;
+  if (huggingFaceFineTuneService.isReady()) return HUGGINGFACE_FINE_TUNE_PROVIDER.id;
   if (isOpenAIFineTuneProviderReady()) return 'openai';
   return VERTEX_FINE_TUNE_PROVIDER.id;
 }
@@ -201,6 +217,20 @@ function isRemoteVertexJob(job) {
     && Boolean(job.providerJobId);
 }
 
+function shouldSubmitVertexOpenModelFineTune(baseModel) {
+  return vertexOpenModelFineTuneService.isReady() && vertexOpenModelFineTuneService.getBaseModelOptions().map((model) => model.id).includes(baseModel);
+}
+
+function isRemoteVertexOpenModelJob(job) {
+  return job.provider === VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id
+    && Boolean(job.providerJobId);
+}
+
+function isRemoteHuggingFaceJob(job) {
+  return job.provider === HUGGINGFACE_FINE_TUNE_PROVIDER.id
+    && Boolean(job.providerJobId);
+}
+
 function buildRunningJobQuotaFilter(userId) {
   return {
     userId,
@@ -208,7 +238,7 @@ function buildRunningJobQuotaFilter(userId) {
       { status: { $in: ['pending', 'running'] } },
       {
         status: 'queued',
-        provider: { $in: ['openai', VERTEX_FINE_TUNE_PROVIDER.id] },
+        provider: { $in: ['openai', VERTEX_FINE_TUNE_PROVIDER.id, VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id, HUGGINGFACE_FINE_TUNE_PROVIDER.id] },
         providerJobId: { $exists: true, $ne: '' },
       },
     ],
@@ -386,6 +416,16 @@ function getVertexTunedModelId(providerJob) {
     || providerJob.tunedModel?.model
     || providerJob.tuned_model?.model
     || '';
+}
+
+function isVertexTunedEndpoint(value) {
+  return /\/locations\/[^/]+\/endpoints\/[^/]+$/.test(String(value || '').trim());
+}
+
+function shouldSyncVertexFineTuneJob(job) {
+  if (job.provider !== VERTEX_FINE_TUNE_PROVIDER.id || !job.providerJobId) return false;
+  if (['pending', 'queued', 'running'].includes(job.status)) return true;
+  return job.status === 'completed' && !isVertexTunedEndpoint(job.fineTunedModelId);
 }
 
 function mapVertexStatus(providerJob) {
@@ -791,8 +831,16 @@ function getUnsupportedRealFineTuneMessage(provider) {
     return 'Vertex Gemini fine-tuning needs GOOGLE_CLOUD_PROJECT, GOOGLE_CLOUD_LOCATION, VERTEX_TUNING_BUCKET, and working Application Default Credentials.';
   }
 
+  if (provider === VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id) {
+    return 'Vertex Llama fine-tuning needs GOOGLE_CLOUD_PROJECT, GOOGLE_CLOUD_LOCATION, VERTEX_TUNING_BUCKET, Application Default Credentials, and the Vertex AI Python SDK.';
+  }
+
   if (provider === 'openai') {
     return 'OpenAI-compatible API is configured for generation only. Set OPENAI_FINE_TUNE_MODEL or OPENAI_FINE_TUNE_BASE_MODELS and use an endpoint that supports /files and /fine_tuning/jobs.';
+  }
+
+  if (provider === HUGGINGFACE_FINE_TUNE_PROVIDER.id) {
+    return 'Hugging Face fine-tuning needs HUGGINGFACE_TOKEN or HF_TOKEN. The token must have write access and permission to create dataset/model/Space repos.';
   }
 
   if (provider === 'freegpt4') {
@@ -1003,9 +1051,46 @@ async function syncVertexGeminiFineTuneJob(job) {
   return job;
 }
 
+async function submitVertexOpenModelFineTuneJob(job) {
+  return vertexOpenModelFineTuneService.submitJob(job);
+}
+
+async function syncVertexOpenModelFineTuneJob(job) {
+  if (!isRemoteVertexOpenModelJob(job)) return job;
+
+  await vertexOpenModelFineTuneService.syncJob(job);
+  if (job.status === 'completed') {
+    await createFineTunedModelFromJob(job).catch((error) => {
+      console.warn(`Vertex Llama fine-tuned model registration failed: ${error.message}`);
+    });
+  }
+  return job;
+}
+
+async function submitHuggingFaceFineTuneJob(job) {
+  return huggingFaceFineTuneService.submitJob(job);
+}
+
+async function syncHuggingFaceFineTuneJob(job) {
+  if (!isRemoteHuggingFaceJob(job)) return job;
+
+  await huggingFaceFineTuneService.syncJob(job, clampProgress);
+  if (job.status === 'completed') {
+    await createFineTunedModelFromJob(job).catch((error) => {
+      console.warn(`Hugging Face fine-tuned model registration failed: ${error.message}`);
+    });
+  }
+  return job;
+}
+
 async function cancelVertexGeminiFineTuneJob(job) {
   if (!isRemoteVertexJob(job)) return null;
   return vertexAIRequest(`${job.providerJobId}:cancel`, { method: 'POST', body: {} }, 'Vertex Gemini tuning job cancel failed');
+}
+
+async function cancelVertexOpenModelFineTuneJob(job) {
+  if (!isRemoteVertexOpenModelJob(job)) return null;
+  return vertexOpenModelFineTuneService.cancelJob(job);
 }
 
 function serializeDataset(dataset) {
@@ -1359,17 +1444,30 @@ async function listFineTuneJobs(userId, query = {}) {
   ]);
 
   await Promise.all(jobs.map(async (job) => {
-    if (!['pending', 'queued', 'running'].includes(job.status)) return;
-
     if (job.provider === 'openai') {
+      if (!['pending', 'queued', 'running'].includes(job.status)) return;
       await syncOpenAIFineTuneJob(job).catch((error) => {
         console.warn(`OpenAI fine-tune list sync failed: ${error.message}`);
       });
     }
 
-    if (job.provider === VERTEX_FINE_TUNE_PROVIDER.id) {
+    if (shouldSyncVertexFineTuneJob(job)) {
       await syncVertexGeminiFineTuneJob(job).catch((error) => {
         console.warn(`Vertex Gemini fine-tune list sync failed: ${error.message}`);
+      });
+    }
+
+    if (job.provider === VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id) {
+      if (!['pending', 'queued', 'running'].includes(job.status)) return;
+      await syncVertexOpenModelFineTuneJob(job).catch((error) => {
+        console.warn(`Vertex Llama fine-tune list sync failed: ${error.message}`);
+      });
+    }
+
+    if (job.provider === HUGGINGFACE_FINE_TUNE_PROVIDER.id) {
+      if (!['pending', 'queued', 'running'].includes(job.status)) return;
+      await syncHuggingFaceFineTuneJob(job).catch((error) => {
+        console.warn(`Hugging Face fine-tune list sync failed: ${error.message}`);
       });
     }
   }));
@@ -1387,9 +1485,19 @@ async function getFineTuneJob(userId, id) {
       console.warn(`OpenAI fine-tune sync failed: ${error.message}`);
     });
   }
-  if (job.provider === VERTEX_FINE_TUNE_PROVIDER.id && ['pending', 'queued', 'running'].includes(job.status)) {
+  if (shouldSyncVertexFineTuneJob(job)) {
     await syncVertexGeminiFineTuneJob(job).catch((error) => {
       console.warn(`Vertex Gemini fine-tune sync failed: ${error.message}`);
+    });
+  }
+  if (job.provider === VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id && ['pending', 'queued', 'running'].includes(job.status)) {
+    await syncVertexOpenModelFineTuneJob(job).catch((error) => {
+      console.warn(`Vertex Llama fine-tune sync failed: ${error.message}`);
+    });
+  }
+  if (job.provider === HUGGINGFACE_FINE_TUNE_PROVIDER.id && ['pending', 'queued', 'running'].includes(job.status)) {
+    await syncHuggingFaceFineTuneJob(job).catch((error) => {
+      console.warn(`Hugging Face fine-tune sync failed: ${error.message}`);
     });
   }
   return serializeFineTuneJob(job);
@@ -1418,9 +1526,17 @@ async function createFineTuneJob(userId, payload) {
   if (provider === VERTEX_FINE_TUNE_PROVIDER.id && isVertexFineTuneProviderReady()) {
     ensureVertexBaseModelAllowed(baseModel);
   }
+  if (provider === VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id && vertexOpenModelFineTuneService.isReady()) {
+    vertexOpenModelFineTuneService.ensureBaseModelAllowed(baseModel);
+  }
+  if (provider === HUGGINGFACE_FINE_TUNE_PROVIDER.id && huggingFaceFineTuneService.isReady()) {
+    huggingFaceFineTuneService.ensureBaseModelAllowed(baseModel);
+  }
   const submitToOpenAI = provider === 'openai' && shouldSubmitOpenAIFineTune(baseModel);
   const submitToVertex = provider === VERTEX_FINE_TUNE_PROVIDER.id && shouldSubmitVertexFineTune(baseModel);
-  if (!submitToOpenAI && !submitToVertex) {
+  const submitToVertexOpenModel = provider === VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id && shouldSubmitVertexOpenModelFineTune(baseModel);
+  const submitToHuggingFace = provider === HUGGINGFACE_FINE_TUNE_PROVIDER.id && huggingFaceFineTuneService.isReady();
+  if (!submitToOpenAI && !submitToVertex && !submitToVertexOpenModel && !submitToHuggingFace) {
     throw createError(409, getUnsupportedRealFineTuneMessage(provider));
   }
   if (submitToOpenAI) {
@@ -1428,6 +1544,14 @@ async function createFineTuneJob(userId, payload) {
   }
   if (submitToVertex) {
     await ensureVertexFineTuneEndpointReady(baseModel);
+  }
+  if (submitToVertexOpenModel) {
+    await vertexOpenModelFineTuneService.preflight();
+    vertexOpenModelFineTuneService.ensureBaseModelAllowed(baseModel);
+  }
+  if (submitToHuggingFace) {
+    huggingFaceFineTuneService.ensureConfigured();
+    huggingFaceFineTuneService.ensureBaseModelAllowed(baseModel);
   }
 
   const dataset = payload.datasetId
@@ -1494,6 +1618,30 @@ async function createFineTuneJob(userId, payload) {
     }
   }
 
+  if (submitToVertexOpenModel) {
+    try {
+      await submitVertexOpenModelFineTuneJob(job);
+    } catch (error) {
+      job.status = 'failed';
+      job.errorMessage = error.message;
+      job.finishedAt = new Date();
+      await job.save();
+      throw error;
+    }
+  }
+
+  if (submitToHuggingFace) {
+    try {
+      await submitHuggingFaceFineTuneJob(job);
+    } catch (error) {
+      job.status = 'failed';
+      job.errorMessage = error.message;
+      job.finishedAt = new Date();
+      await job.save();
+      throw error;
+    }
+  }
+
   return serializeFineTuneJob(job);
 }
 
@@ -1532,6 +1680,12 @@ async function cancelFineTuneJob(userId, id) {
     });
   }
 
+  if (job.provider === VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id) {
+    await cancelVertexOpenModelFineTuneJob(job).catch((error) => {
+      console.warn(`Vertex Llama fine-tune cancel failed: ${error.message}`);
+    });
+  }
+
   job.status = 'cancelled';
   job.errorMessage = 'Cancelled by user';
   job.finishedAt = new Date();
@@ -1551,9 +1705,17 @@ async function retryFineTuneJob(userId, id) {
   if (job.provider === VERTEX_FINE_TUNE_PROVIDER.id && isVertexFineTuneProviderReady()) {
     ensureVertexBaseModelAllowed(job.baseModel);
   }
+  if (job.provider === VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id && vertexOpenModelFineTuneService.isReady()) {
+    vertexOpenModelFineTuneService.ensureBaseModelAllowed(job.baseModel);
+  }
+  if (job.provider === HUGGINGFACE_FINE_TUNE_PROVIDER.id && huggingFaceFineTuneService.isReady()) {
+    huggingFaceFineTuneService.ensureBaseModelAllowed(job.baseModel);
+  }
   const submitToOpenAI = job.provider === 'openai' && shouldSubmitOpenAIFineTune(job.baseModel);
   const submitToVertex = job.provider === VERTEX_FINE_TUNE_PROVIDER.id && shouldSubmitVertexFineTune(job.baseModel);
-  if (!submitToOpenAI && !submitToVertex) {
+  const submitToVertexOpenModel = job.provider === VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id && shouldSubmitVertexOpenModelFineTune(job.baseModel);
+  const submitToHuggingFace = job.provider === HUGGINGFACE_FINE_TUNE_PROVIDER.id && huggingFaceFineTuneService.isReady();
+  if (!submitToOpenAI && !submitToVertex && !submitToVertexOpenModel && !submitToHuggingFace) {
     throw createError(409, getUnsupportedRealFineTuneMessage(job.provider));
   }
   if (submitToOpenAI) {
@@ -1561,6 +1723,14 @@ async function retryFineTuneJob(userId, id) {
   }
   if (submitToVertex) {
     await ensureVertexFineTuneEndpointReady(job.baseModel);
+  }
+  if (submitToVertexOpenModel) {
+    await vertexOpenModelFineTuneService.preflight();
+    vertexOpenModelFineTuneService.ensureBaseModelAllowed(job.baseModel);
+  }
+  if (submitToHuggingFace) {
+    huggingFaceFineTuneService.ensureConfigured();
+    huggingFaceFineTuneService.ensureBaseModelAllowed(job.baseModel);
   }
 
   job.status = 'pending';
@@ -1588,6 +1758,30 @@ async function retryFineTuneJob(userId, id) {
   if (submitToVertex) {
     try {
       await submitVertexGeminiFineTuneJob(job);
+    } catch (error) {
+      job.status = 'failed';
+      job.errorMessage = error.message;
+      job.finishedAt = new Date();
+      await job.save();
+      throw error;
+    }
+  }
+
+  if (submitToVertexOpenModel) {
+    try {
+      await submitVertexOpenModelFineTuneJob(job);
+    } catch (error) {
+      job.status = 'failed';
+      job.errorMessage = error.message;
+      job.finishedAt = new Date();
+      await job.save();
+      throw error;
+    }
+  }
+
+  if (submitToHuggingFace) {
+    try {
+      await submitHuggingFaceFineTuneJob(job);
     } catch (error) {
       job.status = 'failed';
       job.errorMessage = error.message;
@@ -1637,6 +1831,18 @@ async function listJobMetrics(userId, jobId) {
     });
   }
 
+  if (job.provider === VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id) {
+    await syncVertexOpenModelFineTuneJob(job).catch((error) => {
+      console.warn(`Vertex Llama fine-tune metrics sync failed: ${error.message}`);
+    });
+  }
+
+  if (job.provider === HUGGINGFACE_FINE_TUNE_PROVIDER.id) {
+    await syncHuggingFaceFineTuneJob(job).catch((error) => {
+      console.warn(`Hugging Face fine-tune metrics sync failed: ${error.message}`);
+    });
+  }
+
   const metrics = await FineTuneMetric.find({ userId, jobId }).sort({ epoch: 1, createdAt: 1 });
   return { items: metrics.map(serializeMetric) };
 }
@@ -1666,6 +1872,28 @@ async function listJobLogs(userId, jobId) {
     });
   }
 
+  if (job.provider === VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id) {
+    await syncVertexOpenModelFineTuneJob(job).catch((error) => {
+      console.warn(`Vertex Llama fine-tune logs sync failed: ${error.message}`);
+    });
+    const vertexLlamaLogs = await vertexOpenModelFineTuneService.getLogs(job).catch((error) => {
+      console.warn(`Vertex Llama fine-tune logs fetch failed: ${error.message}`);
+      return [];
+    });
+    if (vertexLlamaLogs.length > 0) return { items: vertexLlamaLogs };
+  }
+
+  if (job.provider === HUGGINGFACE_FINE_TUNE_PROVIDER.id) {
+    await syncHuggingFaceFineTuneJob(job).catch((error) => {
+      console.warn(`Hugging Face fine-tune logs sync failed: ${error.message}`);
+    });
+    const huggingFaceLogs = await huggingFaceFineTuneService.getLogs(job).catch((error) => {
+      console.warn(`Hugging Face fine-tune logs fetch failed: ${error.message}`);
+      return [];
+    });
+    if (huggingFaceLogs.length > 0) return { items: huggingFaceLogs };
+  }
+
   const logs = [
     { step: 'Dataset snapshot created', status: 'done', time: job.createdAt },
     { step: 'Provider job queued', status: ['pending', 'queued', 'running', 'completed'].includes(job.status) ? 'done' : 'pending', time: job.createdAt },
@@ -1683,12 +1911,30 @@ async function createFineTunedModelFromJob(job) {
   const userId = job.userId?._id || job.userId;
   if (!userId) return null;
 
-  if ((isRemoteOpenAIJob(job) || isRemoteVertexJob(job)) && !job.fineTunedModelId) {
+  if ((isRemoteOpenAIJob(job) || isRemoteVertexJob(job) || isRemoteHuggingFaceJob(job)) && !job.fineTunedModelId) {
+    return null;
+  }
+
+  if (isRemoteVertexOpenModelJob(job) && !job.fineTunedModelId) {
     return null;
   }
 
   const existingModel = await FineTunedModel.findOne({ userId, jobId: job._id });
-  if (existingModel) return existingModel;
+  if (existingModel) {
+    const providerModelId = job.fineTunedModelId || existingModel.providerModelId;
+    if (providerModelId && existingModel.providerModelId !== providerModelId) {
+      existingModel.providerModelId = providerModelId;
+      existingModel.baseModel = job.baseModel || existingModel.baseModel;
+      existingModel.industry = job.industry || existingModel.industry;
+      existingModel.performance = {
+        accuracy: job.accuracy || existingModel.performance?.accuracy || 0,
+        loss: job.loss || existingModel.performance?.loss || 0,
+        sampleCount: job.samples || existingModel.performance?.sampleCount || 0,
+      };
+      await existingModel.save();
+    }
+    return existingModel;
+  }
 
   const alias = slugify(job.name);
   const existingVersions = await FineTunedModel.countDocuments({ userId, alias });
@@ -1717,6 +1963,27 @@ async function createFineTunedModelFromJob(job) {
 }
 
 async function registerCompletedFineTuneJobs(userId) {
+  const staleVertexJobs = await FineTuneJob.find({
+    userId,
+    provider: VERTEX_FINE_TUNE_PROVIDER.id,
+    status: 'completed',
+    providerJobId: { $exists: true, $ne: '' },
+    $or: [
+      { fineTunedModelId: { $exists: false } },
+      { fineTunedModelId: '' },
+      { fineTunedModelId: /\/models\// },
+    ],
+  });
+
+  await Promise.all(staleVertexJobs.map(async (job) => {
+    await syncVertexGeminiFineTuneJob(job).catch((error) => {
+      console.warn(`Vertex completed job endpoint refresh failed: ${error.message}`);
+    });
+    await createFineTunedModelFromJob(job).catch((error) => {
+      console.warn(`Vertex completed model registry refresh failed: ${error.message}`);
+    });
+  }));
+
   const registeredJobIds = await FineTunedModel.find({ userId }).distinct('jobId');
   const jobs = await FineTuneJob.find({
     userId,
@@ -1761,8 +2028,14 @@ async function promoteFineTuneJob(userId, id) {
   if (isRemoteOpenAIJob(job) && job.status !== 'completed') {
     await syncOpenAIFineTuneJob(job);
   }
-  if (isRemoteVertexJob(job) && job.status !== 'completed') {
+  if (shouldSyncVertexFineTuneJob(job)) {
     await syncVertexGeminiFineTuneJob(job);
+  }
+  if (isRemoteVertexOpenModelJob(job) && job.status !== 'completed') {
+    await syncVertexOpenModelFineTuneJob(job);
+  }
+  if (isRemoteHuggingFaceJob(job) && job.status !== 'completed') {
+    await syncHuggingFaceFineTuneJob(job);
   }
 
   if (job.status !== 'completed') {
@@ -1775,6 +2048,14 @@ async function promoteFineTuneJob(userId, id) {
 
   if (isRemoteVertexJob(job) && !job.fineTunedModelId) {
     throw createError(409, 'Vertex has not returned a tuned model id yet');
+  }
+
+  if (isRemoteVertexOpenModelJob(job) && !job.fineTunedModelId) {
+    throw createError(409, 'Vertex Llama has not returned a tuned model id yet');
+  }
+
+  if (isRemoteHuggingFaceJob(job) && !job.fineTunedModelId) {
+    throw createError(409, 'Hugging Face has not returned a LoRA adapter model repo id yet');
   }
 
   const model = await createFineTunedModelFromJob(job);
@@ -1806,10 +2087,21 @@ function listProviders() {
   const currentProvider = getConfiguredAIProvider();
   const openAIReady = isOpenAIFineTuneProviderReady();
   const vertexReady = isVertexFineTuneProviderReady();
+  const vertexLlamaReady = vertexOpenModelFineTuneService.isReady();
+  const huggingFaceReady = huggingFaceFineTuneService.isReady();
+  const huggingFaceMissing = [];
+  if (!huggingFaceFineTuneService.getToken()) huggingFaceMissing.push('HUGGINGFACE_TOKEN or HF_TOKEN');
+  if (!huggingFaceFineTuneService.getSpaceHardware()) huggingFaceMissing.push('HUGGINGFACE_SPACE_HARDWARE or HF_SPACE_HARDWARE');
   const vertexMissing = [];
   if (!getVertexProject()) vertexMissing.push('GOOGLE_CLOUD_PROJECT');
   if (!getVertexLocation()) vertexMissing.push('GOOGLE_CLOUD_LOCATION');
   if (!getVertexBucket()) vertexMissing.push('VERTEX_TUNING_BUCKET');
+  const vertexLlamaMissing = [];
+  if (!vertexOpenModelFineTuneService.getProject()) vertexLlamaMissing.push('GOOGLE_CLOUD_PROJECT');
+  if (!vertexOpenModelFineTuneService.getLocation()) vertexLlamaMissing.push('GOOGLE_CLOUD_LOCATION');
+  if (!vertexOpenModelFineTuneService.getBucket()) vertexLlamaMissing.push('VERTEX_TUNING_BUCKET');
+  if (!vertexOpenModelFineTuneService.getOutputGcsUri()) vertexLlamaMissing.push('VERTEX_LLAMA_TUNING_OUTPUT_GCS_URI');
+  if (!vertexOpenModelFineTuneService.getSubmitScriptPath()) vertexLlamaMissing.push('Vertex Llama submit script');
   const apiProviders = API_TRAINING_PROVIDERS.map((provider) => {
     const apiConfigured = Boolean(process.env[provider.key]);
     const supportsFineTuning = provider.id === 'openai' && openAIReady;
@@ -1853,6 +2145,34 @@ function listProviders() {
           ? `Uses Google ADC, uploads JSONL to gs://${getVertexBucket()}, and creates a real Vertex tuning job in ${getVertexLocation()}.`
           : `Missing ${vertexMissing.join(', ') || 'Google ADC'} for Vertex Gemini fine-tuning.`,
         baseModels: getVertexFineTuneBaseModelOptions(),
+      },
+      {
+        id: VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id,
+        name: VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.name,
+        status: vertexLlamaReady ? 'active' : 'needs_config',
+        productionReady: vertexLlamaReady,
+        apiConfigured: vertexLlamaReady,
+        supportsFineTuning: vertexLlamaReady,
+        mode: vertexLlamaReady ? 'real' : 'api',
+        isDefault: currentProvider === VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id || (!currentProvider && !vertexReady && vertexLlamaReady),
+        message: vertexLlamaReady
+          ? `Uses Google ADC, uploads chat JSONL to gs://${vertexOpenModelFineTuneService.getBucket()}, and submits Vertex managed open-model tuning through ${vertexOpenModelFineTuneService.getPythonCommand()}. Install Python SDK requirements before running.`
+          : `Missing ${vertexLlamaMissing.join(', ') || 'Vertex Llama tuning configuration'} for Vertex Llama fine-tuning.`,
+        baseModels: vertexOpenModelFineTuneService.getBaseModelOptions(),
+      },
+      {
+        id: HUGGINGFACE_FINE_TUNE_PROVIDER.id,
+        name: HUGGINGFACE_FINE_TUNE_PROVIDER.name,
+        status: huggingFaceReady ? 'active' : 'needs_config',
+        productionReady: huggingFaceReady,
+        apiConfigured: huggingFaceReady,
+        supportsFineTuning: huggingFaceReady,
+        mode: huggingFaceReady ? 'real' : 'api',
+        isDefault: currentProvider === HUGGINGFACE_FINE_TUNE_PROVIDER.id || (!currentProvider && !vertexReady && huggingFaceReady),
+        message: huggingFaceReady
+          ? `Creates Hugging Face dataset/model repos and a Docker trainer Space${huggingFaceFineTuneService.getSpaceHardware() ? ` on ${huggingFaceFineTuneService.getSpaceHardware()}` : ''}. Llama training needs GPU hardware and access to the gated base model.`
+          : `Missing ${huggingFaceMissing.join(', ') || 'Hugging Face GPU configuration'}. Use a Hugging Face write token with access to the selected Llama base model and a GPU Space hardware value.`,
+        baseModels: huggingFaceFineTuneService.getBaseModelOptions(),
       },
       ...apiProviders,
     ],

@@ -1,0 +1,107 @@
+const fs = require('fs');
+const path = require('path');
+
+const packDir = path.resolve(__dirname, '..', 'fine_tuning_ready_vi_huggingface');
+const notebookName = '07_colab_llamafactory_free_llama.ipynb';
+
+function lines(source) {
+  return source.trim().split('\n').map((line) => `${line}\n`);
+}
+
+const notebook = {
+  cells: [
+    {
+      cell_type: 'markdown',
+      metadata: {},
+      source: lines(`# LLaMA Factory free Llama fine-tuning\n\nRun this notebook in Colab or Kaggle with GPU. It converts the bundled OpenAI-style JSONL into LLaMA Factory sharegpt format, runs QLoRA SFT, then uploads the adapter to Hugging Face.`),
+    },
+    {
+      cell_type: 'code',
+      execution_count: null,
+      metadata: {},
+      outputs: [],
+      source: lines(`!nvidia-smi`),
+    },
+    {
+      cell_type: 'code',
+      execution_count: null,
+      metadata: {},
+      outputs: [],
+      source: lines(`import os\nfrom pathlib import Path\n\nif not Path('/content/LLaMA-Factory').exists():\n    !git clone --depth 1 https://github.com/hiyouga/LLaMA-Factory.git /content/LLaMA-Factory\n\n%cd /content/LLaMA-Factory\n!pip install -q -e .\n!pip install -q -r requirements/metrics.txt\n!pip install -q bitsandbytes`),
+    },
+    {
+      cell_type: 'code',
+      execution_count: null,
+      metadata: {},
+      outputs: [],
+      source: lines(`import os\nimport getpass\nfrom pathlib import Path\n\nif not os.environ.get('HF_TOKEN'):\n    os.environ['HF_TOKEN'] = getpass.getpass('Paste Hugging Face write token: ')\n\nBASE_MODEL = 'meta-llama/Llama-3.2-1B-Instruct'\nOUTPUT_REPO = 'Phuoc20050911/copypro-brand-voice-llama-1b-lora-llamafactory'\nSOURCE_JSONL = Path('/content/02_train_huggingface_chat_utf8.jsonl')\n\nassert SOURCE_JSONL.exists(), f'Missing {SOURCE_JSONL}. Upload it to Colab first.'\nprint('Base model:', BASE_MODEL)\nprint('Output repo:', OUTPUT_REPO)`),
+    },
+    {
+      cell_type: 'code',
+      execution_count: null,
+      metadata: {},
+      outputs: [],
+      source: lines(`import json\nimport shutil\nfrom pathlib import Path\n\nfactory = Path('/content/LLaMA-Factory')\ndata_dir = factory / 'data'\ndata_dir.mkdir(parents=True, exist_ok=True)\nsharegpt_path = data_dir / 'copypro_vi_sharegpt.json'\n\nrecords = []\nfor line in SOURCE_JSONL.read_text(encoding='utf-8').splitlines():\n    line = line.strip()\n    if not line:\n        continue\n    item = json.loads(line)\n    system = ''\n    user = ''\n    assistant = ''\n    for msg in item.get('messages', []):\n        role = (msg.get('role') or '').lower()\n        content = msg.get('content') or ''\n        if role == 'system' and not system:\n            system = content\n        elif role == 'user' and not user:\n            user = content\n        elif role == 'assistant' and not assistant:\n            assistant = content\n    records.append({\n        'conversations': [\n            {'from': 'human', 'value': user},\n            {'from': 'gpt', 'value': assistant},\n        ],\n        'system': system,\n    })\n\nsharegpt_path.write_text(json.dumps(records, ensure_ascii=False, indent=2), encoding='utf-8')\n\ndataset_info_path = data_dir / 'dataset_info.json'\ndataset_info = json.loads(dataset_info_path.read_text(encoding='utf-8'))\ndataset_info['copypro_vi_sharegpt'] = {\n    'file_name': 'copypro_vi_sharegpt.json',\n    'formatting': 'sharegpt',\n    'columns': {\n        'messages': 'conversations',\n        'system': 'system',\n    },\n    'tags': {\n        'role_tag': 'from',\n        'content_tag': 'value',\n        'user_tag': 'human',\n        'assistant_tag': 'gpt',\n    },\n}\ndataset_info_path.write_text(json.dumps(dataset_info, ensure_ascii=False, indent=2), encoding='utf-8')\n\nprint('Registered dataset copypro_vi_sharegpt with', len(records), 'samples')`),
+    },
+    {
+      cell_type: 'code',
+      execution_count: null,
+      metadata: {},
+      outputs: [],
+      source: lines(`yaml_path = Path('/content/LLaMA-Factory/copypro_llama32_1b_lora_sft.yaml')\nyaml_lines = [\n    f'model_name_or_path: {BASE_MODEL}',\n    'trust_remote_code: true',\n    '',\n    'stage: sft',\n    'do_train: true',\n    'finetuning_type: lora',\n    'lora_rank: 16',\n    'lora_alpha: 32',\n    'lora_dropout: 0.05',\n    'lora_target: all',\n    '',\n    'dataset: copypro_vi_sharegpt',\n    'template: llama3',\n    'cutoff_len: 2048',\n    'max_samples: 100000',\n    'overwrite_cache: true',\n    'preprocessing_num_workers: 2',\n    'dataloader_num_workers: 0',\n    '',\n    'output_dir: saves/copypro-llama32-1b/lora/sft',\n    'logging_steps: 5',\n    'save_steps: 50',\n    'plot_loss: true',\n    'overwrite_output_dir: true',\n    'save_only_model: false',\n    'report_to: none',\n    '',\n    'per_device_train_batch_size: 1',\n    'gradient_accumulation_steps: 8',\n    'learning_rate: 2.0e-4',\n    'num_train_epochs: 2.0',\n    'lr_scheduler_type: cosine',\n    'warmup_ratio: 0.05',\n    'fp16: true',\n    'quantization_bit: 4',\n]\nyaml_path.write_text('\n'.join(yaml_lines) + '\n', encoding='utf-8')\nprint(yaml_path.read_text(encoding='utf-8'))`),
+    },
+    {
+      cell_type: 'code',
+      execution_count: null,
+      metadata: {},
+      outputs: [],
+      source: lines(`%cd /content/LLaMA-Factory\n!llamafactory-cli train copypro_llama32_1b_lora_sft.yaml`),
+    },
+    {
+      cell_type: 'code',
+      execution_count: null,
+      metadata: {},
+      outputs: [],
+      source: lines(`from huggingface_hub import HfApi\nfrom pathlib import Path\nimport os\n\nadapter_dir = Path('/content/LLaMA-Factory/saves/copypro-llama32-1b/lora/sft')\nassert adapter_dir.exists(), adapter_dir\n\napi = HfApi(token=os.environ['HF_TOKEN'])\napi.create_repo(repo_id=OUTPUT_REPO, repo_type='model', private=True, exist_ok=True)\napi.upload_folder(repo_id=OUTPUT_REPO, repo_type='model', folder_path=str(adapter_dir), token=os.environ['HF_TOKEN'])\nprint('Uploaded LoRA adapter to', f'https://huggingface.co/{OUTPUT_REPO}')`),
+    },
+    {
+      cell_type: 'markdown',
+      metadata: {},
+      source: lines(`After training, your Hugging Face repo should contain adapter files such as \`adapter_model.safetensors\` and \`adapter_config.json\`.`),
+    },
+  ],
+  metadata: {
+    kernelspec: { display_name: 'Python 3', language: 'python', name: 'python3' },
+    language_info: { name: 'python' },
+  },
+  nbformat: 4,
+  nbformat_minor: 5,
+};
+
+fs.mkdirSync(packDir, { recursive: true });
+fs.writeFileSync(path.join(packDir, notebookName), JSON.stringify(notebook, null, 2), 'utf8');
+
+const manifestPath = path.join(packDir, 'manifest.json');
+if (fs.existsSync(manifestPath)) {
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+  manifest.recommended_free_notebook = notebookName;
+  manifest.free_notebook_framework = 'LLaMA Factory';
+  manifest.files = Array.from(new Set([...(manifest.files || []), notebookName]));
+  fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+}
+
+const readmePath = path.join(packDir, 'README_FINE_TUNING_UTF8.md');
+if (fs.existsSync(readmePath)) {
+  const readme = fs.readFileSync(readmePath, 'utf8');
+  const note = [
+    '',
+    '## Recommended free option: LLaMA Factory',
+    '',
+    `Use \`${notebookName}\` with \`02_train_huggingface_chat_utf8.jsonl\`.`,
+    'It converts the dataset to sharegpt format and runs QLoRA with `llamafactory-cli train`.',
+    '',
+  ].join('\n');
+  if (!readme.includes(notebookName)) fs.writeFileSync(readmePath, `${readme.trimEnd()}\n${note}`, 'utf8');
+}
+
+console.log(JSON.stringify({ notebook: path.join(packDir, notebookName) }, null, 2));

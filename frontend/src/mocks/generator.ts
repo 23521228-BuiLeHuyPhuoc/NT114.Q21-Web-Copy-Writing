@@ -5,6 +5,9 @@ import {
 } from 'lucide-react';
 
 export const MODELS = [
+  { id: 'openai/gpt-oss-120b-maas', name: 'OpenAI GPT-OSS 120B', badge: 'Vertex', color: 'text-sky-600', desc: 'OpenAI open-weight model chay qua Google Cloud Vertex AI MaaS', latency: '~3-15s', tokens: '128K' },
+  { id: 'openai/gpt-oss-20b-maas', name: 'OpenAI GPT-OSS 20B', badge: 'Vertex', color: 'text-blue-600', desc: 'Ban nhe hon cua GPT-OSS tren Vertex AI MaaS, hop test nhanh', latency: '~2-8s', tokens: '128K' },
+  { id: 'meta/llama-3.3-70b-instruct-maas', name: 'Llama 3.3 70B Instruct', badge: 'Vertex', color: 'text-orange-600', desc: 'Meta Llama 3.3 chay qua Google Cloud Vertex AI MaaS', latency: '~1-8s', tokens: '128K' },
   { id: 'gemini-flash', name: 'Gemini 2.5 Flash', badge: 'Free', color: 'text-green-600', desc: 'Free tier chạy ổn với key hiện tại, hợp đa số nội dung marketing', latency: '~2s', tokens: '1M' },
   { id: 'gemini-flash-lite', name: 'Gemini 2.5 Flash Lite', badge: 'Free', color: 'text-teal-600', desc: 'Free tier nhẹ và nhanh, hợp demo hoặc request nhiều', latency: '~1s', tokens: '1M' },
   { id: 'groq-llama-3-3-70b', name: 'Llama 3.3 70B (Groq)', badge: 'Groq', color: 'text-orange-600', desc: 'Llama chạy qua Groq API, hợp copy dài và cần chất lượng tốt', latency: '~1-3s', tokens: '128K' },

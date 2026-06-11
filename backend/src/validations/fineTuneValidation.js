@@ -83,7 +83,7 @@ const createFineTuneJobSchema = Joi.object({
   name: Joi.string().trim().min(2).max(120).required(),
   industry: Joi.string().trim().lowercase().max(80).allow('').default('general'),
   baseModel: Joi.string().trim().min(1).max(80).default(defaultBaseModel),
-  provider: Joi.string().valid('gemini', 'groq', 'openrouter', 'openai', 'vertex-gemini', 'freegpt4').default('vertex-gemini'),
+  provider: Joi.string().valid('gemini', 'groq', 'openrouter', 'openai', 'vertex-gemini', 'vertex-llama', 'freegpt4', 'huggingface').default('vertex-gemini'),
   description: Joi.string().trim().max(1200).allow('').default(''),
   datasetId: objectId.optional(),
   datasetUrl: Joi.string().trim().max(500).allow('').default(''),

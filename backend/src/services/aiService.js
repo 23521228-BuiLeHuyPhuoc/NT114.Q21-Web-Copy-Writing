@@ -3,6 +3,7 @@ const createError = require('../utils/createError');
 
 const GOOGLE_CLOUD_SCOPE = 'https://www.googleapis.com/auth/cloud-platform';
 const DEFAULT_VERTEX_LOCATION = 'us-central1';
+const DEFAULT_VERTEX_MAAS_MODEL = 'openai/gpt-oss-120b-maas';
 let googleAuth;
 
 const TYPE_LABELS = {
@@ -593,6 +594,25 @@ function getVertexLocation() {
   return String(process.env.GOOGLE_CLOUD_LOCATION || process.env.VERTEX_LOCATION || DEFAULT_VERTEX_LOCATION).trim();
 }
 
+function getVertexProject() {
+  return String(process.env.GOOGLE_CLOUD_PROJECT || process.env.GCLOUD_PROJECT || '').trim();
+}
+
+function getVertexMaaSModel(model) {
+  return String(model || process.env.VERTEX_MAAS_MODEL || DEFAULT_VERTEX_MAAS_MODEL).trim();
+}
+
+function isVertexMaaSModel(model) {
+  return /^(?:openai|meta)\//.test(String(model || '').trim());
+}
+
+function getVertexMaaSLocation(model) {
+  const configured = String(process.env.VERTEX_MAAS_LOCATION || '').trim();
+  if (configured) return configured;
+  if (String(model || '').startsWith('meta/llama-4-')) return 'us-east5';
+  return getVertexLocation();
+}
+
 function normalizeVertexResourceName(model) {
   const value = String(model || '').trim();
   if (!value) return '';
@@ -793,6 +813,102 @@ async function callVertexGemini(payload) {
     if (payload.requireProviderSuccess) {
       if (error.statusCode) throw error;
       throw createError(502, `Vertex tuned model generateContent failed: ${error.message}`);
+    }
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function callVertexMaaS(payload) {
+  if (typeof fetch !== 'function') {
+    return null;
+  }
+
+  const project = getVertexProject();
+  const model = getVertexMaaSModel(payload.model);
+  if (!project || !model) return null;
+
+  const location = getVertexMaaSLocation(model);
+  const providerPrompt = buildProviderPrompt(payload);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), Number(process.env.VERTEX_MAAS_TIMEOUT_MS || 120000));
+
+  try {
+    const token = await getGoogleAccessToken();
+    const requestBody = {
+      model,
+      messages: [{
+        role: 'user',
+        content: [
+          'You are a senior Vietnamese marketing copywriter. Write the final answer only, in natural Vietnamese with full diacritics. Do not reveal reasoning.',
+          '',
+          providerPrompt,
+        ].join('\n'),
+      }],
+      temperature: 0.7,
+      max_tokens: getMaxOutputTokens(payload),
+      stream: false,
+    };
+
+    if (model.startsWith('meta/')) {
+      requestBody.extra_body = {
+        google: {
+          model_safety_settings: {
+            enabled: true,
+            llama_guard_settings: {},
+          },
+        },
+      };
+    }
+
+    const response = await fetch(
+      `https://${location}-aiplatform.googleapis.com/v1/projects/${project}/locations/${location}/endpoints/openapi/chat/completions`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json; charset=utf-8',
+        },
+        signal: controller.signal,
+        body: JSON.stringify(requestBody),
+      },
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const message = errorData.error?.message || errorData[0]?.error?.message || errorData.message || response.statusText;
+      console.warn('Vertex MaaS chat completion failed', { status: response.status, model, location, message });
+      if (payload.requireProviderSuccess) {
+        throw createError(response.status, `Vertex MaaS request failed: ${message}`);
+      }
+      return null;
+    }
+
+    const data = await response.json();
+    const message = data.choices?.[0]?.message || {};
+    const outputText = cleanProviderOutput(message.content || '');
+    if (!outputText) return null;
+
+    const promptTokens = Number(data.usage?.prompt_tokens || estimateTokens(providerPrompt));
+    const completionTokens = Number(data.usage?.completion_tokens || estimateTokens(outputText));
+
+    return {
+      outputText,
+      modelUsed: data.model || model,
+      usage: {
+        promptTokens,
+        completionTokens,
+        totalTokens: Number(data.usage?.total_tokens || promptTokens + completionTokens),
+      },
+      status: 'success',
+      fallback: false,
+    };
+  } catch (error) {
+    console.warn('Vertex MaaS chat completion failed', { model, location, message: error.message });
+    if (payload.requireProviderSuccess) {
+      if (error.statusCode) throw error;
+      throw createError(502, `Vertex MaaS request failed: ${error.message}`);
     }
     return null;
   } finally {
@@ -1091,11 +1207,14 @@ async function generateCopy(payload) {
   const forcedProvider = String(payload.forceProvider || '').toLowerCase();
   const provider = forcedProvider || (process.env.AI_PROVIDER || 'gemini').toLowerCase();
   const selectedModel = payload.model || '';
+  const isMaaSModel = isVertexMaaSModel(selectedModel);
   const isGroqModel = selectedModel.startsWith('groq-')
     || selectedModel.startsWith('llama-')
     || selectedModel === 'llama3'
     || selectedModel === 'llama3-8b';
-  const providersBySelectedModel = isGroqModel
+  const providersBySelectedModel = isMaaSModel
+    ? [callVertexMaaS]
+    : isGroqModel
     ? [callGroq]
     : selectedModel.startsWith('freegpt4-')
       ? [callFreeGPT4]
@@ -1109,6 +1228,7 @@ async function generateCopy(payload) {
   const providersByEnv = {
     gemini: [callGemini],
     'vertex-gemini': [callVertexGemini],
+    'vertex-maas': [callVertexMaaS],
     openrouter: [callOpenRouter],
     openai: [callOpenAI],
     groq: [callGroq],

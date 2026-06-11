@@ -1,7 +1,7 @@
 import { api } from '@/lib/axios';
 
 export type FineTuneUiStatus = 'ready' | 'training' | 'failed' | 'pending';
-export type FineTuneProvider = 'gemini' | 'groq' | 'openrouter' | 'openai' | 'vertex-gemini' | 'freegpt4';
+export type FineTuneProvider = 'gemini' | 'groq' | 'openrouter' | 'openai' | 'vertex-gemini' | 'freegpt4' | 'huggingface';
 
 export interface TrainingLogItem {
   step: string;
@@ -254,6 +254,9 @@ const MODEL_LABELS: Record<string, string> = {
   'llama-3.1-70b': 'Llama 3.1 70B',
   'llama3-8b': 'Llama 3.1 8B',
   'llama-3.1-8b': 'Llama 3.1 8B',
+  'meta-llama/Llama-3.2-3B-Instruct': 'Llama 3.2 3B Instruct',
+  'meta-llama/Llama-3.1-8B-Instruct': 'Llama 3.1 8B Instruct',
+  'meta-llama/Llama-3.2-1B-Instruct': 'Llama 3.2 1B Instruct',
 };
 
 function getStatusCode(error: unknown) {

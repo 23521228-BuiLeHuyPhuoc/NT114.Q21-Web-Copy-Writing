@@ -262,6 +262,10 @@ async function resolveFineTunedModelForGenerate(userId, payload) {
     };
   }
 
+  if (provider === 'huggingface') {
+    throw createError(409, 'Hugging Face fine-tuning created a LoRA adapter repo. Deploy it with a Hugging Face Inference Endpoint or serving Space before using it in AI Generator.');
+  }
+
   throw createError(409, `Provider ${provider || 'unknown'} does not expose a real fine-tuned inference endpoint in this app yet`);
 }
 
