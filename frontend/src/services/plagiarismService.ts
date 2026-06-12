@@ -1,5 +1,7 @@
 import { api } from '@/lib/axios';
 
+const PLAGIARISM_REQUEST_TIMEOUT_MS = 180000;
+
 export type PlagiarismRiskLevel = 'safe' | 'review' | 'high' | 'critical';
 export type PlagiarismSourceType = 'database' | 'reference' | 'web' | 'uploads';
 export type PlagiarismSensitivity = 'lenient' | 'balanced' | 'strict';
@@ -41,6 +43,8 @@ export interface PlagiarismSource {
   sourceType: PlagiarismSourceType;
   contentId: string | null;
   similarity: number;
+  plagiarismScore: number;
+  topicSimilarityScore: number;
   snippet: string;
   matchedWords: number;
   totalWords: number;
@@ -79,6 +83,8 @@ export interface PlagiarismAnalysis {
   matchCount: number;
   checkedSourceTypes: string[];
   unavailableSourceTypes: string[];
+  plagiarismScore: number;
+  topicSimilarityScore: number;
   exactMatchScore: number;
   phraseOverlapScore: number;
   wordOverlapScore: number;
@@ -194,6 +200,8 @@ interface BackendPlagiarismSource {
   sourceType?: PlagiarismSourceType;
   contentId?: string | null;
   similarity?: number;
+  plagiarismScore?: number;
+  topicSimilarityScore?: number;
   snippet?: string;
   matchedWords?: number;
   totalWords?: number;
@@ -270,6 +278,8 @@ const DEFAULT_ANALYSIS: PlagiarismAnalysis = {
   matchCount: 0,
   checkedSourceTypes: [],
   unavailableSourceTypes: [],
+  plagiarismScore: 0,
+  topicSimilarityScore: 0,
   exactMatchScore: 0,
   phraseOverlapScore: 0,
   wordOverlapScore: 0,
@@ -328,6 +338,8 @@ function normalizeSource(source: BackendPlagiarismSource): PlagiarismSource {
     sourceType: source.sourceType || 'database',
     contentId: source.contentId || null,
     similarity: asNumber(source.similarity),
+    plagiarismScore: asNumber(source.plagiarismScore),
+    topicSimilarityScore: asNumber(source.topicSimilarityScore, asNumber(source.wordOverlapScore)),
     snippet: source.snippet || '',
     matchedWords: asNumber(source.matchedWords),
     totalWords: asNumber(source.totalWords),
@@ -377,6 +389,8 @@ function normalizeReport(report: BackendPlagiarismReport): PlagiarismReport {
       ...(backendAnalysis.commonCrawl || {}),
     },
   };
+  analysis.plagiarismScore = asNumber(analysis.plagiarismScore, asNumber(report.similarityScore));
+  analysis.topicSimilarityScore = asNumber(analysis.topicSimilarityScore, asNumber(analysis.wordOverlapScore));
 
   return {
     id: report.id || report._id || '',
@@ -427,7 +441,7 @@ export const plagiarismService = {
     const response = await api.post<{ data?: { report?: BackendPlagiarismReport } }>(
       '/plagiarism/check',
       payload,
-      { timeout: 120000 },
+      { timeout: PLAGIARISM_REQUEST_TIMEOUT_MS },
     );
 
     return unwrapReport(response);
@@ -442,7 +456,7 @@ export const plagiarismService = {
     const response = await api.post<{ data?: DebugCommonCrawlResult }>(
       '/plagiarism/debug/common-crawl',
       payload,
-      { timeout: 120000 },
+      { timeout: PLAGIARISM_REQUEST_TIMEOUT_MS },
     );
 
     if (!response.data.data) throw new Error('Invalid Common Crawl debug response');

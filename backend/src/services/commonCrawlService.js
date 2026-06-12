@@ -13,20 +13,21 @@ const SERPAPI_GOOGLE_DOMAIN = process.env.SERPAPI_GOOGLE_DOMAIN || 'google.com';
 const SERPAPI_GL = process.env.SERPAPI_GL || 'vn';
 const SERPAPI_HL = process.env.SERPAPI_HL || 'vi';
 const SERPAPI_NUM_RESULTS = Number(process.env.SERPAPI_NUM_RESULTS || 10);
-const REQUEST_TIMEOUT_MS = Number(process.env.COMMON_CRAWL_TIMEOUT_MS || 3500);
-const TOTAL_BUDGET_MS = Number(process.env.COMMON_CRAWL_TOTAL_BUDGET_MS || 45000);
+const REQUEST_TIMEOUT_MS = Number(process.env.COMMON_CRAWL_TIMEOUT_MS || 15000);
+const TOTAL_BUDGET_MS = Number(process.env.COMMON_CRAWL_TOTAL_BUDGET_MS || 150000);
 const MAX_INDEXES = Number(process.env.COMMON_CRAWL_MAX_INDEXES || 4);
 const MAX_QUERY_PATTERNS = Number(process.env.COMMON_CRAWL_MAX_QUERY_PATTERNS || 32);
 const MAX_RECORDS_PER_QUERY = Number(process.env.COMMON_CRAWL_MAX_RECORDS_PER_QUERY || 3);
-const MAX_FETCHES = Number(process.env.COMMON_CRAWL_MAX_FETCHES || 12);
+const MAX_FETCHES = Number(process.env.COMMON_CRAWL_MAX_FETCHES || 8);
 const MAX_SEARCH_QUERIES = Number(process.env.WEB_CRAWL_MAX_SEARCH_QUERIES || 6);
-const MAX_DISCOVERED_URLS = Number(process.env.WEB_CRAWL_MAX_DISCOVERED_URLS || 12);
+const MAX_DISCOVERED_URLS = Number(process.env.WEB_CRAWL_MAX_DISCOVERED_URLS || 5);
 const MAX_SERPAPI_RESULTS = Number(process.env.SERPAPI_MAX_RESULTS || MAX_DISCOVERED_URLS);
-const MAX_CDX_ATTEMPTS_PER_URL = Number(process.env.COMMON_CRAWL_MAX_CDX_ATTEMPTS_PER_URL || 6);
+const MAX_CDX_ATTEMPTS_PER_URL = Number(process.env.COMMON_CRAWL_MAX_CDX_ATTEMPTS_PER_URL || 2);
 const MIN_RELIABLE_SNAPSHOTS = Number(process.env.COMMON_CRAWL_MIN_RELIABLE_SNAPSHOTS || 5);
 const MAX_RECORD_BYTES = Number(process.env.COMMON_CRAWL_MAX_RECORD_BYTES || 1200000);
 const MAX_LIVE_BYTES = Number(process.env.WEB_CRAWL_MAX_LIVE_BYTES || 1500000);
 const MIN_TEXT_WORDS = Number(process.env.COMMON_CRAWL_MIN_TEXT_WORDS || 18);
+const MAX_SOURCE_TITLE_LENGTH = 190;
 const CACHE_TTL_MS = 30 * 60 * 1000;
 
 const STOPWORDS = new Set([
@@ -91,6 +92,11 @@ async function fetchWithTimeout(url, options = {}) {
       ...fetchOptions,
       signal: controller.signal,
     });
+  } catch (error) {
+    if (error && error.name === 'AbortError') {
+      throw new Error(`Request timed out after ${Math.round(timeoutMs)}ms`);
+    }
+    throw error;
   } finally {
     clearTimeout(timeout);
   }
@@ -413,12 +419,18 @@ function htmlToText(html) {
 }
 
 function sourceTitleFromUrl(rawUrl) {
+  const trimTitle = (value) => {
+    const title = String(value || 'Common Crawl page').replace(/\s+/g, ' ').trim();
+    if (title.length <= MAX_SOURCE_TITLE_LENGTH) return title;
+    return `${title.slice(0, MAX_SOURCE_TITLE_LENGTH - 1).trim()}…`;
+  };
+
   try {
     const parsed = new URL(rawUrl);
     const path = parsed.pathname && parsed.pathname !== '/' ? parsed.pathname : '';
-    return `${parsed.hostname}${path}`;
+    return trimTitle(`${parsed.hostname}${path}`);
   } catch (error) {
-    return rawUrl || 'Common Crawl page';
+    return trimTitle(rawUrl || 'Common Crawl page');
   }
 }
 
@@ -602,8 +614,10 @@ async function searchCandidateUrls(text, options = {}) {
         budgetMs: options.budgetMs,
         stats: options.stats,
       }));
+      if (dedupeSerpApiResults(results).length >= MAX_DISCOVERED_URLS) break;
     } catch (error) {
       stats.error = error instanceof Error ? error.message : 'SerpApi lookup failed';
+      if (results.length > 0) break;
     }
   }
 
@@ -654,8 +668,37 @@ async function fetchLiveHtml(rawUrl, options = {}) {
   return text;
 }
 
+async function fetchLiveCandidateFromUrl(url, trace, stats, options = {}) {
+  const liveHtml = await fetchLiveHtml(url, {
+    startedAt: options.startedAt,
+    budgetMs: options.budgetMs,
+    stats,
+  });
+  if (!liveHtml) return [];
+
+  const plainText = htmlToText(liveHtml);
+  stats.fetchedCount += 1;
+  stats.liveFetchCount += 1;
+  trace.liveFetched = true;
+  if (countWords(plainText) < MIN_TEXT_WORDS) return [];
+
+  trace.mode = 'live';
+  trace.candidates += 1;
+  trace.error = '';
+  return [{
+    source: `live:${url}`,
+    sourceTitle: sourceTitleFromUrl(url),
+    sourceUrl: url,
+    sourceType: 'web',
+    contentId: null,
+    text: plainText,
+    sourceMode: 'live',
+  }];
+}
+
 async function fetchCandidateTextsFromUrl(url, collections, stats, options = {}) {
   const allowLiveFallback = options.allowLiveFallback === true;
+  const preferLiveFallback = options.preferLiveFallback === true;
   const maxCandidates = clampNumber(options.maxCandidates || MAX_FETCHES, 1, MAX_FETCHES);
   const patterns = toCdxUrlPattern(url);
   const collectedRecords = [];
@@ -671,6 +714,21 @@ async function fetchCandidateTextsFromUrl(url, collections, stats, options = {})
     mode: 'none',
     error: '',
   };
+
+  if (allowLiveFallback && preferLiveFallback) {
+    try {
+      const liveCandidates = await fetchLiveCandidateFromUrl(url, trace, stats, {
+        startedAt: options.startedAt,
+        budgetMs: options.budgetMs,
+      });
+      if (liveCandidates.length > 0) {
+        stats.checkedUrls.push(trace);
+        return liveCandidates.slice(0, maxCandidates);
+      }
+    } catch (error) {
+      trace.error = error instanceof Error ? error.message : 'Live fetch failed';
+    }
+  }
 
   let cdxAttempts = 0;
   for (const collection of collections) {
@@ -751,43 +809,18 @@ async function fetchCandidateTextsFromUrl(url, collections, stats, options = {})
     return candidates;
   }
 
-  if (!allowLiveFallback) {
+  if (!allowLiveFallback || preferLiveFallback) {
     stats.checkedUrls.push(trace);
     return candidates;
   }
 
   try {
-    const liveHtml = await fetchLiveHtml(url, {
+    const liveCandidates = await fetchLiveCandidateFromUrl(url, trace, stats, {
       startedAt: options.startedAt,
       budgetMs: options.budgetMs,
-      stats,
     });
-    if (!liveHtml) {
-      stats.checkedUrls.push(trace);
-      return candidates;
-    }
-    const plainText = htmlToText(liveHtml);
-    stats.fetchedCount += 1;
-    stats.liveFetchCount += 1;
-    trace.liveFetched = true;
-    if (countWords(plainText) < MIN_TEXT_WORDS) {
-      stats.checkedUrls.push(trace);
-      return candidates;
-    }
-
-    trace.mode = 'live';
-    trace.candidates = 1;
     stats.checkedUrls.push(trace);
-    candidates.push({
-      source: `live:${url}`,
-      sourceTitle: sourceTitleFromUrl(url),
-      sourceUrl: url,
-      sourceType: 'web',
-      contentId: null,
-      text: plainText,
-      sourceMode: 'live',
-    });
-    return candidates;
+    return liveCandidates;
   } catch (error) {
     trace.error = error instanceof Error ? error.message : 'Live fetch failed';
     stats.checkedUrls.push(trace);
@@ -816,12 +849,14 @@ function finalizeStats(stats, candidates, startedAt, allowLiveFallback) {
 
 async function fetchCommonCrawlCandidates(text, options = {}) {
   const allowLiveFallback = options.allowLiveFallback === true;
+  const preferLiveFallback = options.preferLiveFallback === true;
   const startedAt = Date.now();
-  const budgetMs = clampNumber(options.budgetMs || TOTAL_BUDGET_MS, 5000, 120000);
+  const budgetMs = clampNumber(options.budgetMs || TOTAL_BUDGET_MS, 5000, 180000);
   const maxSnapshots = clampNumber(MAX_FETCHES, 1, 20);
   const stats = {
     enabled: true,
     allowLiveFallback,
+    preferLiveFallback,
     status: 'skipped',
     sourceMode: 'none',
     searchProvider: 'serpapi',
@@ -901,6 +936,7 @@ async function fetchCommonCrawlCandidates(text, options = {}) {
       stats.checkedUrlCount += 1;
       const urlCandidates = await fetchCandidateTextsFromUrl(url, collections, stats, {
         allowLiveFallback,
+        preferLiveFallback,
         startedAt,
         budgetMs,
         maxCandidates: maxSnapshots - candidates.length,

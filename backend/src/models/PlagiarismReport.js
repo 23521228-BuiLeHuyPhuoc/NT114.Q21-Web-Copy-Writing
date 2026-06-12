@@ -142,6 +142,18 @@ const sourceSchema = new mongoose.Schema(
       max: 100,
       default: 0,
     },
+    plagiarismScore: {
+      type: Number,
+      min: 0,
+      max: 100,
+      default: 0,
+    },
+    topicSimilarityScore: {
+      type: Number,
+      min: 0,
+      max: 100,
+      default: 0,
+    },
     snippet: {
       type: String,
       trim: true,
@@ -213,6 +225,8 @@ const analysisSchema = new mongoose.Schema(
     matchCount: { type: Number, min: 0, default: 0 },
     checkedSourceTypes: { type: [String], default: [] },
     unavailableSourceTypes: { type: [String], default: [] },
+    plagiarismScore: { type: Number, min: 0, max: 100, default: 0 },
+    topicSimilarityScore: { type: Number, min: 0, max: 100, default: 0 },
     exactMatchScore: { type: Number, min: 0, max: 100, default: 0 },
     phraseOverlapScore: { type: Number, min: 0, max: 100, default: 0 },
     wordOverlapScore: { type: Number, min: 0, max: 100, default: 0 },

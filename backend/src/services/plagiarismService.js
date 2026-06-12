@@ -7,6 +7,11 @@ const MODEL_USED = 'local-ngram-v1';
 const MAX_DATABASE_SOURCES = 80;
 const MAX_REPORT_SOURCES = 6;
 const MAX_REPORT_MATCHES = 12;
+const MAX_SOURCE_TITLE_LENGTH = 200;
+const MAX_SOURCE_LENGTH = 500;
+const MAX_SOURCE_URL_LENGTH = 500;
+const MAX_SNIPPET_LENGTH = 600;
+const MAX_MATCH_TEXT_LENGTH = 2000;
 
 const DEFAULT_SOURCE_CONFIG = {
   database: true,
@@ -171,6 +176,17 @@ function getScoreBasis(scores = {}) {
   return best.value > 0 ? best.key : 'none';
 }
 
+function getPlagiarismScore(scores = {}) {
+  return clamp(Math.max(
+    Number(scores.exactMatchScore || 0),
+    Number(scores.phraseOverlapScore || 0),
+  ));
+}
+
+function getTopicSimilarityScore(scores = {}) {
+  return clamp(Number(scores.wordOverlapScore || 0));
+}
+
 function scoreTexts(inputText, sourceText, options = {}) {
   const inputTokens = tokenize(inputText, options);
   const sourceTokens = tokenize(sourceText, options);
@@ -182,6 +198,8 @@ function scoreTexts(inputText, sourceText, options = {}) {
       exactMatchScore: 0,
       phraseOverlapScore: 0,
       wordOverlapScore: 0,
+      plagiarismScore: 0,
+      topicSimilarityScore: 0,
       scoreBasis: 'none',
       matchedPhrases: 0,
       totalPhrases: 0,
@@ -219,9 +237,13 @@ function scoreTexts(inputText, sourceText, options = {}) {
     wordOverlapScore,
     exactMatchScore,
   );
+  const plagiarismScore = getPlagiarismScore({ exactMatchScore, phraseOverlapScore });
+  const topicSimilarityScore = getTopicSimilarityScore({ wordOverlapScore });
 
   return {
     score: clamp(Math.round(score)),
+    plagiarismScore,
+    topicSimilarityScore,
     matchedWords: sharedWords,
     totalWords: inputTokens.length,
     exactMatchScore,
@@ -268,6 +290,17 @@ function snippet(text, maxLength = 220) {
   return `${compact.slice(0, maxLength - 1).trim()}…`;
 }
 
+function truncateText(value, maxLength) {
+  const text = String(value || '').replace(/\s+/g, ' ').trim();
+  if (text.length <= maxLength) return text;
+  if (maxLength <= 1) return text.slice(0, maxLength);
+  return `${text.slice(0, maxLength - 1).trim()}…`;
+}
+
+function schemaText(value, maxLength) {
+  return truncateText(value, maxLength);
+}
+
 function findSegmentMatches(inputText, candidate, threshold, options = {}) {
   const inputSegments = splitSegments(inputText);
   const sourceSegments = splitSegments(candidate.text);
@@ -278,25 +311,33 @@ function findSegmentMatches(inputText, candidate, threshold, options = {}) {
 
     sourceSegments.forEach((sourceSegment) => {
       const scored = scoreTexts(inputSegment.text, sourceSegment.text, options);
-      if (!bestMatch || scored.score > bestMatch.score) {
+      if (
+        !bestMatch
+        || scored.plagiarismScore > bestMatch.plagiarismScore
+        || (scored.plagiarismScore === bestMatch.plagiarismScore && scored.score > bestMatch.score)
+      ) {
         bestMatch = { ...sourceSegment, ...scored };
       }
     });
 
-    if (bestMatch && bestMatch.score >= threshold) {
+    if (bestMatch && bestMatch.plagiarismScore >= threshold) {
       matches.push({
         start: inputSegment.start,
         end: inputSegment.end,
-        matchedText: inputSegment.text,
-        sourceText: bestMatch.text,
-        sourceUrl: candidate.sourceUrl || '',
-        sourceTitle: candidate.sourceTitle || candidate.source || '',
+        matchedText: schemaText(inputSegment.text, MAX_MATCH_TEXT_LENGTH),
+        sourceText: schemaText(bestMatch.text, MAX_MATCH_TEXT_LENGTH),
+        sourceUrl: schemaText(candidate.sourceUrl || '', MAX_SOURCE_URL_LENGTH),
+        sourceTitle: schemaText(candidate.sourceTitle || candidate.source || '', MAX_SOURCE_TITLE_LENGTH),
         sourceType: candidate.sourceType,
-        score: bestMatch.score,
+        score: bestMatch.plagiarismScore,
         exactMatchScore: bestMatch.exactMatchScore,
         phraseOverlapScore: bestMatch.phraseOverlapScore,
         wordOverlapScore: bestMatch.wordOverlapScore,
-        scoreBasis: bestMatch.scoreBasis,
+        scoreBasis: getScoreBasis({
+          exactMatchScore: bestMatch.exactMatchScore,
+          phraseOverlapScore: bestMatch.phraseOverlapScore,
+          wordOverlapScore: 0,
+        }),
         matchedWords: bestMatch.matchedWords,
         totalWords: bestMatch.totalWords,
         matchedPhrases: bestMatch.matchedPhrases,
@@ -316,8 +357,24 @@ function getRiskLevel(similarityScore) {
   return 'safe';
 }
 
-function buildSummary(similarityScore, sources, matches) {
+function buildSummary(similarityScore, sources, matches, analysis = {}) {
+  const loadedSourceCount = Number(analysis.candidateCount ?? sources.length ?? 0);
+  const commonCrawl = analysis.commonCrawl || {};
+  const topicSimilarityScore = Number(analysis.topicSimilarityScore || analysis.wordOverlapScore || 0);
+
+  if (loadedSourceCount <= 0) {
+    return 'Chưa nạp được nguồn để so khớp, nên chưa đủ dữ liệu để kết luận nội dung không đạo văn.';
+  }
+
   if (similarityScore < 20) {
+    if (commonCrawl.enabled && commonCrawl.candidateCount === 0) {
+      return 'Không phát hiện trùng trong các nguồn đã nạp, nhưng nguồn web chưa tải được nội dung để so khớp nên chưa đủ để kết luận toàn web.';
+    }
+
+    if (topicSimilarityScore >= 20) {
+      return 'Không phát hiện đạo văn rõ; nội dung chỉ có tương đồng chủ đề/từ khóa với các nguồn đã nạp.';
+    }
+
     return 'Nội dung có mức trùng lặp thấp so với dữ liệu đang kiểm tra.';
   }
 
@@ -336,13 +393,15 @@ function buildSummary(similarityScore, sources, matches) {
 function serializeSource(source) {
   const reference = findReferenceSource(source);
   return {
-    source: source.source || reference?.source || '',
-    sourceTitle: reference?.sourceTitle || source.sourceTitle || '',
-    sourceUrl: source.sourceUrl || reference?.sourceUrl || '',
+    source: schemaText(source.source || reference?.source || '', MAX_SOURCE_LENGTH),
+    sourceTitle: schemaText(reference?.sourceTitle || source.sourceTitle || '', MAX_SOURCE_TITLE_LENGTH),
+    sourceUrl: schemaText(source.sourceUrl || reference?.sourceUrl || '', MAX_SOURCE_URL_LENGTH),
     sourceType: source.sourceType || reference?.sourceType || 'database',
     contentId: toId(source.contentId),
     similarity: Math.round(source.similarity || 0),
-    snippet: reference ? snippet(reference.text) : source.snippet || '',
+    plagiarismScore: Math.round(source.plagiarismScore || 0),
+    topicSimilarityScore: Math.round(source.topicSimilarityScore || source.wordOverlapScore || 0),
+    snippet: schemaText(reference ? snippet(reference.text) : source.snippet || '', MAX_SNIPPET_LENGTH),
     matchedWords: source.matchedWords || 0,
     totalWords: source.totalWords || 0,
     exactMatchScore: Math.round(source.exactMatchScore || 0),
@@ -359,10 +418,10 @@ function serializeMatch(match) {
   return {
     start: match.start || 0,
     end: match.end || 0,
-    matchedText: match.matchedText || '',
-    sourceText: match.sourceText || '',
-    sourceUrl: match.sourceUrl || reference?.sourceUrl || '',
-    sourceTitle: reference?.sourceTitle || match.sourceTitle || '',
+    matchedText: schemaText(match.matchedText || '', MAX_MATCH_TEXT_LENGTH),
+    sourceText: schemaText(match.sourceText || '', MAX_MATCH_TEXT_LENGTH),
+    sourceUrl: schemaText(match.sourceUrl || reference?.sourceUrl || '', MAX_SOURCE_URL_LENGTH),
+    sourceTitle: schemaText(reference?.sourceTitle || match.sourceTitle || '', MAX_SOURCE_TITLE_LENGTH),
     sourceType: match.sourceType || reference?.sourceType || 'database',
     score: Math.round(match.score || 0),
     exactMatchScore: Math.round(match.exactMatchScore || 0),
@@ -382,6 +441,7 @@ function serializeReport(report) {
   const originalityScore = Math.round(report.originalityScore || 0);
   const matches = (report.matches || []).map(serializeMatch);
   const sources = (report.sources || []).map(serializeSource);
+  const analysis = report.analysis || {};
 
   return {
     id: report._id.toString(),
@@ -401,8 +461,8 @@ function serializeReport(report) {
     sensitivity: report.sensitivity || 'balanced',
     ignoreCommonPhrases: report.ignoreCommonPhrases !== false,
     sourceConfig: report.sourceConfig || DEFAULT_SOURCE_CONFIG,
-    analysis: report.analysis || {},
-    summary: buildSummary(similarityScore, sources, matches),
+    analysis,
+    summary: report.summary || buildSummary(similarityScore, sources, matches, analysis),
     createdAt: report.createdAt,
     updatedAt: report.updatedAt,
   };
@@ -488,6 +548,8 @@ function buildAnalysis(scoredSources, candidates, matches, sourceConfig, effecti
     matchCount: matches.length,
     checkedSourceTypes,
     unavailableSourceTypes,
+    plagiarismScore: maxScore(scoredSources.map((source) => source.plagiarismScore)),
+    topicSimilarityScore: maxScore(scoredSources.map((source) => source.topicSimilarityScore ?? source.wordOverlapScore)),
     exactMatchScore: maxScore(scoredSources.map((source) => source.exactMatchScore)),
     phraseOverlapScore: maxScore(scoredSources.map((source) => source.phraseOverlapScore)),
     wordOverlapScore: maxScore(scoredSources.map((source) => source.wordOverlapScore)),
@@ -551,7 +613,7 @@ async function checkPlagiarism(userId, payload) {
   const [databaseCandidates, commonCrawlResult] = await Promise.all([
     sourceConfig.database ? buildDatabaseCandidates(userId, contentId) : Promise.resolve([]),
     sourceConfig.web
-      ? commonCrawlService.fetchCommonCrawlCandidates(checkText, { allowLiveFallback: false })
+      ? commonCrawlService.fetchCommonCrawlCandidates(checkText, { allowLiveFallback: true, preferLiveFallback: true })
       : Promise.resolve({ candidates: [], stats: { enabled: false, status: 'skipped', allowLiveFallback: false } }),
   ]);
   const referenceCandidates = sourceConfig.references ? REFERENCE_SOURCES : [];
@@ -567,11 +629,15 @@ async function checkPlagiarism(userId, payload) {
       const exactMatchScore = Math.max(textScore.exactMatchScore, bestSegment.exactMatchScore || 0);
       const phraseOverlapScore = Math.max(textScore.phraseOverlapScore, bestSegment.phraseOverlapScore || 0);
       const wordOverlapScore = Math.max(textScore.wordOverlapScore, bestSegment.wordOverlapScore || 0);
+      const plagiarismScore = Math.max(textScore.plagiarismScore, bestMatchScore);
+      const topicSimilarityScore = getTopicSimilarityScore({ wordOverlapScore });
       const similarity = Math.max(textScore.score, bestMatchScore);
 
       return {
         ...candidate,
         similarity,
+        plagiarismScore,
+        topicSimilarityScore,
         matchedWords: textScore.matchedWords,
         totalWords: textScore.totalWords,
         exactMatchScore,
@@ -588,13 +654,15 @@ async function checkPlagiarism(userId, payload) {
     .sort((left, right) => right.similarity - left.similarity);
 
   const sources = scoredSources.slice(0, MAX_REPORT_SOURCES).map((candidate) => ({
-    source: candidate.source,
-    sourceTitle: candidate.sourceTitle,
-    sourceUrl: candidate.sourceUrl,
+    source: schemaText(candidate.source, MAX_SOURCE_LENGTH),
+    sourceTitle: schemaText(candidate.sourceTitle, MAX_SOURCE_TITLE_LENGTH),
+    sourceUrl: schemaText(candidate.sourceUrl, MAX_SOURCE_URL_LENGTH),
     sourceType: candidate.sourceType,
     contentId: candidate.contentId || null,
     similarity: candidate.similarity,
-    snippet: candidate.snippet,
+    plagiarismScore: candidate.plagiarismScore,
+    topicSimilarityScore: candidate.topicSimilarityScore,
+    snippet: schemaText(candidate.snippet, MAX_SNIPPET_LENGTH),
     matchedWords: candidate.matchedWords,
     totalWords: candidate.totalWords,
     exactMatchScore: candidate.exactMatchScore,
@@ -611,10 +679,9 @@ async function checkPlagiarism(userId, payload) {
     .slice(0, MAX_REPORT_MATCHES)
     .sort((left, right) => left.start - right.start);
 
-  const similarityScore = clamp(scoredSources[0]?.similarity || 0);
+  const similarityScore = clamp(maxScore(scoredSources.map((source) => source.plagiarismScore)));
   const originalityScore = clamp(100 - similarityScore);
   const riskLevel = getRiskLevel(similarityScore);
-  const summary = buildSummary(similarityScore, sources, matches);
   const analysis = buildAnalysis(
     scoredSources,
     candidates,
@@ -623,6 +690,7 @@ async function checkPlagiarism(userId, payload) {
     effectiveThreshold,
     commonCrawlResult.stats,
   );
+  const summary = buildSummary(similarityScore, sources, matches, analysis);
 
   const report = await PlagiarismReport.create({
     userId,
@@ -707,4 +775,10 @@ module.exports = {
   debugCommonCrawl,
   listReports,
   getReport,
+  __test: {
+    scoreTexts,
+    findSegmentMatches,
+    getPlagiarismScore,
+    getTopicSimilarityScore,
+  },
 };
