@@ -160,6 +160,12 @@ const sourceSchema = new mongoose.Schema(
       maxlength: 600,
       default: '',
     },
+    sourceText: {
+      type: String,
+      trim: true,
+      maxlength: 30000,
+      default: '',
+    },
     matchedWords: {
       type: Number,
       min: 0,
@@ -223,6 +229,7 @@ const analysisSchema = new mongoose.Schema(
     candidateCount: { type: Number, min: 0, default: 0 },
     sourceCount: { type: Number, min: 0, default: 0 },
     matchCount: { type: Number, min: 0, default: 0 },
+    topicMatchCount: { type: Number, min: 0, default: 0 },
     checkedSourceTypes: { type: [String], default: [] },
     unavailableSourceTypes: { type: [String], default: [] },
     plagiarismScore: { type: Number, min: 0, max: 100, default: 0 },
@@ -372,6 +379,10 @@ const plagiarismReportSchema = new mongoose.Schema(
       index: true,
     },
     matches: {
+      type: [matchSchema],
+      default: [],
+    },
+    topicMatches: {
       type: [matchSchema],
       default: [],
     },

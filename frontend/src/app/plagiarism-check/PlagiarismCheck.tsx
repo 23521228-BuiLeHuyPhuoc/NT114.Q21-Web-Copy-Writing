@@ -7,7 +7,7 @@ import { Progress } from '@/app/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select';
 import { Switch } from '@/app/components/ui/switch';
 import { Textarea } from '@/app/components/ui/textarea';
-import { AlertTriangle, CheckCircle2, Clock, Database, FileCheck, FileText, RefreshCw, Search, Shield } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, ChevronDown, ChevronUp, Clock, Database, FileCheck, FileText, RefreshCw, Search, Shield } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 import { useCheckPlagiarism, usePlagiarismHistory } from '@/hooks/queries/usePlagiarism';
@@ -62,6 +62,12 @@ function suspiciousHighlightClass(score: number) {
   return 'rounded border border-red-200 bg-red-50 px-1 py-0.5 text-red-800';
 }
 
+function topicHighlightClass(score: number) {
+  if (score >= 70) return 'rounded border border-amber-300 bg-amber-200 px-1 py-0.5 text-amber-950';
+  if (score >= 45) return 'rounded border border-amber-200 bg-amber-100 px-1 py-0.5 text-amber-900';
+  return 'rounded border border-amber-200 bg-amber-50 px-1 py-0.5 text-amber-800';
+}
+
 function scoreBadgeClass(score: number) {
   if (score >= 70) return 'border-0 bg-red-100 text-red-800';
   if (score >= 45) return 'border-0 bg-orange-100 text-orange-800';
@@ -96,13 +102,16 @@ function dateLabel(value?: string) {
   return new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).format(date);
 }
 
-function mergeMatchRanges(matches: PlagiarismMatch[]) {
+type HighlightKind = 'plagiarism' | 'topic';
+
+function mergeMatchRanges(matches: PlagiarismMatch[], kind: HighlightKind) {
   const ranges = matches
     .map((match) => ({
       start: Math.max(0, Math.min(match.start, match.end)),
       end: Math.max(0, Math.max(match.start, match.end)),
       score: match.score,
       scoreBasis: match.scoreBasis,
+      kind,
       label: `${match.sourceTitle || match.sourceUrl || 'Nguồn'} · ${match.score}% · ${basisLabel(match.scoreBasis)}`,
     }))
     .filter((range) => range.end > range.start)
@@ -126,8 +135,27 @@ function mergeMatchRanges(matches: PlagiarismMatch[]) {
   return merged;
 }
 
-function renderHighlightedText(text: string, matches: PlagiarismMatch[]) {
-  const ranges = mergeMatchRanges(matches);
+function rangesOverlap(left: { start: number; end: number }, right: { start: number; end: number }) {
+  return left.start < right.end && right.start < left.end;
+}
+
+function buildHighlightRanges(matches: PlagiarismMatch[], topicMatches: PlagiarismMatch[]) {
+  const plagiarismRanges = mergeMatchRanges(matches, 'plagiarism');
+  const topicRanges = mergeMatchRanges(topicMatches, 'topic')
+    .filter((topicRange) => !plagiarismRanges.some((plagiarismRange) => rangesOverlap(topicRange, plagiarismRange)));
+
+  return [...plagiarismRanges, ...topicRanges]
+    .sort((left, right) => left.start - right.start || right.end - left.end);
+}
+
+function highlightClass(range: { kind: HighlightKind; score: number }) {
+  return range.kind === 'plagiarism'
+    ? suspiciousHighlightClass(range.score)
+    : topicHighlightClass(range.score);
+}
+
+function renderHighlightedText(text: string, matches: PlagiarismMatch[], topicMatches: PlagiarismMatch[] = []) {
+  const ranges = buildHighlightRanges(matches, topicMatches);
   if (ranges.length === 0) return <span>{text}</span>;
 
   const nodes: ReactNode[] = [];
@@ -141,7 +169,7 @@ function renderHighlightedText(text: string, matches: PlagiarismMatch[]) {
       <mark
         key={`m-${index}-${range.start}-${range.end}`}
         title={range.label}
-        className={suspiciousHighlightClass(range.score)}
+        className={highlightClass(range)}
       >
         {text.slice(range.start, range.end)}
       </mark>,
@@ -242,8 +270,9 @@ function plagiarismConclusion(report: PlagiarismReport) {
   const originality = Math.round(report.originalityScore || 0);
   const threshold = report.analysis.effectiveThreshold || report.threshold || 35;
   const matchCount = report.analysis.matchCount || report.matches.length;
+  const topicMatchCount = report.analysis.topicMatchCount || report.topicMatches.length;
   const loadedSources = report.analysis.candidateCount || 0;
-  const sourceText = `${loadedSources} nguồn đã nạp, ${matchCount} đoạn vượt ngưỡng ${threshold}%, tương đồng chủ đề ${topicSimilarity}%`;
+  const sourceText = `${loadedSources} nguồn đã nạp, ${matchCount} đoạn vượt ngưỡng ${threshold}%, ${topicMatchCount} đoạn tương đồng chủ đề, tương đồng chủ đề ${topicSimilarity}%`;
 
   if (loadedSources <= 0) {
     return {
@@ -297,6 +326,7 @@ function durationLabel(ms: number) {
 export function CustomerPlagiarismCheck() {
   const [text, setText] = useState('');
   const [result, setResult] = useState<PlagiarismReport | null>(null);
+  const [expandedSources, setExpandedSources] = useState<Record<string, boolean>>({});
   const [sensitivity, setSensitivity] = useState<PlagiarismSensitivity>('balanced');
   const [sourceConfig, setSourceConfig] = useState<PlagiarismSourceConfig>({
     database: true,
@@ -314,6 +344,10 @@ export function CustomerPlagiarismCheck() {
 
   const updateSource = (key: keyof PlagiarismSourceConfig, value: boolean) => {
     setSourceConfig(prev => ({ ...prev, [key]: value }));
+  };
+
+  const toggleSourceExpanded = (key: string) => {
+    setExpandedSources(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
   const handleCheck = () => {
@@ -334,7 +368,7 @@ export function CustomerPlagiarismCheck() {
       ignoreCommonPhrases,
       sources: sourceConfig,
     }, {
-      onSuccess: (report) => { setResult(report); toast.success('Kiểm tra đạo văn hoàn tất'); },
+      onSuccess: (report) => { setResult(report); setExpandedSources({}); toast.success('Kiểm tra đạo văn hoàn tất'); },
       onError: (error) => toast.error(errorMessage(error)),
     });
   };
@@ -383,7 +417,7 @@ export function CustomerPlagiarismCheck() {
           </div>
           <div className='mt-4 flex gap-3'>
             <Button className='h-11 flex-1 text-white' onClick={handleCheck} disabled={check.isPending}>{check.isPending ? <><RefreshCw className='mr-2 h-4 w-4 animate-spin' /> Đang kiểm tra...</> : <><FileCheck className='mr-2 h-4 w-4' /> Kiểm tra đạo văn</>}</Button>
-            <Button variant='outline' onClick={() => { setText(''); setResult(null); }}>Xóa</Button>
+            <Button variant='outline' onClick={() => { setText(''); setResult(null); setExpandedSources({}); }}>Xóa</Button>
           </div>
         </Card>
         {result && (
@@ -408,7 +442,7 @@ export function CustomerPlagiarismCheck() {
               <div className='rounded-lg border p-4'><p className='text-xs uppercase text-muted-foreground'>Tính độc đáo</p><p className={`mt-2 text-3xl font-bold ${scoreClass(result.originalityScore)}`}>{result.originalityScore}%</p><Progress value={result.originalityScore} className='mt-3' /></div>
               <div className='rounded-lg border p-4'><p className='text-xs uppercase text-muted-foreground'>Nguy cơ đạo văn</p><p className={`mt-2 text-3xl font-bold ${scoreClass(result.analysis.plagiarismScore || result.similarityScore, true)}`}>{result.analysis.plagiarismScore || result.similarityScore}%</p><Progress value={result.analysis.plagiarismScore || result.similarityScore} className='mt-3' /></div>
               <div className='rounded-lg border p-4'><p className='text-xs uppercase text-muted-foreground'>Tương đồng chủ đề</p><p className={`mt-2 text-3xl font-bold ${scoreClass(result.analysis.topicSimilarityScore || result.analysis.wordOverlapScore, true)}`}>{result.analysis.topicSimilarityScore || result.analysis.wordOverlapScore}%</p><Progress value={result.analysis.topicSimilarityScore || result.analysis.wordOverlapScore} className='mt-3' /></div>
-              <div className='rounded-lg border p-4'><p className='text-xs uppercase text-muted-foreground'>Đoạn nghi vấn</p><p className='mt-2 text-3xl font-bold text-foreground'>{result.matches.length}</p><p className='mt-3 text-xs text-muted-foreground'>{result.modelUsed}</p></div>
+              <div className='rounded-lg border p-4'><p className='text-xs uppercase text-muted-foreground'>Đoạn cần xem</p><p className='mt-2 text-3xl font-bold text-foreground'>{result.matches.length + result.topicMatches.length}</p><p className='mt-3 text-xs text-muted-foreground'>{result.matches.length} đạo văn · {result.topicMatches.length} tương đồng</p></div>
             </div>
             <div className='mt-4 grid gap-3 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]'>
               <div className='min-w-0 rounded-lg border bg-muted/30 p-4'>
@@ -436,7 +470,7 @@ export function CustomerPlagiarismCheck() {
                 <h3 className='font-semibold text-foreground'>Thông số lần kiểm tra</h3>
                 <div className='mt-3 min-w-0 space-y-2 overflow-hidden text-xs text-muted-foreground'>
                   <p>Đã nạp {result.analysis.candidateCount} nguồn để so khớp; {result.analysis.sourceCount} nguồn có tín hiệu tương đồng: {result.analysis.checkedSourceTypes.map(sourceTypeLabel).join(', ') || 'không có nguồn'}.</p>
-                  <p>Tìm thấy {result.analysis.matchCount || result.matches.length} đoạn vượt ngưỡng trong {result.wordCount} từ kiểm tra.</p>
+                  <p>Tìm thấy {result.analysis.matchCount || result.matches.length} đoạn vượt ngưỡng và {result.analysis.topicMatchCount || result.topicMatches.length} đoạn tương đồng chủ đề trong {result.wordCount} từ kiểm tra.</p>
                   <p>Chế độ: {SENSITIVITY[result.sensitivity].label}; {result.ignoreCommonPhrases ? 'đã bỏ qua cụm CTA/câu mẫu phổ biến' : 'không bỏ qua cụm phổ biến'}.</p>
                   {result.analysis.commonCrawl.enabled && (
                     <div className='space-y-2'>
@@ -492,7 +526,11 @@ export function CustomerPlagiarismCheck() {
         {result && (
           <Card className='p-5'>
             <h2 className='mb-4 flex items-center gap-2 font-semibold text-foreground'><FileText className='h-4 w-4 text-primary' /> Văn bản đã kiểm tra</h2>
-            <div className='max-h-[300px] overflow-auto whitespace-pre-wrap rounded-lg border bg-background p-4 text-sm leading-7 text-foreground'>{renderHighlightedText(result.checkText, result.matches)}</div>
+            <div className='mb-3 flex flex-wrap gap-2 text-xs text-muted-foreground'>
+              <span className='inline-flex items-center gap-1'><span className='h-2.5 w-2.5 rounded bg-red-200 ring-1 ring-red-300' /> Nghi đạo văn</span>
+              <span className='inline-flex items-center gap-1'><span className='h-2.5 w-2.5 rounded bg-amber-200 ring-1 ring-amber-300' /> Tương đồng chủ đề/từ khóa</span>
+            </div>
+            <div className='max-h-[300px] overflow-auto whitespace-pre-wrap rounded-lg border bg-background p-4 text-sm leading-7 text-foreground'>{renderHighlightedText(result.checkText, result.matches, result.topicMatches)}</div>
             {result.matches.length > 0 ? (
               <div className='mt-4 space-y-3'>
                 <h3 className='text-sm font-semibold text-foreground'>Đoạn có khả năng đạo văn</h3>
@@ -522,6 +560,33 @@ export function CustomerPlagiarismCheck() {
             ) : (
               <p className='mt-3 rounded-lg border border-dashed p-3 text-sm text-muted-foreground'>Không có đoạn nào vượt ngưỡng để bôi đỏ.</p>
             )}
+            {result.topicMatches.length > 0 && (
+              <div className='mt-4 space-y-3'>
+                <h3 className='text-sm font-semibold text-foreground'>Đoạn tương đồng chủ đề/từ khóa</h3>
+                {result.topicMatches.map((match, index) => (
+                  <div key={`topic-${match.start}-${match.end}-${index}`} className='rounded-lg border border-amber-100 bg-amber-50/60 p-4'>
+                    <div className='flex flex-wrap items-center justify-between gap-2'>
+                      <div>
+                        <p className='text-sm font-semibold text-amber-950'>Đoạn {index + 1}: {basisLabel(match.scoreBasis)}</p>
+                        <p className='mt-1 text-xs text-amber-800'>Đoạn này có nhiều từ khóa/chủ đề giống nguồn, nhưng chưa đủ exact/n-gram để kết luận đạo văn.</p>
+                      </div>
+                      <Badge className={scoreBadgeClass(match.score)}>{match.score}%</Badge>
+                    </div>
+                    <p className='mt-3 whitespace-pre-wrap rounded-md bg-background p-3 text-sm text-foreground'>{match.matchedText}</p>
+                    <div className='mt-3 grid gap-2 sm:grid-cols-3'>
+                      <div className='rounded-md border bg-background p-2 text-xs'><span className='text-muted-foreground'>Exact</span><p className='font-semibold text-foreground'>{match.exactMatchScore}%</p></div>
+                      <div className='rounded-md border bg-background p-2 text-xs'><span className='text-muted-foreground'>N-gram</span><p className='font-semibold text-foreground'>{match.phraseOverlapScore}%</p></div>
+                      <div className='rounded-md border bg-background p-2 text-xs'><span className='text-muted-foreground'>Overlap từ</span><p className='font-semibold text-foreground'>{match.wordOverlapScore}%</p></div>
+                    </div>
+                    <p className='mt-3 text-xs text-muted-foreground'>Trùng {ratioLabel(match.matchedWords, match.totalWords, 'từ')} và {ratioLabel(match.matchedPhrases, match.totalPhrases, 'cụm')} trong đoạn so khớp.</p>
+                    <div className='mt-3 rounded-md border bg-background p-3'>
+                      <p className='text-xs font-semibold text-muted-foreground'>Nguồn gần nhất: {match.sourceTitle || sourceTypeLabel(match.sourceType)}</p>
+                      <p className='mt-1 line-clamp-3 text-sm italic text-muted-foreground'>{match.sourceText}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </Card>
         )}
         {result && (
@@ -530,8 +595,14 @@ export function CustomerPlagiarismCheck() {
             <div className='space-y-3'>
               {result.sources.length === 0 ? (
                 <p className='rounded-lg border border-dashed p-4 text-sm text-muted-foreground'>Không tìm thấy nguồn tương đồng đáng kể.</p>
-              ) : result.sources.map((source, index) => (
-                <div key={`${source.source}-${index}`} className='rounded-lg border p-4'>
+              ) : result.sources.map((source, index) => {
+                const sourceKey = `${source.sourceUrl || source.source || source.sourceTitle || 'source'}-${index}`;
+                const expanded = Boolean(expandedSources[sourceKey]);
+                const sourceText = source.sourceText || source.snippet;
+                const canExpand = sourceText.length > 240;
+
+                return (
+                <div key={sourceKey} className='rounded-lg border p-4'>
                   <div className='mb-2 flex items-center justify-between gap-2'>
                     <div className='min-w-0'>
                       <p className='truncate text-sm font-semibold text-foreground'>{source.sourceTitle || source.source}</p>
@@ -539,7 +610,15 @@ export function CustomerPlagiarismCheck() {
                     </div>
                     <Badge className={scoreBadgeClass(source.similarity)}>{source.similarity}%</Badge>
                   </div>
-                  <p className='text-sm italic text-muted-foreground'>{source.snippet}</p>
+                  <div className='rounded-md border bg-background p-3'>
+                    <p className={`whitespace-pre-wrap text-sm text-muted-foreground ${expanded ? 'max-h-[360px] overflow-auto' : 'line-clamp-3 italic'}`}>{sourceText}</p>
+                    {canExpand && (
+                      <Button type='button' variant='ghost' size='sm' className='mt-2 h-8 px-2 text-xs' onClick={() => toggleSourceExpanded(sourceKey)}>
+                        {expanded ? <ChevronUp className='mr-1 h-3.5 w-3.5' /> : <ChevronDown className='mr-1 h-3.5 w-3.5' />}
+                        {expanded ? 'Thu gọn nguồn' : 'Đọc nội dung nguồn'}
+                      </Button>
+                    )}
+                  </div>
                   <div className='mt-3 grid gap-2 sm:grid-cols-3'>
                     <div className='rounded-md border bg-muted/20 p-2 text-xs'><span className='text-muted-foreground'>Exact</span><p className='font-semibold text-foreground'>{source.exactMatchScore}%</p></div>
                     <div className='rounded-md border bg-muted/20 p-2 text-xs'><span className='text-muted-foreground'>N-gram</span><p className='font-semibold text-foreground'>{source.phraseOverlapScore}%</p></div>
@@ -547,14 +626,15 @@ export function CustomerPlagiarismCheck() {
                   </div>
                   <p className='mt-2 text-xs text-muted-foreground'>Trùng {ratioLabel(source.matchedWords, source.totalWords, 'từ')} và {ratioLabel(source.matchedPhrases, source.totalPhrases, 'cụm')} trong phép so khớp toàn văn.</p>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </Card>
         )}
         <Card className='p-5'>
           <h2 className='mb-4 flex items-center gap-2 font-semibold text-foreground'><Clock className='h-4 w-4 text-primary' /> Lịch sử gần đây</h2>
           <div className='mb-4 grid gap-3 sm:grid-cols-3'><div className='flex items-center gap-2 text-sm'><Search className='h-4 w-4 text-primary' /> {history?.pagination.totalItems || historyItems.length} lượt kiểm tra</div><div className='flex items-center gap-2 text-sm'><Shield className='h-4 w-4 text-primary' /> local-ngram-v1</div><div className='flex items-center gap-2 text-sm'><CheckCircle2 className='h-4 w-4 text-primary' /> ngưỡng 35%</div></div>
-          {historyItems.length === 0 ? <p className='text-sm text-muted-foreground'>Chưa có report nào.</p> : <div className='space-y-3'>{historyItems.map((item) => <button key={item.id} type='button' onClick={() => setResult(item)} className='w-full rounded-lg border p-3 text-left hover:border-primary/50'><div className='mb-2 flex items-center justify-between gap-2'><span className='text-sm font-semibold text-foreground'>{item.originalityScore}% độc đáo</span><Badge variant='outline' className={RISK[item.riskLevel].cls}>{RISK[item.riskLevel].label}</Badge></div><p className='line-clamp-2 text-xs text-muted-foreground'>{item.checkText}</p><p className='mt-2 text-[11px] text-muted-foreground'>{dateLabel(item.createdAt)}</p></button>)}</div>}
+          {historyItems.length === 0 ? <p className='text-sm text-muted-foreground'>Chưa có report nào.</p> : <div className='space-y-3'>{historyItems.map((item) => <button key={item.id} type='button' onClick={() => { setResult(item); setExpandedSources({}); }} className='w-full rounded-lg border p-3 text-left hover:border-primary/50'><div className='mb-2 flex items-center justify-between gap-2'><span className='text-sm font-semibold text-foreground'>{item.originalityScore}% độc đáo</span><Badge variant='outline' className={RISK[item.riskLevel].cls}>{RISK[item.riskLevel].label}</Badge></div><p className='line-clamp-2 text-xs text-muted-foreground'>{item.checkText}</p><p className='mt-2 text-[11px] text-muted-foreground'>{dateLabel(item.createdAt)}</p></button>)}</div>}
         </Card>
       </div>
     </Layout>

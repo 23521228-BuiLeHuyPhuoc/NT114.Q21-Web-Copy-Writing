@@ -3,7 +3,9 @@ const FineTuneDataset = require('../models/FineTuneDataset');
 const FineTuneJob = require('../models/FineTuneJob');
 
 const objectId = Joi.string().hex().length(24);
-const defaultBaseModel = process.env.FINE_TUNE_BASE_MODELS?.split(',')[0]?.trim() || 'gemini-flash';
+const defaultBaseModel = process.env.VERTEX_TUNING_BASE_MODELS?.split(',')[0]?.trim()
+  || process.env.FINE_TUNE_BASE_MODELS?.split(',')[0]?.trim()
+  || 'gemini-2.5-flash';
 
 const paramsWithId = Joi.object({
   id: objectId.required(),
@@ -83,7 +85,7 @@ const createFineTuneJobSchema = Joi.object({
   name: Joi.string().trim().min(2).max(120).required(),
   industry: Joi.string().trim().lowercase().max(80).allow('').default('general'),
   baseModel: Joi.string().trim().min(1).max(80).default(defaultBaseModel),
-  provider: Joi.string().valid('gemini', 'groq', 'openrouter', 'openai', 'vertex-gemini', 'vertex-llama', 'freegpt4', 'huggingface').default('vertex-gemini'),
+  provider: Joi.string().valid('openai', 'vertex-gemini', 'vertex-llama', 'gpt-oss').default('vertex-gemini'),
   description: Joi.string().trim().max(1200).allow('').default(''),
   datasetId: objectId.optional(),
   datasetUrl: Joi.string().trim().max(500).allow('').default(''),

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ChangeEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import { Layout } from '@/app/components/Layout';
 import { Card } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
@@ -17,6 +17,7 @@ import {
 import toast from 'react-hot-toast';
 import { ImageWithFallback } from '@/app/components/figma/ImageWithFallback';
 import { useNavigate } from '@/lib/next-router-compat';
+import * as XLSX from 'xlsx';
 
 import {
   useCreateFineTuneJob,
@@ -31,7 +32,6 @@ import {
 } from '@/hooks/queries/useFineTuning';
 import { DataPagination } from '@/app/components/common/DataPagination';
 import { usePagination } from '@/hooks/usePagination';
-import { MODELS as GENERATOR_MODELS } from '@/mocks/generator';
 
 type ImportedFineTuneExample = {
   id: string;
@@ -39,13 +39,6 @@ type ImportedFineTuneExample = {
   output: string;
   industry: string;
   tone: string;
-};
-
-type BaseModelOption = {
-  id: string;
-  name: string;
-  description?: string;
-  default?: boolean;
 };
 
 type TrainingMetric = {
@@ -66,12 +59,9 @@ type MetricCard = {
   good?: boolean;
 };
 
-const BASE_MODEL_OPTIONS: BaseModelOption[] = GENERATOR_MODELS.map((model, index) => ({
-  id: model.id,
-  name: model.name,
-  description: model.desc,
-  default: index === 0,
-}));
+const FINE_TUNE_PROVIDER_PRIORITY = ['gpt-oss', 'vertex-gemini', 'vertex-llama', 'openai'];
+const TRAINING_IMPORT_ACCEPT = '.csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel';
+const TRAINING_IMPORT_FILE_TYPES = 'CSV hoac Excel (.xlsx, .xls)';
 
 function clampProgressValue(value?: number | null) {
   const numeric = Number(value ?? 0);
@@ -125,24 +115,69 @@ function parseCsvRows(text: string): string[][] {
 
 function parseFineTuneCsv(text: string): ImportedFineTuneExample[] {
   const rows = parseCsvRows(text.replace(/^\uFEFF/, ''));
+  return parseFineTuneTableRows(rows, 'csv');
+}
+
+function normalizeHeader(value: string) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\u0111/g, 'd')
+    .replace(/\u0110/g, 'd')
+    .replace(/[^a-z0-9]+/g, '');
+}
+
+function findHeaderIndex(headers: string[], candidates: string[]) {
+  const normalizedCandidates = candidates.map(normalizeHeader);
+  return headers.findIndex(header => normalizedCandidates.includes(normalizeHeader(header)));
+}
+
+function parseFineTuneTableRows(rows: Array<Array<unknown>>, idPrefix: string): ImportedFineTuneExample[] {
   if (rows.length < 2) return [];
 
-  const headers = rows[0].map(header => header.trim().toLowerCase());
-  const inputIndex = headers.indexOf('input');
-  const outputIndex = headers.indexOf('output');
-  const industryIndex = headers.indexOf('industry');
-  const toneIndex = headers.indexOf('tone');
+  const headers = rows[0].map(header => String(header ?? '').trim());
+  const inputIndex = findHeaderIndex(headers, ['input', 'inputText', 'prompt', 'user', 'userPrompt', 'noi dung dau vao', 'cau hoi']);
+  const outputIndex = findHeaderIndex(headers, ['output', 'outputText', 'completion', 'assistant', 'response', 'noi dung dau ra', 'cau tra loi']);
+  const industryIndex = findHeaderIndex(headers, ['industry', 'nganh', 'nganh nghe', 'linh vuc']);
+  const toneIndex = findHeaderIndex(headers, ['tone', 'voice', 'brandVoice', 'giong van', 'tone giong']);
   if (inputIndex < 0 || outputIndex < 0) return [];
 
   return rows.slice(1).map((cells, index) => {
+    const input = String(cells[inputIndex] ?? '').trim();
+    const output = String(cells[outputIndex] ?? '').trim();
     return {
-      id: `csv-${Date.now()}-${index}`,
-      input: cells[inputIndex] || '',
-      output: cells[outputIndex] || '',
-      industry: industryIndex >= 0 ? cells[industryIndex] || 'general' : 'general',
-      tone: toneIndex >= 0 ? cells[toneIndex] || '' : '',
+      id: `${idPrefix}-${Date.now()}-${index}`,
+      input,
+      output,
+      industry: industryIndex >= 0 ? String(cells[industryIndex] ?? '').trim() || 'general' : 'general',
+      tone: toneIndex >= 0 ? String(cells[toneIndex] ?? '').trim() || '' : '',
     };
   }).filter(item => item.input.length >= 10 && item.output.length >= 20);
+}
+
+async function parseFineTuneExcel(file: File): Promise<ImportedFineTuneExample[]> {
+  const buffer = await file.arrayBuffer();
+  const workbook = XLSX.read(buffer, { type: 'array' });
+  const firstSheetName = workbook.SheetNames[0];
+  if (!firstSheetName) return [];
+
+  const sheet = workbook.Sheets[firstSheetName];
+  const rows = XLSX.utils.sheet_to_json<Array<string | number | boolean | null>>(sheet, {
+    header: 1,
+    blankrows: false,
+    defval: '',
+    raw: false,
+  });
+  return parseFineTuneTableRows(rows, 'excel');
+}
+
+function isExcelFile(file: File) {
+  const name = file.name.toLowerCase();
+  return name.endsWith('.xlsx') || name.endsWith('.xls')
+    || file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    || file.type === 'application/vnd.ms-excel';
 }
 
 function isCloseNumber(value: number, expected: number) {
@@ -204,6 +239,20 @@ function getMetricBadgeClass(metric: MetricCard) {
   return metric.good ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive';
 }
 
+function isReadyFineTuneProvider(provider: { status?: string; supportsFineTuning?: boolean }) {
+  return provider.status === 'active' && Boolean(provider.supportsFineTuning);
+}
+
+function isFineTuneProviderOption(provider: { id: string; supportsFineTuning?: boolean }) {
+  if (provider.id === 'openai') return Boolean(provider.supportsFineTuning);
+  return Boolean(provider.supportsFineTuning) || FINE_TUNE_PROVIDER_PRIORITY.includes(provider.id);
+}
+
+function fineTuneProviderRank(providerId: string) {
+  const index = FINE_TUNE_PROVIDER_PRIORITY.indexOf(providerId);
+  return index === -1 ? FINE_TUNE_PROVIDER_PRIORITY.length : index;
+}
+
 export function CustomerFineTuningStudio() {
   const navigate = useNavigate();
   const { data: modelsData } = useFineTuningModels();
@@ -228,31 +277,44 @@ export function CustomerFineTuningStudio() {
   const [newModelProvider, setNewModelProvider] = useState('');
   const [newModelDesc, setNewModelDesc] = useState('');
   const [activeTab, setActiveTab] = useState('models');
-  const csvInputRef = useRef<HTMLInputElement | null>(null);
-  const activeProvider = providers.find(provider => provider.id === newModelProvider);
-  const providerBaseModelOptions = activeProvider?.baseModels?.length
-    ? activeProvider.baseModels
-    : BASE_MODEL_OPTIONS;
-  const baseModelOptions = providerBaseModelOptions.length > 0 ? providerBaseModelOptions : BASE_MODEL_OPTIONS;
-  const selectedProviderCanCreateTrainingJob = Boolean(activeProvider?.supportsFineTuning);
+  const trainingFileInputRef = useRef<HTMLInputElement | null>(null);
+  const fineTuneProviders = useMemo(
+    () => providers
+      .filter(isFineTuneProviderOption)
+      .sort((a, b) => fineTuneProviderRank(a.id) - fineTuneProviderRank(b.id)),
+    [providers],
+  );
+  const activeProvider = fineTuneProviders.find(provider => provider.id === newModelProvider);
+  const baseModelOptions = activeProvider?.baseModels || [];
+  const selectedProviderCanCreateTrainingJob = isReadyFineTuneProvider(activeProvider || {});
   const providerHint = activeProvider
     ? activeProvider.message || (activeProvider.supportsFineTuning
       ? 'Provider n\u00e0y upload JSONL v\u00e0 t\u1ea1o job fine-tuning th\u1eadt qua provider.'
       : activeProvider.status === 'active'
         ? 'Provider API n\u00e0y \u0111ang d\u00f9ng cho generate, ch\u01b0a c\u00f3 adapter fine-tuning th\u1eadt trong backend.'
         : 'Provider n\u00e0y ch\u01b0a c\u00f3 API key trong backend.')
-    : '';
+    : providers.length > 0
+      ? 'Chua co provider fine-tuning that trong cau hinh backend.'
+      : '';
   useEffect(() => {
-    if (providers.length === 0) return;
-    const currentProvider = providers.find(provider => provider.id === newModelProvider);
-    if (currentProvider?.status === 'active') return;
+    if (fineTuneProviders.length === 0) {
+      if (newModelProvider) setNewModelProvider('');
+      return;
+    }
 
-    const preferredProvider = providers.find(provider => provider.status === 'active' && provider.isDefault)
-      || providers.find(provider => provider.status === 'active' && provider.productionReady)
-      || providers.find(provider => provider.status === 'active')
-      || providers[0];
+    const currentProvider = fineTuneProviders.find(provider => provider.id === newModelProvider);
+    if (currentProvider && isReadyFineTuneProvider(currentProvider)) return;
+
+    const readyProviders = fineTuneProviders.filter(isReadyFineTuneProvider);
+
+    const preferredProvider = readyProviders.find(provider => provider.isDefault)
+      || readyProviders.find(provider => provider.productionReady)
+      || readyProviders[0]
+      || fineTuneProviders.find(provider => provider.status === 'active' && provider.isDefault)
+      || fineTuneProviders.find(provider => provider.status === 'active')
+      || fineTuneProviders[0];
     if (preferredProvider) setNewModelProvider(preferredProvider.id);
-  }, [providers, newModelProvider]);
+  }, [fineTuneProviders, newModelProvider]);
   useEffect(() => {
     if (baseModelOptions.length === 0) return;
     if (baseModelOptions.some(model => model.id === newModelBase)) return;
@@ -285,20 +347,27 @@ export function CustomerFineTuningStudio() {
     toast.success('Đã thêm cặp ví dụ!');
   };
 
-  const importCsvExamples = async (event: ChangeEvent<HTMLInputElement>) => {
+  const importTrainingExamples = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    const imported = parseFineTuneCsv(await file.text());
-    event.target.value = '';
+    try {
+      const imported = isExcelFile(file)
+        ? await parseFineTuneExcel(file)
+        : parseFineTuneCsv(await file.text());
+      event.target.value = '';
 
-    if (imported.length === 0) {
-      toast.error('CSV cần có cột input và output hợp lệ');
-      return;
+      if (imported.length === 0) {
+        toast.error(`${TRAINING_IMPORT_FILE_TYPES} can co cot input va output hop le`);
+        return;
+      }
+
+      setExamples(prev => [...prev, ...imported]);
+      toast.success(`Da import ${imported.length} vi du tu ${isExcelFile(file) ? 'Excel' : 'CSV'}`);
+    } catch (error) {
+      event.target.value = '';
+      toast.error(error instanceof Error ? error.message : `Khong the doc file ${TRAINING_IMPORT_FILE_TYPES}`);
     }
-
-    setExamples(prev => [...prev, ...imported]);
-    toast.success(`Đã import ${imported.length} ví dụ từ CSV`);
   };
 
   const startTraining = async () => {
@@ -494,11 +563,11 @@ export function CustomerFineTuningStudio() {
                 </div>
                 <div>
                   <Label>Provider training</Label>
-                  <Select value={newModelProvider} onValueChange={setNewModelProvider} disabled={providers.length === 0}>
+                  <Select value={newModelProvider} onValueChange={setNewModelProvider} disabled={fineTuneProviders.length === 0}>
                     <SelectTrigger className="mt-2"><SelectValue placeholder={'Ch\u1ecdn provider'} /></SelectTrigger>
                     <SelectContent>
-                      {providers.map(provider => (
-                        <SelectItem key={provider.id} value={provider.id} disabled={provider.status !== 'active'}>
+                      {fineTuneProviders.map(provider => (
+                        <SelectItem key={provider.id} value={provider.id}>
                           {provider.name}{provider.supportsFineTuning ? ' (fine-tune th\u1eadt)' : provider.apiConfigured ? ' (API)' : ''}{provider.status !== 'active' ? ` - ${provider.status}` : ''}
                         </SelectItem>
                       ))}
@@ -592,9 +661,9 @@ export function CustomerFineTuningStudio() {
                   <Input placeholder="Input: Thông tin sản phẩm, ngữ cảnh..." value={newInput} onChange={e => setNewInput(e.target.value)} className="text-sm" />
                   <Textarea placeholder="Output: Copy lý tưởng bạn muốn AI học theo..." value={newOutput} onChange={e => setNewOutput(e.target.value)} className="text-sm min-h-16" />
                   <div className="flex gap-2">
-                    <input ref={csvInputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={importCsvExamples} />
-                    <Button size="sm" variant="outline" className="flex-1" onClick={() => csvInputRef.current?.click()}>
-                      <Upload className="w-4 h-4 mr-1" /> Import CSV
+                    <input ref={trainingFileInputRef} type="file" accept={TRAINING_IMPORT_ACCEPT} className="hidden" onChange={importTrainingExamples} />
+                    <Button size="sm" variant="outline" className="flex-1" onClick={() => trainingFileInputRef.current?.click()}>
+                      <Upload className="w-4 h-4 mr-1" /> Import CSV/Excel
                     </Button>
                     <Button size="sm" className="flex-1 bg-primary hover:bg-green-700 text-white" onClick={addExample}>
                       <Plus className="w-4 h-4 mr-1" /> Thêm ví dụ

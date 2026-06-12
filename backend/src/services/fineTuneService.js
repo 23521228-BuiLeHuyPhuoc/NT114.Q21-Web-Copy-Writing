@@ -5,8 +5,8 @@ const FineTuneMetric = require('../models/FineTuneMetric');
 const FineTunedModel = require('../models/FineTunedModel');
 const createError = require('../utils/createError');
 const { GoogleAuth } = require('google-auth-library');
-const huggingFaceFineTuneService = require('./huggingFaceFineTuneService');
 const vertexOpenModelFineTuneService = require('./vertexOpenModelFineTuneService');
+const gptOssFineTuneService = require('./gptOssFineTuneService');
 
 const MIN_VALID_EXAMPLES = 10;
 const GOOGLE_CLOUD_SCOPE = 'https://www.googleapis.com/auth/cloud-platform';
@@ -15,28 +15,15 @@ const VERTEX_FINE_TUNE_PROVIDER = {
   id: 'vertex-gemini',
   name: 'Vertex AI Gemini Fine-tuning',
 };
-const HUGGINGFACE_FINE_TUNE_PROVIDER = {
-  id: huggingFaceFineTuneService.PROVIDER_ID,
-  name: huggingFaceFineTuneService.PROVIDER_NAME,
+const GPT_OSS_FINE_TUNE_PROVIDER = {
+  id: gptOssFineTuneService.PROVIDER_ID,
+  name: gptOssFineTuneService.PROVIDER_NAME,
 };
 const VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER = {
   id: vertexOpenModelFineTuneService.PROVIDER_ID,
   name: vertexOpenModelFineTuneService.PROVIDER_NAME,
 };
 let googleAuth;
-
-const GENERATOR_MODEL_OPTIONS = [
-  { id: 'gemini-flash', name: 'Gemini 2.5 Flash', provider: 'gemini' },
-  { id: 'gemini-flash-lite', name: 'Gemini 2.5 Flash Lite', provider: 'gemini' },
-  { id: 'groq-llama-3-3-70b', name: 'Llama 3.3 70B (Groq)', provider: 'groq' },
-  { id: 'groq-llama-3-1-8b', name: 'Llama 3.1 8B Instant', provider: 'groq' },
-  { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', provider: 'gemini' },
-  { id: 'gemini-3-1-flash-lite', name: 'Gemini 3.1 Flash Lite', provider: 'gemini' },
-  { id: 'gemma-4-26b', name: 'Gemma 4 26B', provider: 'gemini' },
-  { id: 'openrouter-free', name: 'OpenRouter Free Router', provider: 'openrouter' },
-  { id: 'freegpt4-gpt-4', name: 'GPT-4 Free Local API', provider: 'freegpt4' },
-  { id: 'freegpt4-gpt-4o', name: 'GPT-4o Free Local API', provider: 'freegpt4' },
-];
 
 const VERTEX_GEMINI_MODEL_OPTIONS = [
   { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', default: true },
@@ -49,11 +36,7 @@ const VERTEX_MODEL_ALIASES = {
 };
 
 const API_TRAINING_PROVIDERS = [
-  { id: 'gemini', name: 'Gemini API', key: 'GEMINI_API_KEY' },
-  { id: 'groq', name: 'Groq API', key: 'GROQ_API_KEY' },
-  { id: 'openrouter', name: 'OpenRouter API', key: 'OPENROUTER_API_KEY' },
   { id: 'openai', name: 'OpenAI-compatible API', key: 'OPENAI_API_KEY' },
-  { id: 'freegpt4', name: 'FreeGPT4 Local API', key: 'FREEGPT4_BASE_URL' },
 ];
 
 function getConfiguredFineTuneBaseModels() {
@@ -62,7 +45,7 @@ function getConfiguredFineTuneBaseModels() {
     return parseModelList(configured);
   }
 
-  return GENERATOR_MODEL_OPTIONS.map((model) => model.id);
+  return VERTEX_GEMINI_MODEL_OPTIONS.map((model) => model.id);
 }
 
 function parseModelList(value) {
@@ -84,38 +67,7 @@ function getConfiguredOpenAIFineTuneBaseModels() {
 }
 
 function getDefaultFineTuneBaseModel() {
-  return getConfiguredFineTuneBaseModels()[0] || GENERATOR_MODEL_OPTIONS[0].id;
-}
-
-function getFineTuneBaseModelOptions() {
-  const configuredModels = getConfiguredFineTuneBaseModels();
-  return configuredModels.map((id, index) => {
-    const generatorModel = GENERATOR_MODEL_OPTIONS.find((model) => model.id === id);
-    return {
-      id,
-      name: generatorModel?.name || id,
-      default: index === 0,
-    };
-  });
-}
-
-function getGeneratorBaseModelOptions(providerId) {
-  return GENERATOR_MODEL_OPTIONS
-    .filter((model) => !providerId || model.provider === providerId)
-    .map((model, index) => ({
-      id: model.id,
-      name: model.name,
-      default: index === 0,
-    }));
-}
-
-function getOpenAIInferenceBaseModelOptions() {
-  const configured = parseModelList(process.env.OPENAI_MODEL);
-  return configured.map((id, index) => ({
-    id,
-    name: id,
-    default: index === 0,
-  }));
+  return getConfiguredFineTuneBaseModels()[0] || VERTEX_GEMINI_MODEL_OPTIONS[0].id;
 }
 
 function getOpenAIFineTuneBaseModelOptions() {
@@ -178,23 +130,23 @@ function getConfiguredAIProvider() {
   const provider = String(process.env.AI_PROVIDER || '').trim().toLowerCase();
   if (provider === VERTEX_FINE_TUNE_PROVIDER.id) return provider;
   if (provider === VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id) return provider;
-  if (provider === HUGGINGFACE_FINE_TUNE_PROVIDER.id) return provider;
+  if (provider === GPT_OSS_FINE_TUNE_PROVIDER.id || provider === 'gptoss') return GPT_OSS_FINE_TUNE_PROVIDER.id;
   return API_TRAINING_PROVIDERS.some((item) => item.id === provider) ? provider : '';
 }
 
 function getSupportedTrainingProviderIds() {
-  return [VERTEX_FINE_TUNE_PROVIDER.id, VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id, HUGGINGFACE_FINE_TUNE_PROVIDER.id, ...API_TRAINING_PROVIDERS.map((provider) => provider.id)];
+  return [VERTEX_FINE_TUNE_PROVIDER.id, VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id, GPT_OSS_FINE_TUNE_PROVIDER.id, 'openai'];
 }
 
 function getDefaultTrainingProvider() {
   const configuredProvider = getConfiguredAIProvider();
   if (configuredProvider === VERTEX_FINE_TUNE_PROVIDER.id && isVertexFineTuneProviderReady()) return configuredProvider;
   if (configuredProvider === VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id && vertexOpenModelFineTuneService.isReady()) return configuredProvider;
-  if (configuredProvider === HUGGINGFACE_FINE_TUNE_PROVIDER.id && huggingFaceFineTuneService.isReady()) return configuredProvider;
+  if (configuredProvider === GPT_OSS_FINE_TUNE_PROVIDER.id && gptOssFineTuneService.isReady()) return configuredProvider;
   if (configuredProvider === 'openai' && isOpenAIFineTuneProviderReady()) return configuredProvider;
   if (isVertexFineTuneProviderReady()) return VERTEX_FINE_TUNE_PROVIDER.id;
   if (vertexOpenModelFineTuneService.isReady()) return VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id;
-  if (huggingFaceFineTuneService.isReady()) return HUGGINGFACE_FINE_TUNE_PROVIDER.id;
+  if (gptOssFineTuneService.isReady()) return GPT_OSS_FINE_TUNE_PROVIDER.id;
   if (isOpenAIFineTuneProviderReady()) return 'openai';
   return VERTEX_FINE_TUNE_PROVIDER.id;
 }
@@ -226,8 +178,12 @@ function isRemoteVertexOpenModelJob(job) {
     && Boolean(job.providerJobId);
 }
 
-function isRemoteHuggingFaceJob(job) {
-  return job.provider === HUGGINGFACE_FINE_TUNE_PROVIDER.id
+function shouldSubmitGptOssFineTune(baseModel) {
+  return gptOssFineTuneService.isReady() && gptOssFineTuneService.getBaseModelOptions().map((model) => model.id).includes(baseModel);
+}
+
+function isRemoteGptOssJob(job) {
+  return job.provider === GPT_OSS_FINE_TUNE_PROVIDER.id
     && Boolean(job.providerJobId);
 }
 
@@ -238,7 +194,7 @@ function buildRunningJobQuotaFilter(userId) {
       { status: { $in: ['pending', 'running'] } },
       {
         status: 'queued',
-        provider: { $in: ['openai', VERTEX_FINE_TUNE_PROVIDER.id, VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id, HUGGINGFACE_FINE_TUNE_PROVIDER.id] },
+        provider: { $in: ['openai', VERTEX_FINE_TUNE_PROVIDER.id, VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id, GPT_OSS_FINE_TUNE_PROVIDER.id] },
         providerJobId: { $exists: true, $ne: '' },
       },
     ],
@@ -839,12 +795,8 @@ function getUnsupportedRealFineTuneMessage(provider) {
     return 'OpenAI-compatible API is configured for generation only. Set OPENAI_FINE_TUNE_MODEL or OPENAI_FINE_TUNE_BASE_MODELS and use an endpoint that supports /files and /fine_tuning/jobs.';
   }
 
-  if (provider === HUGGINGFACE_FINE_TUNE_PROVIDER.id) {
-    return 'Hugging Face fine-tuning needs HUGGINGFACE_TOKEN or HF_TOKEN. The token must have write access and permission to create dataset/model/Space repos.';
-  }
-
-  if (provider === 'freegpt4') {
-    return 'FreeGPT4 Local API only exposes text generation in this app. It does not provide /files or /fine_tuning/jobs, so real fine-tuning cannot be submitted through this provider.';
+  if (provider === GPT_OSS_FINE_TUNE_PROVIDER.id) {
+    return 'GPT-OSS fine-tuning needs a Hugging Face write token, permission to create dataset/model/Space repos, and GPU Space hardware configured with GPT_OSS_SPACE_HARDWARE or HUGGINGFACE_SPACE_HARDWARE.';
   }
 
   return `${provider} API is configured for generation, but this app does not have a real fine-tuning adapter for that provider.`;
@@ -1067,17 +1019,17 @@ async function syncVertexOpenModelFineTuneJob(job) {
   return job;
 }
 
-async function submitHuggingFaceFineTuneJob(job) {
-  return huggingFaceFineTuneService.submitJob(job);
+async function submitGptOssFineTuneJob(job) {
+  return gptOssFineTuneService.submitJob(job);
 }
 
-async function syncHuggingFaceFineTuneJob(job) {
-  if (!isRemoteHuggingFaceJob(job)) return job;
+async function syncGptOssFineTuneJob(job) {
+  if (!isRemoteGptOssJob(job)) return job;
 
-  await huggingFaceFineTuneService.syncJob(job, clampProgress);
+  await gptOssFineTuneService.syncJob(job, clampProgress);
   if (job.status === 'completed') {
     await createFineTunedModelFromJob(job).catch((error) => {
-      console.warn(`Hugging Face fine-tuned model registration failed: ${error.message}`);
+      console.warn(`GPT-OSS fine-tuned model registration failed: ${error.message}`);
     });
   }
   return job;
@@ -1411,7 +1363,7 @@ async function archiveDataset(userId, id) {
 
 async function findFineTuneJobOrThrow(userId, id) {
   const job = await FineTuneJob.findOne({ _id: id, userId }).populate('userId', 'name email');
-  if (!job || job.provider === 'mock') throw createError(404, 'Fine-tune job not found');
+  if (!job || !getSupportedTrainingProviderIds().includes(job.provider)) throw createError(404, 'Fine-tune job not found');
   return job;
 }
 
@@ -1420,7 +1372,7 @@ async function listFineTuneJobs(userId, query = {}) {
   const limit = normalizeLimit(query);
   const filter = {
     userId,
-    provider: { $ne: 'mock' },
+    provider: { $in: getSupportedTrainingProviderIds() },
     ...buildSearchFilter(query.search, ['name', 'description', 'industry', 'baseModel', 'providerJobId', 'fineTunedModelId']),
   };
 
@@ -1428,7 +1380,7 @@ async function listFineTuneJobs(userId, query = {}) {
   if (query.industry) filter.industry = query.industry;
   if (query.datasetId) filter.datasetId = query.datasetId;
   if (query.provider) {
-    if (query.provider === 'mock') {
+    if (!getSupportedTrainingProviderIds().includes(query.provider)) {
       return { items: [], pagination: { page, limit, totalItems: 0, totalPages: 1 } };
     }
     filter.provider = query.provider;
@@ -1464,12 +1416,13 @@ async function listFineTuneJobs(userId, query = {}) {
       });
     }
 
-    if (job.provider === HUGGINGFACE_FINE_TUNE_PROVIDER.id) {
+    if (job.provider === GPT_OSS_FINE_TUNE_PROVIDER.id) {
       if (!['pending', 'queued', 'running'].includes(job.status)) return;
-      await syncHuggingFaceFineTuneJob(job).catch((error) => {
-        console.warn(`Hugging Face fine-tune list sync failed: ${error.message}`);
+      await syncGptOssFineTuneJob(job).catch((error) => {
+        console.warn(`GPT-OSS fine-tune list sync failed: ${error.message}`);
       });
     }
+
   }));
 
   return {
@@ -1495,9 +1448,9 @@ async function getFineTuneJob(userId, id) {
       console.warn(`Vertex Llama fine-tune sync failed: ${error.message}`);
     });
   }
-  if (job.provider === HUGGINGFACE_FINE_TUNE_PROVIDER.id && ['pending', 'queued', 'running'].includes(job.status)) {
-    await syncHuggingFaceFineTuneJob(job).catch((error) => {
-      console.warn(`Hugging Face fine-tune sync failed: ${error.message}`);
+  if (job.provider === GPT_OSS_FINE_TUNE_PROVIDER.id && ['pending', 'queued', 'running'].includes(job.status)) {
+    await syncGptOssFineTuneJob(job).catch((error) => {
+      console.warn(`GPT-OSS fine-tune sync failed: ${error.message}`);
     });
   }
   return serializeFineTuneJob(job);
@@ -1529,14 +1482,14 @@ async function createFineTuneJob(userId, payload) {
   if (provider === VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id && vertexOpenModelFineTuneService.isReady()) {
     vertexOpenModelFineTuneService.ensureBaseModelAllowed(baseModel);
   }
-  if (provider === HUGGINGFACE_FINE_TUNE_PROVIDER.id && huggingFaceFineTuneService.isReady()) {
-    huggingFaceFineTuneService.ensureBaseModelAllowed(baseModel);
+  if (provider === GPT_OSS_FINE_TUNE_PROVIDER.id && gptOssFineTuneService.isReady()) {
+    gptOssFineTuneService.ensureBaseModelAllowed(baseModel);
   }
   const submitToOpenAI = provider === 'openai' && shouldSubmitOpenAIFineTune(baseModel);
   const submitToVertex = provider === VERTEX_FINE_TUNE_PROVIDER.id && shouldSubmitVertexFineTune(baseModel);
   const submitToVertexOpenModel = provider === VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id && shouldSubmitVertexOpenModelFineTune(baseModel);
-  const submitToHuggingFace = provider === HUGGINGFACE_FINE_TUNE_PROVIDER.id && huggingFaceFineTuneService.isReady();
-  if (!submitToOpenAI && !submitToVertex && !submitToVertexOpenModel && !submitToHuggingFace) {
+  const submitToGptOss = provider === GPT_OSS_FINE_TUNE_PROVIDER.id && shouldSubmitGptOssFineTune(baseModel);
+  if (!submitToOpenAI && !submitToVertex && !submitToVertexOpenModel && !submitToGptOss) {
     throw createError(409, getUnsupportedRealFineTuneMessage(provider));
   }
   if (submitToOpenAI) {
@@ -1549,11 +1502,10 @@ async function createFineTuneJob(userId, payload) {
     await vertexOpenModelFineTuneService.preflight();
     vertexOpenModelFineTuneService.ensureBaseModelAllowed(baseModel);
   }
-  if (submitToHuggingFace) {
-    huggingFaceFineTuneService.ensureConfigured();
-    huggingFaceFineTuneService.ensureBaseModelAllowed(baseModel);
+  if (submitToGptOss) {
+    gptOssFineTuneService.ensureConfigured();
+    gptOssFineTuneService.ensureBaseModelAllowed(baseModel);
   }
-
   const dataset = payload.datasetId
     ? await findDatasetOrThrow(userId, payload.datasetId)
     : await createDatasetFromInlineExamples(userId, payload);
@@ -1630,9 +1582,9 @@ async function createFineTuneJob(userId, payload) {
     }
   }
 
-  if (submitToHuggingFace) {
+  if (submitToGptOss) {
     try {
-      await submitHuggingFaceFineTuneJob(job);
+      await submitGptOssFineTuneJob(job);
     } catch (error) {
       job.status = 'failed';
       job.errorMessage = error.message;
@@ -1712,14 +1664,14 @@ async function retryFineTuneJob(userId, id) {
   if (job.provider === VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id && vertexOpenModelFineTuneService.isReady()) {
     vertexOpenModelFineTuneService.ensureBaseModelAllowed(job.baseModel);
   }
-  if (job.provider === HUGGINGFACE_FINE_TUNE_PROVIDER.id && huggingFaceFineTuneService.isReady()) {
-    huggingFaceFineTuneService.ensureBaseModelAllowed(job.baseModel);
+  if (job.provider === GPT_OSS_FINE_TUNE_PROVIDER.id && gptOssFineTuneService.isReady()) {
+    gptOssFineTuneService.ensureBaseModelAllowed(job.baseModel);
   }
   const submitToOpenAI = job.provider === 'openai' && shouldSubmitOpenAIFineTune(job.baseModel);
   const submitToVertex = job.provider === VERTEX_FINE_TUNE_PROVIDER.id && shouldSubmitVertexFineTune(job.baseModel);
   const submitToVertexOpenModel = job.provider === VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id && shouldSubmitVertexOpenModelFineTune(job.baseModel);
-  const submitToHuggingFace = job.provider === HUGGINGFACE_FINE_TUNE_PROVIDER.id && huggingFaceFineTuneService.isReady();
-  if (!submitToOpenAI && !submitToVertex && !submitToVertexOpenModel && !submitToHuggingFace) {
+  const submitToGptOss = job.provider === GPT_OSS_FINE_TUNE_PROVIDER.id && shouldSubmitGptOssFineTune(job.baseModel);
+  if (!submitToOpenAI && !submitToVertex && !submitToVertexOpenModel && !submitToGptOss) {
     throw createError(409, getUnsupportedRealFineTuneMessage(job.provider));
   }
   if (submitToOpenAI) {
@@ -1732,11 +1684,10 @@ async function retryFineTuneJob(userId, id) {
     await vertexOpenModelFineTuneService.preflight();
     vertexOpenModelFineTuneService.ensureBaseModelAllowed(job.baseModel);
   }
-  if (submitToHuggingFace) {
-    huggingFaceFineTuneService.ensureConfigured();
-    huggingFaceFineTuneService.ensureBaseModelAllowed(job.baseModel);
+  if (submitToGptOss) {
+    gptOssFineTuneService.ensureConfigured();
+    gptOssFineTuneService.ensureBaseModelAllowed(job.baseModel);
   }
-
   job.status = 'pending';
   job.progress = 0;
   job.errorMessage = '';
@@ -1783,9 +1734,9 @@ async function retryFineTuneJob(userId, id) {
     }
   }
 
-  if (submitToHuggingFace) {
+  if (submitToGptOss) {
     try {
-      await submitHuggingFaceFineTuneJob(job);
+      await submitGptOssFineTuneJob(job);
     } catch (error) {
       job.status = 'failed';
       job.errorMessage = error.message;
@@ -1841,10 +1792,34 @@ async function listJobMetrics(userId, jobId) {
     });
   }
 
-  if (job.provider === HUGGINGFACE_FINE_TUNE_PROVIDER.id) {
-    await syncHuggingFaceFineTuneJob(job).catch((error) => {
-      console.warn(`Hugging Face fine-tune metrics sync failed: ${error.message}`);
+  if (job.provider === GPT_OSS_FINE_TUNE_PROVIDER.id) {
+    await syncGptOssFineTuneJob(job).catch((error) => {
+      console.warn(`GPT-OSS fine-tune metrics sync failed: ${error.message}`);
     });
+    await gptOssFineTuneService.getMetrics(job)
+      .then((providerMetrics) => Promise.all(providerMetrics.map(async (metric) => {
+        const epoch = Number(metric.epoch ?? metric.step ?? 0);
+        const trainLoss = Number(metric.trainLoss ?? metric.train_loss ?? metric.loss ?? 0);
+        const validationLoss = Number(metric.validationLoss ?? metric.validation_loss ?? metric.eval_loss ?? 0);
+        const tokenUsage = Number(metric.tokenUsage ?? metric.token_usage ?? metric.tokens ?? 0);
+        return FineTuneMetric.findOneAndUpdate(
+          { userId, jobId, epoch: Number.isFinite(epoch) ? epoch : 0 },
+          {
+            userId,
+            jobId,
+            epoch: Number.isFinite(epoch) ? epoch : 0,
+            trainLoss: Number.isFinite(trainLoss) ? trainLoss : 0,
+            validationLoss: Number.isFinite(validationLoss) ? validationLoss : 0,
+            accuracy: Number(metric.accuracy || 0),
+            tokenUsage: Number.isFinite(tokenUsage) ? tokenUsage : 0,
+            timestamp: new Date(),
+          },
+          { upsert: true, new: true, setDefaultsOnInsert: true },
+        );
+      })))
+      .catch((error) => {
+        console.warn(`GPT-OSS fine-tune provider metrics fetch failed: ${error.message}`);
+      });
   }
 
   const metrics = await FineTuneMetric.find({ userId, jobId }).sort({ epoch: 1, createdAt: 1 });
@@ -1887,15 +1862,15 @@ async function listJobLogs(userId, jobId) {
     if (vertexLlamaLogs.length > 0) return { items: vertexLlamaLogs };
   }
 
-  if (job.provider === HUGGINGFACE_FINE_TUNE_PROVIDER.id) {
-    await syncHuggingFaceFineTuneJob(job).catch((error) => {
-      console.warn(`Hugging Face fine-tune logs sync failed: ${error.message}`);
+  if (job.provider === GPT_OSS_FINE_TUNE_PROVIDER.id) {
+    await syncGptOssFineTuneJob(job).catch((error) => {
+      console.warn(`GPT-OSS fine-tune logs sync failed: ${error.message}`);
     });
-    const huggingFaceLogs = await huggingFaceFineTuneService.getLogs(job).catch((error) => {
-      console.warn(`Hugging Face fine-tune logs fetch failed: ${error.message}`);
+    const gptOssLogs = await gptOssFineTuneService.getLogs(job).catch((error) => {
+      console.warn(`GPT-OSS fine-tune logs fetch failed: ${error.message}`);
       return [];
     });
-    if (huggingFaceLogs.length > 0) return { items: huggingFaceLogs };
+    if (gptOssLogs.length > 0) return { items: gptOssLogs };
   }
 
   const logs = [
@@ -1910,12 +1885,12 @@ async function listJobLogs(userId, jobId) {
 
 async function createFineTunedModelFromJob(job) {
   if (!job || job.status !== 'completed') return null;
-  if (job.provider === 'mock') return null;
+  if (!getSupportedTrainingProviderIds().includes(job.provider)) return null;
 
   const userId = job.userId?._id || job.userId;
   if (!userId) return null;
 
-  if ((isRemoteOpenAIJob(job) || isRemoteVertexJob(job) || isRemoteHuggingFaceJob(job)) && !job.fineTunedModelId) {
+  if ((isRemoteOpenAIJob(job) || isRemoteVertexJob(job) || isRemoteGptOssJob(job)) && !job.fineTunedModelId) {
     return null;
   }
 
@@ -1991,7 +1966,7 @@ async function registerCompletedFineTuneJobs(userId) {
   const registeredJobIds = await FineTunedModel.find({ userId }).distinct('jobId');
   const jobs = await FineTuneJob.find({
     userId,
-    provider: { $ne: 'mock' },
+    provider: { $in: getSupportedTrainingProviderIds() },
     status: 'completed',
     _id: { $nin: registeredJobIds },
   }).sort({ finishedAt: 1, updatedAt: 1 });
@@ -2008,10 +1983,10 @@ async function listFineTunedModels(userId, query = {}) {
 
   const page = normalizePage(query);
   const limit = normalizeLimit(query);
-  const mockJobIds = await FineTuneJob.find({ userId, provider: 'mock' }).distinct('_id');
+  const hiddenJobIds = await FineTuneJob.find({ userId, provider: { $nin: getSupportedTrainingProviderIds() } }).distinct('_id');
   const filter = {
     userId,
-    jobId: { $nin: mockJobIds },
+    jobId: { $nin: hiddenJobIds },
     ...buildSearchFilter(query.search, ['name', 'alias', 'industry', 'providerModelId']),
   };
   if (query.industry) filter.industry = query.industry;
@@ -2038,10 +2013,9 @@ async function promoteFineTuneJob(userId, id) {
   if (isRemoteVertexOpenModelJob(job) && job.status !== 'completed') {
     await syncVertexOpenModelFineTuneJob(job);
   }
-  if (isRemoteHuggingFaceJob(job) && job.status !== 'completed') {
-    await syncHuggingFaceFineTuneJob(job);
+  if (isRemoteGptOssJob(job) && job.status !== 'completed') {
+    await syncGptOssFineTuneJob(job);
   }
-
   if (job.status !== 'completed') {
     throw createError(409, 'Only completed real fine-tune jobs can be promoted');
   }
@@ -2058,8 +2032,8 @@ async function promoteFineTuneJob(userId, id) {
     throw createError(409, 'Vertex Llama has not returned a tuned model id yet');
   }
 
-  if (isRemoteHuggingFaceJob(job) && !job.fineTunedModelId) {
-    throw createError(409, 'Hugging Face has not returned a LoRA adapter model repo id yet');
+  if (isRemoteGptOssJob(job) && !job.fineTunedModelId) {
+    throw createError(409, 'GPT-OSS trainer has not returned a LoRA adapter model repo id yet');
   }
 
   const model = await createFineTunedModelFromJob(job);
@@ -2072,7 +2046,7 @@ async function setFineTunedModelActive(userId, id, payload) {
   const model = await FineTunedModel.findOne({ _id: id, userId });
   if (!model) throw createError(404, 'Fine-tuned model not found');
   const job = await FineTuneJob.findOne({ _id: model.jobId, userId });
-  if (!job || job.provider === 'mock') throw createError(404, 'Fine-tuned model not found');
+  if (!job || !getSupportedTrainingProviderIds().includes(job.provider)) throw createError(404, 'Fine-tuned model not found');
 
   if (payload.isActive) {
     await FineTunedModel.updateMany({ userId, industry: model.industry, isActive: true }, { $set: { isActive: false, deactivatedAt: new Date() } });
@@ -2092,10 +2066,10 @@ function listProviders() {
   const openAIReady = isOpenAIFineTuneProviderReady();
   const vertexReady = isVertexFineTuneProviderReady();
   const vertexLlamaReady = vertexOpenModelFineTuneService.isReady();
-  const huggingFaceReady = huggingFaceFineTuneService.isReady();
-  const huggingFaceMissing = [];
-  if (!huggingFaceFineTuneService.getToken()) huggingFaceMissing.push('HUGGINGFACE_TOKEN or HF_TOKEN');
-  if (!huggingFaceFineTuneService.getSpaceHardware()) huggingFaceMissing.push('HUGGINGFACE_SPACE_HARDWARE or HF_SPACE_HARDWARE');
+  const gptOssReady = gptOssFineTuneService.isReady();
+  const gptOssMissing = [];
+  if (!gptOssFineTuneService.getToken()) gptOssMissing.push('GPT_OSS_HUGGINGFACE_TOKEN or HUGGINGFACE_TOKEN');
+  if (!gptOssFineTuneService.getSpaceHardware()) gptOssMissing.push('GPT_OSS_SPACE_HARDWARE or HUGGINGFACE_SPACE_HARDWARE');
   const vertexMissing = [];
   if (!getVertexProject()) vertexMissing.push('GOOGLE_CLOUD_PROJECT');
   if (!getVertexLocation()) vertexMissing.push('GOOGLE_CLOUD_LOCATION');
@@ -2106,13 +2080,12 @@ function listProviders() {
   if (!vertexOpenModelFineTuneService.getBucket()) vertexLlamaMissing.push('VERTEX_TUNING_BUCKET');
   if (!vertexOpenModelFineTuneService.getOutputGcsUri()) vertexLlamaMissing.push('VERTEX_LLAMA_TUNING_OUTPUT_GCS_URI');
   if (!vertexOpenModelFineTuneService.hasSubmitScript()) vertexLlamaMissing.push('Vertex Llama submit script');
-  const apiProviders = API_TRAINING_PROVIDERS.map((provider) => {
+  const apiProviders = API_TRAINING_PROVIDERS
+    .filter((provider) => provider.id === 'openai' && openAIReady)
+    .map((provider) => {
     const apiConfigured = Boolean(process.env[provider.key]);
     const supportsFineTuning = provider.id === 'openai' && openAIReady;
-    const openAIModels = getOpenAIFineTuneBaseModelOptions();
-    const baseModels = provider.id === 'openai'
-      ? (openAIModels.length > 0 ? openAIModels : getOpenAIInferenceBaseModelOptions())
-      : getGeneratorBaseModelOptions(provider.id);
+    const baseModels = getOpenAIFineTuneBaseModelOptions();
 
     return {
       id: provider.id,
@@ -2165,18 +2138,18 @@ function listProviders() {
         baseModels: vertexOpenModelFineTuneService.getBaseModelOptions(),
       },
       {
-        id: HUGGINGFACE_FINE_TUNE_PROVIDER.id,
-        name: HUGGINGFACE_FINE_TUNE_PROVIDER.name,
-        status: huggingFaceReady ? 'active' : 'needs_config',
-        productionReady: huggingFaceReady,
-        apiConfigured: huggingFaceReady,
-        supportsFineTuning: huggingFaceReady,
-        mode: huggingFaceReady ? 'real' : 'api',
-        isDefault: currentProvider === HUGGINGFACE_FINE_TUNE_PROVIDER.id || (!currentProvider && !vertexReady && huggingFaceReady),
-        message: huggingFaceReady
-          ? `Creates Hugging Face dataset/model repos and a Docker trainer Space${huggingFaceFineTuneService.getSpaceHardware() ? ` on ${huggingFaceFineTuneService.getSpaceHardware()}` : ''}. Llama training needs GPU hardware and access to the gated base model.`
-          : `Missing ${huggingFaceMissing.join(', ') || 'Hugging Face GPU configuration'}. Use a Hugging Face write token with access to the selected Llama base model and a GPU Space hardware value.`,
-        baseModels: huggingFaceFineTuneService.getBaseModelOptions(),
+        id: GPT_OSS_FINE_TUNE_PROVIDER.id,
+        name: GPT_OSS_FINE_TUNE_PROVIDER.name,
+        status: gptOssReady ? 'active' : 'needs_config',
+        productionReady: gptOssReady,
+        apiConfigured: gptOssReady,
+        supportsFineTuning: gptOssReady,
+        mode: gptOssReady ? 'real' : 'api',
+        isDefault: currentProvider === GPT_OSS_FINE_TUNE_PROVIDER.id || (!currentProvider && !vertexReady && !vertexLlamaReady && gptOssReady),
+        message: gptOssReady
+          ? `Creates Hugging Face dataset/model repos and a Docker trainer Space${gptOssFineTuneService.getSpaceHardware() ? ` on ${gptOssFineTuneService.getSpaceHardware()}` : ''}. GPT-OSS uses Transformers/TRL LoRA and should run on strong GPU hardware.`
+          : `Missing ${gptOssMissing.join(', ') || 'GPT-OSS Hugging Face GPU configuration'}. Use a Hugging Face write token and GPU Space hardware for GPT-OSS LoRA fine-tuning.`,
+        baseModels: gptOssFineTuneService.getBaseModelOptions(),
       },
       ...apiProviders,
     ],
@@ -2184,11 +2157,11 @@ function listProviders() {
 }
 
 async function getQuotas(userId) {
-  const mockJobIds = await FineTuneJob.find({ userId, provider: 'mock' }).distinct('_id');
+  const hiddenJobIds = await FineTuneJob.find({ userId, provider: { $nin: getSupportedTrainingProviderIds() } }).distinct('_id');
   const [datasetCount, runningJobs, modelCount] = await Promise.all([
     FineTuneDataset.countDocuments({ userId, status: { $ne: 'archived' } }),
     FineTuneJob.countDocuments(buildRunningJobQuotaFilter(userId)),
-    FineTunedModel.countDocuments({ userId, isDeprecated: false, jobId: { $nin: mockJobIds } }),
+    FineTunedModel.countDocuments({ userId, isDeprecated: false, jobId: { $nin: hiddenJobIds } }),
   ]);
   return {
     datasetCount,

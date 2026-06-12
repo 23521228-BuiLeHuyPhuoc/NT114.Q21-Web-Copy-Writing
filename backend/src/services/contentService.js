@@ -8,6 +8,8 @@ const projectService = require('./projectService');
 const templateService = require('./templateService');
 const createError = require('../utils/createError');
 
+const SUPPORTED_FINE_TUNE_PROVIDERS = new Set(['openai', 'vertex-gemini', 'vertex-llama', 'gpt-oss']);
+
 function escapeRegExp(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -218,7 +220,9 @@ async function resolveFineTunedModelForGenerate(userId, payload) {
   if (!model.isActive) throw createError(409, 'Fine-tuned model is not active');
 
   const job = await FineTuneJob.findOne({ _id: model.jobId, userId });
-  if (!job || job.provider === 'mock') throw createError(404, 'Fine-tuned model not found');
+  if (!job || !SUPPORTED_FINE_TUNE_PROVIDERS.has(job.provider)) {
+    throw createError(404, 'Fine-tuned model not found');
+  }
   const provider = job?.provider || '';
   const modelUsed = `fine-tuned:${model._id.toString()}`;
   const fineTunedPrompt = String(payload.prompt || '').trim();
@@ -257,8 +261,8 @@ async function resolveFineTunedModelForGenerate(userId, payload) {
     };
   }
 
-  if (provider === 'huggingface') {
-    throw createError(409, 'Hugging Face fine-tuning created a LoRA adapter repo. Deploy it with a Hugging Face Inference Endpoint or serving Space before using it in AI Generator.');
+  if (provider === 'gpt-oss') {
+    throw createError(409, 'GPT-OSS fine-tuning created a LoRA adapter repo. Deploy the adapter with a Hugging Face Inference Endpoint or serving Space before using it in AI Generator.');
   }
 
   throw createError(409, `Provider ${provider || 'unknown'} does not expose a real fine-tuned inference endpoint in this app yet`);

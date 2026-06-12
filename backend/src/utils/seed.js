@@ -7,9 +7,6 @@ const Category = require('../models/Category');
 const Content = require('../models/Content');
 const FineTuneDataset = require('../models/FineTuneDataset');
 const FineTuneExample = require('../models/FineTuneExample');
-const FineTuneJob = require('../models/FineTuneJob');
-const FineTuneMetric = require('../models/FineTuneMetric');
-const FineTunedModel = require('../models/FineTunedModel');
 const AuditLog = require('../models/AuditLog');
 const Notification = require('../models/Notification');
 const Payment = require('../models/Payment');
@@ -18,12 +15,6 @@ const Project = require('../models/Project');
 const Subscription = require('../models/Subscription');
 const Template = require('../models/Template');
 const UsageLog = require('../models/UsageLog');
-
-const configuredFineTuneBaseModel = process.env.FINE_TUNE_BASE_MODELS?.split(',')[0]?.trim() || 'gemini-flash';
-
-function demoFineTunedModelId(alias) {
-  return `ft:${configuredFineTuneBaseModel}:copypro:${alias}:2026`;
-}
 
 async function upsertUser() {
   const email = 'customer@copypro.vn';
@@ -69,118 +60,6 @@ async function upsertAdmin() {
 
   await account.save();
   return account;
-}
-
-async function upsertLegacyFineTuneJob(user, data) {
-  return FineTuneJob.findOneAndUpdate(
-    {
-      userId: user._id,
-      name: data.name,
-    },
-    {
-      $set: {
-        userId: user._id,
-        name: data.name,
-        industry: data.industry,
-        baseModel: data.baseModel,
-        description: data.description,
-        datasetUrl: data.datasetUrl || '',
-        status: data.status,
-        progress: data.progress,
-        samples: data.samples,
-        epochs: data.epochs,
-        accuracy: data.accuracy,
-        loss: data.loss,
-        providerJobId: data.providerJobId || '',
-        fineTunedModelId: data.fineTunedModelId || '',
-        startedAt: data.startedAt || null,
-        finishedAt: data.finishedAt || null,
-      },
-    },
-    { upsert: true, new: true, setDefaultsOnInsert: true },
-  );
-}
-
-async function seedLegacyFineTuneJobs(user) {
-  const jobs = [
-    {
-      name: 'Brand Voice - E-commerce',
-      industry: 'ecommerce',
-      baseModel: configuredFineTuneBaseModel,
-      description: 'Fine-tune demo cho copy e-commerce, tập trung tone khẩn cấp, ưu đãi và CTA mạnh.',
-      datasetUrl: 'demo://datasets/ecommerce-brand-voice.jsonl',
-      status: 'completed',
-      progress: 100,
-      samples: 120,
-      epochs: 5,
-      accuracy: 94.2,
-      loss: 0.142,
-      providerJobId: 'ftjob_demo_ecommerce',
-      fineTunedModelId: demoFineTunedModelId('ecommerce-brand-voice'),
-      startedAt: new Date('2026-03-20T02:00:00.000Z'),
-      finishedAt: new Date('2026-03-20T04:23:00.000Z'),
-    },
-    {
-      name: 'Luxury Real Estate Voice',
-      industry: 'realestate',
-      baseModel: configuredFineTuneBaseModel,
-      description: 'Job demo đang chạy cho bất động sản cao cấp, tone sang trọng và tư vấn chuyên nghiệp.',
-      datasetUrl: 'demo://datasets/luxury-real-estate.jsonl',
-      status: 'running',
-      progress: 55,
-      samples: 85,
-      epochs: 5,
-      accuracy: 78.3,
-      loss: 0.342,
-      providerJobId: 'ftjob_demo_realestate',
-      fineTunedModelId: '',
-      startedAt: new Date('2026-03-23T01:00:00.000Z'),
-      finishedAt: null,
-    },
-    {
-      name: 'Healthcare Compassionate',
-      industry: 'healthcare',
-      baseModel: configuredFineTuneBaseModel,
-      description: 'Fine-tune demo cho copy y tế nhẹ nhàng, rõ ràng và tuân thủ claim an toàn.',
-      datasetUrl: 'demo://datasets/healthcare-compassionate.jsonl',
-      status: 'completed',
-      progress: 100,
-      samples: 95,
-      epochs: 5,
-      accuracy: 91,
-      loss: 0.189,
-      providerJobId: 'ftjob_demo_healthcare',
-      fineTunedModelId: demoFineTunedModelId('healthcare-compassionate'),
-      startedAt: new Date('2026-03-10T07:00:00.000Z'),
-      finishedAt: new Date('2026-03-10T09:45:00.000Z'),
-    },
-    {
-      name: 'F&B Promotion Voice',
-      industry: 'fnb',
-      baseModel: configuredFineTuneBaseModel,
-      description: 'Job demo đang chờ xử lý cho copy khuyến mãi F&B, caption menu mới và ưu đãi combo.',
-      datasetUrl: 'demo://datasets/fnb-promotion.jsonl',
-      status: 'queued',
-      progress: 0,
-      samples: 60,
-      epochs: 3,
-      accuracy: 0,
-      loss: 0,
-      providerJobId: '',
-      fineTunedModelId: '',
-      startedAt: null,
-      finishedAt: null,
-    },
-  ];
-
-  return Promise.all(jobs.map((job) => upsertLegacyFineTuneJob(user, job)));
-}
-
-function toSeedAlias(value) {
-  return String(value || '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '') || 'fine-tuned-model';
 }
 
 function buildFineTuneExamples(profile) {
@@ -239,90 +118,6 @@ async function replaceFineTuneExamples(user, dataset, profile) {
   })));
 }
 
-async function upsertFineTuneMetrics(user, job) {
-  const losses = [1.25, 0.82, 0.51, 0.31, 0.21, job.loss || 0.18];
-  return Promise.all(losses.map((loss, epoch) => FineTuneMetric.findOneAndUpdate(
-    { userId: user._id, jobId: job._id, epoch },
-    {
-      userId: user._id,
-      jobId: job._id,
-      epoch,
-      trainLoss: loss,
-      validationLoss: Number((loss + 0.06).toFixed(3)),
-      accuracy: Math.min(99, 45 + (epoch * 11)),
-      tokenUsage: 4200 + (epoch * 850),
-      timestamp: new Date(Date.now() - ((losses.length - epoch) * 3600000)),
-    },
-    { upsert: true, new: true, setDefaultsOnInsert: true },
-  )));
-}
-
-async function upsertFineTuneJob(user, dataset, data) {
-  const samples = data.samples || dataset.validExampleCount || 12;
-  return FineTuneJob.findOneAndUpdate(
-    {
-      userId: user._id,
-      name: data.name,
-    },
-    {
-      $set: {
-        userId: user._id,
-        datasetId: dataset._id,
-        name: data.name,
-        industry: data.industry,
-        baseModel: data.baseModel,
-        provider: data.provider || 'mock',
-        description: data.description,
-        datasetUrl: `dataset:${dataset._id.toString()}`,
-        status: data.status,
-        progress: data.progress,
-        samples,
-        epochs: data.epochs,
-        accuracy: data.accuracy,
-        loss: data.loss,
-        estimatedCost: Number((samples * 0.006).toFixed(4)),
-        actualCost: data.status === 'completed' ? Number((samples * 0.006).toFixed(4)) : 0,
-        errorMessage: data.errorMessage || '',
-        providerJobId: data.providerJobId || '',
-        fineTunedModelId: data.fineTunedModelId || '',
-        startedAt: data.startedAt || null,
-        finishedAt: data.finishedAt || null,
-      },
-    },
-    { upsert: true, new: true, setDefaultsOnInsert: true },
-  );
-}
-
-async function upsertFineTunedModel(user, job, data) {
-  if (job.status !== 'completed' || !job.fineTunedModelId) return null;
-  const alias = toSeedAlias(job.name);
-  return FineTunedModel.findOneAndUpdate(
-    { userId: user._id, alias, version: 1 },
-    {
-      $set: {
-        userId: user._id,
-        jobId: job._id,
-        name: job.name,
-        alias,
-        providerModelId: job.fineTunedModelId,
-        baseModel: job.baseModel,
-        industry: job.industry,
-        version: 1,
-        isActive: Boolean(data.isActive),
-        isDeprecated: false,
-        performance: {
-          accuracy: job.accuracy,
-          loss: job.loss,
-          sampleCount: job.samples,
-        },
-        deployedAt: data.isActive ? new Date('2026-03-21T03:00:00.000Z') : null,
-        deactivatedAt: data.isActive ? null : new Date('2026-03-22T03:00:00.000Z'),
-      },
-    },
-    { upsert: true, new: true, setDefaultsOnInsert: true },
-  );
-}
-
 async function seedFineTunePipelines(user) {
   const profiles = [
     {
@@ -337,7 +132,6 @@ async function seedFineTunePipelines(user) {
       hook: 'Limited-time deals should feel clear, useful, and easy to act on.',
       benefit: 'customers understand the discount, delivery condition, and product value in one scan',
       cta: 'Shop the offer before the best sizes run out',
-      baseModel: configuredFineTuneBaseModel,
       description: 'Demo fine-tune for ecommerce copy with urgent offers and strong CTA patterns.',
       status: 'completed',
       progress: 100,
@@ -346,7 +140,6 @@ async function seedFineTunePipelines(user) {
       accuracy: 94.2,
       loss: 0.142,
       providerJobId: 'ftjob_demo_ecommerce',
-      fineTunedModelId: demoFineTunedModelId('ecommerce-brand-voice'),
       startedAt: new Date('2026-03-20T02:00:00.000Z'),
       finishedAt: new Date('2026-03-20T04:23:00.000Z'),
       isActive: true,
@@ -363,7 +156,6 @@ async function seedFineTunePipelines(user) {
       hook: 'Premium property copy should sound calm, credible, and specific.',
       benefit: 'buyers see location, lifestyle value, and consultation path without exaggerated claims',
       cta: 'Book a private consultation for the latest availability',
-      baseModel: configuredFineTuneBaseModel,
       description: 'Running demo job for luxury real estate voice and lead conversion copy.',
       status: 'running',
       progress: 55,
@@ -388,7 +180,6 @@ async function seedFineTunePipelines(user) {
       hook: 'Healthcare copy must be careful, reassuring, and easy to understand.',
       benefit: 'patients know the service scope, process, and when to ask a professional',
       cta: 'Schedule a consultation with the clinic team',
-      baseModel: configuredFineTuneBaseModel,
       description: 'Completed demo job for safe healthcare copy and compassionate service explanations.',
       status: 'completed',
       progress: 100,
@@ -397,7 +188,6 @@ async function seedFineTunePipelines(user) {
       accuracy: 91,
       loss: 0.189,
       providerJobId: 'ftjob_demo_healthcare',
-      fineTunedModelId: demoFineTunedModelId('healthcare-compassionate'),
       startedAt: new Date('2026-03-10T07:00:00.000Z'),
       finishedAt: new Date('2026-03-10T09:45:00.000Z'),
       isActive: false,
@@ -414,7 +204,6 @@ async function seedFineTunePipelines(user) {
       hook: 'Food promotion copy should make the offer vivid without sounding generic.',
       benefit: 'customers understand the menu, price value, and ordering action quickly',
       cta: 'Order the lunch combo before the peak hour',
-      baseModel: configuredFineTuneBaseModel,
       description: 'Queued demo job for F&B promotions and menu launch captions.',
       status: 'queued',
       progress: 0,
@@ -429,17 +218,14 @@ async function seedFineTunePipelines(user) {
     },
   ];
 
-  const jobs = [];
+  const datasets = [];
   for (const profile of profiles) {
     const dataset = await upsertFineTuneDataset(user, profile);
     await replaceFineTuneExamples(user, dataset, profile);
-    const job = await upsertFineTuneJob(user, dataset, profile);
-    await upsertFineTuneMetrics(user, job);
-    await upsertFineTunedModel(user, job, profile);
-    jobs.push(job);
+    datasets.push(dataset);
   }
 
-  return jobs;
+  return datasets;
 }
 async function cleanupAdminRegistrationData() {
   const result = await AccountAdmin.deleteMany({
@@ -1774,7 +1560,7 @@ async function seed() {
     seedDemoContents(user, projects),
   ]);
   const notifications = await seedDemoNotifications(user);
-  const fineTuneJobs = await seedFineTunePipelines(user);
+  const fineTuneDatasets = await seedFineTunePipelines(user);
   const auditLogs = await seedDemoAuditLogs(user, admin, contents);
   const billing = await seedBilling(user);
 
@@ -1786,7 +1572,7 @@ async function seed() {
   console.log(`Seeded Template: ${templates.length}`);
   console.log(`Seeded Content: ${contents.length}`);
   console.log(`Seeded Notification: ${notifications.length}`);
-  console.log(`Seeded FineTuneJob: ${fineTuneJobs.length}`);
+  console.log(`Seeded FineTuneDataset: ${fineTuneDatasets.length}`);
   console.log(`Seeded AuditLog: ${auditLogs.length}`);
   console.log(`Seeded Plan: ${billing.plans.length}`);
   console.log(`Seeded Payment: ${billing.payments.length}`);

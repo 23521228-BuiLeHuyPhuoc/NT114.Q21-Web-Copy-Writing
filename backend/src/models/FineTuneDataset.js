@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const DATASET_STATUSES = ['draft', 'validated', 'submitted', 'archived'];
-const DATASET_SOURCE_TYPES = ['manual', 'csv', 'jsonl', 'content-history'];
+const DATASET_SOURCE_TYPES = ['manual', 'csv', 'excel', 'jsonl', 'content-history'];
 
 const fineTuneDatasetSchema = new mongoose.Schema(
   {

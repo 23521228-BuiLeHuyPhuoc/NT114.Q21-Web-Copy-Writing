@@ -11,7 +11,9 @@ const MAX_SOURCE_TITLE_LENGTH = 200;
 const MAX_SOURCE_LENGTH = 500;
 const MAX_SOURCE_URL_LENGTH = 500;
 const MAX_SNIPPET_LENGTH = 600;
+const MAX_SOURCE_TEXT_LENGTH = 30000;
 const MAX_MATCH_TEXT_LENGTH = 2000;
+const MAX_TOPIC_MATCHES = 12;
 
 const DEFAULT_SOURCE_CONFIG = {
   database: true,
@@ -350,6 +352,60 @@ function findSegmentMatches(inputText, candidate, threshold, options = {}) {
   return matches.sort((left, right) => right.score - left.score).slice(0, 4);
 }
 
+function topicMatchThreshold(threshold) {
+  return clamp(threshold, 20, 50);
+}
+
+function findTopicSegmentMatches(inputText, candidate, threshold, options = {}) {
+  const inputSegments = splitSegments(inputText);
+  const sourceSegments = splitSegments(candidate.text);
+  const matches = [];
+  const effectiveTopicThreshold = topicMatchThreshold(threshold);
+
+  inputSegments.forEach((inputSegment) => {
+    let bestMatch = null;
+
+    sourceSegments.forEach((sourceSegment) => {
+      const scored = scoreTexts(inputSegment.text, sourceSegment.text, options);
+      if (
+        !bestMatch
+        || scored.wordOverlapScore > bestMatch.wordOverlapScore
+        || (scored.wordOverlapScore === bestMatch.wordOverlapScore && scored.score > bestMatch.score)
+      ) {
+        bestMatch = { ...sourceSegment, ...scored };
+      }
+    });
+
+    if (
+      bestMatch
+      && bestMatch.wordOverlapScore >= effectiveTopicThreshold
+      && bestMatch.plagiarismScore < threshold
+    ) {
+      matches.push({
+        start: inputSegment.start,
+        end: inputSegment.end,
+        matchedText: schemaText(inputSegment.text, MAX_MATCH_TEXT_LENGTH),
+        sourceText: schemaText(bestMatch.text, MAX_MATCH_TEXT_LENGTH),
+        sourceUrl: schemaText(candidate.sourceUrl || '', MAX_SOURCE_URL_LENGTH),
+        sourceTitle: schemaText(candidate.sourceTitle || candidate.source || '', MAX_SOURCE_TITLE_LENGTH),
+        sourceType: candidate.sourceType,
+        score: bestMatch.wordOverlapScore,
+        exactMatchScore: bestMatch.exactMatchScore,
+        phraseOverlapScore: bestMatch.phraseOverlapScore,
+        wordOverlapScore: bestMatch.wordOverlapScore,
+        scoreBasis: 'word',
+        matchedWords: bestMatch.matchedWords,
+        totalWords: bestMatch.totalWords,
+        matchedPhrases: bestMatch.matchedPhrases,
+        totalPhrases: bestMatch.totalPhrases,
+        phraseSize: bestMatch.phraseSize,
+      });
+    }
+  });
+
+  return matches.sort((left, right) => right.score - left.score).slice(0, 4);
+}
+
 function getRiskLevel(similarityScore) {
   if (similarityScore >= 70) return 'critical';
   if (similarityScore >= 45) return 'high';
@@ -402,6 +458,7 @@ function serializeSource(source) {
     plagiarismScore: Math.round(source.plagiarismScore || 0),
     topicSimilarityScore: Math.round(source.topicSimilarityScore || source.wordOverlapScore || 0),
     snippet: schemaText(reference ? snippet(reference.text) : source.snippet || '', MAX_SNIPPET_LENGTH),
+    sourceText: schemaText(reference?.text || source.sourceText || '', MAX_SOURCE_TEXT_LENGTH),
     matchedWords: source.matchedWords || 0,
     totalWords: source.totalWords || 0,
     exactMatchScore: Math.round(source.exactMatchScore || 0),
@@ -440,6 +497,7 @@ function serializeReport(report) {
   const similarityScore = Math.round(report.similarityScore || 0);
   const originalityScore = Math.round(report.originalityScore || 0);
   const matches = (report.matches || []).map(serializeMatch);
+  const topicMatches = (report.topicMatches || []).map(serializeMatch);
   const sources = (report.sources || []).map(serializeSource);
   const analysis = report.analysis || {};
 
@@ -455,6 +513,7 @@ function serializeReport(report) {
     status: report.status,
     riskLevel: report.riskLevel,
     matches,
+    topicMatches,
     sources,
     modelUsed: report.modelUsed || MODEL_USED,
     threshold: report.threshold || 35,
@@ -533,7 +592,7 @@ function maxScore(values) {
   return Math.max(0, ...values.map((value) => Number(value || 0)).filter(Number.isFinite));
 }
 
-function buildAnalysis(scoredSources, candidates, matches, sourceConfig, effectiveThreshold, commonCrawlStats = {}) {
+function buildAnalysis(scoredSources, candidates, matches, topicMatches, sourceConfig, effectiveThreshold, commonCrawlStats = {}) {
   const checkedSourceTypes = unique([
     ...candidates.map((candidate) => candidate.sourceType).filter(Boolean),
     sourceConfig.web ? 'web' : null,
@@ -546,6 +605,7 @@ function buildAnalysis(scoredSources, candidates, matches, sourceConfig, effecti
     candidateCount: candidates.length,
     sourceCount: scoredSources.length,
     matchCount: matches.length,
+    topicMatchCount: topicMatches.length,
     checkedSourceTypes,
     unavailableSourceTypes,
     plagiarismScore: maxScore(scoredSources.map((source) => source.plagiarismScore)),
@@ -624,6 +684,7 @@ async function checkPlagiarism(userId, payload) {
     .map((candidate) => {
       const textScore = scoreTexts(checkText, candidate.text, scoringOptions);
       const matches = findSegmentMatches(checkText, candidate, effectiveThreshold, scoringOptions);
+      const topicMatches = findTopicSegmentMatches(checkText, candidate, effectiveThreshold, scoringOptions);
       const bestSegment = matches[0] || {};
       const bestMatchScore = bestSegment.score || 0;
       const exactMatchScore = Math.max(textScore.exactMatchScore, bestSegment.exactMatchScore || 0);
@@ -648,9 +709,10 @@ async function checkPlagiarism(userId, payload) {
         totalPhrases: textScore.totalPhrases,
         snippet: snippet(candidate.text),
         matches,
+        topicMatches,
       };
     })
-    .filter((candidate) => candidate.similarity >= 5 || candidate.matches.length > 0)
+    .filter((candidate) => candidate.similarity >= 5 || candidate.matches.length > 0 || candidate.topicMatches.length > 0)
     .sort((left, right) => right.similarity - left.similarity);
 
   const sources = scoredSources.slice(0, MAX_REPORT_SOURCES).map((candidate) => ({
@@ -663,6 +725,7 @@ async function checkPlagiarism(userId, payload) {
     plagiarismScore: candidate.plagiarismScore,
     topicSimilarityScore: candidate.topicSimilarityScore,
     snippet: schemaText(candidate.snippet, MAX_SNIPPET_LENGTH),
+    sourceText: schemaText(candidate.text, MAX_SOURCE_TEXT_LENGTH),
     matchedWords: candidate.matchedWords,
     totalWords: candidate.totalWords,
     exactMatchScore: candidate.exactMatchScore,
@@ -679,6 +742,12 @@ async function checkPlagiarism(userId, payload) {
     .slice(0, MAX_REPORT_MATCHES)
     .sort((left, right) => left.start - right.start);
 
+  const topicMatches = scoredSources
+    .flatMap((candidate) => candidate.topicMatches)
+    .sort((left, right) => right.score - left.score)
+    .slice(0, MAX_TOPIC_MATCHES)
+    .sort((left, right) => left.start - right.start);
+
   const similarityScore = clamp(maxScore(scoredSources.map((source) => source.plagiarismScore)));
   const originalityScore = clamp(100 - similarityScore);
   const riskLevel = getRiskLevel(similarityScore);
@@ -686,6 +755,7 @@ async function checkPlagiarism(userId, payload) {
     scoredSources,
     candidates,
     matches,
+    topicMatches,
     sourceConfig,
     effectiveThreshold,
     commonCrawlResult.stats,
@@ -701,6 +771,7 @@ async function checkPlagiarism(userId, payload) {
     status: 'completed',
     riskLevel,
     matches,
+    topicMatches,
     sources,
     modelUsed: MODEL_USED,
     threshold,
@@ -778,6 +849,7 @@ module.exports = {
   __test: {
     scoreTexts,
     findSegmentMatches,
+    findTopicSegmentMatches,
     getPlagiarismScore,
     getTopicSimilarityScore,
   },

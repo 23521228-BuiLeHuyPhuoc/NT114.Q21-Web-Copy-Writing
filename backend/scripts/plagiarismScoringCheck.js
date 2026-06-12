@@ -28,10 +28,17 @@ const keywordMatches = __test.findSegmentMatches(
   threshold,
   scoringOptions,
 );
+const keywordTopicMatches = __test.findTopicSegmentMatches(
+  keywordHeavyInput,
+  { text: keywordHeavySource, sourceTitle: 'Keyword-heavy source', sourceType: 'web' },
+  threshold,
+  scoringOptions,
+);
 
 assert(keywordScore.topicSimilarityScore >= 50, 'keyword-heavy text should exercise high word overlap');
 assert(keywordScore.plagiarismScore < threshold, 'high word overlap without n-gram/exact should not be plagiarism');
 assert.strictEqual(keywordMatches.length, 0, 'high word overlap alone should not create highlighted matches');
+assert(keywordTopicMatches.length > 0, 'high word overlap should create topic-similarity matches');
 
 const copied = '9Router hoạt động bằng cách trỏ tool vào gateway rồi route request sang provider phù hợp, giúp quản lý model, khóa truy cập và chi phí tập trung.';
 const copiedSource = `Phần hướng dẫn ghi rằng ${copied} Nội dung này được dùng làm ví dụ kiểm tra copy nguyên văn.`;
@@ -56,6 +63,7 @@ console.log(JSON.stringify({
     plagiarismScore: keywordScore.plagiarismScore,
     topicSimilarityScore: keywordScore.topicSimilarityScore,
     matches: keywordMatches.length,
+    topicMatches: keywordTopicMatches.length,
   },
   copied: {
     plagiarismScore: copiedScore.plagiarismScore,

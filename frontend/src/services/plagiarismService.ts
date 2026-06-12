@@ -46,6 +46,7 @@ export interface PlagiarismSource {
   plagiarismScore: number;
   topicSimilarityScore: number;
   snippet: string;
+  sourceText: string;
   matchedWords: number;
   totalWords: number;
   exactMatchScore: number;
@@ -81,6 +82,7 @@ export interface PlagiarismAnalysis {
   candidateCount: number;
   sourceCount: number;
   matchCount: number;
+  topicMatchCount: number;
   checkedSourceTypes: string[];
   unavailableSourceTypes: string[];
   plagiarismScore: number;
@@ -158,6 +160,7 @@ export interface PlagiarismReport {
   status: 'completed' | 'failed' | 'processing';
   riskLevel: PlagiarismRiskLevel;
   matches: PlagiarismMatch[];
+  topicMatches: PlagiarismMatch[];
   sources: PlagiarismSource[];
   modelUsed: string;
   threshold: number;
@@ -203,6 +206,7 @@ interface BackendPlagiarismSource {
   plagiarismScore?: number;
   topicSimilarityScore?: number;
   snippet?: string;
+  sourceText?: string;
   matchedWords?: number;
   totalWords?: number;
   exactMatchScore?: number;
@@ -245,6 +249,7 @@ interface BackendPlagiarismReport {
   status?: 'completed' | 'failed' | 'processing';
   riskLevel?: PlagiarismRiskLevel;
   matches?: BackendPlagiarismMatch[];
+  topicMatches?: BackendPlagiarismMatch[];
   sources?: BackendPlagiarismSource[];
   modelUsed?: string;
   threshold?: number;
@@ -276,6 +281,7 @@ const DEFAULT_ANALYSIS: PlagiarismAnalysis = {
   candidateCount: 0,
   sourceCount: 0,
   matchCount: 0,
+  topicMatchCount: 0,
   checkedSourceTypes: [],
   unavailableSourceTypes: [],
   plagiarismScore: 0,
@@ -341,6 +347,7 @@ function normalizeSource(source: BackendPlagiarismSource): PlagiarismSource {
     plagiarismScore: asNumber(source.plagiarismScore),
     topicSimilarityScore: asNumber(source.topicSimilarityScore, asNumber(source.wordOverlapScore)),
     snippet: source.snippet || '',
+    sourceText: source.sourceText || source.snippet || '',
     matchedWords: asNumber(source.matchedWords),
     totalWords: asNumber(source.totalWords),
     exactMatchScore: asNumber(source.exactMatchScore),
@@ -403,6 +410,7 @@ function normalizeReport(report: BackendPlagiarismReport): PlagiarismReport {
     status: report.status || 'completed',
     riskLevel: report.riskLevel || 'safe',
     matches: (report.matches || []).map(normalizeMatch),
+    topicMatches: (report.topicMatches || []).map(normalizeMatch),
     sources: (report.sources || []).map(normalizeSource),
     modelUsed: report.modelUsed || 'local-ngram-v1',
     threshold: asNumber(report.threshold, 35),

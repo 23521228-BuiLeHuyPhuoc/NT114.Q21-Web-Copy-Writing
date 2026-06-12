@@ -1,7 +1,7 @@
 import { api } from '@/lib/axios';
 
 export type FineTuneUiStatus = 'ready' | 'training' | 'failed' | 'pending';
-export type FineTuneProvider = 'gemini' | 'groq' | 'openrouter' | 'openai' | 'vertex-gemini' | 'vertex-llama' | 'freegpt4' | 'huggingface';
+export type FineTuneProvider = 'openai' | 'vertex-gemini' | 'vertex-llama' | 'gpt-oss';
 
 export interface TrainingLogItem {
   step: string;
@@ -90,7 +90,7 @@ export interface CreateFineTuneDatasetPayload {
   name: string;
   industry: string;
   description?: string;
-  sourceType?: 'manual' | 'csv' | 'jsonl' | 'content-history';
+  sourceType?: 'manual' | 'csv' | 'excel' | 'jsonl' | 'content-history';
   language?: string;
   tags?: string[];
   examples?: CreateFineTuneExamplePayload[];
@@ -258,6 +258,8 @@ const MODEL_LABELS: Record<string, string> = {
   'meta-llama/Llama-3.1-8B-Instruct': 'Llama 3.1 8B Instruct',
   'meta-llama/Llama-3.2-1B-Instruct': 'Llama 3.2 1B Instruct',
   'meta/llama3-3@llama-3.3-70b-instruct': 'Llama 3.3 70B Instruct (Vertex)',
+  'openai/gpt-oss-20b': 'GPT-OSS 20B',
+  'openai/gpt-oss-120b': 'GPT-OSS 120B',
 };
 
 const FINE_TUNE_JOB_REQUEST_TIMEOUT_MS = 300000;
