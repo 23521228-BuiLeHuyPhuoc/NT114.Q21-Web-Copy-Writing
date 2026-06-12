@@ -22,6 +22,12 @@ const checkPlagiarismSchema = Joi.object({
   }).default(),
 }).or('text', 'contentId');
 
+const debugCommonCrawlSchema = Joi.object({
+  text: Joi.string().trim().min(20).max(60000).required(),
+  allowLiveFallback: Joi.boolean().default(false),
+  budgetMs: Joi.number().integer().min(5000).max(120000).optional(),
+});
+
 const listReportsSchema = Joi.object({
   page: Joi.number().integer().min(1).default(1),
   limit: Joi.number().integer().min(1).max(100).default(10),
@@ -31,5 +37,6 @@ const listReportsSchema = Joi.object({
 module.exports = {
   paramsWithId,
   checkPlagiarismSchema,
+  debugCommonCrawlSchema,
   listReportsSchema,
 };

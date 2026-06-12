@@ -28,6 +28,12 @@ export interface PlagiarismHistoryParams {
   riskLevel?: PlagiarismRiskLevel;
 }
 
+export interface DebugCommonCrawlPayload {
+  text: string;
+  allowLiveFallback?: boolean;
+  budgetMs?: number;
+}
+
 export interface PlagiarismSource {
   source: string;
   sourceTitle: string;
@@ -78,14 +84,60 @@ export interface PlagiarismAnalysis {
   wordOverlapScore: number;
   commonCrawl: {
     enabled: boolean;
+    allowLiveFallback: boolean;
     status: 'skipped' | 'ok' | 'empty' | 'error';
+    sourceMode: 'none' | 'commoncrawl' | 'live' | 'mixed';
+    searchProvider: 'none' | 'serpapi';
+    serpApiStatus: 'skipped' | 'ok' | 'empty' | 'error' | 'missing_api_key';
+    serpApiQueryCount: number;
+    serpApiResultCount: number;
+    serpApiUrlCount: number;
+    serpApiError: string;
+    serpApiResults: Array<{
+      url: string;
+      title: string;
+      snippet: string;
+      position: number;
+      query: string;
+      group: string;
+    }>;
+    explicitUrls: string[];
     indexes: string[];
     queryCount: number;
     recordCount: number;
+    cdxHitCount: number;
+    cdxErrorCount: number;
+    warcFetchCount: number;
+    liveFetchCount: number;
     fetchedCount: number;
+    targetUrlCount: number;
+    checkedUrlCount: number;
+    skippedUrlCount: number;
     candidateCount: number;
+    minimumRecommendedSnapshots: number;
+    coverageLevel: 'none' | 'low' | 'medium' | 'good';
+    budgetMs: number;
+    elapsedMs: number;
+    timedOut: boolean;
+    budgetExhausted: boolean;
+    maxSnapshots: number;
+    maxUrlCandidates: number;
     patterns: string[];
+    searchQueries: string[];
+    discoveredUrls: string[];
+    checkedUrls: Array<{
+      url: string;
+      patterns: string[];
+      cdxRecords: number;
+      warcFetched: boolean;
+      warcFetches: number;
+      liveFetched: boolean;
+      candidates: number;
+      mode: 'none' | 'commoncrawl' | 'live';
+      error: string;
+    }>;
     error: string;
+    lastCdxError: string;
   };
 }
 
@@ -120,6 +172,19 @@ export interface PlagiarismHistoryResult {
     totalItems: number;
     totalPages: number;
   };
+}
+
+export interface DebugCommonCrawlResult {
+  stats: PlagiarismAnalysis['commonCrawl'];
+  candidates: Array<{
+    source: string;
+    sourceTitle: string;
+    sourceUrl: string;
+    sourceMode: PlagiarismAnalysis['commonCrawl']['sourceMode'];
+    wordCount: number;
+    textPreview: string;
+    commonCrawl: unknown;
+  }>;
 }
 
 interface BackendPlagiarismSource {
@@ -210,14 +275,43 @@ const DEFAULT_ANALYSIS: PlagiarismAnalysis = {
   wordOverlapScore: 0,
   commonCrawl: {
     enabled: false,
+    allowLiveFallback: false,
     status: 'skipped',
+    sourceMode: 'none',
+    searchProvider: 'none',
+    serpApiStatus: 'skipped',
+    serpApiQueryCount: 0,
+    serpApiResultCount: 0,
+    serpApiUrlCount: 0,
+    serpApiError: '',
+    serpApiResults: [],
+    explicitUrls: [],
     indexes: [],
     queryCount: 0,
     recordCount: 0,
+    cdxHitCount: 0,
+    cdxErrorCount: 0,
+    warcFetchCount: 0,
+    liveFetchCount: 0,
     fetchedCount: 0,
+    targetUrlCount: 0,
+    checkedUrlCount: 0,
+    skippedUrlCount: 0,
     candidateCount: 0,
+    minimumRecommendedSnapshots: 5,
+    coverageLevel: 'none',
+    budgetMs: 0,
+    elapsedMs: 0,
+    timedOut: false,
+    budgetExhausted: false,
+    maxSnapshots: 0,
+    maxUrlCandidates: 0,
     patterns: [],
+    searchQueries: [],
+    discoveredUrls: [],
+    checkedUrls: [],
     error: '',
+    lastCdxError: '',
   },
 };
 
@@ -342,5 +436,16 @@ export const plagiarismService = {
   async get(id: string): Promise<PlagiarismReport> {
     const response = await api.get<{ data?: { report?: BackendPlagiarismReport } }>(`/plagiarism/${id}`);
     return unwrapReport(response);
+  },
+
+  async debugCommonCrawl(payload: DebugCommonCrawlPayload): Promise<DebugCommonCrawlResult> {
+    const response = await api.post<{ data?: DebugCommonCrawlResult }>(
+      '/plagiarism/debug/common-crawl',
+      payload,
+      { timeout: 120000 },
+    );
+
+    if (!response.data.data) throw new Error('Invalid Common Crawl debug response');
+    return response.data.data;
   },
 };

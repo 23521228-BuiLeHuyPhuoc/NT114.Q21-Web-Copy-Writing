@@ -29,7 +29,7 @@ const SENSITIVITY: Record<PlagiarismSensitivity, { label: string; threshold: num
 const SOURCE_LABELS: Record<keyof PlagiarismSourceConfig, string> = {
   database: 'Nội dung đã lưu',
   references: 'Nguồn mẫu nội bộ',
-  web: 'Common Crawl web',
+  web: 'SerpApi + Common Crawl',
   uploads: 'File tải lên',
 };
 
@@ -165,15 +165,43 @@ function sourceTypeLabel(type: string) {
 }
 
 function commonCrawlStatusLabel(status: string) {
-  if (status === 'ok') return 'đã lấy được trang web để so khớp';
-  if (status === 'empty') return 'đã truy vấn nhưng chưa có trang phù hợp';
+  if (status === 'ok') return 'đã lấy được snapshot để so khớp';
+  if (status === 'empty') return 'đã truy vấn nhưng chưa có snapshot phù hợp';
   if (status === 'error') return 'truy vấn lỗi';
   return 'không bật';
+}
+
+function serpApiStatusLabel(status: string) {
+  if (status === 'ok') return 'đã tìm được URL ứng viên';
+  if (status === 'empty') return 'không có URL phù hợp';
+  if (status === 'missing_api_key') return 'thiếu SERPAPI_API_KEY';
+  if (status === 'error') return 'truy vấn lỗi';
+  return 'không chạy';
+}
+
+function sourceModeLabel(mode: string) {
+  if (mode === 'commoncrawl') return 'Common Crawl snapshot';
+  if (mode === 'live') return 'live crawl debug';
+  if (mode === 'mixed') return 'Common Crawl + live crawl debug';
+  return 'chưa có Common Crawl snapshot';
+}
+
+function coverageLabel(level: string) {
+  if (level === 'good') return 'tốt';
+  if (level === 'medium') return 'trung bình';
+  if (level === 'low') return 'thấp';
+  return 'chưa có';
 }
 
 function shortList(values: string[], max = 2) {
   if (values.length <= max) return values.join(', ');
   return `${values.slice(0, max).join(', ')} +${values.length - max}`;
+}
+
+function durationLabel(ms: number) {
+  if (!ms) return '0s';
+  const seconds = ms / 1000;
+  return `${seconds >= 10 ? Math.round(seconds) : seconds.toFixed(1)}s`;
 }
 
 export function CustomerPlagiarismCheck() {
@@ -303,13 +331,49 @@ export function CustomerPlagiarismCheck() {
               <div className='rounded-lg border bg-muted/30 p-4 text-sm'>
                 <h3 className='font-semibold text-foreground'>Thông số lần kiểm tra</h3>
                 <div className='mt-3 space-y-2 text-xs text-muted-foreground'>
-                  <p>Đã so với {result.analysis.candidateCount} nguồn: {result.analysis.checkedSourceTypes.map(sourceTypeLabel).join(', ') || 'không có nguồn'}.</p>
+                  <p>Đã nạp {result.analysis.candidateCount} nguồn để so khớp; {result.analysis.sourceCount} nguồn có tín hiệu tương đồng: {result.analysis.checkedSourceTypes.map(sourceTypeLabel).join(', ') || 'không có nguồn'}.</p>
                   <p>Tìm thấy {result.analysis.matchCount || result.matches.length} đoạn vượt ngưỡng trong {result.wordCount} từ kiểm tra.</p>
                   <p>Chế độ: {SENSITIVITY[result.sensitivity].label}; {result.ignoreCommonPhrases ? 'đã bỏ qua cụm CTA/câu mẫu phổ biến' : 'không bỏ qua cụm phổ biến'}.</p>
                   {result.analysis.commonCrawl.enabled && (
-                    <p>
-                      Common Crawl: {commonCrawlStatusLabel(result.analysis.commonCrawl.status)}; {result.analysis.commonCrawl.queryCount} truy vấn, {result.analysis.commonCrawl.fetchedCount}/{result.analysis.commonCrawl.recordCount} WARC, {result.analysis.commonCrawl.candidateCount} trang so khớp{result.analysis.commonCrawl.indexes.length ? `; index ${shortList(result.analysis.commonCrawl.indexes)}` : ''}.
-                    </p>
+                    <div className='space-y-2'>
+                      <p>
+                        SerpApi: {serpApiStatusLabel(result.analysis.commonCrawl.serpApiStatus)}; {result.analysis.commonCrawl.serpApiQueryCount} query, {result.analysis.commonCrawl.serpApiResultCount} kết quả, {result.analysis.commonCrawl.serpApiUrlCount} URL ứng viên.
+                      </p>
+                      {result.analysis.commonCrawl.serpApiError && (
+                        <p className='text-amber-700'>SerpApi lỗi: {result.analysis.commonCrawl.serpApiError}.</p>
+                      )}
+                      <p>
+                        Common Crawl: {commonCrawlStatusLabel(result.analysis.commonCrawl.status)}; nguồn {sourceModeLabel(result.analysis.commonCrawl.sourceMode)}; đã kiểm {result.analysis.commonCrawl.checkedUrlCount}/{result.analysis.commonCrawl.targetUrlCount} URL{result.analysis.commonCrawl.skippedUrlCount ? `, bỏ qua ${result.analysis.commonCrawl.skippedUrlCount} URL do giới hạn` : ''}, {result.analysis.commonCrawl.cdxHitCount} CDX record{result.analysis.commonCrawl.cdxErrorCount ? `, ${result.analysis.commonCrawl.cdxErrorCount} CDX lỗi` : ''}, {result.analysis.commonCrawl.warcFetchCount} WARC fetch, dùng {result.analysis.commonCrawl.candidateCount}/{result.analysis.commonCrawl.maxSnapshots || result.analysis.commonCrawl.candidateCount} snapshot; thời gian {durationLabel(result.analysis.commonCrawl.elapsedMs)}/{durationLabel(result.analysis.commonCrawl.budgetMs)}; độ phủ {coverageLabel(result.analysis.commonCrawl.coverageLevel)}{result.analysis.commonCrawl.indexes.length ? `; index ${shortList(result.analysis.commonCrawl.indexes)}` : ''}.
+                      </p>
+                      <p>Kết luận chỉ dựa trên các URL SerpApi và snapshot Common Crawl đã kiểm, không phải toàn bộ web.</p>
+                      {result.analysis.commonCrawl.cdxErrorCount > 0 && result.analysis.commonCrawl.lastCdxError && (
+                        <p className='text-amber-700'>CDX phản hồi lỗi gần nhất: {result.analysis.commonCrawl.lastCdxError}.</p>
+                      )}
+                      {result.analysis.commonCrawl.budgetExhausted && (
+                        <p className='text-amber-700'>Common Crawl đã dừng do hết ngân sách thời gian; kết quả chỉ phản ánh các URL/snapshot đã kịp kiểm.</p>
+                      )}
+                      {result.analysis.commonCrawl.coverageLevel !== 'good' && (
+                        <p className='text-amber-700'>Độ phủ thấp: chỉ dùng {result.analysis.commonCrawl.candidateCount} snapshot Common Crawl, chưa đủ để kết luận nội dung không đạo văn.</p>
+                      )}
+                      {result.analysis.commonCrawl.searchQueries.length > 0 && (
+                        <p>SerpApi query: {shortList(result.analysis.commonCrawl.searchQueries, 2)}</p>
+                      )}
+                      {result.analysis.commonCrawl.discoveredUrls.length > 0 && (
+                        <p>URL từ SerpApi: {shortList(result.analysis.commonCrawl.discoveredUrls, 2)}</p>
+                      )}
+                      {result.analysis.commonCrawl.explicitUrls.length > 0 && (
+                        <p>URL nhập trực tiếp: {shortList(result.analysis.commonCrawl.explicitUrls, 2)}</p>
+                      )}
+                      {result.analysis.commonCrawl.checkedUrls.length > 0 && (
+                        <div className='space-y-1 rounded-md border bg-background p-2'>
+                          {result.analysis.commonCrawl.checkedUrls.slice(0, 6).map((item, index) => (
+                            <p key={`${item.url}-${index}`} className='truncate'>
+                              {item.mode === 'commoncrawl' ? 'Đã dùng' : 'Không dùng'} · CDX {item.cdxRecords} · WARC {item.warcFetches || (item.warcFetched ? 1 : 0)} · snapshot {item.candidates || (item.mode === 'commoncrawl' ? 1 : 0)} · {item.url}
+                            </p>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   )}
                   {result.analysis.commonCrawl.status === 'error' && result.analysis.commonCrawl.error && <p className='text-red-700'>Common Crawl lỗi: {result.analysis.commonCrawl.error}</p>}
                   {result.analysis.unavailableSourceTypes.length > 0 && <p className='text-amber-700'>Chưa khả dụng: {result.analysis.unavailableSourceTypes.map(sourceTypeLabel).join(', ')}.</p>}

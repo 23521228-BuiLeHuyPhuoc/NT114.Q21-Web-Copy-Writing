@@ -493,14 +493,43 @@ function buildAnalysis(scoredSources, candidates, matches, sourceConfig, effecti
     wordOverlapScore: maxScore(scoredSources.map((source) => source.wordOverlapScore)),
     commonCrawl: {
       enabled: Boolean(commonCrawlStats.enabled),
+      allowLiveFallback: Boolean(commonCrawlStats.allowLiveFallback),
       status: commonCrawlStats.status || (sourceConfig.web ? 'empty' : 'skipped'),
+      sourceMode: commonCrawlStats.sourceMode || 'none',
+      searchProvider: commonCrawlStats.searchProvider || (sourceConfig.web ? 'serpapi' : 'none'),
+      serpApiStatus: commonCrawlStats.serpApiStatus || (sourceConfig.web ? 'empty' : 'skipped'),
+      serpApiQueryCount: commonCrawlStats.serpApiQueryCount || 0,
+      serpApiResultCount: commonCrawlStats.serpApiResultCount || 0,
+      serpApiUrlCount: commonCrawlStats.serpApiUrlCount || 0,
+      serpApiError: commonCrawlStats.serpApiError || '',
+      serpApiResults: commonCrawlStats.serpApiResults || [],
+      explicitUrls: commonCrawlStats.explicitUrls || [],
       indexes: commonCrawlStats.indexes || [],
       queryCount: commonCrawlStats.queryCount || 0,
       recordCount: commonCrawlStats.recordCount || 0,
+      cdxHitCount: commonCrawlStats.cdxHitCount || 0,
+      cdxErrorCount: commonCrawlStats.cdxErrorCount || 0,
+      warcFetchCount: commonCrawlStats.warcFetchCount || 0,
+      liveFetchCount: commonCrawlStats.liveFetchCount || 0,
       fetchedCount: commonCrawlStats.fetchedCount || 0,
+      targetUrlCount: commonCrawlStats.targetUrlCount || 0,
+      checkedUrlCount: commonCrawlStats.checkedUrlCount || 0,
+      skippedUrlCount: commonCrawlStats.skippedUrlCount || 0,
       candidateCount: commonCrawlStats.candidateCount || 0,
+      minimumRecommendedSnapshots: commonCrawlStats.minimumRecommendedSnapshots || 5,
+      coverageLevel: commonCrawlStats.coverageLevel || 'none',
+      budgetMs: commonCrawlStats.budgetMs || 0,
+      elapsedMs: commonCrawlStats.elapsedMs || 0,
+      timedOut: Boolean(commonCrawlStats.timedOut),
+      budgetExhausted: Boolean(commonCrawlStats.budgetExhausted),
+      maxSnapshots: commonCrawlStats.maxSnapshots || 0,
+      maxUrlCandidates: commonCrawlStats.maxUrlCandidates || 0,
       patterns: commonCrawlStats.patterns || [],
+      searchQueries: commonCrawlStats.searchQueries || [],
+      discoveredUrls: commonCrawlStats.discoveredUrls || [],
+      checkedUrls: commonCrawlStats.checkedUrls || [],
       error: commonCrawlStats.error || '',
+      lastCdxError: commonCrawlStats.lastCdxError || '',
     },
   };
 }
@@ -522,8 +551,8 @@ async function checkPlagiarism(userId, payload) {
   const [databaseCandidates, commonCrawlResult] = await Promise.all([
     sourceConfig.database ? buildDatabaseCandidates(userId, contentId) : Promise.resolve([]),
     sourceConfig.web
-      ? commonCrawlService.fetchCommonCrawlCandidates(checkText)
-      : Promise.resolve({ candidates: [], stats: { enabled: false, status: 'skipped' } }),
+      ? commonCrawlService.fetchCommonCrawlCandidates(checkText, { allowLiveFallback: false })
+      : Promise.resolve({ candidates: [], stats: { enabled: false, status: 'skipped', allowLiveFallback: false } }),
   ]);
   const referenceCandidates = sourceConfig.references ? REFERENCE_SOURCES : [];
   const webCandidates = commonCrawlResult.candidates || [];
@@ -617,6 +646,26 @@ async function checkPlagiarism(userId, payload) {
   return serializeReport(report);
 }
 
+async function debugCommonCrawl(payload) {
+  const result = await commonCrawlService.fetchCommonCrawlCandidates(payload.text, {
+    allowLiveFallback: payload.allowLiveFallback === true,
+    budgetMs: payload.budgetMs,
+  });
+
+  return {
+    stats: result.stats,
+    candidates: (result.candidates || []).map((candidate) => ({
+      source: candidate.source,
+      sourceTitle: candidate.sourceTitle,
+      sourceUrl: candidate.sourceUrl,
+      sourceMode: candidate.sourceMode || 'none',
+      wordCount: countWords(candidate.text),
+      textPreview: snippet(candidate.text, 500),
+      commonCrawl: candidate.commonCrawl || null,
+    })),
+  };
+}
+
 async function listReports(userId, query = {}) {
   const page = Math.max(1, Number(query.page || 1));
   const limit = Math.min(100, Math.max(1, Number(query.limit || 10)));
@@ -655,6 +704,7 @@ module.exports = {
   MODEL_USED,
   serializeReport,
   checkPlagiarism,
+  debugCommonCrawl,
   listReports,
   getReport,
 };

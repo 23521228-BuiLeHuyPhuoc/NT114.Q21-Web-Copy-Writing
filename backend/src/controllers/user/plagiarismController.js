@@ -11,6 +11,16 @@ const checkPlagiarism = asyncHandler(async (req, res) => {
   });
 });
 
+const debugCommonCrawl = asyncHandler(async (req, res) => {
+  const data = await plagiarismService.debugCommonCrawl(req.body);
+
+  return res.status(200).json({
+    success: true,
+    message: 'SerpApi + Common Crawl debug completed',
+    data,
+  });
+});
+
 const listReports = asyncHandler(async (req, res) => {
   const data = await plagiarismService.listReports(req.user._id, req.query);
 
@@ -33,6 +43,7 @@ const getReport = asyncHandler(async (req, res) => {
 
 module.exports = {
   checkPlagiarism,
+  debugCommonCrawl,
   listReports,
   getReport,
 };
