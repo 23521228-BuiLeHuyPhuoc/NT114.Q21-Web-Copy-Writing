@@ -5,6 +5,7 @@ const { protect } = require('../../middlewares/auth/authMiddleware');
 const validate = require('../../middlewares/validation/validate');
 const {
   addExamplesSchema,
+  archiveDatasetsBulkSchema,
   createDatasetSchema,
   createFineTuneJobSchema,
   listDatasetsSchema,
@@ -32,6 +33,11 @@ router.patch(
 
 router.get('/datasets', validate(listDatasetsSchema, 'query'), fineTuneController.listDatasets);
 router.post('/datasets', validate(createDatasetSchema), fineTuneController.createDataset);
+router.post(
+  '/datasets/archive-bulk',
+  validate({ body: archiveDatasetsBulkSchema }),
+  fineTuneController.archiveDatasets,
+);
 router.get(
   '/datasets/:id',
   validate({ params: paramsWithId, query: listExamplesSchema }),

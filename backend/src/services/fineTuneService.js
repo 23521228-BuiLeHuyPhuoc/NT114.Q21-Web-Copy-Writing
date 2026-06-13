@@ -1079,6 +1079,9 @@ function serializeExample(example) {
     outputText: example.outputText,
     industry: example.industry || 'general',
     tone: example.tone || '',
+    type: example.contentType || '',
+    contentType: example.contentType || '',
+    product: example.product || '',
     qualityScore: example.qualityScore || 0,
     isValid: Boolean(example.isValid),
     validationErrors: example.validationErrors || [],
@@ -1301,6 +1304,8 @@ async function addExamples(userId, datasetId, payload) {
       outputText: validated.outputText,
       industry: item.industry || dataset.industry,
       tone: item.tone || '',
+      contentType: item.contentType || item.type || '',
+      product: item.product || '',
       qualityScore: validated.qualityScore,
       isValid: validated.isValid,
       validationErrors: validated.validationErrors,
@@ -1359,6 +1364,26 @@ async function archiveDataset(userId, id) {
   dataset.archivedAt = new Date();
   await dataset.save();
   return serializeDataset(dataset);
+}
+
+async function archiveDatasets(userId, ids = []) {
+  const uniqueIds = [...new Set(ids.map((id) => String(id)))];
+  if (uniqueIds.length === 0) throw createError(400, 'At least one dataset id is required');
+
+  const datasets = await FineTuneDataset.find({ _id: { $in: uniqueIds }, userId });
+  if (datasets.length !== uniqueIds.length) throw createError(404, 'One or more fine-tune datasets were not found');
+
+  const now = new Date();
+  await FineTuneDataset.updateMany(
+    { _id: { $in: uniqueIds }, userId },
+    { $set: { status: 'archived', archivedAt: now } },
+  );
+
+  const archived = await FineTuneDataset.find({ _id: { $in: uniqueIds }, userId }).sort({ updatedAt: -1, createdAt: -1 });
+  return {
+    archivedCount: archived.length,
+    items: archived.map(serializeDataset),
+  };
 }
 
 async function findFineTuneJobOrThrow(userId, id) {
@@ -2186,6 +2211,7 @@ module.exports = {
   listExamples,
   validateDataset,
   archiveDataset,
+  archiveDatasets,
   listFineTuneJobs,
   getFineTuneJob,
   createFineTuneJob,

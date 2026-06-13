@@ -25,6 +25,8 @@ export interface ExamplePair {
   output: string;
   industry: string;
   tone?: string;
+  type?: string;
+  product?: string;
   qualityScore?: number;
   isValid?: boolean;
   validationErrors?: string[];
@@ -83,6 +85,9 @@ export interface CreateFineTuneExamplePayload {
   outputText?: string;
   industry?: string;
   tone?: string;
+  type?: string;
+  contentType?: string;
+  product?: string;
   sourceContentId?: string | null;
 }
 
@@ -180,6 +185,9 @@ interface BackendExample {
   outputText?: string;
   industry?: string;
   tone?: string;
+  type?: string;
+  contentType?: string;
+  product?: string;
   qualityScore?: number;
   isValid?: boolean;
   validationErrors?: string[];
@@ -346,6 +354,8 @@ function normalizeExample(item: BackendExample): ExamplePair {
     output: item.output || item.outputText || '',
     industry: item.industry || 'general',
     tone: item.tone || '',
+    type: item.type || item.contentType || '',
+    product: item.product || '',
     qualityScore: Number(item.qualityScore || 0),
     isValid: Boolean(item.isValid),
     validationErrors: item.validationErrors || [],
@@ -437,6 +447,9 @@ function normalizeExamplesForApi(examples?: CreateFineTuneExamplePayload[]) {
     output: example.output || example.outputText || '',
     industry: example.industry,
     tone: example.tone || '',
+    type: example.type || example.contentType || '',
+    contentType: example.contentType || example.type || '',
+    product: example.product || '',
     sourceContentId: example.sourceContentId || null,
   }));
 }
@@ -483,6 +496,16 @@ export const fineTuningService = {
   async archiveDataset(datasetId: string) {
     const response = await api.post<ApiResponse<ApiItem<BackendDataset>>>(`/fine-tune/datasets/${datasetId}/archive`);
     return normalizeDataset(response.data.data?.item || {});
+  },
+
+  async archiveDatasets(datasetIds: string[]) {
+    const response = await api.post<ApiResponse<{ archivedCount?: number; items?: BackendDataset[] }>>('/fine-tune/datasets/archive-bulk', {
+      ids: datasetIds,
+    });
+    return {
+      archivedCount: Number(response.data.data?.archivedCount || 0),
+      items: (response.data.data?.items || []).map(normalizeDataset),
+    };
   },
 
   async listJobs(params?: { page?: number; limit?: number; status?: string; industry?: string; datasetId?: string; provider?: string }) {

@@ -81,6 +81,16 @@ const archiveDataset = asyncHandler(async (req, res) => {
   });
 });
 
+const archiveDatasets = asyncHandler(async (req, res) => {
+  const data = await fineTuneService.archiveDatasets(req.user._id, req.body.ids);
+
+  return res.status(200).json({
+    success: true,
+    message: 'Fine-tune datasets archived',
+    data,
+  });
+});
+
 const listFineTuneJobs = asyncHandler(async (req, res) => {
   const data = await fineTuneService.listFineTuneJobs(req.user._id, req.query);
 
@@ -210,6 +220,7 @@ module.exports = {
   listExamples,
   validateDataset,
   archiveDataset,
+  archiveDatasets,
   listFineTuneJobs,
   getFineTuneJob,
   createFineTuneJob,

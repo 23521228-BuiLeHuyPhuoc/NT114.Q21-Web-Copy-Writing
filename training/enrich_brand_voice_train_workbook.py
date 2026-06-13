@@ -10,9 +10,53 @@ from xml.etree import ElementTree as ET
 
 SHEET_NS = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'
 XML_NS = 'http://www.w3.org/XML/1998/namespace'
+MC_NS = 'http://schemas.openxmlformats.org/markup-compatibility/2006'
+X14AC_NS = 'http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac'
+XR_NS = 'http://schemas.microsoft.com/office/spreadsheetml/2014/revision'
+XR2_NS = 'http://schemas.microsoft.com/office/spreadsheetml/2015/revision2'
+XR3_NS = 'http://schemas.microsoft.com/office/spreadsheetml/2016/revision3'
 NS = {'x': SHEET_NS}
+IGNORABLE_PREFIX_URIS = {
+    'x14ac': X14AC_NS,
+    'xr': XR_NS,
+    'xr2': XR2_NS,
+    'xr3': XR3_NS,
+}
 
 ET.register_namespace('', SHEET_NS)
+ET.register_namespace('mc', MC_NS)
+ET.register_namespace('x14ac', X14AC_NS)
+ET.register_namespace('xr', XR_NS)
+ET.register_namespace('xr2', XR2_NS)
+ET.register_namespace('xr3', XR3_NS)
+
+
+def used_namespace_uris(root: ET.Element) -> set[str]:
+    namespaces = set()
+    for element in root.iter():
+        names = [element.tag, *element.attrib]
+        for name in names:
+            if name.startswith('{'):
+                namespaces.add(name[1:].split('}', 1)[0])
+    return namespaces
+
+
+def normalize_ignorable_prefixes(root: ET.Element) -> None:
+    used_namespaces = used_namespace_uris(root)
+    ignorable_attribute = f'{{{MC_NS}}}Ignorable'
+    for element in root.iter():
+        value = element.get(ignorable_attribute)
+        if not value:
+            continue
+
+        kept_prefixes = [
+            prefix for prefix in value.split()
+            if IGNORABLE_PREFIX_URIS.get(prefix, '') in used_namespaces
+        ]
+        if kept_prefixes:
+            element.set(ignorable_attribute, ' '.join(kept_prefixes))
+        else:
+            del element.attrib[ignorable_attribute]
 
 
 PRODUCT_CONTEXT = {
@@ -621,6 +665,7 @@ def write_enriched_workbook(source: Path, destination: Path) -> dict[str, int]:
 
         shared_root.set('count', str(len(shared_root.findall('x:si', NS))))
         shared_root.set('uniqueCount', str(len(shared_root.findall('x:si', NS))))
+        normalize_ignorable_prefixes(sheet_tree.getroot())
         shared_xml = ET.tostring(shared_root, encoding='utf-8', xml_declaration=True)
         sheet_xml = ET.tostring(sheet_tree.getroot(), encoding='utf-8', xml_declaration=True)
 

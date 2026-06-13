@@ -33,10 +33,17 @@ const examplePayloadSchema = Joi.object({
   outputText: Joi.string().trim().min(1).max(20000),
   industry: Joi.string().trim().lowercase().max(80).allow('').optional(),
   tone: Joi.string().trim().max(80).allow('').default(''),
+  type: Joi.string().trim().lowercase().max(80).allow('').optional(),
+  contentType: Joi.string().trim().lowercase().max(80).allow('').optional(),
+  product: Joi.string().trim().max(160).allow('').optional(),
   sourceContentId: objectId.allow(null).empty('').optional(),
 })
   .or('input', 'inputText')
   .or('output', 'outputText');
+
+const archiveDatasetsBulkSchema = Joi.object({
+  ids: Joi.array().items(objectId.required()).min(1).max(100).required(),
+});
 
 const listDatasetsSchema = Joi.object({
   ...baseListSchema,
@@ -110,6 +117,7 @@ module.exports = {
   listDatasetsSchema,
   createDatasetSchema,
   updateDatasetSchema,
+  archiveDatasetsBulkSchema,
   addExamplesSchema,
   listExamplesSchema,
   listFineTuneJobsSchema,

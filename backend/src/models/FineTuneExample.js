@@ -40,6 +40,21 @@ const fineTuneExampleSchema = new mongoose.Schema(
       maxlength: 80,
       default: '',
     },
+    contentType: {
+      type: String,
+      trim: true,
+      lowercase: true,
+      maxlength: 80,
+      default: '',
+      index: true,
+    },
+    product: {
+      type: String,
+      trim: true,
+      maxlength: 160,
+      default: '',
+      index: true,
+    },
     qualityScore: {
       type: Number,
       min: 0,

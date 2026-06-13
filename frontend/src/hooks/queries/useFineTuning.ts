@@ -99,6 +99,15 @@ export function useValidateFineTuneDataset() {
   });
 }
 
+export function useArchiveFineTuneDatasets() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (datasetIds: string[]) => fineTuningService.archiveDatasets(datasetIds),
+    onSuccess: () => invalidateFineTuneOverview(queryClient),
+  });
+}
+
 export function useCreateFineTuneJob() {
   const queryClient = useQueryClient();
 

@@ -39,6 +39,8 @@ type ImportedFineTuneExample = {
   output: string;
   industry: string;
   tone: string;
+  type: string;
+  product: string;
 };
 
 type TrainingMetric = {
@@ -142,6 +144,8 @@ function parseFineTuneTableRows(rows: Array<Array<unknown>>, idPrefix: string): 
   const outputIndex = findHeaderIndex(headers, ['output', 'outputText', 'completion', 'assistant', 'response', 'noi dung dau ra', 'cau tra loi']);
   const industryIndex = findHeaderIndex(headers, ['industry', 'nganh', 'nganh nghe', 'linh vuc']);
   const toneIndex = findHeaderIndex(headers, ['tone', 'voice', 'brandVoice', 'giong van', 'tone giong']);
+  const typeIndex = findHeaderIndex(headers, ['type', 'contentType', 'copyType', 'loai noi dung', 'loai', 'dinh dang']);
+  const productIndex = findHeaderIndex(headers, ['product', 'productName', 'san pham', 'san pham dich vu', 'dich vu']);
   if (inputIndex < 0 || outputIndex < 0) return [];
 
   return rows.slice(1).map((cells, index) => {
@@ -153,6 +157,8 @@ function parseFineTuneTableRows(rows: Array<Array<unknown>>, idPrefix: string): 
       output,
       industry: industryIndex >= 0 ? String(cells[industryIndex] ?? '').trim() || 'general' : 'general',
       tone: toneIndex >= 0 ? String(cells[toneIndex] ?? '').trim() || '' : '',
+      type: typeIndex >= 0 ? String(cells[typeIndex] ?? '').trim() || '' : '',
+      product: productIndex >= 0 ? String(cells[productIndex] ?? '').trim() || '' : '',
     };
   }).filter(item => item.input.length >= 10 && item.output.length >= 20);
 }
@@ -260,15 +266,26 @@ export function CustomerFineTuningStudio() {
   const { data: examplesData } = useExamplePairs();
   const { data: providers = [] } = useFineTuneProviders();
   const { data: quotas } = useFineTuneQuotas();
-  const activeTrainingJob = jobsData.find(job => job.status === 'training') || jobsData.find(job => job.status === 'pending') || jobsData[0];
-  const { data: trainingLog = [] } = useTrainingLog(activeTrainingJob?.id);
-  const { data: metrics = [] } = useFineTuneMetrics(activeTrainingJob?.id);
   const createFineTuneJob = useCreateFineTuneJob();
   const setFineTunedModelActive = useSetFineTunedModelActive();
+  const [selectedTrainingJobId, setSelectedTrainingJobId] = useState<string>('');
   const [models, setModels] = useState<NonNullable<typeof modelsData>>([] as any);
   const [examples, setExamples] = useState<NonNullable<typeof examplesData>>([] as any);
+  const [selectedExampleIds, setSelectedExampleIds] = useState<string[]>([]);
+  const preferredTrainingJob = jobsData.find(job => job.status === 'training') || jobsData.find(job => job.status === 'pending') || jobsData[0];
+  const activeTrainingJob = jobsData.find(job => job.id === selectedTrainingJobId) || preferredTrainingJob;
+  const { data: trainingLog = [] } = useTrainingLog(activeTrainingJob?.id);
+  const { data: metrics = [] } = useFineTuneMetrics(activeTrainingJob?.id);
   useEffect(() => { if (modelsData) setModels(modelsData); }, [modelsData]);
   useEffect(() => { if (examplesData) setExamples(examplesData); }, [examplesData]);
+  useEffect(() => {
+    if (jobsData.length === 0) {
+      if (selectedTrainingJobId) setSelectedTrainingJobId('');
+      return;
+    }
+    if (selectedTrainingJobId && jobsData.some(job => job.id === selectedTrainingJobId)) return;
+    if (preferredTrainingJob?.id) setSelectedTrainingJobId(preferredTrainingJob.id);
+  }, [jobsData, preferredTrainingJob?.id, selectedTrainingJobId]);
   const [newInput, setNewInput] = useState('');
   const [newOutput, setNewOutput] = useState('');
   const [newModelName, setNewModelName] = useState('');
@@ -338,10 +355,52 @@ export function CustomerFineTuningStudio() {
     initialPageSize: 6,
     resetKey: trainingLog.length,
   });
+  const selectedExampleIdSet = useMemo(() => new Set(selectedExampleIds), [selectedExampleIds]);
+  const pageExampleIds = useMemo(() => examplePagination.pageItems.map(ex => String(ex.id)), [examplePagination.pageItems]);
+  const allPageExamplesSelected = pageExampleIds.length > 0 && pageExampleIds.every(id => selectedExampleIdSet.has(id));
+
+  useEffect(() => {
+    setSelectedExampleIds(prev => prev.filter(id => examples.some(ex => String(ex.id) === id)));
+  }, [examples]);
+
+  const toggleExampleSelection = (exampleId: number | string, checked: boolean) => {
+    const id = String(exampleId);
+    setSelectedExampleIds(prev => {
+      if (checked) return prev.includes(id) ? prev : [...prev, id];
+      return prev.filter(item => item !== id);
+    });
+  };
+
+  const toggleCurrentPageExamples = (checked: boolean) => {
+    setSelectedExampleIds(prev => {
+      const next = new Set(prev);
+      pageExampleIds.forEach(id => {
+        if (checked) next.add(id);
+        else next.delete(id);
+      });
+      return Array.from(next);
+    });
+  };
+
+  const deleteSelectedExamples = () => {
+    if (selectedExampleIds.length === 0) return;
+    const idsToDelete = new Set(selectedExampleIds);
+    setExamples(prev => prev.filter(ex => !idsToDelete.has(String(ex.id))));
+    setSelectedExampleIds([]);
+    toast.success(`Da xoa ${idsToDelete.size} vi du da chon`);
+  };
+
+  const deleteAllExamples = () => {
+    if (examples.length === 0) return;
+    const count = examples.length;
+    setExamples([]);
+    setSelectedExampleIds([]);
+    toast.success(`Da xoa ${count} vi du training`);
+  };
 
   const addExample = () => {
     if (!newInput || !newOutput) { toast.error('Điền đầy đủ input và output'); return; }
-    setExamples(prev => [...prev, { id: Date.now(), input: newInput, output: newOutput, industry: newModelIndustry }]);
+    setExamples(prev => [...prev, { id: Date.now(), input: newInput, output: newOutput, industry: newModelIndustry, tone: '', type: '', product: '' }]);
     setNewInput('');
     setNewOutput('');
     toast.success('Đã thêm cặp ví dụ!');
@@ -391,11 +450,14 @@ export function CustomerFineTuningStudio() {
           input: ex.input,
           output: ex.output,
           industry: ex.industry || newModelIndustry,
-          tone: newModelProvider === 'openai' ? 'professional' : '',
+          tone: ex.tone || '',
+          type: ex.type || '',
+          product: ex.product || '',
         })),
       });
       setNewModelName('');
       setNewModelDesc('');
+      setSelectedTrainingJobId(job.id);
       setActiveTab('training');
       toast.success(`Đã tạo job fine-tuning "${job.name}"`);
     } catch (error) {
@@ -613,11 +675,32 @@ export function CustomerFineTuningStudio() {
 
               {/* Right: Training data */}
               <Card className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-bold text-foreground">Dữ liệu training</h3>
-                  <Badge className={`border-0 ${examples.length >= 50 ? 'bg-primary/10 text-primary' : examples.length >= 10 ? 'bg-primary/10 text-primary' : 'bg-warning/15 text-amber-800'}`}>
-                    {examples.length} ví dụ
-                  </Badge>
+                <div className="flex flex-col gap-3 mb-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className="font-bold text-foreground">Dữ liệu training</h3>
+                    <Badge className={`border-0 ${examples.length >= 50 ? 'bg-primary/10 text-primary' : examples.length >= 10 ? 'bg-primary/10 text-primary' : 'bg-warning/15 text-amber-800'}`}>
+                      {examples.length} ví dụ
+                    </Badge>
+                  </div>
+                  {examples.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <label className="flex items-center gap-2 text-xs text-foreground/70">
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 rounded border-border"
+                          checked={allPageExamplesSelected}
+                          onChange={event => toggleCurrentPageExamples(event.target.checked)}
+                        />
+                        Chọn trang hiện tại
+                      </label>
+                      <Button size="sm" variant="outline" onClick={deleteSelectedExamples} disabled={selectedExampleIds.length === 0}>
+                        <Trash2 className="w-4 h-4 mr-1" /> Xóa đã chọn ({selectedExampleIds.length})
+                      </Button>
+                      <Button size="sm" variant="ghost" className="text-red-500" onClick={deleteAllExamples}>
+                        <Trash2 className="w-4 h-4 mr-1" /> Xóa tất cả
+                      </Button>
+                    </div>
+                  )}
                 </div>
 
                 {examples.length < 10 && (
@@ -627,12 +710,24 @@ export function CustomerFineTuningStudio() {
                   </div>
                 )}
 
-                <div className="space-y-3 max-h-48 overflow-y-auto mb-4">
+                <div className="space-y-3 max-h-64 overflow-y-auto mb-4">
                   {examplePagination.pageItems.map(ex => (
                     <div key={ex.id} className="border rounded-lg p-3 bg-surface-muted">
-                      <div className="flex justify-between items-start mb-1">
-                        <Badge className="bg-primary/10 text-primary border-0 text-xs">Input</Badge>
-                        <button onClick={() => setExamples(prev => prev.filter(e => e.id !== ex.id))} className="text-muted-foreground/80 hover:text-red-500">
+                      <div className="flex justify-between items-start gap-3 mb-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4 rounded border-border"
+                            checked={selectedExampleIdSet.has(String(ex.id))}
+                            onChange={event => toggleExampleSelection(ex.id, event.target.checked)}
+                          />
+                          <Badge className="bg-primary/10 text-primary border-0 text-xs">Input</Badge>
+                          {ex.industry && <Badge className="bg-muted text-foreground/70 border-0 text-[10px]">{ex.industry}</Badge>}
+                          {ex.tone && <Badge className="bg-muted text-foreground/70 border-0 text-[10px]">{ex.tone}</Badge>}
+                          {ex.type && <Badge className="bg-muted text-foreground/70 border-0 text-[10px]">{ex.type}</Badge>}
+                          {ex.product && <Badge className="bg-muted text-foreground/70 border-0 text-[10px]">{ex.product}</Badge>}
+                        </div>
+                        <button onClick={() => { setExamples(prev => prev.filter(e => e.id !== ex.id)); setSelectedExampleIds(prev => prev.filter(id => id !== String(ex.id))); }} className="text-muted-foreground/80 hover:text-red-500">
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
@@ -779,12 +874,13 @@ export function CustomerFineTuningStudio() {
               {jobPagination.pageItems.length > 0 ? (
                 <div className="space-y-3">
                   {jobPagination.pageItems.map(job => (
-                    <div key={job.id} className="border rounded-lg p-3 bg-surface-muted">
+                    <div key={job.id} className={`border rounded-lg p-3 ${activeTrainingJob?.id === job.id ? 'bg-primary/5 border-primary/30' : 'bg-surface-muted'}`}>
                       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-2 mb-1">
                             <h4 className="font-semibold text-foreground truncate">{job.name}</h4>
                             <Badge className={`${statusColor(job.status)} border-0 text-xs`}>{statusLabel(job.status)}</Badge>
+                            {activeTrainingJob?.id === job.id && <Badge className="bg-primary/10 text-primary border-0 text-xs">Đang xem</Badge>}
                           </div>
                           <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
                             <span>Provider: {job.provider}</span>
@@ -800,6 +896,14 @@ export function CustomerFineTuningStudio() {
                           </div>
                           <Progress value={clampProgressValue(job.progress)} className="h-2" />
                         </div>
+                        <Button
+                          size="sm"
+                          variant={activeTrainingJob?.id === job.id ? 'default' : 'outline'}
+                          className={activeTrainingJob?.id === job.id ? 'bg-primary hover:bg-green-700 text-white' : ''}
+                          onClick={() => setSelectedTrainingJobId(job.id)}
+                        >
+                          <BarChart3 className="w-4 h-4 mr-1" /> Xem tiến trình
+                        </Button>
                       </div>
                     </div>
                   ))}
