@@ -24,8 +24,8 @@ Nhung diem da phat hien can dua vao ke hoach:
 - Backend con provider/default `mock` trong `FineTuneJob`, `Payment`, `Subscription`, `billingService` va `seed.js`.
 - Frontend con service tra mock nhu du lieu that: `paymentService.ts`, `apiKeyService.ts`, `historyService.ts`.
 - Frontend con mot so mock dang dung nhu option/static dictionary. Can phan loai ro: cai nao duoc phep giu, cai nao la fake API data phai bo.
-- Fine-tuning hien nen chi giu provider that co the tao job: `vertex-gemini`, `vertex-llama`, `gpt-oss`; khong hien Hugging Face nhu provider fine-tuning doc lap.
-- GPT-OSS co the can Hugging Face token/Space/GPU nhu ha tang chay LoRA, nhung README/UI phai noi ro day khong phai provider Hugging Face doc lap.
+- Fine-tuning hien nen chi giu provider that co the tao job: `vertex-gemini`, `vertex-llama`, `vertex-qwen`; khong hien Hugging Face nhu provider fine-tuning doc lap.
+- Qwen 3 0.6B dung Vertex Model Garden flow hien tai; can xac minh app submit dung API ma Google Console dung.
 - Fine-tune import da co CSV/Excel, can them test chat luong dataset: output phai la copy sinh ra, khong duoc trung prompt hay meta instruction.
 - Billing/pricing con noi dung demo/fallback, can canh lai de khong overclaim production payment neu gateway chua cau hinh.
 
@@ -38,10 +38,10 @@ Nhung diem da phat hien can dua vao ke hoach:
 - [ ] Sua Muc 6: Module 6 Thanh Toan
 - [ ] Sua Muc 8: Tien do, cap nhat ngay 12/06
 - [ ] Go cac dong README cu ve mock/API service layer, thu muc mock va auth mock/localStorage neu khong con dung.
-- [ ] Cap nhat danh sach fine-tuning provider that: `vertex-gemini`, `vertex-llama`, `gpt-oss`.
-- [ ] Ghi ro khong con Hugging Face provider doc lap; GPT-OSS chi dung Hugging Face Space/token nhu ha tang training khi can.
+- [ ] Cap nhat danh sach fine-tuning provider that: `vertex-gemini`, `vertex-llama`, `vertex-qwen`.
+- [ ] Ghi ro khong con Hugging Face provider doc lap; Qwen 3 0.6B can chay qua dung Vertex Model Garden tuning flow.
 - [ ] Cap nhat import dataset fine-tuning ho tro CSV va Excel `.xlsx/.xls`.
-- [ ] Ghi ro dieu kien dung fine-tuned model trong AI Generator: provider phai co endpoint inference that; GPT-OSS LoRA adapter can deploy endpoint rieng neu muon generate.
+- [ ] Ghi ro dieu kien dung fine-tuned model trong AI Generator: provider phai co endpoint inference that; Qwen tuned output can deploy endpoint rieng neu muon generate.
 - [ ] Cap nhat phan Docker theo `backend/Dockerfile`, `frontend/Dockerfile` va `docker-compose.yml` sau Phase 3.
 
 Ket qua can dat:
@@ -62,7 +62,7 @@ Ket qua can dat:
 - [ ] Test AI Generate
 - [ ] Test Fine-tune import CSV
 - [ ] Test Fine-tune import Excel `.xlsx/.xls`
-- [ ] Test tao fine-tune job voi provider kha dung (`vertex-gemini`, `vertex-llama`, `gpt-oss`) theo env hien co
+- [ ] Test tao fine-tune job voi provider kha dung (`vertex-gemini`, `vertex-llama`, `vertex-qwen`) theo env hien co
 - [ ] Test promote/active fine-tuned model va mo sang `/generate?model=fine-tuned:*`
 - [ ] Test Generator khi chon model fine-tuned: thanh cong neu co endpoint, bao loi ro neu chua co endpoint inference
 - [ ] Test Plagiarism Check voi SerpApi/Common Crawl khi co key va graceful error khi thieu key
@@ -126,7 +126,7 @@ Ket qua can dat:
 - [ ] Tao/kiem tra tai khoan demo customer va admin, kem role/permission dung.
 - [ ] Chuan bi dataset fine-tuning Excel mau: output la copy marketing dac sac, khong trung prompt, khong la meta instruction.
 - [ ] Demo flow fine-tuning: import Excel, chon provider that, tao job, xem status/metrics, promote model.
-- [ ] Demo flow generate voi model base va fine-tuned; neu GPT-OSS chua co inference endpoint thi noi ro phan training adapter va cach deploy endpoint.
+- [ ] Demo flow generate voi model base va fine-tuned; neu Qwen tuned output chua co inference endpoint thi noi ro phan training adapter va cach deploy endpoint.
 - [ ] Demo flow plagiarism check voi noi dung co/khong co trung lap.
 - [ ] Demo flow admin: user approval, model/provider management, audit/payment logs neu da ket noi API that.
 - [ ] Demo flow billing: xem goi, tao thanh toan manual/sandbox gateway, admin xem giao dich.

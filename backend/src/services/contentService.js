@@ -1,5 +1,6 @@
 const Content = require('../models/Content');
 const FineTunedModel = require('../models/FineTunedModel');
+const FineTuneExample = require('../models/FineTuneExample');
 const FineTuneJob = require('../models/FineTuneJob');
 const UsageLog = require('../models/UsageLog');
 const aiService = require('./aiService');
@@ -8,7 +9,180 @@ const projectService = require('./projectService');
 const templateService = require('./templateService');
 const createError = require('../utils/createError');
 
-const SUPPORTED_FINE_TUNE_PROVIDERS = new Set(['openai', 'vertex-gemini', 'vertex-llama', 'gpt-oss']);
+const SUPPORTED_FINE_TUNE_PROVIDERS = new Set(['openai', 'vertex-gemini', 'vertex-llama', 'vertex-qwen', 'vertex-claude', 'anthropic']);
+const MARKETING_ICON_RE = /[\u2600-\u27BF\u{1F300}-\u{1FAFF}]/u;
+
+function hasMarketingIcon(value) {
+  return MARKETING_ICON_RE.test(String(value || ''));
+}
+
+function buildVertexLlamaFineTunedPrompt(currentPrompt) {
+  return [
+    'You are a Vietnamese ecommerce marketing copywriter.',
+    'Write natural Vietnamese with full diacritics and follow the original brief exactly.',
+    'Always put emoji/icons at the beginning of each version and each content label.',
+    'Icon guide: \u{1F9E9} Phien ban 1, \u{1F9EA} Phien ban 2, \u{1F680} Phien ban 3, \u{1F4E3} Headline, \u2728 Subheadline, \u{1F3AF} Hook, \u{1F4AC} Caption, \u{1F449} CTA, \u{1F4A1} Microcopy.',
+    'Return final marketing copy only. Do not explain.',
+    '',
+    'Original brief:',
+    String(currentPrompt || '').trim(),
+  ].join('\n');
+}
+
+function prefixIcon(line, icon) {
+  const match = String(line || '').match(/^(\s*(?:[-*]\s*)?)(.*)$/);
+  if (!match) return line;
+  if (hasMarketingIcon(match[2].slice(0, 6))) return line;
+  return match[1] + icon + ' ' + match[2];
+}
+
+function applyMarketingIcons(outputText) {
+  const text = String(outputText || '').trim();
+  if (!text) return text;
+
+  const rules = [
+    { icon: '\u{1F9E9}', pattern: /^phi(?:\u00ean|\?)n b(?:\u1ea3|\?)n\s*1\s*:/i },
+    { icon: '\u{1F9EA}', pattern: /^phi(?:\u00ean|\?)n b(?:\u1ea3|\?)n\s*2\s*:/i },
+    { icon: '\u{1F680}', pattern: /^phi(?:\u00ean|\?)n b(?:\u1ea3|\?)n\s*3\s*:/i },
+    { icon: '\u2B50', pattern: /^phi(?:\u00ean|\?)n b(?:\u1ea3|\?)n\s*\d+\s*:/i },
+    { icon: '\u{1F4E3}', pattern: /^(headline|ti(?:\u00eau|\?)u|ch(?:\u1ee7|\?)\s*(?:\u0111|\?)(?:\u1ec1|\?))\s*:/i },
+    { icon: '\u2728', pattern: /^(subheadline|m(?:\u00f4|\?)\s*t(?:\u1ea3|\?)\s*ng(?:\u1eaf|\?)n|m(?:\u00f4|\?)\s*t(?:\u1ea3|\?)\s*ph(?:\u1ee5|\?))\s*:/i },
+    { icon: '\u{1F3AF}', pattern: /^(hook|m(?:\u1edf|\?)\s*(?:\u0111|\?)(?:\u1ea7|\?)u)\s*:/i },
+    { icon: '\u{1F4AC}', pattern: /^(caption|n(?:\u1ed9|\?)i\s*dung|body)\s*:/i },
+    { icon: '\u{1F449}', pattern: /^(l(?:\u1eddi|\?)i\s*k(?:\u00eau|\?)u\s*g(?:\u1ecdi|\?)i\s*h(?:\u00e0nh|\?)\s*(?:\u0111|\?)(?:\u1ed9|\?)ng|cta|call to action)\s*:/i },
+    { icon: '\u{1F4A1}', pattern: /^(microcopy|ghi ch(?:\u00fa|\?)|l(?:\u1ee3|\?)i\s*(?:\u00ed|\?)ch\s*ch(?:\u00ed|\?)nh)\s*:/i },
+    { icon: '\u{1F6D2}', pattern: /^(m(?:\u00f4|\?)\s*t(?:\u1ea3|\?)\s*s(?:\u1ea3|\?)n\s*ph(?:\u1ea9|\?)m|s(?:\u1ea3|\?)n\s*ph(?:\u1ea9|\?)m|(?:\u01b0|\?)u\s*(?:\u0111|\?)(?:\u00e3|\?)i)\s*:/i },
+    { icon: '\u{1F4E9}', pattern: /^(subject|preview text|email)\s*:/i },
+  ];
+
+  const lines = text.split(/\r?\n/).map((line) => {
+    const body = line.trimStart().replace(/^[-*]\s*/, '');
+    const rule = rules.find((item) => item.pattern.test(body));
+    return rule ? prefixIcon(line, rule.icon) : line;
+  });
+
+  const iconized = lines.join('\n').trim();
+  return hasMarketingIcon(iconized) ? iconized : '\u2728 ' + iconized;
+}
+
+function looksUnicodeCorrupted(value) {
+  const text = String(value || '');
+  if (!text) return false;
+  const questionCount = (text.match(/\?/g) || []).length;
+  const replacementCount = (text.match(/\uFFFD/g) || []).length;
+  if (replacementCount > 0) return true;
+  if (/(B\?n|Phi\?n|ng\?nh|Th\?\?ng|L\?i|k\?u|h\?nh|d\?ng|s\?n ph\?m|Ti\?u \?\?)/i.test(text)) return true;
+  if (questionCount >= 6 && /[A-Za-z]\?[A-Za-z]/.test(text)) return true;
+  return questionCount >= 10 && questionCount / Math.max(text.length, 1) > 0.02;
+}
+
+function mergeUsage(primary = {}, secondary = {}) {
+  return {
+    promptTokens: Number(primary.promptTokens || 0) + Number(secondary.promptTokens || 0),
+    completionTokens: Number(primary.completionTokens || 0) + Number(secondary.completionTokens || 0),
+    totalTokens: Number(primary.totalTokens || 0) + Number(secondary.totalTokens || 0),
+  };
+}
+
+function getRequiredVersionCount(prompt) {
+  const text = String(prompt || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\u0111/g, 'd');
+  const versionWords = '(?:phien\\s*ban|phi.n\\s*b.n|versions?)';
+  const match = text.match(new RegExp('(?:tao|t.o|viet|vi.t|write|exactly|dung|d.ng)\\D{0,60}([2-5])\\s*' + versionWords, 'i'))
+    || text.match(new RegExp('([2-5])\\s*' + versionWords, 'i'));
+  return match ? Number(match[1]) : 0;
+}
+
+function countVersionLabels(value) {
+  const text = String(value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\u0111/g, 'd');
+  return (text.match(/(?:phien\s*ban|phi.n\s*b.n)\s*\d+/gi) || []).length;
+}
+
+function isUsableRepairedOutput(value, sourcePrompt = '') {
+  const text = String(value || '').trim();
+  if (text.length < 120) return false;
+  if (!hasMarketingIcon(text) || looksUnicodeCorrupted(text)) return false;
+  const requiredVersions = getRequiredVersionCount(sourcePrompt);
+  if (requiredVersions > 1 && countVersionLabels(text) < requiredVersions) return false;
+  return !/^(d\u01b0\u1edbi \u0111\u00e2y|duoi day|here is|below is)/i.test(text);
+}
+
+async function stabilizeVertexLlamaFineTunedOutput(aiPayload, aiResult) {
+  const iconizedOutput = applyMarketingIcons(aiResult.outputText);
+  const requiredVersions = getRequiredVersionCount(aiPayload.prompt);
+  const actualVersions = countVersionLabels(iconizedOutput);
+  const hasWrongVersionCount = requiredVersions > 0 && actualVersions !== requiredVersions;
+  const needsRepair = looksUnicodeCorrupted(iconizedOutput) || !hasMarketingIcon(iconizedOutput) || hasWrongVersionCount;
+  if (!needsRepair) return { ...aiResult, outputText: iconizedOutput };
+
+  const repairPrompt = [
+    'You are a Vietnamese marketing editor.',
+    'The Llama output below may have broken Vietnamese diacritics or missing icons because of the Vertex Llama endpoint.',
+    'Rewrite it as final marketing copy in natural Vietnamese with full diacritics, following the original brief.',
+    'The original brief is authoritative. If it asks for N versions, output exactly N complete versions.',
+    'Do not summarize, do not omit requested versions, and do not stop mid-sentence.',
+    'Always add emoji/icons at the beginning of each version and each content label.',
+    'Return only the rewritten copy. Start immediately with an emoji/icon and a version or content label.',
+    'Do not explain, do not mention the error, and do not mention any model.',
+    '',
+    'Original brief:',
+    aiPayload.prompt,
+    '',
+    'Llama output to repair:',
+    aiResult.outputText,
+  ].join('\n');
+
+  const directRepairPrompt = [
+    'You are a Vietnamese ecommerce marketing copywriter.',
+    'Generate the final answer directly from the original brief below.',
+    'Write natural Vietnamese with full diacritics.',
+    'If the brief asks for N versions, output exactly N complete versions.',
+    'Always add emoji/icons at the beginning of each version and each content label.',
+    'Return only the final marketing copy. Do not explain.',
+    '',
+    'Original brief:',
+    aiPayload.prompt,
+  ].join('\n');
+
+  try {
+    for (const prompt of [repairPrompt, directRepairPrompt]) {
+      const repaired = await aiService.generateCopy({
+        ...aiPayload,
+        prompt,
+        useRawPrompt: true,
+        forceProvider: 'gemini',
+        model: process.env.VERTEX_LLAMA_REPAIR_MODEL || process.env.GEMINI_MODEL || 'gemini-2.5-flash',
+        maxOutputTokens: Math.max(1800, Number(aiPayload.maxOutputTokens || 0)),
+        requireProviderSuccess: false,
+      });
+
+      if (repaired && !repaired.fallback && isUsableRepairedOutput(repaired.outputText, aiPayload.prompt)) {
+        return {
+          ...aiResult,
+          outputText: applyMarketingIcons(repaired.outputText),
+          usage: mergeUsage(aiResult.usage, repaired.usage),
+          status: repaired.status || aiResult.status,
+          fallback: true,
+        };
+      }
+    }
+  } catch (error) {
+    console.warn('Vertex Llama fine-tuned output repair failed: ' + error.message);
+  }
+
+  return { ...aiResult, outputText: iconizedOutput };
+}
+
+function isVertexEndpointResource(value) {
+  return /\/locations\/[^/]+\/endpoints\/[^/:]+(?:$|:)/.test(String(value || '').trim());
+}
 
 function escapeRegExp(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -211,13 +385,49 @@ function getFineTunedRegistryIdFromPayload(payload) {
   return explicitId || getFineTunedRegistryId(payload.model);
 }
 
+function truncateForBrandVoice(value, maxLength) {
+  const text = String(value || '').trim();
+  if (text.length <= maxLength) return text;
+  return `${text.slice(0, maxLength).trim()}...`;
+}
+
+async function buildVertexClaudeBrandVoicePrompt(userId, job, currentPrompt) {
+  const examples = await FineTuneExample.find({
+    datasetId: job.datasetId,
+    userId,
+    isValid: true,
+  })
+    .sort({ createdAt: 1 })
+    .limit(Number(process.env.VERTEX_CLAUDE_BRAND_VOICE_EXAMPLE_LIMIT || 8));
+
+  const exampleBlocks = examples.map((example, index) => [
+    `Ví dụ ${index + 1}:`,
+    `Input: ${truncateForBrandVoice(example.inputText, 900)}`,
+    `Output mẫu: ${truncateForBrandVoice(example.outputText, 1800)}`,
+  ].join('\n'));
+
+  return [
+    'Bạn đang dùng một model brand-voice dựa trên dataset fine-tuning của người dùng.',
+    'Hãy học phong cách, cấu trúc, cách chọn từ, nhịp câu và mức độ cảm xúc từ các ví dụ bên dưới.',
+    'Không chép nguyên văn ví dụ. Không nhắc rằng bạn đang học từ ví dụ. Chỉ trả về nội dung marketing cuối cùng cho khách hàng.',
+    '',
+    `Ngành của model: ${job.industry || 'general'}.`,
+    `Model Claude nền: ${job.baseModel}.`,
+    '',
+    'Ví dụ brand voice:',
+    exampleBlocks.join('\n\n') || 'Không có ví dụ khả dụng, hãy dùng brief hiện tại.',
+    '',
+    'Yêu cầu hiện tại:',
+    currentPrompt,
+  ].join('\n');
+}
+
 async function resolveFineTunedModelForGenerate(userId, payload) {
   const registryId = getFineTunedRegistryIdFromPayload(payload);
   if (!registryId) return { payload, model: null, modelUsed: payload.model };
 
   const model = await FineTunedModel.findOne({ _id: registryId, userId, isDeprecated: { $ne: true } });
   if (!model) throw createError(404, 'Fine-tuned model not found');
-  if (!model.isActive) throw createError(409, 'Fine-tuned model is not active');
 
   const job = await FineTuneJob.findOne({ _id: model.jobId, userId });
   if (!job || !SUPPORTED_FINE_TUNE_PROVIDERS.has(job.provider)) {
@@ -261,8 +471,59 @@ async function resolveFineTunedModelForGenerate(userId, payload) {
     };
   }
 
-  if (provider === 'gpt-oss') {
-    throw createError(409, 'GPT-OSS fine-tuning created a LoRA adapter repo. Deploy the adapter with a Hugging Face Inference Endpoint or serving Space before using it in AI Generator.');
+  if (provider === 'vertex-claude' || provider === 'anthropic') {
+    const brandVoicePrompt = await buildVertexClaudeBrandVoicePrompt(userId, job, fineTunedPrompt);
+    return {
+      model,
+      modelUsed,
+      payload: {
+        ...payload,
+        prompt: brandVoicePrompt,
+        useRawPrompt: true,
+        model: model.providerModelId || job.baseModel || 'claude-haiku-4-5',
+        forceProvider: 'vertex-claude',
+        requireProviderSuccess: true,
+      },
+    };
+  }
+
+  if (provider === 'vertex-llama') {
+    if (!isVertexEndpointResource(model.providerModelId)) {
+      throw createError(409, 'Vertex Llama fine-tuning completed, but the registered model id is not a deployed Vertex endpoint. Deploy the tuned Llama model to a Vertex endpoint first, then sync or register that endpoint id.');
+    }
+
+    return {
+      model,
+      modelUsed,
+      fineTuneProvider: provider,
+      payload: {
+        ...payload,
+        prompt: buildVertexLlamaFineTunedPrompt(fineTunedPrompt),
+        useRawPrompt: true,
+        model: model.providerModelId,
+        forceProvider: 'vertex-endpoint',
+        requireProviderSuccess: true,
+      },
+    };
+  }
+
+  if (provider === 'vertex-qwen') {
+    if (isVertexEndpointResource(model.providerModelId)) {
+      return {
+        model,
+        modelUsed,
+        payload: {
+          ...payload,
+          prompt: fineTunedPrompt,
+          useRawPrompt: true,
+          model: model.providerModelId,
+          forceProvider: 'vertex-endpoint',
+          requireProviderSuccess: true,
+        },
+      };
+    }
+
+    throw createError(409, 'Vertex AI Qwen fine-tuning completed, but the registered model id is not a deployed Vertex endpoint. Deploy the tuned Qwen output to a Vertex endpoint first, then sync or register that endpoint id.');
   }
 
   throw createError(409, `Provider ${provider || 'unknown'} does not expose a real fine-tuned inference endpoint in this app yet`);
@@ -281,7 +542,10 @@ async function generateContent(userId, payload) {
     prompt: effectivePrompt,
     type: resolvedFineTune.payload.type || template?.type,
   };
-  const aiResult = await aiService.generateCopy(aiPayload);
+  let aiResult = await aiService.generateCopy(aiPayload);
+  if (resolvedFineTune.fineTuneProvider === 'vertex-llama') {
+    aiResult = await stabilizeVertexLlamaFineTunedOutput(aiPayload, aiResult);
+  }
   const modelUsed = resolvedFineTune.modelUsed || aiResult.modelUsed;
   const generatedTags = [
     ...(payload.industry ? [payload.industry] : []),

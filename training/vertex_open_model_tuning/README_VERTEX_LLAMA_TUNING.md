@@ -16,15 +16,23 @@ Install the SDK in the repo venv:
 Backend environment needed:
 
 ```env
-GOOGLE_CLOUD_PROJECT=linen-sweep-7w106
+GOOGLE_CLOUD_PROJECT=copy-writing-499306
 GOOGLE_CLOUD_LOCATION=us-central1
-VERTEX_TUNING_BUCKET=vertex-befc8364-be5a-4be5-9419-180bfdc3d98a
+VERTEX_TUNING_BUCKET=copy-writing-499306-vertex-tuning
 VERTEX_LLAMA_TUNING_BASE_MODELS=meta/llama3-3@llama-3.3-70b-instruct
 VERTEX_LLAMA_TUNING_PYTHON=.venv/Scripts/python.exe
 VERTEX_LLAMA_TUNING_MODE=PEFT_ADAPTER
 # Optional adapter size accepted by current SDK: 1, 4, 8, 16, or 32.
 VERTEX_LLAMA_TUNING_ADAPTER_SIZE=
 ```
+
+Create the tuning bucket and grant Vertex managed open-model tuning access:
+
+```powershell
+.\scripts\setup_vertex_tuning_bucket.ps1
+```
+
+The script grants the Vertex MOSS fine-tuning service account `service-167488791850@gcp-sa-vertex-moss-ft.iam.gserviceaccount.com` the bucket roles needed for `storage.objects.get`, `storage.objects.create`, `storage.objects.delete`, and `storage.buckets.get`.
 
 Preflight the Python SDK without creating a paid tuning job:
 

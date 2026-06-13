@@ -26,6 +26,7 @@ import {
   useFineTuneProviders,
   useFineTuneQuotas,
   useFineTuningModels,
+  usePromoteFineTuneJob,
   useSetFineTunedModelActive,
   useTrainingLog,
   useExamplePairs,
@@ -61,7 +62,7 @@ type MetricCard = {
   good?: boolean;
 };
 
-const FINE_TUNE_PROVIDER_PRIORITY = ['gpt-oss', 'vertex-gemini', 'vertex-llama', 'openai'];
+const FINE_TUNE_PROVIDER_PRIORITY = ['vertex-claude', 'vertex-qwen', 'vertex-gemini', 'vertex-llama', 'openai'];
 const TRAINING_IMPORT_ACCEPT = '.csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel';
 const TRAINING_IMPORT_FILE_TYPES = 'CSV hoac Excel (.xlsx, .xls)';
 
@@ -259,6 +260,17 @@ function fineTuneProviderRank(providerId: string) {
   return index === -1 ? FINE_TUNE_PROVIDER_PRIORITY.length : index;
 }
 
+function getProviderOptionSuffix(provider: { mode?: string; supportsFineTuning?: boolean; apiConfigured?: boolean; status?: string }) {
+  const capability = provider.mode === 'brand_voice'
+    ? ' (brand voice)'
+    : provider.supportsFineTuning
+      ? ' (fine-tune thật)'
+      : provider.apiConfigured
+        ? ' (API)'
+        : '';
+  return `${capability}${provider.status !== 'active' ? ` - ${provider.status}` : ''}`;
+}
+
 export function CustomerFineTuningStudio() {
   const navigate = useNavigate();
   const { data: modelsData } = useFineTuningModels();
@@ -267,6 +279,7 @@ export function CustomerFineTuningStudio() {
   const { data: providers = [] } = useFineTuneProviders();
   const { data: quotas } = useFineTuneQuotas();
   const createFineTuneJob = useCreateFineTuneJob();
+  const promoteFineTuneJob = usePromoteFineTuneJob();
   const setFineTunedModelActive = useSetFineTunedModelActive();
   const [selectedTrainingJobId, setSelectedTrainingJobId] = useState<string>('');
   const [models, setModels] = useState<NonNullable<typeof modelsData>>([] as any);
@@ -305,7 +318,9 @@ export function CustomerFineTuningStudio() {
   const baseModelOptions = activeProvider?.baseModels || [];
   const selectedProviderCanCreateTrainingJob = isReadyFineTuneProvider(activeProvider || {});
   const providerHint = activeProvider
-    ? activeProvider.message || (activeProvider.supportsFineTuning
+    ? activeProvider.message || (activeProvider.mode === 'brand_voice'
+      ? 'Provider này tạo model brand-voice từ dataset và generate bằng Claude, không train trọng số model.'
+      : activeProvider.supportsFineTuning
       ? 'Provider n\u00e0y upload JSONL v\u00e0 t\u1ea1o job fine-tuning th\u1eadt qua provider.'
       : activeProvider.status === 'active'
         ? 'Provider API n\u00e0y \u0111ang d\u00f9ng cho generate, ch\u01b0a c\u00f3 adapter fine-tuning th\u1eadt trong backend.'
@@ -358,6 +373,13 @@ export function CustomerFineTuningStudio() {
   const selectedExampleIdSet = useMemo(() => new Set(selectedExampleIds), [selectedExampleIds]);
   const pageExampleIds = useMemo(() => examplePagination.pageItems.map(ex => String(ex.id)), [examplePagination.pageItems]);
   const allPageExamplesSelected = pageExampleIds.length > 0 && pageExampleIds.every(id => selectedExampleIdSet.has(id));
+  const registryModelByJobId = useMemo(() => {
+    const map = new Map<string, NonNullable<typeof modelsData>[number]>();
+    (modelsData || []).forEach(modelItem => {
+      map.set(String(modelItem.id), modelItem);
+    });
+    return map;
+  }, [modelsData]);
 
   useEffect(() => {
     setSelectedExampleIds(prev => prev.filter(id => examples.some(ex => String(ex.id) === id)));
@@ -473,6 +495,11 @@ export function CustomerFineTuningStudio() {
       return;
     }
 
+    if (modelItem.generatorReady === false) {
+      toast.error(modelItem.generatorMessage || 'Provider của model này chưa có endpoint Generate trong app');
+      return;
+    }
+
     try {
       await setFineTunedModelActive.mutateAsync({ modelId: registryModelId, isActive: true });
       navigate(`/generate?model=${encodeURIComponent(`fine-tuned:${registryModelId}`)}`);
@@ -481,6 +508,29 @@ export function CustomerFineTuningStudio() {
       toast.error(message);
     }
   };
+  const useCompletedJobInGenerator = async (job: NonNullable<typeof jobsData>[number]) => {
+    if (job.status !== 'ready') return;
+
+    const registeredModel = registryModelByJobId.get(String(job.id));
+    if (registeredModel) {
+      await applyModel(registeredModel);
+      return;
+    }
+
+    try {
+      const promotedModel = await promoteFineTuneJob.mutateAsync(job.id);
+      if (promotedModel.generatorReady === false) {
+        toast.error(promotedModel.generatorMessage || 'Model đã được đăng ký nhưng provider này chưa dùng được trong Generator');
+        setActiveTab('models');
+        return;
+      }
+      await applyModel(promotedModel);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Không thể đăng ký model để dùng trong Generator';
+      toast.error(message);
+    }
+  };
+  const isApplyingFineTunedModel = setFineTunedModelActive.isPending || promoteFineTuneJob.isPending;
   const statusColor = (s: string) => ({ ready: 'bg-primary/10 text-primary', training: 'bg-primary/10 text-primary', failed: 'bg-destructive/10 text-destructive', pending: 'bg-muted text-foreground/70' }[s] ?? 'bg-muted text-foreground/70');
   const statusLabel = (s: string) => ({ ready: 'Sẵn sàng', training: 'Đang training', failed: 'Thất bại', pending: 'Chờ xử lý' }[s] ?? s);
 
@@ -568,7 +618,7 @@ export function CustomerFineTuningStudio() {
                   </div>
                   <div className="flex flex-col gap-2 flex-shrink-0">
                     {m.status === 'ready' && (
-                      <Button size="sm" className="bg-primary hover:bg-green-700 text-white" onClick={() => applyModel(m)} disabled={setFineTunedModelActive.isPending}>
+                      <Button size="sm" className="bg-primary hover:bg-green-700 text-white" onClick={() => applyModel(m)} disabled={isApplyingFineTunedModel}>
                         <Zap className="w-4 h-4 mr-1" /> Dùng trong Generator
                       </Button>
                     )}
@@ -630,7 +680,7 @@ export function CustomerFineTuningStudio() {
                     <SelectContent>
                       {fineTuneProviders.map(provider => (
                         <SelectItem key={provider.id} value={provider.id}>
-                          {provider.name}{provider.supportsFineTuning ? ' (fine-tune th\u1eadt)' : provider.apiConfigured ? ' (API)' : ''}{provider.status !== 'active' ? ` - ${provider.status}` : ''}
+                          {provider.name}{getProviderOptionSuffix(provider)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -771,7 +821,7 @@ export function CustomerFineTuningStudio() {
             {/* Start training */}
             <div className="flex justify-end">
               <Button size="lg" className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-10" onClick={startTraining} disabled={createFineTuneJob.isPending || !activeProvider || activeProvider.status !== 'active' || !selectedProviderCanCreateTrainingJob}>
-                <Play className="w-5 h-5 mr-2" /> {activeProvider?.supportsFineTuning ? 'Bắt đầu Fine-tuning' : 'Provider chưa hỗ trợ fine-tuning'}
+                <Play className="w-5 h-5 mr-2" /> {activeProvider?.mode === 'brand_voice' ? 'Tạo model brand voice' : activeProvider?.supportsFineTuning ? 'Bắt đầu Fine-tuning' : 'Provider chưa hỗ trợ fine-tuning'}
               </Button>
             </div>
           </TabsContent>
@@ -896,6 +946,16 @@ export function CustomerFineTuningStudio() {
                           </div>
                           <Progress value={clampProgressValue(job.progress)} className="h-2" />
                         </div>
+                        {job.status === 'ready' && (
+                          <Button
+                            size="sm"
+                            className="bg-primary hover:bg-green-700 text-white"
+                            onClick={() => useCompletedJobInGenerator(job)}
+                            disabled={isApplyingFineTunedModel}
+                          >
+                            <Zap className="w-4 h-4 mr-1" /> {registryModelByJobId.has(String(job.id)) ? 'Dùng trong Generator' : 'Đăng ký model'}
+                          </Button>
+                        )}
                         <Button
                           size="sm"
                           variant={activeTrainingJob?.id === job.id ? 'default' : 'outline'}

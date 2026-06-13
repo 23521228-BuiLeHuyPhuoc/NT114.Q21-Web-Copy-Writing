@@ -1,10 +1,15 @@
 const { GoogleAuth } = require('google-auth-library');
 const createError = require('../utils/createError');
+const { throwGoogleCredentialError } = require('../utils/googleCredentialError');
 
 const GOOGLE_CLOUD_SCOPE = 'https://www.googleapis.com/auth/cloud-platform';
 const DEFAULT_VERTEX_LOCATION = 'us-central1';
-const DEFAULT_VERTEX_MAAS_MODEL = 'openai/gpt-oss-120b-maas';
+const DEFAULT_VERTEX_CLAUDE_LOCATION = 'global';
+const DEFAULT_VERTEX_CLAUDE_LOCATIONS = ['us-east5', 'europe-west1', 'asia-east1', 'global'];
+const DEFAULT_VERTEX_MAAS_MODEL = 'meta/llama-3.3-70b-instruct-maas';
 let googleAuth;
+const vertexEndpointDnsCache = new Map();
+const vertexEndpointMetadataCache = new Map();
 
 const TYPE_LABELS = {
   headline: 'tiêu đề quảng cáo',
@@ -210,6 +215,13 @@ const GROQ_MODEL_MAP = {
   'groq-llama-3-1-8b': 'llama-3.1-8b-instant',
   llama3: 'llama-3.3-70b-versatile',
   'llama3-8b': 'llama-3.1-8b-instant',
+};
+
+const VERTEX_CLAUDE_MODEL_MAP = {
+  'claude-haiku-4-5': 'claude-haiku-4-5@20251001',
+  'claude-haiku-4.5': 'claude-haiku-4-5@20251001',
+  'claude-haiku-4-5@20251001': 'claude-haiku-4-5@20251001',
+  'claude-haiku-4-5-20251001': 'claude-haiku-4-5@20251001',
 };
 
 const FREEGPT4_MODEL_MAP = {
@@ -566,6 +578,24 @@ function getGeminiModel(model) {
   return GEMINI_MODEL_MAP[model] || process.env.GEMINI_MODEL || model || 'gemini-2.5-flash';
 }
 
+function getGeminiApiKey() {
+  return String(process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY || '').trim();
+}
+
+function getVertexApiKey() {
+  return String(process.env.VERTEX_API_KEY || process.env.GOOGLE_API_KEY || '').trim();
+}
+
+function shouldUseEnterpriseGeminiApiKey() {
+  return String(process.env.GOOGLE_GENAI_USE_ENTERPRISE || process.env.GEMINI_USE_ENTERPRISE || '').toLowerCase() === 'true';
+}
+
+function appendApiKey(url, apiKey) {
+  const endpoint = new URL(url);
+  endpoint.searchParams.set('key', apiKey);
+  return endpoint.toString();
+}
+
 function getOpenAIModel(model) {
   const modelMap = {
     gpt4o: 'gpt-4o-mini',
@@ -587,6 +617,11 @@ function getGroqModel(model) {
   return process.env.GROQ_MODEL || GROQ_MODEL_MAP[model] || model || 'llama-3.3-70b-versatile';
 }
 
+function getVertexClaudeModel(model) {
+  const normalized = String(model || '').replace(/^(?:anthropic|vertex-claude)\//, '');
+  return process.env.VERTEX_CLAUDE_MODEL || VERTEX_CLAUDE_MODEL_MAP[normalized] || normalized || 'claude-haiku-4-5@20251001';
+}
+
 function getFreeGPT4BaseUrl() {
   return (process.env.FREEGPT4_BASE_URL || 'http://127.0.0.1:5500').replace(/\/+$/, '');
 }
@@ -603,12 +638,74 @@ function getVertexProject() {
   return String(process.env.GOOGLE_CLOUD_PROJECT || process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT || '').trim();
 }
 
+function parseCommaList(value) {
+  return Array.from(new Set(
+    String(value || '')
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean),
+  ));
+}
+
 function getVertexMaaSModel(model) {
   return String(model || process.env.VERTEX_MAAS_MODEL || DEFAULT_VERTEX_MAAS_MODEL).trim();
 }
 
+function getVertexClaudeLocation() {
+  return String(process.env.VERTEX_CLAUDE_LOCATION || process.env.VERTEX_ANTHROPIC_LOCATION || DEFAULT_VERTEX_CLAUDE_LOCATION).trim();
+}
+
+function getVertexClaudeLocations() {
+  const configuredLocations = parseCommaList(process.env.VERTEX_CLAUDE_LOCATIONS || process.env.VERTEX_ANTHROPIC_LOCATIONS);
+  if (configuredLocations.length > 0) return configuredLocations;
+
+  return Array.from(new Set([
+    getVertexClaudeLocation(),
+    ...DEFAULT_VERTEX_CLAUDE_LOCATIONS,
+  ].filter(Boolean)));
+}
+
+function getVertexClaudeHost(location) {
+  if (location === 'global') return 'aiplatform.googleapis.com';
+  if (location === 'us' || location === 'eu') return `aiplatform.${location}.rep.googleapis.com`;
+  return `${location}-aiplatform.googleapis.com`;
+}
+
+async function readProviderErrorMessage(response) {
+  const rawText = await response.text().catch(() => '');
+  if (!rawText) return response.statusText;
+
+  try {
+    const data = JSON.parse(rawText);
+    return data.error?.message || data.message || rawText;
+  } catch (error) {
+    return rawText || response.statusText;
+  }
+}
+
+function isVertexClaudeQuotaError(status, message) {
+  return Number(status) === 429 || /quota|resource_exhausted|online_prediction_requests_per_base_model/i.test(String(message || ''));
+}
+
+function createVertexClaudeQuotaError(model, attemptedLocations, failures) {
+  const locations = attemptedLocations.join(', ');
+  return createError(
+    429,
+    `Vertex Claude quota exceeded for ${model}. Tried locations: ${locations}. Request a Vertex AI quota increase for anthropic-claude-haiku-4-5, or set VERTEX_CLAUDE_LOCATIONS to a project/location with available quota.`,
+    undefined,
+    {
+      code: 'VERTEX_CLAUDE_QUOTA_EXCEEDED',
+      model,
+      attemptedLocations,
+      failures,
+      quotaMetric: 'online_prediction_requests_per_base_model',
+      recommendedAction: 'Increase Vertex AI quota for the Anthropic Claude Haiku 4.5 base model or use another Vertex AI location/project with available quota.',
+    },
+  );
+}
+
 function isVertexMaaSModel(model) {
-  return /^(?:openai|meta)\//.test(String(model || '').trim());
+  return /^meta\//.test(String(model || '').trim());
 }
 
 function isVertexResourceModel(model) {
@@ -616,8 +713,13 @@ function isVertexResourceModel(model) {
   return value.startsWith('projects/') || value.includes('/projects/');
 }
 
+function isVertexEndpointResource(model) {
+  const value = stripVertexApiPrefix(model).replace(/:predict$/, '');
+  return /\/locations\/[^/]+\/endpoints\/[^/:]+$/.test(value);
+}
+
 function isVertexProvider(provider) {
-  return provider === 'vertex-gemini' || provider === 'vertex-maas';
+  return provider === 'vertex-gemini' || provider === 'vertex-maas' || provider === 'vertex-endpoint';
 }
 
 function getVertexMaaSLocation(model) {
@@ -629,6 +731,16 @@ function getVertexMaaSLocation(model) {
 
 function stripVertexApiPrefix(value) {
   return String(value || '').trim().replace(/^https?:\/\/[^/]+\/v\d+(?:beta\d*)?\//, '');
+}
+
+function normalizeVertexEndpointResourceName(model) {
+  const value = stripVertexApiPrefix(model).replace(/:predict$/, '');
+  if (!value) return '';
+
+  const projectPathIndex = value.indexOf('projects/');
+  if (projectPathIndex >= 0) return value.slice(projectPathIndex);
+
+  return '';
 }
 
 function normalizeVertexResourceName(model) {
@@ -650,12 +762,40 @@ function normalizeVertexResourceName(model) {
 }
 
 async function getGoogleAccessToken() {
-  googleAuth = googleAuth || new GoogleAuth({ scopes: [GOOGLE_CLOUD_SCOPE] });
-  const client = await googleAuth.getClient();
-  const tokenResponse = await client.getAccessToken();
-  const token = typeof tokenResponse === 'string' ? tokenResponse : tokenResponse?.token;
-  if (!token) throw createError(503, 'Could not read Google ADC access token. Run gcloud auth application-default login.');
-  return token;
+  try {
+    googleAuth = googleAuth || new GoogleAuth({ scopes: [GOOGLE_CLOUD_SCOPE] });
+    const client = await googleAuth.getClient();
+    const tokenResponse = await client.getAccessToken();
+    const token = typeof tokenResponse === 'string' ? tokenResponse : tokenResponse?.token;
+    if (!token) throw createError(503, 'Could not read Google ADC access token. Run gcloud auth application-default login.');
+    return token;
+  } catch (error) {
+    throwGoogleCredentialError(error, 'Vertex AI generation');
+  }
+}
+
+async function getGoogleRequestAuth(url, options = {}) {
+  const apiKey = options.forceAdc ? '' : getVertexApiKey();
+  if (apiKey) {
+    return {
+      url: appendApiKey(url, apiKey),
+      headers: {},
+      mode: 'api-key',
+    };
+  }
+
+  const token = await getGoogleAccessToken();
+  return {
+    url,
+    headers: { Authorization: `Bearer ${token}` },
+    mode: 'adc',
+  };
+}
+
+async function readJsonResponse(response) {
+  const text = await response.text().catch(() => '');
+  if (!text) return {};
+  try { return JSON.parse(text); } catch { return { message: text.slice(0, 1000) }; }
 }
 
 function cleanFreeGPT4Text(text) {
@@ -680,11 +820,16 @@ function extractGeminiText(data) {
 }
 
 async function callGemini(payload) {
-  if (!process.env.GEMINI_API_KEY || typeof fetch !== 'function') {
+  const apiKey = getGeminiApiKey();
+  if (!apiKey || typeof fetch !== 'function') {
     return null;
   }
 
   const model = getGeminiModel(payload.model);
+  const useEnterpriseApi = shouldUseEnterpriseGeminiApiKey();
+  const url = useEnterpriseApi
+    ? appendApiKey(`https://aiplatform.googleapis.com/v1/publishers/google/models/${model}:generateContent`, apiKey)
+    : `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
   const providerPrompt = getProviderPrompt(payload);
   const controller = new AbortController();
   const timeoutMs = model.startsWith('gemma-') ? 90000 : 30000;
@@ -692,12 +837,12 @@ async function callGemini(payload) {
 
   try {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+      url,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-goog-api-key': process.env.GEMINI_API_KEY,
+          ...(!useEnterpriseApi ? { 'x-goog-api-key': apiKey } : {}),
         },
         signal: controller.signal,
         body: JSON.stringify({
@@ -784,13 +929,13 @@ async function callVertexGemini(payload) {
   const timeout = setTimeout(() => controller.abort(), Number(process.env.VERTEX_GEMINI_TIMEOUT_MS || 90000));
 
   try {
-    const token = await getGoogleAccessToken();
+    const requestAuth = await getGoogleRequestAuth(`https://${resourceLocation}-aiplatform.googleapis.com/v1/${resourceName}:generateContent`);
     const response = await fetch(
-      `https://${resourceLocation}-aiplatform.googleapis.com/v1/${resourceName}:generateContent`,
+      requestAuth.url,
       {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${token}`,
+          ...requestAuth.headers,
           'Content-Type': 'application/json',
         },
         signal: controller.signal,
@@ -853,6 +998,224 @@ async function callVertexGemini(payload) {
   }
 }
 
+function extractVertexEndpointTextValue(value, depth = 0) {
+  if (value == null || depth > 6) return '';
+  if (typeof value === 'string') return value.trim();
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const text = extractVertexEndpointTextValue(item, depth + 1);
+      if (text) return text;
+    }
+    return '';
+  }
+  if (typeof value !== 'object') return String(value || '').trim();
+
+  const choice = Array.isArray(value.choices) ? value.choices[0] : null;
+  const choiceText = extractVertexEndpointTextValue(
+    choice?.message?.content || choice?.text || choice?.content || choice?.delta?.content,
+    depth + 1,
+  );
+  if (choiceText) return choiceText;
+
+  const candidate = Array.isArray(value.candidates) ? value.candidates[0] : null;
+  const candidateParts = candidate?.content?.parts || candidate?.parts;
+  const candidateText = extractVertexEndpointTextValue(candidateParts || candidate?.content || candidate?.text, depth + 1);
+  if (candidateText) return candidateText;
+
+  const fields = [
+    'generated_text',
+    'generatedText',
+    'output_text',
+    'outputText',
+    'content',
+    'text',
+    'output',
+    'outputs',
+    'prediction',
+    'predictions',
+    'response',
+    'answer',
+  ];
+
+  for (const field of fields) {
+    const text = extractVertexEndpointTextValue(value[field], depth + 1);
+    if (text) return text;
+  }
+
+  return '';
+}
+
+function extractVertexEndpointText(data) {
+  const predictions = Array.isArray(data?.predictions) ? data.predictions : [];
+  for (const prediction of predictions) {
+    const text = extractVertexEndpointTextValue(prediction);
+    if (text) return text;
+  }
+
+  return extractVertexEndpointTextValue(data);
+}
+
+function cleanVertexEndpointOutput(outputText, providerPrompt) {
+  let text = String(outputText || '').trim();
+  const prompt = String(providerPrompt || '').trim();
+  if (prompt && text.startsWith(prompt)) {
+    text = text.slice(prompt.length).trim();
+  }
+
+  const markers = ['<|assistant|>', '### Response:', 'Assistant:', 'Response:', 'Output:'];
+  for (const marker of markers) {
+    const index = text.toLowerCase().lastIndexOf(marker.toLowerCase());
+    if (index >= 0 && index + marker.length < text.length) {
+      text = text.slice(index + marker.length).trim();
+    }
+  }
+
+  return cleanProviderOutput(text);
+}
+
+async function getVertexEndpointMetadata(resourceName, resourceLocation) {
+  const cached = vertexEndpointMetadataCache.get(resourceName);
+  if (cached) return cached;
+  const metadataUrl = `https://${resourceLocation}-aiplatform.googleapis.com/v1/${resourceName}`;
+  const requestAuth = await getGoogleRequestAuth(metadataUrl, { forceAdc: true });
+  const response = await fetch(requestAuth.url, {
+    method: 'GET',
+    headers: requestAuth.headers,
+  });
+
+  if (!response.ok) return {};
+
+  const data = await readJsonResponse(response);
+  vertexEndpointMetadataCache.set(resourceName, data);
+  return data;
+}
+
+async function getVertexEndpointPredictUrl(resourceName, resourceLocation) {
+  const cached = vertexEndpointDnsCache.get(resourceName);
+  if (cached) return `https://${cached}/v1/${resourceName}:predict`;
+
+  const data = await getVertexEndpointMetadata(resourceName, resourceLocation);
+  const dedicatedDns = String(data.dedicatedEndpointDns || '').trim();
+  if (data.dedicatedEndpointEnabled && dedicatedDns) {
+    vertexEndpointDnsCache.set(resourceName, dedicatedDns);
+    return `https://${dedicatedDns}/v1/${resourceName}:predict`;
+  }
+
+  return `https://${resourceLocation}-aiplatform.googleapis.com/v1/${resourceName}:predict`;
+}
+
+function isSglangVertexEndpoint(metadata) {
+  const text = JSON.stringify({
+    displayName: metadata?.displayName,
+    labels: metadata?.labels,
+    deployedModels: (metadata?.deployedModels || []).map((model) => model.displayName),
+  }).toLowerCase();
+  return text.includes('sglang') || text.includes('qwen');
+}
+
+function buildVertexEndpointPredictBody(metadata, providerPrompt, payload) {
+  const maxTokens = getMaxOutputTokens(payload);
+  if (isSglangVertexEndpoint(metadata)) {
+    return {
+      instances: [{
+        text: providerPrompt,
+        sampling_params: {
+          max_new_tokens: maxTokens,
+          temperature: 0.7,
+          top_p: 0.9,
+          top_k: 40,
+        },
+      }],
+    };
+  }
+
+  return {
+    instances: [{
+      prompt: providerPrompt,
+      max_tokens: maxTokens,
+      temperature: 0.7,
+      top_p: 0.9,
+      top_k: 40,
+      raw_response: true,
+    }],
+  };
+}
+
+async function callVertexEndpointPredict(payload) {
+  if (typeof fetch !== 'function') {
+    return null;
+  }
+
+  const resourceName = normalizeVertexEndpointResourceName(payload.model);
+  if (!resourceName || !isVertexEndpointResource(resourceName)) {
+    const message = 'Vertex endpoint resource id is required for tuned open-model generation.';
+    console.warn('Vertex endpoint predict skipped', { model: payload.model, message });
+    if (payload.requireProviderSuccess) throw createError(400, message);
+    return null;
+  }
+
+  const resourceLocation = resourceName.match(/\/locations\/([^/]+)/)?.[1] || getVertexLocation();
+  const providerPrompt = getProviderPrompt(payload);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), Number(process.env.VERTEX_ENDPOINT_TIMEOUT_MS || 120000));
+
+  try {
+    const metadata = await getVertexEndpointMetadata(resourceName, resourceLocation);
+    const predictUrl = await getVertexEndpointPredictUrl(resourceName, resourceLocation);
+    const requestAuth = await getGoogleRequestAuth(predictUrl, { forceAdc: true });
+    const response = await fetch(
+      requestAuth.url,
+      {
+        method: 'POST',
+        headers: {
+          ...requestAuth.headers,
+          'Content-Type': 'application/json; charset=utf-8',
+        },
+        signal: controller.signal,
+        body: JSON.stringify(buildVertexEndpointPredictBody(metadata, providerPrompt, payload)),
+      },
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const message = errorData.error?.message || errorData.message || response.statusText;
+      console.warn('Vertex endpoint predict failed', { status: response.status, model: resourceName, location: resourceLocation, message });
+      if (payload.requireProviderSuccess) {
+        throw createError(response.status, `Vertex endpoint predict failed: ${message}`);
+      }
+      return null;
+    }
+
+    const data = await response.json();
+    const outputText = cleanVertexEndpointOutput(extractVertexEndpointText(data), providerPrompt);
+    if (!outputText) return null;
+
+    const promptTokens = estimateTokens(providerPrompt);
+    const completionTokens = estimateTokens(outputText);
+
+    return {
+      outputText,
+      modelUsed: resourceName,
+      usage: {
+        promptTokens,
+        completionTokens,
+        totalTokens: promptTokens + completionTokens,
+      },
+      status: 'success',
+      fallback: false,
+    };
+  } catch (error) {
+    console.warn('Vertex endpoint predict failed', { model: resourceName, location: resourceLocation, message: error.message });
+    if (payload.requireProviderSuccess) {
+      if (error.statusCode) throw error;
+      throw createError(502, `Vertex endpoint predict failed: ${error.message}`);
+    }
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function callVertexMaaS(payload) {
   if (typeof fetch !== 'function') {
     return null;
@@ -879,7 +1242,6 @@ async function callVertexMaaS(payload) {
   const timeout = setTimeout(() => controller.abort(), Number(process.env.VERTEX_MAAS_TIMEOUT_MS || 120000));
 
   try {
-    const token = await getGoogleAccessToken();
     const requestBody = {
       model,
       messages: [{
@@ -906,12 +1268,13 @@ async function callVertexMaaS(payload) {
       };
     }
 
+    const requestAuth = await getGoogleRequestAuth(`https://${location}-aiplatform.googleapis.com/v1/projects/${project}/locations/${location}/endpoints/openapi/chat/completions`);
     const response = await fetch(
-      `https://${location}-aiplatform.googleapis.com/v1/projects/${project}/locations/${location}/endpoints/openapi/chat/completions`,
+      requestAuth.url,
       {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${token}`,
+          ...requestAuth.headers,
           'Content-Type': 'application/json; charset=utf-8',
         },
         signal: controller.signal,
@@ -1186,6 +1549,142 @@ async function callGroq(payload) {
   }
 }
 
+async function callVertexClaude(payload) {
+  if (typeof fetch !== 'function') {
+    return null;
+  }
+
+  const project = getVertexProject();
+  if (!project) {
+    const message = 'GOOGLE_CLOUD_PROJECT is required for Vertex AI Claude generation.';
+    if (payload.requireProviderSuccess) throw createError(503, message);
+    return null;
+  }
+
+  const model = getVertexClaudeModel(payload.model);
+  const locations = getVertexClaudeLocations();
+  const providerPrompt = getProviderPrompt(payload);
+  const attemptedLocations = [];
+  const failures = [];
+
+  try {
+    for (const location of locations) {
+      attemptedLocations.push(location);
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), Number(process.env.VERTEX_CLAUDE_TIMEOUT_MS || 120000));
+
+      try {
+        const requestAuth = await getGoogleRequestAuth(`https://${getVertexClaudeHost(location)}/v1/projects/${project}/locations/${location}/publishers/anthropic/models/${model}:rawPredict`);
+        const response = await fetch(requestAuth.url, {
+          method: 'POST',
+          headers: {
+            ...requestAuth.headers,
+            'Content-Type': 'application/json',
+          },
+          signal: controller.signal,
+          body: JSON.stringify({
+            anthropic_version: process.env.VERTEX_CLAUDE_ANTHROPIC_VERSION || 'vertex-2023-10-16',
+            max_tokens: getMaxOutputTokens(payload),
+            temperature: 0.7,
+            system: 'You are a senior Vietnamese marketing copywriter. Write final customer-facing copy only, in natural Vietnamese with full diacritics. Follow the requested structure exactly.',
+            messages: [{
+              role: 'user',
+              content: providerPrompt,
+            }],
+          }),
+        });
+
+        if (!response.ok) {
+          const message = await readProviderErrorMessage(response);
+          const failure = { status: response.status, location, message };
+          failures.push(failure);
+          console.warn('Vertex Claude rawPredict request failed', { status: response.status, model, location, message });
+
+          if (isVertexClaudeQuotaError(response.status, message) && attemptedLocations.length < locations.length) {
+            continue;
+          }
+
+          if (payload.requireProviderSuccess) {
+            if (failures.every((item) => isVertexClaudeQuotaError(item.status, item.message))) {
+              throw createVertexClaudeQuotaError(model, attemptedLocations, failures);
+            }
+            throw createError(response.status, `Vertex Claude request failed in ${location}: ${message}`, undefined, {
+              code: 'VERTEX_CLAUDE_REQUEST_FAILED',
+              model,
+              location,
+              attemptedLocations,
+              failures,
+            });
+          }
+          return null;
+        }
+
+        const data = await response.json();
+        const outputText = cleanProviderOutput((data.content || [])
+          .filter((part) => part?.type === 'text' && part.text)
+          .map((part) => part.text)
+          .join('\n'));
+        if (!outputText) return null;
+
+        const promptTokens = Number(data.usage?.input_tokens || estimateTokens(providerPrompt));
+        const completionTokens = Number(data.usage?.output_tokens || estimateTokens(outputText));
+
+        return {
+          outputText,
+          modelUsed: `vertex-claude:${model}:${location}`,
+          usage: {
+            promptTokens,
+            completionTokens,
+            totalTokens: promptTokens + completionTokens,
+          },
+          status: 'success',
+          fallback: false,
+        };
+      } catch (error) {
+        if (error.statusCode) throw error;
+
+        const failure = { status: 0, location, message: error.message };
+        failures.push(failure);
+        console.warn('Vertex Claude rawPredict request failed', { model, location, message: error.message });
+        if (attemptedLocations.length < locations.length) continue;
+
+        if (payload.requireProviderSuccess) {
+          throw createError(502, `Vertex Claude request failed in ${location}: ${error.message}`, undefined, {
+            code: 'VERTEX_CLAUDE_REQUEST_FAILED',
+            model,
+            location,
+            attemptedLocations,
+            failures,
+          });
+        }
+        return null;
+      } finally {
+        clearTimeout(timeout);
+      }
+    }
+
+    if (payload.requireProviderSuccess) {
+      if (failures.length > 0 && failures.every((item) => isVertexClaudeQuotaError(item.status, item.message))) {
+        throw createVertexClaudeQuotaError(model, attemptedLocations, failures);
+      }
+      throw createError(502, `Vertex Claude request failed for ${model}. Tried locations: ${attemptedLocations.join(', ')}`, undefined, {
+        code: 'VERTEX_CLAUDE_REQUEST_FAILED',
+        model,
+        attemptedLocations,
+        failures,
+      });
+    }
+    return null;
+  } catch (error) {
+    console.warn('Vertex Claude rawPredict request failed', { model, attemptedLocations, message: error.message });
+    if (payload.requireProviderSuccess) {
+      if (error.statusCode) throw error;
+      throw createError(502, `Vertex Claude request failed: ${error.message}`);
+    }
+    return null;
+  }
+}
+
 async function callFreeGPT4(payload) {
   if (typeof fetch !== 'function') {
     return null;
@@ -1252,7 +1751,8 @@ async function generateCopy(payload) {
   const provider = forcedProvider || (process.env.AI_PROVIDER || 'gemini').toLowerCase();
   const selectedModel = payload.model || '';
   const isMaaSModel = isVertexMaaSModel(selectedModel);
-  const isVertexGeminiModel = isVertexResourceModel(selectedModel);
+  const isVertexEndpointModel = isVertexEndpointResource(selectedModel);
+  const isVertexGeminiModel = isVertexResourceModel(selectedModel) && !isVertexEndpointModel;
   const isGeminiFamilyModel = selectedModel.startsWith('gemini-')
     || selectedModel.startsWith('gemma-')
     || selectedModel.includes('pro');
@@ -1260,12 +1760,17 @@ async function generateCopy(payload) {
     || selectedModel.startsWith('llama-')
     || selectedModel === 'llama3'
     || selectedModel === 'llama3-8b';
+  const isVertexClaudeModel = selectedModel.startsWith('claude-') || selectedModel.startsWith('anthropic/') || selectedModel.startsWith('vertex-claude/');
   const providersBySelectedModel = isMaaSModel
     ? [callVertexMaaS]
+    : isVertexEndpointModel
+    ? [callVertexEndpointPredict]
     : isVertexGeminiModel
     ? [callVertexGemini]
     : isGroqModel
     ? [callGroq]
+    : isVertexClaudeModel
+    ? [callVertexClaude]
     : selectedModel.startsWith('freegpt4-')
       ? [callFreeGPT4]
     : selectedModel.startsWith('openrouter-')
@@ -1279,8 +1784,11 @@ async function generateCopy(payload) {
     gemini: [callGemini],
     'vertex-gemini': [callVertexGemini],
     'vertex-maas': [callVertexMaaS],
+    'vertex-endpoint': [callVertexEndpointPredict],
     openrouter: [callOpenRouter],
     openai: [callOpenAI],
+    'vertex-claude': [callVertexClaude],
+    anthropic: [callVertexClaude],
     groq: [callGroq],
     freegpt4: [callFreeGPT4],
     auto: [callGemini, callGroq, callOpenRouter, callOpenAI, callFreeGPT4],
@@ -1289,8 +1797,12 @@ async function generateCopy(payload) {
   const providers = forcedProvider || shouldUseVertexGeminiProvider ? providersByEnv : (providersBySelectedModel || providersByEnv);
   const shouldRequireSelectedProvider = payload.requireProviderSuccess
     || isMaaSModel
+    || isVertexEndpointModel
     || isVertexGeminiModel
+    || isVertexClaudeModel
     || isVertexProvider(forcedProvider)
+    || forcedProvider === 'vertex-claude'
+    || forcedProvider === 'anthropic'
     || shouldUseVertexGeminiProvider
     || (!providersBySelectedModel && isVertexProvider(provider));
   const providerPayload = shouldRequireSelectedProvider

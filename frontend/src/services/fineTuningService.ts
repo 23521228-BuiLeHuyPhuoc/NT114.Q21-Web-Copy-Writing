@@ -1,7 +1,7 @@
 import { api } from '@/lib/axios';
 
 export type FineTuneUiStatus = 'ready' | 'training' | 'failed' | 'pending';
-export type FineTuneProvider = 'openai' | 'vertex-gemini' | 'vertex-llama' | 'gpt-oss';
+export type FineTuneProvider = 'openai' | 'vertex-gemini' | 'vertex-llama' | 'vertex-qwen' | 'vertex-claude';
 
 export interface TrainingLogItem {
   step: string;
@@ -75,6 +75,8 @@ export interface FineTuneModel {
   user: string;
   isActive?: boolean;
   registryModelId?: string;
+  generatorReady?: boolean;
+  generatorMessage?: string;
   trainingLog?: TrainingLogItem[];
 }
 
@@ -229,6 +231,10 @@ interface BackendFineTunedModel {
   name?: string;
   alias?: string;
   providerModelId?: string;
+  provider?: string;
+  providerJobId?: string;
+  generatorReady?: boolean;
+  generatorMessage?: string;
   baseModel?: string;
   industry?: string;
   version?: number;
@@ -266,8 +272,19 @@ const MODEL_LABELS: Record<string, string> = {
   'meta-llama/Llama-3.1-8B-Instruct': 'Llama 3.1 8B Instruct',
   'meta-llama/Llama-3.2-1B-Instruct': 'Llama 3.2 1B Instruct',
   'meta/llama3-3@llama-3.3-70b-instruct': 'Llama 3.3 70B Instruct (Vertex)',
-  'openai/gpt-oss-20b': 'GPT-OSS 20B',
-  'openai/gpt-oss-120b': 'GPT-OSS 120B',
+  'qwen/qwen3@qwen3-14b': 'Qwen 3 14B',
+  'qwen/qwen3-14b': 'Qwen 3 14B',
+  'qwen3-14b': 'Qwen 3 14B',
+  'qwen_qwen3-14b': 'Qwen 3 14B',
+  'qwen/qwen3@qwen3-0.6b': 'Qwen 3 0.6B',
+  'qwen/qwen3-0.6b': 'Qwen 3 0.6B',
+  'qwen/qwen3-0_6b': 'Qwen 3 0.6B',
+  'qwen3-0.6b': 'Qwen 3 0.6B',
+  'qwen3-0_6b': 'Qwen 3 0.6B',
+  'qwen_qwen3-0_6b': 'Qwen 3 0.6B',
+  'claude-haiku-4-5': 'Claude Haiku 4.5',
+  'claude-haiku-4-5@20251001': 'Claude Haiku 4.5',
+  'claude-haiku-4-5-20251001': 'Claude Haiku 4.5',
 };
 
 const FINE_TUNE_JOB_REQUEST_TIMEOUT_MS = 300000;
@@ -419,13 +436,15 @@ function normalizeRegistryModel(item: BackendFineTunedModel): FineTuneModel {
     loss: Number(performance.loss || 0),
     epochs: 0,
     datasetUrl: '',
-    provider: item.providerModelId?.startsWith('ft:') ? 'openai' : '',
-    providerJobId: '',
+    provider: item.provider || (item.providerModelId?.startsWith('ft:') ? 'openai' : ''),
+    providerJobId: item.providerJobId || '',
     fineTunedModelId: item.providerModelId || '',
     started: '-',
     finished: formatDateTime(item.deployedAt),
     user: '',
     isActive: Boolean(item.isActive),
+    generatorReady: item.generatorReady !== false,
+    generatorMessage: item.generatorMessage || '',
   };
 }
 

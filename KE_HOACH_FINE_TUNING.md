@@ -8,7 +8,7 @@ Kế hoạch này **chỉ được gọi là fine-tuning thật khi backend có 
 - Đã có import CSV, validate ví dụ, tạo dataset/job, list job, log/metric cơ bản và promote model local.
 - Đã có adapter OpenAI-compatible ở mức code: build JSONL, upload `/files`, tạo `/fine_tuning/jobs`, sync status/events.
 - Đã có adapter `vertex-gemini` cho Google Vertex AI Gemini fine-tuning: export JSONL theo format Gemini, upload Cloud Storage, gọi `tuningJobs.create`, sync/cancel job bằng Application Default Credentials.
-- Project Google Cloud hiện dùng `linen-sweep-7w106`, region tuning `us-central1`, bucket `VERTEX_TUNING_BUCKET`; preflight `GET tuningJobs` đã trả `200`.
+- Project Google Cloud hiện dùng `copy-writing-499306`, region tuning `us-central1`, bucket `VERTEX_TUNING_BUCKET`; preflight `GET tuningJobs` đã trả `200`.
 - Chưa có worker nền chạy định kỳ; sync hiện xảy ra theo request job/log/metric.
 - Chưa có adapter fine-tuning thật cho Gemini Developer API key, Groq hoặc OpenRouter; các API này trong repo hiện chỉ dùng cho generate/inference.
 - Endpoint OpenAI-compatible hiện tại `http://localhost:20128/v1` chỉ trả được `/models`; `/files` và `/fine_tuning/jobs` đang trả `404`, nên **không thể fine-tune thật với endpoint này**.
@@ -30,12 +30,14 @@ OPENAI_FINE_TUNE_MODEL=<model-id-provider-cho-phep-fine-tune>
 OPENAI_FINE_TUNE_BASE_MODELS=<model-1>,<model-2>
 
 # Hoặc dùng Google Vertex AI Gemini
-GOOGLE_CLOUD_PROJECT=linen-sweep-7w106
+GOOGLE_CLOUD_PROJECT=copy-writing-499306
 GOOGLE_CLOUD_LOCATION=us-central1
 GOOGLE_APPLICATION_CREDENTIALS=
 VERTEX_TUNING_BUCKET=<gcs-bucket-name>
 VERTEX_TUNING_BASE_MODELS=gemini-2.5-flash,gemini-2.5-flash-lite
 ```
+
+Với Vertex Llama/open-model tuning trong project `copy-writing-499306`, bucket khuyến nghị là `copy-writing-499306-vertex-tuning`. Chạy `scripts/setup_vertex_tuning_bucket.ps1` để tạo bucket và grant quyền cho service account Vertex MOSS fine-tuning `service-167488791850@gcp-sa-vertex-moss-ft.iam.gserviceaccount.com`.
 
 Preflight bắt buộc trước khi tạo job thật:
 

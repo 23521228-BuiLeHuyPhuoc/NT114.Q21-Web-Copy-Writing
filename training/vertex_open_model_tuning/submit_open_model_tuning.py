@@ -21,17 +21,13 @@ def load_config(path: str) -> dict:
 def import_vertex_tuning():
     try:
         import vertexai
+        from vertexai.tuning import SourceModel
         from vertexai.tuning import sft
     except Exception as exc:  # pragma: no cover - depends on local SDK install
         raise RuntimeError(
             "Missing Vertex AI Python SDK. Install with: "
             "python -m pip install -r training/vertex_open_model_tuning/requirements.txt"
         ) from exc
-
-    try:
-        from vertexai.tuning.sft import SourceModel
-    except Exception:
-        SourceModel = getattr(sft, "SourceModel", None)
 
     return vertexai, sft, SourceModel
 
@@ -77,6 +73,7 @@ def call_sft_train(sft, source_model, config: dict):
     add_kwarg(kwargs, params, ["tuning_mode"], config.get("tuning_mode"))
     add_kwarg(kwargs, params, ["epochs", "epoch_count"], int(config.get("epochs") or 3))
     add_kwarg(kwargs, params, ["output_gcs_uri", "output_uri", "output_dir"], config.get("output_gcs_uri"))
+    add_kwarg(kwargs, params, ["target_endpoint", "tuned_model_endpoint", "endpoint"], config.get("target_endpoint"))
     adapter_size = config.get("adapter_size")
     if isinstance(adapter_size, str) and adapter_size.isdigit():
         adapter_size = int(adapter_size)

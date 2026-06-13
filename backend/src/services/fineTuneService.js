@@ -4,9 +4,9 @@ const FineTuneJob = require('../models/FineTuneJob');
 const FineTuneMetric = require('../models/FineTuneMetric');
 const FineTunedModel = require('../models/FineTunedModel');
 const createError = require('../utils/createError');
+const { throwGoogleCredentialError } = require('../utils/googleCredentialError');
 const { GoogleAuth } = require('google-auth-library');
 const vertexOpenModelFineTuneService = require('./vertexOpenModelFineTuneService');
-const gptOssFineTuneService = require('./gptOssFineTuneService');
 
 const MIN_VALID_EXAMPLES = 10;
 const GOOGLE_CLOUD_SCOPE = 'https://www.googleapis.com/auth/cloud-platform';
@@ -15,13 +15,30 @@ const VERTEX_FINE_TUNE_PROVIDER = {
   id: 'vertex-gemini',
   name: 'Vertex AI Gemini Fine-tuning',
 };
-const GPT_OSS_FINE_TUNE_PROVIDER = {
-  id: gptOssFineTuneService.PROVIDER_ID,
-  name: gptOssFineTuneService.PROVIDER_NAME,
+const VERTEX_QWEN_FINE_TUNE_PROVIDER = {
+  id: 'vertex-qwen',
+  name: 'Vertex AI Qwen 3 14B Fine-tuning',
 };
 const VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER = {
   id: vertexOpenModelFineTuneService.PROVIDER_ID,
   name: vertexOpenModelFineTuneService.PROVIDER_NAME,
+};
+const VERTEX_CLAUDE_BRAND_VOICE_PROVIDER = {
+  id: 'vertex-claude',
+  name: 'Vertex AI Claude Haiku 4.5 Brand Voice',
+};
+const VERTEX_CLAUDE_BRAND_VOICE_MODEL_OPTIONS = [
+  { id: 'claude-haiku-4-5', name: 'Claude Haiku 4.5', default: true },
+];
+const VERTEX_QWEN_MODEL_OPTIONS = [
+  { id: 'qwen/qwen3@qwen3-14b', name: 'Qwen 3 14B on Vertex AI', default: true },
+];
+const VERTEX_QWEN_MODEL_ALIASES = {
+  'qwen3-14b': 'qwen/qwen3@qwen3-14b',
+  'qwen_qwen3-14b': 'qwen/qwen3@qwen3-14b',
+  'qwen/qwen3-14b': 'qwen/qwen3@qwen3-14b',
+  'qwen/qwen3@14b': 'qwen/qwen3@qwen3-14b',
+  'publishers/qwen/models/qwen3@qwen3-14b': 'qwen/qwen3@qwen3-14b',
 };
 let googleAuth;
 
@@ -78,6 +95,81 @@ function getOpenAIFineTuneBaseModelOptions() {
   }));
 }
 
+function getVertexClaudeBrandVoiceBaseModelOptions() {
+  const configured = parseModelList(process.env.VERTEX_CLAUDE_BRAND_VOICE_MODELS || process.env.VERTEX_CLAUDE_MODELS);
+  const models = configured.length > 0 ? configured : VERTEX_CLAUDE_BRAND_VOICE_MODEL_OPTIONS.map((model) => model.id);
+  return models.map((id, index) => {
+    const option = VERTEX_CLAUDE_BRAND_VOICE_MODEL_OPTIONS.find((model) => model.id === id);
+    return { id, name: option?.name || id, default: index === 0 || option?.default === true };
+  });
+}
+
+function isVertexClaudeBrandVoiceReady() {
+  return Boolean(getVertexProject() && typeof fetch === 'function');
+}
+
+function ensureVertexClaudeBrandVoiceBaseModelAllowed(baseModel) {
+  const configuredModels = getVertexClaudeBrandVoiceBaseModelOptions().map((model) => model.id);
+  if (!configuredModels.includes(baseModel)) {
+    throw createError(400, `Claude model ${baseModel} is not configured for Vertex Claude brand-voice generation. Use one of: ${configuredModels.join(', ')}.`);
+  }
+}
+
+function getVertexQwenBaseModelOptions() {
+  const configured = parseModelList(process.env.VERTEX_QWEN_TUNING_BASE_MODELS);
+  const models = configured.length > 0 ? configured : VERTEX_QWEN_MODEL_OPTIONS.map((model) => model.id);
+  return models.map((id, index) => {
+    const canonicalId = normalizeVertexQwenBaseModel(id);
+    const option = VERTEX_QWEN_MODEL_OPTIONS.find((model) => model.id === canonicalId || model.id === id);
+    return { id, name: option?.name || id, default: index === 0 || option?.default === true };
+  });
+}
+
+function normalizeVertexQwenBaseModel(baseModel) {
+  const value = String(baseModel || '').trim();
+  return VERTEX_QWEN_MODEL_ALIASES[value] || value;
+}
+
+function getAllowedVertexQwenBaseModels() {
+  const configuredModels = getVertexQwenBaseModelOptions().map((model) => model.id);
+  const allowed = new Set();
+  configuredModels.forEach((model) => {
+    allowed.add(model);
+    allowed.add(normalizeVertexQwenBaseModel(model));
+  });
+  Object.entries(VERTEX_QWEN_MODEL_ALIASES).forEach(([alias, canonical]) => {
+    if (allowed.has(alias) || allowed.has(canonical)) {
+      allowed.add(alias);
+      allowed.add(canonical);
+    }
+  });
+  return Array.from(allowed);
+}
+
+function ensureVertexQwenBaseModelAllowed(baseModel) {
+  const configuredModels = getAllowedVertexQwenBaseModels();
+  if (!configuredModels.includes(baseModel) && !configuredModels.includes(normalizeVertexQwenBaseModel(baseModel))) {
+    throw createError(400, `Qwen model ${baseModel} is not configured for Vertex AI open-model tuning. Use one of: ${configuredModels.join(', ')}.`);
+  }
+}
+
+function isVertexQwenBaseModel(baseModel) {
+  return String(baseModel || '').startsWith('qwen/');
+}
+
+function getVertexNonQwenOpenModelOptions() {
+  return vertexOpenModelFineTuneService
+    .getBaseModelOptions()
+    .filter((model) => !isVertexQwenBaseModel(normalizeVertexQwenBaseModel(model.id)));
+}
+
+function ensureVertexNonQwenOpenModelAllowed(baseModel) {
+  if (isVertexQwenBaseModel(normalizeVertexQwenBaseModel(baseModel))) {
+    throw createError(400, 'Select the vertex-qwen provider for Vertex AI Qwen fine-tuning. The vertex-llama provider is reserved for Llama/open models that are not Qwen.');
+  }
+  vertexOpenModelFineTuneService.ensureBaseModelAllowed(baseModel);
+}
+
 function getConfiguredVertexFineTuneBaseModels() {
   const configured = process.env.VERTEX_TUNING_BASE_MODELS || process.env.VERTEX_FINE_TUNE_BASE_MODELS;
   const models = parseModelList(configured);
@@ -130,23 +222,25 @@ function getConfiguredAIProvider() {
   const provider = String(process.env.AI_PROVIDER || '').trim().toLowerCase();
   if (provider === VERTEX_FINE_TUNE_PROVIDER.id) return provider;
   if (provider === VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id) return provider;
-  if (provider === GPT_OSS_FINE_TUNE_PROVIDER.id || provider === 'gptoss') return GPT_OSS_FINE_TUNE_PROVIDER.id;
+  if (provider === VERTEX_QWEN_FINE_TUNE_PROVIDER.id || provider === 'qwen') return VERTEX_QWEN_FINE_TUNE_PROVIDER.id;
+  if (provider === VERTEX_CLAUDE_BRAND_VOICE_PROVIDER.id || provider === 'claude') return VERTEX_CLAUDE_BRAND_VOICE_PROVIDER.id;
   return API_TRAINING_PROVIDERS.some((item) => item.id === provider) ? provider : '';
 }
 
 function getSupportedTrainingProviderIds() {
-  return [VERTEX_FINE_TUNE_PROVIDER.id, VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id, GPT_OSS_FINE_TUNE_PROVIDER.id, 'openai'];
+  return [VERTEX_FINE_TUNE_PROVIDER.id, VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id, VERTEX_QWEN_FINE_TUNE_PROVIDER.id, VERTEX_CLAUDE_BRAND_VOICE_PROVIDER.id, 'openai'];
 }
 
 function getDefaultTrainingProvider() {
   const configuredProvider = getConfiguredAIProvider();
   if (configuredProvider === VERTEX_FINE_TUNE_PROVIDER.id && isVertexFineTuneProviderReady()) return configuredProvider;
   if (configuredProvider === VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id && vertexOpenModelFineTuneService.isReady()) return configuredProvider;
-  if (configuredProvider === GPT_OSS_FINE_TUNE_PROVIDER.id && gptOssFineTuneService.isReady()) return configuredProvider;
+  if (configuredProvider === VERTEX_QWEN_FINE_TUNE_PROVIDER.id && vertexOpenModelFineTuneService.isReady()) return configuredProvider;
+  if (configuredProvider === VERTEX_CLAUDE_BRAND_VOICE_PROVIDER.id && isVertexClaudeBrandVoiceReady()) return configuredProvider;
   if (configuredProvider === 'openai' && isOpenAIFineTuneProviderReady()) return configuredProvider;
   if (isVertexFineTuneProviderReady()) return VERTEX_FINE_TUNE_PROVIDER.id;
   if (vertexOpenModelFineTuneService.isReady()) return VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id;
-  if (gptOssFineTuneService.isReady()) return GPT_OSS_FINE_TUNE_PROVIDER.id;
+  if (isVertexClaudeBrandVoiceReady()) return VERTEX_CLAUDE_BRAND_VOICE_PROVIDER.id;
   if (isOpenAIFineTuneProviderReady()) return 'openai';
   return VERTEX_FINE_TUNE_PROVIDER.id;
 }
@@ -170,7 +264,7 @@ function isRemoteVertexJob(job) {
 }
 
 function shouldSubmitVertexOpenModelFineTune(baseModel) {
-  return vertexOpenModelFineTuneService.isReady() && vertexOpenModelFineTuneService.getBaseModelOptions().map((model) => model.id).includes(baseModel);
+  return vertexOpenModelFineTuneService.isReady() && getVertexNonQwenOpenModelOptions().map((model) => model.id).includes(baseModel);
 }
 
 function isRemoteVertexOpenModelJob(job) {
@@ -178,12 +272,16 @@ function isRemoteVertexOpenModelJob(job) {
     && Boolean(job.providerJobId);
 }
 
-function shouldSubmitGptOssFineTune(baseModel) {
-  return gptOssFineTuneService.isReady() && gptOssFineTuneService.getBaseModelOptions().map((model) => model.id).includes(baseModel);
+function shouldSubmitQwenFineTune(baseModel) {
+  return vertexOpenModelFineTuneService.isReady() && getAllowedVertexQwenBaseModels().includes(baseModel);
 }
 
-function isRemoteGptOssJob(job) {
-  return job.provider === GPT_OSS_FINE_TUNE_PROVIDER.id
+function shouldCreateVertexClaudeBrandVoiceModel(baseModel) {
+  return isVertexClaudeBrandVoiceReady() && getVertexClaudeBrandVoiceBaseModelOptions().map((model) => model.id).includes(baseModel);
+}
+
+function isRemoteQwenJob(job) {
+  return job.provider === VERTEX_QWEN_FINE_TUNE_PROVIDER.id
     && Boolean(job.providerJobId);
 }
 
@@ -194,7 +292,7 @@ function buildRunningJobQuotaFilter(userId) {
       { status: { $in: ['pending', 'running'] } },
       {
         status: 'queued',
-        provider: { $in: ['openai', VERTEX_FINE_TUNE_PROVIDER.id, VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id, GPT_OSS_FINE_TUNE_PROVIDER.id] },
+        provider: { $in: ['openai', VERTEX_FINE_TUNE_PROVIDER.id, VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id, VERTEX_QWEN_FINE_TUNE_PROVIDER.id] },
         providerJobId: { $exists: true, $ne: '' },
       },
     ],
@@ -283,12 +381,16 @@ async function ensureVertexFineTuneEndpointReady(baseModel) {
 
 async function getGoogleAccessToken() {
   ensureVertexFineTuneConfigured();
-  googleAuth = googleAuth || new GoogleAuth({ scopes: [GOOGLE_CLOUD_SCOPE] });
-  const client = await googleAuth.getClient();
-  const tokenResponse = await client.getAccessToken();
-  const token = typeof tokenResponse === 'string' ? tokenResponse : tokenResponse?.token;
-  if (!token) throw createError(503, 'Could not read Google ADC access token. Run gcloud auth application-default login.');
-  return token;
+  try {
+    googleAuth = googleAuth || new GoogleAuth({ scopes: [GOOGLE_CLOUD_SCOPE] });
+    const client = await googleAuth.getClient();
+    const tokenResponse = await client.getAccessToken();
+    const token = typeof tokenResponse === 'string' ? tokenResponse : tokenResponse?.token;
+    if (!token) throw createError(503, 'Could not read Google ADC access token. Run gcloud auth application-default login.');
+    return token;
+  } catch (error) {
+    throwGoogleCredentialError(error, 'Vertex Gemini fine-tuning');
+  }
 }
 
 async function googleJsonRequest(url, options = {}, fallbackMessage = 'Google request failed') {
@@ -375,13 +477,25 @@ function getVertexTunedModelId(providerJob) {
 }
 
 function isVertexTunedEndpoint(value) {
-  return /\/locations\/[^/]+\/endpoints\/[^/]+$/.test(String(value || '').trim());
+  return /\/locations\/[^/]+\/endpoints\/[^/:]+(?:$|:)/.test(String(value || '').trim());
 }
 
 function shouldSyncVertexFineTuneJob(job) {
   if (job.provider !== VERTEX_FINE_TUNE_PROVIDER.id || !job.providerJobId) return false;
   if (['pending', 'queued', 'running'].includes(job.status)) return true;
   return job.status === 'completed' && !isVertexTunedEndpoint(job.fineTunedModelId);
+}
+
+function shouldSyncVertexOpenModelJob(job) {
+  if (!job?.providerJobId) return false;
+  if (![VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id, VERTEX_QWEN_FINE_TUNE_PROVIDER.id].includes(job.provider)) return false;
+  if (['pending', 'queued', 'running'].includes(job.status)) return true;
+  if (job.status !== 'completed') return false;
+  if (job.deploymentStatus === 'failed') return false;
+  if (!isVertexTunedEndpoint(job.fineTunedModelId)) return true;
+  if (job.deploymentOperationId) return true;
+  if (['started', 'deploying'].includes(job.deploymentStatus || '')) return true;
+  return Boolean(job.tunedModelResourceId && job.deploymentStatus !== 'deployed');
 }
 
 function mapVertexStatus(providerJob) {
@@ -795,11 +909,28 @@ function getUnsupportedRealFineTuneMessage(provider) {
     return 'OpenAI-compatible API is configured for generation only. Set OPENAI_FINE_TUNE_MODEL or OPENAI_FINE_TUNE_BASE_MODELS and use an endpoint that supports /files and /fine_tuning/jobs.';
   }
 
-  if (provider === GPT_OSS_FINE_TUNE_PROVIDER.id) {
-    return 'GPT-OSS fine-tuning needs a Hugging Face write token, permission to create dataset/model/Space repos, and GPU Space hardware configured with GPT_OSS_SPACE_HARDWARE or HUGGINGFACE_SPACE_HARDWARE.';
+  if (provider === VERTEX_QWEN_FINE_TUNE_PROVIDER.id) {
+    return 'Vertex AI Qwen 3 14B fine-tuning needs GOOGLE_CLOUD_PROJECT, GOOGLE_CLOUD_LOCATION, VERTEX_TUNING_BUCKET, Application Default Credentials, and the Vertex AI Python SDK.';
+  }
+
+  if (provider === VERTEX_CLAUDE_BRAND_VOICE_PROVIDER.id) {
+    return 'Claude Haiku 4.5 on Vertex AI does not expose weight fine-tuning in this app. Configure GOOGLE_CLOUD_PROJECT and Google ADC to create a prompt-conditioned brand-voice model from this dataset.';
   }
 
   return `${provider} API is configured for generation, but this app does not have a real fine-tuning adapter for that provider.`;
+}
+
+async function completeVertexClaudeBrandVoiceJob(job) {
+  job.providerJobId = `vertex-claude-brand-voice:${job._id.toString()}`;
+  job.fineTunedModelId = job.baseModel;
+  job.status = 'completed';
+  job.progress = 100;
+  job.startedAt = job.startedAt || new Date();
+  job.finishedAt = new Date();
+  job.errorMessage = '';
+  await job.save();
+  await createFineTunedModelFromJob(job);
+  return job;
 }
 
 function buildTrainingJsonl(examples) {
@@ -1012,6 +1143,12 @@ async function syncVertexOpenModelFineTuneJob(job) {
 
   await vertexOpenModelFineTuneService.syncJob(job);
   if (job.status === 'completed') {
+    await vertexOpenModelFineTuneService.ensureTunedModelDeployed(job).catch(async (error) => {
+      job.deploymentStatus = 'failed';
+      job.deploymentErrorMessage = error.message;
+      await job.save().catch(() => {});
+      console.warn(`Vertex Llama tuned endpoint deploy failed: ${error.message}`);
+    });
     await createFineTunedModelFromJob(job).catch((error) => {
       console.warn(`Vertex Llama fine-tuned model registration failed: ${error.message}`);
     });
@@ -1019,17 +1156,23 @@ async function syncVertexOpenModelFineTuneJob(job) {
   return job;
 }
 
-async function submitGptOssFineTuneJob(job) {
-  return gptOssFineTuneService.submitJob(job);
+async function submitQwenFineTuneJob(job) {
+  return vertexOpenModelFineTuneService.submitJob(job);
 }
 
-async function syncGptOssFineTuneJob(job) {
-  if (!isRemoteGptOssJob(job)) return job;
+async function syncQwenFineTuneJob(job) {
+  if (!isRemoteQwenJob(job)) return job;
 
-  await gptOssFineTuneService.syncJob(job, clampProgress);
+  await vertexOpenModelFineTuneService.syncJob(job);
   if (job.status === 'completed') {
+    await vertexOpenModelFineTuneService.ensureTunedModelDeployed(job).catch(async (error) => {
+      job.deploymentStatus = 'failed';
+      job.deploymentErrorMessage = error.message;
+      await job.save().catch(() => {});
+      console.warn(`Qwen tuned endpoint deploy failed: ${error.message}`);
+    });
     await createFineTunedModelFromJob(job).catch((error) => {
-      console.warn(`GPT-OSS fine-tuned model registration failed: ${error.message}`);
+      console.warn(`Qwen fine-tuned model registration failed: ${error.message}`);
     });
   }
   return job;
@@ -1119,7 +1262,14 @@ function serializeFineTuneJob(job) {
     actualCost: job.actualCost || 0,
     errorMessage: job.errorMessage || '',
     providerJobId: job.providerJobId || '',
+    tuningLocation: job.tuningLocation || '',
+    tuningEndpoint: job.tuningEndpoint || '',
     fineTunedModelId: job.fineTunedModelId || '',
+    tunedModelResourceId: job.tunedModelResourceId || '',
+    deploymentOperationId: job.deploymentOperationId || '',
+    deploymentStatus: job.deploymentStatus || '',
+    deploymentErrorMessage: job.deploymentErrorMessage || '',
+    deployedModelId: job.deployedModelId || '',
     startedAt: job.startedAt,
     finishedAt: job.finishedAt,
     createdAt: job.createdAt,
@@ -1141,7 +1291,64 @@ function serializeMetric(metric) {
   };
 }
 
-function serializeModel(model) {
+function getModelJob(model, fallbackJob = null) {
+  if (fallbackJob) return fallbackJob;
+  return model?.jobId && typeof model.jobId === 'object' ? model.jobId : null;
+}
+
+function getOpenModelGeneratorMessage(job, label) {
+  if (job?.deploymentStatus === 'deploying' || job?.deploymentStatus === 'started') {
+    return `${label} tuning completed. Vertex endpoint deployment is still running; wait for deploymentStatus=deployed, then refresh.`;
+  }
+  if (job?.deploymentStatus === 'failed') {
+    return `${label} tuning completed, but endpoint deployment failed: ${job.deploymentErrorMessage || 'unknown Vertex deployment error'}`;
+  }
+  return `${label} tuning is registered, but the tuned output is not a deployed Vertex endpoint yet.`;
+}
+
+function getGeneratorAvailability(model, job = null) {
+  const provider = job?.provider || '';
+  if (provider === 'openai' || provider === VERTEX_FINE_TUNE_PROVIDER.id) {
+    return {
+      generatorReady: Boolean(model.providerModelId),
+      generatorMessage: model.providerModelId ? '' : 'Provider has not returned a usable fine-tuned model id yet.',
+    };
+  }
+
+  if (provider === VERTEX_CLAUDE_BRAND_VOICE_PROVIDER.id) {
+    return {
+      generatorReady: Boolean(model.providerModelId),
+      generatorMessage: model.providerModelId ? '' : 'Claude brand-voice model has no base model id yet.',
+    };
+  }
+
+  if (provider === VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id) {
+    const hasEndpoint = isVertexTunedEndpoint(model.providerModelId);
+    return {
+      generatorReady: hasEndpoint,
+      generatorMessage: hasEndpoint ? '' : getOpenModelGeneratorMessage(job, 'Vertex Llama'),
+    };
+  }
+
+  if (provider === VERTEX_QWEN_FINE_TUNE_PROVIDER.id) {
+    const hasEndpoint = isVertexTunedEndpoint(model.providerModelId);
+    return {
+      generatorReady: hasEndpoint,
+      generatorMessage: hasEndpoint ? '' : getOpenModelGeneratorMessage(job, 'Vertex AI Qwen'),
+    };
+  }
+
+  return {
+    generatorReady: false,
+    generatorMessage: provider ? `Provider ${provider} is not supported by Generator.` : 'Training provider is unknown.',
+  };
+}
+
+function serializeModel(model, fallbackJob = null) {
+  const job = getModelJob(model, fallbackJob);
+  const provider = job?.provider || '';
+  const availability = getGeneratorAvailability(model, job);
+
   return {
     id: model._id.toString(),
     _id: model._id.toString(),
@@ -1150,6 +1357,16 @@ function serializeModel(model) {
     name: model.name,
     alias: model.alias,
     providerModelId: model.providerModelId,
+    provider,
+    providerJobId: job?.providerJobId || '',
+    tuningEndpoint: job?.tuningEndpoint || '',
+    tunedModelResourceId: job?.tunedModelResourceId || '',
+    deploymentOperationId: job?.deploymentOperationId || '',
+    deploymentStatus: job?.deploymentStatus || '',
+    deploymentErrorMessage: job?.deploymentErrorMessage || '',
+    deployedModelId: job?.deployedModelId || '',
+    generatorReady: availability.generatorReady,
+    generatorMessage: availability.generatorMessage,
     baseModel: model.baseModel,
     industry: model.industry || 'general',
     version: model.version || 1,
@@ -1435,16 +1652,16 @@ async function listFineTuneJobs(userId, query = {}) {
     }
 
     if (job.provider === VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id) {
-      if (!['pending', 'queued', 'running'].includes(job.status)) return;
+      if (!shouldSyncVertexOpenModelJob(job)) return;
       await syncVertexOpenModelFineTuneJob(job).catch((error) => {
         console.warn(`Vertex Llama fine-tune list sync failed: ${error.message}`);
       });
     }
 
-    if (job.provider === GPT_OSS_FINE_TUNE_PROVIDER.id) {
-      if (!['pending', 'queued', 'running'].includes(job.status)) return;
-      await syncGptOssFineTuneJob(job).catch((error) => {
-        console.warn(`GPT-OSS fine-tune list sync failed: ${error.message}`);
+    if (job.provider === VERTEX_QWEN_FINE_TUNE_PROVIDER.id) {
+      if (!shouldSyncVertexOpenModelJob(job)) return;
+      await syncQwenFineTuneJob(job).catch((error) => {
+        console.warn(`Qwen fine-tune list sync failed: ${error.message}`);
       });
     }
 
@@ -1468,14 +1685,14 @@ async function getFineTuneJob(userId, id) {
       console.warn(`Vertex Gemini fine-tune sync failed: ${error.message}`);
     });
   }
-  if (job.provider === VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id && ['pending', 'queued', 'running'].includes(job.status)) {
+  if (job.provider === VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id && shouldSyncVertexOpenModelJob(job)) {
     await syncVertexOpenModelFineTuneJob(job).catch((error) => {
       console.warn(`Vertex Llama fine-tune sync failed: ${error.message}`);
     });
   }
-  if (job.provider === GPT_OSS_FINE_TUNE_PROVIDER.id && ['pending', 'queued', 'running'].includes(job.status)) {
-    await syncGptOssFineTuneJob(job).catch((error) => {
-      console.warn(`GPT-OSS fine-tune sync failed: ${error.message}`);
+  if (job.provider === VERTEX_QWEN_FINE_TUNE_PROVIDER.id && shouldSyncVertexOpenModelJob(job)) {
+    await syncQwenFineTuneJob(job).catch((error) => {
+      console.warn(`Qwen fine-tune sync failed: ${error.message}`);
     });
   }
   return serializeFineTuneJob(job);
@@ -1505,16 +1722,21 @@ async function createFineTuneJob(userId, payload) {
     ensureVertexBaseModelAllowed(baseModel);
   }
   if (provider === VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id && vertexOpenModelFineTuneService.isReady()) {
+    ensureVertexNonQwenOpenModelAllowed(baseModel);
+  }
+  if (provider === VERTEX_QWEN_FINE_TUNE_PROVIDER.id && vertexOpenModelFineTuneService.isReady()) {
+    ensureVertexQwenBaseModelAllowed(baseModel);
     vertexOpenModelFineTuneService.ensureBaseModelAllowed(baseModel);
   }
-  if (provider === GPT_OSS_FINE_TUNE_PROVIDER.id && gptOssFineTuneService.isReady()) {
-    gptOssFineTuneService.ensureBaseModelAllowed(baseModel);
+  if (provider === VERTEX_CLAUDE_BRAND_VOICE_PROVIDER.id && isVertexClaudeBrandVoiceReady()) {
+    ensureVertexClaudeBrandVoiceBaseModelAllowed(baseModel);
   }
   const submitToOpenAI = provider === 'openai' && shouldSubmitOpenAIFineTune(baseModel);
   const submitToVertex = provider === VERTEX_FINE_TUNE_PROVIDER.id && shouldSubmitVertexFineTune(baseModel);
   const submitToVertexOpenModel = provider === VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id && shouldSubmitVertexOpenModelFineTune(baseModel);
-  const submitToGptOss = provider === GPT_OSS_FINE_TUNE_PROVIDER.id && shouldSubmitGptOssFineTune(baseModel);
-  if (!submitToOpenAI && !submitToVertex && !submitToVertexOpenModel && !submitToGptOss) {
+  const submitToQwen = provider === VERTEX_QWEN_FINE_TUNE_PROVIDER.id && shouldSubmitQwenFineTune(baseModel);
+  const submitToVertexClaudeBrandVoice = provider === VERTEX_CLAUDE_BRAND_VOICE_PROVIDER.id && shouldCreateVertexClaudeBrandVoiceModel(baseModel);
+  if (!submitToOpenAI && !submitToVertex && !submitToVertexOpenModel && !submitToQwen && !submitToVertexClaudeBrandVoice) {
     throw createError(409, getUnsupportedRealFineTuneMessage(provider));
   }
   if (submitToOpenAI) {
@@ -1524,12 +1746,16 @@ async function createFineTuneJob(userId, payload) {
     await ensureVertexFineTuneEndpointReady(baseModel);
   }
   if (submitToVertexOpenModel) {
-    await vertexOpenModelFineTuneService.preflight();
+    await vertexOpenModelFineTuneService.preflight(baseModel, { provider });
+    ensureVertexNonQwenOpenModelAllowed(baseModel);
+  }
+  if (submitToQwen) {
+    ensureVertexQwenBaseModelAllowed(baseModel);
+    await vertexOpenModelFineTuneService.preflight(baseModel, { provider });
     vertexOpenModelFineTuneService.ensureBaseModelAllowed(baseModel);
   }
-  if (submitToGptOss) {
-    gptOssFineTuneService.ensureConfigured();
-    gptOssFineTuneService.ensureBaseModelAllowed(baseModel);
+  if (submitToVertexClaudeBrandVoice) {
+    ensureVertexClaudeBrandVoiceBaseModelAllowed(baseModel);
   }
   const dataset = payload.datasetId
     ? await findDatasetOrThrow(userId, payload.datasetId)
@@ -1607,9 +1833,9 @@ async function createFineTuneJob(userId, payload) {
     }
   }
 
-  if (submitToGptOss) {
+  if (submitToQwen) {
     try {
-      await submitGptOssFineTuneJob(job);
+      await submitQwenFineTuneJob(job);
     } catch (error) {
       job.status = 'failed';
       job.errorMessage = error.message;
@@ -1617,6 +1843,10 @@ async function createFineTuneJob(userId, payload) {
       await job.save();
       throw error;
     }
+  }
+
+  if (submitToVertexClaudeBrandVoice) {
+    await completeVertexClaudeBrandVoiceJob(job);
   }
 
   return serializeFineTuneJob(job);
@@ -1667,6 +1897,12 @@ async function cancelFineTuneJob(userId, id) {
     });
   }
 
+  if (job.provider === VERTEX_QWEN_FINE_TUNE_PROVIDER.id) {
+    await vertexOpenModelFineTuneService.cancelJob(job).catch((error) => {
+      console.warn(`Qwen fine-tune cancel failed: ${error.message}`);
+    });
+  }
+
   job.status = 'cancelled';
   job.errorMessage = 'Cancelled by user';
   job.finishedAt = new Date();
@@ -1687,16 +1923,21 @@ async function retryFineTuneJob(userId, id) {
     ensureVertexBaseModelAllowed(job.baseModel);
   }
   if (job.provider === VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id && vertexOpenModelFineTuneService.isReady()) {
+    ensureVertexNonQwenOpenModelAllowed(job.baseModel);
+  }
+  if (job.provider === VERTEX_QWEN_FINE_TUNE_PROVIDER.id && vertexOpenModelFineTuneService.isReady()) {
+    ensureVertexQwenBaseModelAllowed(job.baseModel);
     vertexOpenModelFineTuneService.ensureBaseModelAllowed(job.baseModel);
   }
-  if (job.provider === GPT_OSS_FINE_TUNE_PROVIDER.id && gptOssFineTuneService.isReady()) {
-    gptOssFineTuneService.ensureBaseModelAllowed(job.baseModel);
+  if (job.provider === VERTEX_CLAUDE_BRAND_VOICE_PROVIDER.id && isVertexClaudeBrandVoiceReady()) {
+    ensureVertexClaudeBrandVoiceBaseModelAllowed(job.baseModel);
   }
   const submitToOpenAI = job.provider === 'openai' && shouldSubmitOpenAIFineTune(job.baseModel);
   const submitToVertex = job.provider === VERTEX_FINE_TUNE_PROVIDER.id && shouldSubmitVertexFineTune(job.baseModel);
   const submitToVertexOpenModel = job.provider === VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id && shouldSubmitVertexOpenModelFineTune(job.baseModel);
-  const submitToGptOss = job.provider === GPT_OSS_FINE_TUNE_PROVIDER.id && shouldSubmitGptOssFineTune(job.baseModel);
-  if (!submitToOpenAI && !submitToVertex && !submitToVertexOpenModel && !submitToGptOss) {
+  const submitToQwen = job.provider === VERTEX_QWEN_FINE_TUNE_PROVIDER.id && shouldSubmitQwenFineTune(job.baseModel);
+  const submitToVertexClaudeBrandVoice = job.provider === VERTEX_CLAUDE_BRAND_VOICE_PROVIDER.id && shouldCreateVertexClaudeBrandVoiceModel(job.baseModel);
+  if (!submitToOpenAI && !submitToVertex && !submitToVertexOpenModel && !submitToQwen && !submitToVertexClaudeBrandVoice) {
     throw createError(409, getUnsupportedRealFineTuneMessage(job.provider));
   }
   if (submitToOpenAI) {
@@ -1706,12 +1947,16 @@ async function retryFineTuneJob(userId, id) {
     await ensureVertexFineTuneEndpointReady(job.baseModel);
   }
   if (submitToVertexOpenModel) {
-    await vertexOpenModelFineTuneService.preflight();
+    await vertexOpenModelFineTuneService.preflight(job.baseModel, { provider: job.provider });
+    ensureVertexNonQwenOpenModelAllowed(job.baseModel);
+  }
+  if (submitToQwen) {
+    ensureVertexQwenBaseModelAllowed(job.baseModel);
+    await vertexOpenModelFineTuneService.preflight(job.baseModel, { provider: job.provider });
     vertexOpenModelFineTuneService.ensureBaseModelAllowed(job.baseModel);
   }
-  if (submitToGptOss) {
-    gptOssFineTuneService.ensureConfigured();
-    gptOssFineTuneService.ensureBaseModelAllowed(job.baseModel);
+  if (submitToVertexClaudeBrandVoice) {
+    ensureVertexClaudeBrandVoiceBaseModelAllowed(job.baseModel);
   }
   job.status = 'pending';
   job.progress = 0;
@@ -1720,6 +1965,8 @@ async function retryFineTuneJob(userId, id) {
   job.finishedAt = null;
   job.providerJobId = '';
   job.fineTunedModelId = '';
+  job.tuningLocation = '';
+  job.tuningEndpoint = '';
   await job.save();
   await seedInitialMetrics(userId, job);
 
@@ -1759,9 +2006,9 @@ async function retryFineTuneJob(userId, id) {
     }
   }
 
-  if (submitToGptOss) {
+  if (submitToQwen) {
     try {
-      await submitGptOssFineTuneJob(job);
+      await submitQwenFineTuneJob(job);
     } catch (error) {
       job.status = 'failed';
       job.errorMessage = error.message;
@@ -1769,6 +2016,10 @@ async function retryFineTuneJob(userId, id) {
       await job.save();
       throw error;
     }
+  }
+
+  if (submitToVertexClaudeBrandVoice) {
+    await completeVertexClaudeBrandVoiceJob(job);
   }
 
   return serializeFineTuneJob(job);
@@ -1817,34 +2068,10 @@ async function listJobMetrics(userId, jobId) {
     });
   }
 
-  if (job.provider === GPT_OSS_FINE_TUNE_PROVIDER.id) {
-    await syncGptOssFineTuneJob(job).catch((error) => {
-      console.warn(`GPT-OSS fine-tune metrics sync failed: ${error.message}`);
+  if (job.provider === VERTEX_QWEN_FINE_TUNE_PROVIDER.id) {
+    await syncQwenFineTuneJob(job).catch((error) => {
+      console.warn(`Qwen fine-tune metrics sync failed: ${error.message}`);
     });
-    await gptOssFineTuneService.getMetrics(job)
-      .then((providerMetrics) => Promise.all(providerMetrics.map(async (metric) => {
-        const epoch = Number(metric.epoch ?? metric.step ?? 0);
-        const trainLoss = Number(metric.trainLoss ?? metric.train_loss ?? metric.loss ?? 0);
-        const validationLoss = Number(metric.validationLoss ?? metric.validation_loss ?? metric.eval_loss ?? 0);
-        const tokenUsage = Number(metric.tokenUsage ?? metric.token_usage ?? metric.tokens ?? 0);
-        return FineTuneMetric.findOneAndUpdate(
-          { userId, jobId, epoch: Number.isFinite(epoch) ? epoch : 0 },
-          {
-            userId,
-            jobId,
-            epoch: Number.isFinite(epoch) ? epoch : 0,
-            trainLoss: Number.isFinite(trainLoss) ? trainLoss : 0,
-            validationLoss: Number.isFinite(validationLoss) ? validationLoss : 0,
-            accuracy: Number(metric.accuracy || 0),
-            tokenUsage: Number.isFinite(tokenUsage) ? tokenUsage : 0,
-            timestamp: new Date(),
-          },
-          { upsert: true, new: true, setDefaultsOnInsert: true },
-        );
-      })))
-      .catch((error) => {
-        console.warn(`GPT-OSS fine-tune provider metrics fetch failed: ${error.message}`);
-      });
   }
 
   const metrics = await FineTuneMetric.find({ userId, jobId }).sort({ epoch: 1, createdAt: 1 });
@@ -1887,15 +2114,15 @@ async function listJobLogs(userId, jobId) {
     if (vertexLlamaLogs.length > 0) return { items: vertexLlamaLogs };
   }
 
-  if (job.provider === GPT_OSS_FINE_TUNE_PROVIDER.id) {
-    await syncGptOssFineTuneJob(job).catch((error) => {
-      console.warn(`GPT-OSS fine-tune logs sync failed: ${error.message}`);
+  if (job.provider === VERTEX_QWEN_FINE_TUNE_PROVIDER.id) {
+    await syncQwenFineTuneJob(job).catch((error) => {
+      console.warn(`Qwen fine-tune logs sync failed: ${error.message}`);
     });
-    const gptOssLogs = await gptOssFineTuneService.getLogs(job).catch((error) => {
-      console.warn(`GPT-OSS fine-tune logs fetch failed: ${error.message}`);
+    const qwenLogs = await vertexOpenModelFineTuneService.getLogs(job).catch((error) => {
+      console.warn(`Qwen fine-tune logs fetch failed: ${error.message}`);
       return [];
     });
-    if (gptOssLogs.length > 0) return { items: gptOssLogs };
+    if (qwenLogs.length > 0) return { items: qwenLogs };
   }
 
   const logs = [
@@ -1915,7 +2142,7 @@ async function createFineTunedModelFromJob(job) {
   const userId = job.userId?._id || job.userId;
   if (!userId) return null;
 
-  if ((isRemoteOpenAIJob(job) || isRemoteVertexJob(job) || isRemoteGptOssJob(job)) && !job.fineTunedModelId) {
+  if ((isRemoteOpenAIJob(job) || isRemoteVertexJob(job) || isRemoteQwenJob(job)) && !job.fineTunedModelId) {
     return null;
   }
 
@@ -1925,7 +2152,12 @@ async function createFineTunedModelFromJob(job) {
 
   const existingModel = await FineTunedModel.findOne({ userId, jobId: job._id });
   if (existingModel) {
-    const providerModelId = job.fineTunedModelId || existingModel.providerModelId;
+    const jobProviderModelId = job.fineTunedModelId || '';
+    const providerModelId = (isRemoteVertexOpenModelJob(job) || isRemoteQwenJob(job))
+      && isVertexTunedEndpoint(existingModel.providerModelId)
+      && !isVertexTunedEndpoint(jobProviderModelId)
+      ? existingModel.providerModelId
+      : jobProviderModelId || existingModel.providerModelId;
     if (providerModelId && existingModel.providerModelId !== providerModelId) {
       existingModel.providerModelId = providerModelId;
       existingModel.baseModel = job.baseModel || existingModel.baseModel;
@@ -1966,7 +2198,35 @@ async function createFineTunedModelFromJob(job) {
   });
 }
 
+async function syncFineTuneJobForRegistry(job) {
+  if (!job) return job;
+
+  if (job.provider === VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id && shouldSyncVertexOpenModelJob(job)) return syncVertexOpenModelFineTuneJob(job);
+  if (job.provider === VERTEX_QWEN_FINE_TUNE_PROVIDER.id && shouldSyncVertexOpenModelJob(job)) return syncQwenFineTuneJob(job);
+
+  if (!['pending', 'queued', 'running'].includes(job.status)) return job;
+
+  if (job.provider === 'openai' && isRemoteOpenAIJob(job)) return syncOpenAIFineTuneJob(job);
+  if (job.provider === VERTEX_FINE_TUNE_PROVIDER.id && isRemoteVertexJob(job)) return syncVertexGeminiFineTuneJob(job);
+  return job;
+}
+
 async function registerCompletedFineTuneJobs(userId) {
+  const liveJobs = await FineTuneJob.find({
+    userId,
+    provider: { $in: getSupportedTrainingProviderIds() },
+    status: { $in: ['pending', 'queued', 'running'] },
+    providerJobId: { $exists: true, $ne: '' },
+  })
+    .sort({ updatedAt: 1 })
+    .limit(20);
+
+  await Promise.all(liveJobs.map(async (job) => {
+    await syncFineTuneJobForRegistry(job).catch((error) => {
+      console.warn(`Fine-tuned model registry sync failed: ${error.message}`);
+    });
+  }));
+
   const staleVertexJobs = await FineTuneJob.find({
     userId,
     provider: VERTEX_FINE_TUNE_PROVIDER.id,
@@ -1985,6 +2245,33 @@ async function registerCompletedFineTuneJobs(userId) {
     });
     await createFineTunedModelFromJob(job).catch((error) => {
       console.warn(`Vertex completed model registry refresh failed: ${error.message}`);
+    });
+  }));
+
+  const staleOpenModelJobs = await FineTuneJob.find({
+    userId,
+    provider: { $in: [VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id, VERTEX_QWEN_FINE_TUNE_PROVIDER.id] },
+    status: 'completed',
+    providerJobId: { $exists: true, $ne: '' },
+    deploymentStatus: { $ne: 'failed' },
+    $or: [
+      { fineTunedModelId: { $exists: false } },
+      { fineTunedModelId: '' },
+      { fineTunedModelId: /\/models\// },
+      { deploymentOperationId: { $exists: true, $ne: '' } },
+      { deploymentStatus: { $in: ['started', 'deploying'] } },
+      { tunedModelResourceId: { $exists: true, $ne: '' }, deploymentStatus: { $ne: 'deployed' } },
+    ],
+  })
+    .sort({ finishedAt: 1, updatedAt: 1 })
+    .limit(5);
+
+  await Promise.all(staleOpenModelJobs.map(async (job) => {
+    await syncFineTuneJobForRegistry(job).catch((error) => {
+      console.warn(`Vertex open-model endpoint deployment sync failed: ${error.message}`);
+    });
+    await createFineTunedModelFromJob(job).catch((error) => {
+      console.warn(`Vertex open-model registry refresh failed: ${error.message}`);
     });
   }));
 
@@ -2011,6 +2298,7 @@ async function listFineTunedModels(userId, query = {}) {
   const hiddenJobIds = await FineTuneJob.find({ userId, provider: { $nin: getSupportedTrainingProviderIds() } }).distinct('_id');
   const filter = {
     userId,
+    isDeprecated: { $ne: true },
     jobId: { $nin: hiddenJobIds },
     ...buildSearchFilter(query.search, ['name', 'alias', 'industry', 'providerModelId']),
   };
@@ -2019,10 +2307,18 @@ async function listFineTunedModels(userId, query = {}) {
 
   const [totalItems, models] = await Promise.all([
     FineTunedModel.countDocuments(filter),
-    FineTunedModel.find(filter).sort({ isActive: -1, updatedAt: -1 }).skip((page - 1) * limit).limit(limit),
+    FineTunedModel.find(filter)
+      .populate('jobId', 'provider providerJobId fineTunedModelId tunedModelResourceId tuningEndpoint status deploymentStatus deploymentOperationId deploymentErrorMessage deployedModelId')
+      .sort({ isActive: -1, updatedAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit),
   ]);
+  const modelJobIds = models.map((model) => toId(model.jobId)).filter(Boolean);
+  const modelJobs = await FineTuneJob.find({ _id: { $in: modelJobIds }, userId }).select('provider providerJobId fineTunedModelId tunedModelResourceId tuningEndpoint status deploymentStatus deploymentOperationId deploymentErrorMessage deployedModelId');
+  const jobsById = new Map(modelJobs.map((job) => [job._id.toString(), job]));
+
   return {
-    items: models.map(serializeModel),
+    items: models.map((model) => serializeModel(model, jobsById.get(toId(model.jobId)))),
     pagination: { page, limit, totalItems, totalPages: Math.max(1, Math.ceil(totalItems / limit)) },
   };
 }
@@ -2035,11 +2331,11 @@ async function promoteFineTuneJob(userId, id) {
   if (shouldSyncVertexFineTuneJob(job)) {
     await syncVertexGeminiFineTuneJob(job);
   }
-  if (isRemoteVertexOpenModelJob(job) && job.status !== 'completed') {
+  if (isRemoteVertexOpenModelJob(job) && shouldSyncVertexOpenModelJob(job)) {
     await syncVertexOpenModelFineTuneJob(job);
   }
-  if (isRemoteGptOssJob(job) && job.status !== 'completed') {
-    await syncGptOssFineTuneJob(job);
+  if (isRemoteQwenJob(job) && shouldSyncVertexOpenModelJob(job)) {
+    await syncQwenFineTuneJob(job);
   }
   if (job.status !== 'completed') {
     throw createError(409, 'Only completed real fine-tune jobs can be promoted');
@@ -2053,18 +2349,24 @@ async function promoteFineTuneJob(userId, id) {
     throw createError(409, 'Vertex has not returned a tuned model id yet');
   }
 
-  if (isRemoteVertexOpenModelJob(job) && !job.fineTunedModelId) {
-    throw createError(409, 'Vertex Llama has not returned a tuned model id yet');
+  if (isRemoteVertexOpenModelJob(job) && !isVertexTunedEndpoint(job.fineTunedModelId)) {
+    const message = job.deploymentStatus === 'failed'
+      ? 'Vertex Llama endpoint deployment failed: ' + (job.deploymentErrorMessage || 'unknown Vertex deployment error')
+      : 'Vertex Llama tuned model is not deployed to the configured endpoint yet. Deployment will continue automatically; refresh after deploymentStatus=deployed.';
+    throw createError(409, message);
   }
 
-  if (isRemoteGptOssJob(job) && !job.fineTunedModelId) {
-    throw createError(409, 'GPT-OSS trainer has not returned a LoRA adapter model repo id yet');
+  if (isRemoteQwenJob(job) && !isVertexTunedEndpoint(job.fineTunedModelId)) {
+    const message = job.deploymentStatus === 'failed'
+      ? 'Qwen endpoint deployment failed: ' + (job.deploymentErrorMessage || 'unknown Vertex deployment error')
+      : 'Qwen tuned model is not deployed to the configured endpoint yet. Deployment will continue automatically; refresh after deploymentStatus=deployed.';
+    throw createError(409, message);
   }
 
   const model = await createFineTunedModelFromJob(job);
   if (!model) throw createError(409, 'Fine-tuned model could not be registered');
 
-  return serializeModel(model);
+  return serializeModel(model, job);
 }
 
 async function setFineTunedModelActive(userId, id, payload) {
@@ -2083,7 +2385,7 @@ async function setFineTunedModelActive(userId, id, payload) {
     model.deactivatedAt = new Date();
   }
   await model.save();
-  return serializeModel(model);
+  return serializeModel(model, job);
 }
 
 function listProviders() {
@@ -2091,10 +2393,16 @@ function listProviders() {
   const openAIReady = isOpenAIFineTuneProviderReady();
   const vertexReady = isVertexFineTuneProviderReady();
   const vertexLlamaReady = vertexOpenModelFineTuneService.isReady();
-  const gptOssReady = gptOssFineTuneService.isReady();
-  const gptOssMissing = [];
-  if (!gptOssFineTuneService.getToken()) gptOssMissing.push('GPT_OSS_HUGGINGFACE_TOKEN or HUGGINGFACE_TOKEN');
-  if (!gptOssFineTuneService.getSpaceHardware()) gptOssMissing.push('GPT_OSS_SPACE_HARDWARE or HUGGINGFACE_SPACE_HARDWARE');
+  const qwenReady = vertexOpenModelFineTuneService.isReady();
+  const vertexClaudeReady = isVertexClaudeBrandVoiceReady();
+  const vertexLlamaTuningLocation = (() => {
+    try { return vertexOpenModelFineTuneService.getLocationForProvider(VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id, getVertexNonQwenOpenModelOptions()[0]?.id); } catch { return ''; }
+  })();
+  const qwenTuningLocation = (() => {
+    try { return vertexOpenModelFineTuneService.getLocationForProvider(VERTEX_QWEN_FINE_TUNE_PROVIDER.id, getVertexQwenBaseModelOptions()[0]?.id); } catch { return ''; }
+  })();
+  const vertexLlamaTuningEndpoint = vertexOpenModelFineTuneService.getTargetEndpoint(VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id, getVertexNonQwenOpenModelOptions()[0]?.id);
+  const qwenTuningEndpoint = vertexOpenModelFineTuneService.getTargetEndpoint(VERTEX_QWEN_FINE_TUNE_PROVIDER.id, getVertexQwenBaseModelOptions()[0]?.id);
   const vertexMissing = [];
   if (!getVertexProject()) vertexMissing.push('GOOGLE_CLOUD_PROJECT');
   if (!getVertexLocation()) vertexMissing.push('GOOGLE_CLOUD_LOCATION');
@@ -2158,23 +2466,41 @@ function listProviders() {
         mode: vertexLlamaReady ? 'real' : 'api',
         isDefault: currentProvider === VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id || (!currentProvider && !vertexReady && vertexLlamaReady),
         message: vertexLlamaReady
-          ? `Uses Google ADC, uploads chat JSONL to gs://${vertexOpenModelFineTuneService.getBucket()}, and submits Vertex managed open-model tuning through ${vertexOpenModelFineTuneService.getPythonCommand()}.`
+          ? `Uses Google ADC, uploads chat JSONL to gs://${vertexOpenModelFineTuneService.getBucket()}, and submits Vertex managed open-model tuning in ${vertexLlamaTuningLocation || vertexOpenModelFineTuneService.getLocation()} through ${vertexOpenModelFineTuneService.getPythonCommand()}.`
           : `Missing ${vertexLlamaMissing.join(', ') || 'Vertex Llama tuning configuration'} for Vertex Llama fine-tuning.`,
-        baseModels: vertexOpenModelFineTuneService.getBaseModelOptions(),
+        tuningLocation: vertexLlamaTuningLocation || vertexOpenModelFineTuneService.getLocation(),
+        tuningEndpoint: vertexLlamaTuningEndpoint,
+        baseModels: getVertexNonQwenOpenModelOptions(),
       },
       {
-        id: GPT_OSS_FINE_TUNE_PROVIDER.id,
-        name: GPT_OSS_FINE_TUNE_PROVIDER.name,
-        status: gptOssReady ? 'active' : 'needs_config',
-        productionReady: gptOssReady,
-        apiConfigured: gptOssReady,
-        supportsFineTuning: gptOssReady,
-        mode: gptOssReady ? 'real' : 'api',
-        isDefault: currentProvider === GPT_OSS_FINE_TUNE_PROVIDER.id || (!currentProvider && !vertexReady && !vertexLlamaReady && gptOssReady),
-        message: gptOssReady
-          ? `Creates Hugging Face dataset/model repos and a Docker trainer Space${gptOssFineTuneService.getSpaceHardware() ? ` on ${gptOssFineTuneService.getSpaceHardware()}` : ''}. GPT-OSS uses Transformers/TRL LoRA and should run on strong GPU hardware.`
-          : `Missing ${gptOssMissing.join(', ') || 'GPT-OSS Hugging Face GPU configuration'}. Use a Hugging Face write token and GPU Space hardware for GPT-OSS LoRA fine-tuning.`,
-        baseModels: gptOssFineTuneService.getBaseModelOptions(),
+        id: VERTEX_QWEN_FINE_TUNE_PROVIDER.id,
+        name: VERTEX_QWEN_FINE_TUNE_PROVIDER.name,
+        status: qwenReady ? 'active' : 'needs_config',
+        productionReady: qwenReady,
+        apiConfigured: qwenReady,
+        supportsFineTuning: qwenReady,
+        mode: qwenReady ? 'real' : 'api',
+        isDefault: currentProvider === VERTEX_QWEN_FINE_TUNE_PROVIDER.id || (!currentProvider && !vertexReady && !vertexLlamaReady && qwenReady),
+        message: qwenReady
+          ? `Uses Google ADC, uploads Qwen chat JSONL to gs://${vertexOpenModelFineTuneService.getBucket()}, and submits Vertex AI managed open-model tuning in ${qwenTuningLocation || vertexOpenModelFineTuneService.getLocation()} through ${vertexOpenModelFineTuneService.getPythonCommand()}.`
+          : `Missing ${vertexLlamaMissing.join(', ') || 'Vertex AI open-model tuning configuration'} for Vertex Qwen fine-tuning.`,
+        tuningLocation: qwenTuningLocation || vertexOpenModelFineTuneService.getLocation(),
+        tuningEndpoint: qwenTuningEndpoint,
+        baseModels: getVertexQwenBaseModelOptions(),
+      },
+      {
+        id: VERTEX_CLAUDE_BRAND_VOICE_PROVIDER.id,
+        name: VERTEX_CLAUDE_BRAND_VOICE_PROVIDER.name,
+        status: vertexClaudeReady ? 'active' : 'needs_config',
+        productionReady: vertexClaudeReady,
+        apiConfigured: vertexClaudeReady,
+        supportsFineTuning: vertexClaudeReady,
+        mode: 'brand_voice',
+        isDefault: currentProvider === VERTEX_CLAUDE_BRAND_VOICE_PROVIDER.id || (!currentProvider && !vertexReady && !vertexLlamaReady && !qwenReady && vertexClaudeReady),
+        message: vertexClaudeReady
+          ? 'Creates a prompt-conditioned brand-voice model from your dataset and generates with Claude Haiku 4.5 on Vertex AI. This does not train Claude weights.'
+          : 'Missing GOOGLE_CLOUD_PROJECT or Google ADC for Claude Haiku 4.5 on Vertex AI.',
+        baseModels: getVertexClaudeBrandVoiceBaseModelOptions(),
       },
       ...apiProviders,
     ],

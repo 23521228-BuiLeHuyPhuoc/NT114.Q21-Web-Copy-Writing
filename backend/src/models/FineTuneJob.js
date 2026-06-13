@@ -120,10 +120,53 @@ const fineTuneJobSchema = new mongoose.Schema(
       maxlength: 600,
       default: '',
     },
+    tuningLocation: {
+      type: String,
+      trim: true,
+      maxlength: 80,
+      default: '',
+    },
+    tuningEndpoint: {
+      type: String,
+      trim: true,
+      maxlength: 600,
+      default: '',
+    },
     fineTunedModelId: {
       type: String,
       trim: true,
       maxlength: 600,
+      default: '',
+    },
+    tunedModelResourceId: {
+      type: String,
+      trim: true,
+      maxlength: 600,
+      default: '',
+    },
+    deploymentOperationId: {
+      type: String,
+      trim: true,
+      maxlength: 700,
+      default: '',
+    },
+    deploymentStatus: {
+      type: String,
+      trim: true,
+      maxlength: 40,
+      default: '',
+      index: true,
+    },
+    deploymentErrorMessage: {
+      type: String,
+      trim: true,
+      maxlength: 2000,
+      default: '',
+    },
+    deployedModelId: {
+      type: String,
+      trim: true,
+      maxlength: 120,
       default: '',
     },
     startedAt: {

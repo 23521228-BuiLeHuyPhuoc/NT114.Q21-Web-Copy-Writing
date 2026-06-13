@@ -218,9 +218,13 @@ export function CustomerGenerator() {
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
   const [selectedProjectId, setSelectedProjectId] = useState('');
 
+  const registeredFineTunedModels = useMemo(() => {
+    return fineTunedModels.filter(item => item.status === 'ready' && item.registryModelId);
+  }, [fineTunedModels]);
+
   const fineTunedGeneratorModels = useMemo<GeneratorModelOption[]>(() => {
-    return fineTunedModels
-      .filter(item => item.status === 'ready' && item.registryModelId && item.isActive !== false)
+    return registeredFineTunedModels
+      .filter(item => item.generatorReady !== false)
       .map(item => ({
         id: `${FINE_TUNED_MODEL_PREFIX}${item.registryModelId}`,
         name: item.name,
@@ -230,7 +234,17 @@ export function CustomerGenerator() {
         latency: '~2-30s',
         tokens: item.fineTunedModelId ? 'custom' : 'base',
       }));
-  }, [fineTunedModels]);
+  }, [registeredFineTunedModels]);
+
+  const fineTunedUnavailableMessage = useMemo(() => {
+    if (fineTunedGeneratorModels.length > 0) return '';
+    const unsupported = registeredFineTunedModels.find(item => item.generatorReady === false);
+    if (unsupported) return unsupported.generatorMessage || 'Model đã train xong nhưng provider này chưa có endpoint Generate trong app.';
+    if (fineTunedModels.some(item => item.status === 'ready')) {
+      return 'Model đã xong training, hệ thống đang đồng bộ registry. Thử tải lại sau vài giây.';
+    }
+    return 'Chưa có model fine-tuned khả dụng. Hãy hoàn tất training trước.';
+  }, [fineTunedGeneratorModels.length, fineTunedModels, registeredFineTunedModels]);
 
   const fineTunedModelPickerValue = fineTunedModelId ? `${FINE_TUNED_MODEL_PREFIX}${fineTunedModelId}` : '';
   const selectedFineTunedModel = fineTunedGeneratorModels.find(m => m.id === fineTunedModelPickerValue) ?? fineTunedGeneratorModels[0] ?? null;
@@ -532,6 +546,9 @@ export function CustomerGenerator() {
                   <p className="text-sm font-semibold text-foreground/80">Chưa có model fine-tuned khả dụng</p>
                 </div>
                 <p className="text-xs text-muted-foreground mb-3">Promote job fine-tuning và bật active để dùng model tại generator.</p>
+                {fineTunedUnavailableMessage && (
+                  <p className="text-xs text-amber-700 mb-3">{fineTunedUnavailableMessage}</p>
+                )}
                 <Button variant="outline" size="sm" onClick={() => navigate('/fine-tune')}>Mở fine-tuning</Button>
               </Card>
             )}
