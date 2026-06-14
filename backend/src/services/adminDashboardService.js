@@ -105,6 +105,8 @@ async function getStats() {
     auditLogService.getAuditSummary(),
   ]);
 
+  const serializedRecentContents = await adminContentService.serializeContents(recentContents);
+
   return {
     stats: {
       totalUsers,
@@ -122,7 +124,7 @@ async function getStats() {
     },
     monthlyData,
     contentTypeData,
-    recentContents: recentContents.map(adminContentService.serializeContent),
+    recentContents: serializedRecentContents,
   };
 }
 

@@ -271,7 +271,7 @@ export function AdminContents() {
                       </div>
                     </TableCell>
                     <TableCell><Badge className={`border-0 text-xs ${typeBadgeColor[item.type] || 'bg-muted text-foreground/70'}`}>{item.type}</Badge></TableCell>
-                    <TableCell><Badge className="bg-primary/10 text-primary border-0 text-xs">{item.model}</Badge></TableCell>
+                    <TableCell><Badge className="max-w-72 whitespace-normal bg-primary/10 text-left text-primary border-0 text-xs leading-tight" title={item.model}>{item.model}</Badge></TableCell>
                     <TableCell><span className="text-sm font-semibold text-primary">{item.words.toLocaleString('vi-VN')}</span></TableCell>
                     <TableCell>
                       <Badge className="border-0 text-xs bg-primary/10 text-primary">Hoạt động</Badge>
@@ -324,7 +324,7 @@ export function AdminContents() {
               </div>
               <div className="flex flex-wrap gap-2">
                 <Badge className={`border-0 text-xs ${typeBadgeColor[viewItem.type] || 'bg-muted text-foreground/70'}`}>{viewItem.type}</Badge>
-                <Badge className="bg-primary/10 text-primary border-0 text-xs">{viewItem.model}</Badge>
+                <Badge className="max-w-full whitespace-normal bg-primary/10 text-left text-primary border-0 text-xs leading-tight" title={viewItem.model}>{viewItem.model}</Badge>
                 {viewItem.isFavorite && <Badge className="bg-amber-100 text-amber-700 border-0 text-xs">Đã đánh dấu</Badge>}
               </div>
               <div className="bg-surface-muted rounded-xl p-4 max-h-72 overflow-y-auto">

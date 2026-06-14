@@ -40,6 +40,24 @@ const BLOCK_LABELS = [
 
 const LIST_CONTEXT_PATTERN = /\b(?:bao gồm|gồm|ưu đãi|danh sách|sản phẩm|các mục|như sau)\s*:/i;
 const INLINE_BULLET_PATTERN = /\s[-*]\s+(?=[A-ZÀ-ỴĐ0-9])/g;
+const MARKETING_ICON_PATTERN = String.raw`[\u2600-\u27BF\u{1F300}-\u{1FAFF}]\uFE0F?`;
+const MARKETING_ICON_PREFIX = String.raw`(?:${MARKETING_ICON_PATTERN}\s*)*`;
+const LINE_DECORATION_PREFIX = String.raw`(?:#{1,4}\s*)?(?:[-*]\s*)?(?:\*\*)?\s*`;
+
+function normalizeLabel(value: string) {
+  return String(value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .trim();
+}
+
+const NORMALIZED_BLOCK_LABELS = new Set(BLOCK_LABELS.map(normalizeLabel));
+
+function isKnownBlockLabel(value: string) {
+  return NORMALIZED_BLOCK_LABELS.has(normalizeLabel(value));
+}
 
 function escapeHtml(value: string) {
   return value
@@ -69,7 +87,7 @@ function labelRegex() {
     .map(label => label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
     .join('|');
 
-  return new RegExp(`^\\s*(?:${labelPattern})\\s*:`, 'i');
+  return new RegExp(String.raw`^\s*${LINE_DECORATION_PREFIX}${MARKETING_ICON_PREFIX}(?:${labelPattern})\s*:`, 'iu');
 }
 
 function isLabelBlock(block: string) {
@@ -101,7 +119,7 @@ function normalizePlainText(text: string) {
   return String(text || '')
     .replace(/\r\n/g, '\n')
     .replace(/[ \t]+/g, ' ')
-    .replace(new RegExp(`\\s+((?:${boundaryLabels})\\s*:)`, 'gi'), '\n\n$1')
+    .replace(new RegExp(String.raw`\s+(${MARKETING_ICON_PREFIX}(?:${boundaryLabels})\s*:)`, 'giu'), '\n\n$1')
     .replace(/\s+(Kính gửi\b)/gi, '\n\n$1')
     .split(/\n{2,}/)
     .flatMap(block => splitInlineBullets(block.trim()))
@@ -147,6 +165,38 @@ function renderInlineMarkdown(text: string) {
     .replace(/\*+/g, '');
 }
 
+function trimClosingMarkdown(value: string) {
+  return String(value || '').replace(/^\s*\*\*\s*/, '').replace(/\s*\*\*\s*$/, '').trim();
+}
+
+function renderLeadingIcon(icon: string) {
+  const cleanIcon = icon.trim();
+  if (!cleanIcon) return '';
+  return `<span aria-hidden='true' style='display:inline-block;line-height:1;vertical-align:-0.08em;margin-right:0.35em'>${escapeHtml(cleanIcon)}</span>`;
+}
+
+function matchVersionLine(line: string) {
+  const version = line.match(new RegExp(String.raw`^${LINE_DECORATION_PREFIX}(${MARKETING_ICON_PREFIX})(?:Phiên\s*bản|Phien\s*ban|Version)\s*(\d+)\s*[:.\-]\s*(?:\*\*)?\s*(.*)$`, 'iu'));
+  if (!version) return null;
+
+  return {
+    icon: version[1] || '',
+    number: version[2],
+    content: trimClosingMarkdown(version[3] || ''),
+  };
+}
+
+function matchLabelLine(line: string) {
+  const label = line.match(new RegExp(String.raw`^${LINE_DECORATION_PREFIX}(${MARKETING_ICON_PREFIX})([A-Za-zÀ-ỹĐđ. ]{2,48})\s*:\s*(?:\*\*)?\s*(.*)$`, 'iu'));
+  if (!label || !isKnownBlockLabel(label[2])) return null;
+
+  return {
+    icon: label[1] || '',
+    label: label[2].trim(),
+    content: trimClosingMarkdown(label[3] || ''),
+  };
+}
+
 export function formatGeneratedCopyForTinyMce(text: string) {
   if (!text) return '';
   if (looksLikeHtml(text)) return sanitizeHtml(text);
@@ -175,22 +225,19 @@ export function formatGeneratedCopyForTinyMce(text: string) {
 
     flushList();
 
-    const version = line.match(/^Phiên bản\s*(\d+)\s*:\s*(.*)$/i);
+    const version = matchVersionLine(line);
     if (version) {
-      html.push(`<h3>Phiên bản ${version[1]}</h3>`);
-      if (version[2]) html.push(`<p>${renderInlineMarkdown(version[2])}</p>`);
+      html.push(`<h3>${renderLeadingIcon(version.icon)}Phiên bản ${escapeHtml(version.number)}</h3>`);
+      if (version.content) html.push(`<p>${renderInlineMarkdown(version.content)}</p>`);
       return;
     }
 
-    const label = line.match(/^([A-Za-zÀ-ỹĐđ. ]{2,32})\s*:\s*(.+)$/);
-    if (label && BLOCK_LABELS.some(item => item.toLowerCase() === label[1].trim().toLowerCase())) {
-      html.push(`<p><strong>${escapeHtml(label[1].trim())}:</strong> ${renderInlineMarkdown(label[2])}</p>`);
-      return;
-    }
-
-    const labelOnly = line.match(/^([A-Za-zÀ-ỹĐđ. ]{2,32})\s*:\s*$/);
-    if (labelOnly && BLOCK_LABELS.some(item => item.toLowerCase() === labelOnly[1].trim().toLowerCase())) {
-      html.push(`<p><strong>${escapeHtml(labelOnly[1].trim())}:</strong></p>`);
+    const label = matchLabelLine(line);
+    if (label) {
+      const labelPrefix = `${renderLeadingIcon(label.icon)}<strong>${escapeHtml(label.label)}:</strong>`;
+      html.push(label.content
+        ? `<p>${labelPrefix} ${renderInlineMarkdown(label.content)}</p>`
+        : `<p>${labelPrefix}</p>`);
       return;
     }
 

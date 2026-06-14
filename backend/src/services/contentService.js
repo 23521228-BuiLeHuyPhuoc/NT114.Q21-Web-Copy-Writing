@@ -8,6 +8,10 @@ const notificationService = require('./notificationService');
 const projectService = require('./projectService');
 const templateService = require('./templateService');
 const createError = require('../utils/createError');
+const {
+  buildModelDisplayNameMap,
+  resolveModelDisplayName,
+} = require('../utils/modelDisplayName');
 
 const SUPPORTED_FINE_TUNE_PROVIDERS = new Set(['openai', 'vertex-gemini', 'vertex-llama', 'vertex-qwen', 'vertex-claude', 'anthropic']);
 const MARKETING_ICON_RE = /[\u2600-\u27BF\u{1F300}-\u{1FAFF}]/u;
@@ -41,10 +45,10 @@ function applyMarketingIcons(outputText) {
   if (!text) return text;
 
   const rules = [
-    { icon: '\u{1F9E9}', pattern: /^phi(?:\u00ean|\?)n b(?:\u1ea3|\?)n\s*1\s*:/i },
-    { icon: '\u{1F9EA}', pattern: /^phi(?:\u00ean|\?)n b(?:\u1ea3|\?)n\s*2\s*:/i },
-    { icon: '\u{1F680}', pattern: /^phi(?:\u00ean|\?)n b(?:\u1ea3|\?)n\s*3\s*:/i },
-    { icon: '\u2B50', pattern: /^phi(?:\u00ean|\?)n b(?:\u1ea3|\?)n\s*\d+\s*:/i },
+    { icon: '\u{1F9E9}', pattern: /^(?:phi(?:\u00ea|e|\?)n b(?:\u1ea3|a|\?)n|version)\s*1\s*:/i },
+    { icon: '\u{1F9EA}', pattern: /^(?:phi(?:\u00ea|e|\?)n b(?:\u1ea3|a|\?)n|version)\s*2\s*:/i },
+    { icon: '\u{1F680}', pattern: /^(?:phi(?:\u00ea|e|\?)n b(?:\u1ea3|a|\?)n|version)\s*3\s*:/i },
+    { icon: '\u2B50', pattern: /^(?:phi(?:\u00ea|e|\?)n b(?:\u1ea3|a|\?)n|version)\s*\d+\s*:/i },
     { icon: '\u{1F4E3}', pattern: /^(headline|ti(?:\u00eau|\?)u|ch(?:\u1ee7|\?)\s*(?:\u0111|\?)(?:\u1ec1|\?))\s*:/i },
     { icon: '\u2728', pattern: /^(subheadline|m(?:\u00f4|\?)\s*t(?:\u1ea3|\?)\s*ng(?:\u1eaf|\?)n|m(?:\u00f4|\?)\s*t(?:\u1ea3|\?)\s*ph(?:\u1ee5|\?))\s*:/i },
     { icon: '\u{1F3AF}', pattern: /^(hook|m(?:\u1edf|\?)\s*(?:\u0111|\?)(?:\u1ea7|\?)u)\s*:/i },
@@ -192,7 +196,9 @@ function toId(value) {
   return value ? value.toString() : null;
 }
 
-function serializeContent(content) {
+function serializeContent(content, modelDisplayNames = new Map()) {
+  const modelUsed = content.modelUsed;
+
   return {
     id: content._id.toString(),
     _id: content._id.toString(),
@@ -205,7 +211,8 @@ function serializeContent(content) {
     type: content.type,
     tone: content.tone,
     language: content.language,
-    modelUsed: content.modelUsed,
+    modelUsed,
+    modelDisplayName: resolveModelDisplayName(modelUsed, modelDisplayNames),
     tags: content.tags || [],
     isFavorite: Boolean(content.isFavorite),
     wordCount: content.wordCount || 0,
@@ -213,6 +220,11 @@ function serializeContent(content) {
     createdAt: content.createdAt,
     updatedAt: content.updatedAt,
   };
+}
+
+async function serializeContentWithModelDisplayName(content, options = {}) {
+  const modelDisplayNames = await buildModelDisplayNameMap([content.modelUsed], options);
+  return serializeContent(content, modelDisplayNames);
 }
 
 function serializeUsage(usage) {
@@ -275,8 +287,10 @@ async function listContents(userId, query) {
       .limit(limit),
   ]);
 
+  const modelDisplayNames = await buildModelDisplayNameMap(contents.map(content => content.modelUsed), { userId });
+
   return {
-    items: contents.map(serializeContent),
+    items: contents.map(content => serializeContent(content, modelDisplayNames)),
     pagination: {
       page,
       limit,
@@ -301,7 +315,7 @@ async function findContentOrThrow(userId, id) {
 
 async function getContent(userId, id) {
   const content = await findContentOrThrow(userId, id);
-  return serializeContent(content);
+  return serializeContentWithModelDisplayName(content, { userId });
 }
 
 async function createContent(userId, payload) {
@@ -321,7 +335,7 @@ async function createContent(userId, payload) {
     tags: payload.tags || [],
   });
 
-  return serializeContent(content);
+  return serializeContentWithModelDisplayName(content, { userId });
 }
 
 async function updateContent(userId, id, payload) {
@@ -337,7 +351,7 @@ async function updateContent(userId, id, payload) {
   if (payload.projectId !== undefined) content.projectId = payload.projectId || null;
 
   await content.save();
-  return serializeContent(content);
+  return serializeContentWithModelDisplayName(content, { userId });
 }
 
 async function softDeleteContent(userId, id) {
@@ -345,7 +359,7 @@ async function softDeleteContent(userId, id) {
   content.isDeleted = true;
   content.deletedAt = new Date();
   await content.save();
-  return serializeContent(content);
+  return serializeContentWithModelDisplayName(content, { userId });
 }
 
 function buildTitleFromOutput(type, outputText) {
@@ -587,7 +601,7 @@ async function generateContent(userId, payload) {
   }
 
   return {
-    item: serializeContent(content),
+    item: await serializeContentWithModelDisplayName(content, { userId }),
     usage: serializeUsage(usage),
     template: template ? templateService.serializeTemplate(template) : null,
     fallback: aiResult.fallback,

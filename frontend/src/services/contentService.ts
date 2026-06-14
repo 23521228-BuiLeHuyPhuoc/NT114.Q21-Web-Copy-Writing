@@ -1,10 +1,12 @@
 import { api } from '@/lib/axios';
+import { formatContentModelDisplayName } from '@/lib/modelDisplayName';
 
 export interface ContentListParams {
   page?: number;
   limit?: number;
   search?: string;
   projectId?: string;
+  fetchAll?: boolean;
 }
 
 export interface GenerateContentPayload {
@@ -55,6 +57,7 @@ interface BackendContent {
   tone?: string;
   language?: string;
   modelUsed?: string;
+  modelDisplayName?: string;
   model?: string;
   tags?: string[];
   isFavorite?: boolean;
@@ -71,6 +74,20 @@ interface UsageLog {
   completionTokens?: number;
   totalTokens?: number;
   status?: string;
+}
+
+interface ListPagination {
+  page: number;
+  limit: number;
+  totalItems: number;
+  totalPages: number;
+}
+
+interface ListResponse {
+  data?: {
+    items?: BackendContent[];
+    pagination?: ListPagination;
+  };
 }
 
 export interface ContentVersion {
@@ -121,6 +138,8 @@ const INDUSTRY_LABELS: Record<string, string> = {
   travel: 'Du lịch',
 };
 
+const MAX_CONTENT_LIST_LIMIT = 100;
+
 function countWords(text: string) {
   return text.trim().split(/\s+/).filter(Boolean).length;
 }
@@ -154,7 +173,7 @@ function normalizeContent(item: BackendContent): UiContent {
     title: item.title || 'Untitled content',
     type: item.type || 'content',
     industry: formatIndustry(item.tags?.[0]),
-    model: item.modelUsed || item.model || 'fallback-mvp',
+    model: formatContentModelDisplayName(item.modelDisplayName, item.modelUsed, item.model),
     quality,
     words: item.wordCount || item.words || countWords(content),
     tokens: 0,
@@ -178,10 +197,49 @@ function unwrapItem(response: { data: { data?: { item?: BackendContent } } }) {
   return normalizeContent(item);
 }
 
+function getContentListLimit(limit?: number) {
+  const value = Number(limit || MAX_CONTENT_LIST_LIMIT);
+  if (!Number.isFinite(value)) return MAX_CONTENT_LIST_LIMIT;
+  return Math.min(Math.max(Math.floor(value), 1), MAX_CONTENT_LIST_LIMIT);
+}
+
+async function fetchContentPage(params?: Omit<ContentListParams, 'fetchAll'>) {
+  const response = await api.get<ListResponse>('/contents', { params });
+  return response.data.data || {};
+}
+
+async function fetchAllContentPages(params?: ContentListParams) {
+  const { fetchAll: _fetchAll, page: _page, limit, ...rest } = params || {};
+  const pageSize = getContentListLimit(limit);
+  const firstPage = await fetchContentPage({ ...rest, page: 1, limit: pageSize });
+  const totalPages = firstPage.pagination?.totalPages || 1;
+  const items = [...(firstPage.items || [])];
+
+  if (totalPages <= 1) return items;
+
+  const remainingPages = await Promise.all(
+    Array.from({ length: totalPages - 1 }, (_, index) => (
+      fetchContentPage({ ...rest, page: index + 2, limit: pageSize })
+    )),
+  );
+
+  remainingPages.forEach((pageData) => {
+    items.push(...(pageData.items || []));
+  });
+
+  return items;
+}
+
 export const contentService = {
   async list(params?: ContentListParams) {
-    const response = await api.get<{ data?: { items?: BackendContent[] } }>('/contents', { params });
-    return (response.data.data?.items || []).map(normalizeContent);
+    if (params?.fetchAll) {
+      const items = await fetchAllContentPages(params);
+      return items.map(normalizeContent);
+    }
+
+    const { fetchAll: _fetchAll, ...apiParams } = params || {};
+    const data = await fetchContentPage(apiParams);
+    return (data.items || []).map(normalizeContent);
   },
 
   async get(id: string) {

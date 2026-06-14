@@ -31,21 +31,35 @@ import { useTemplates } from '@/hooks/queries/useTemplates';
 import { useFineTuningModels } from '@/hooks/queries/useFineTuning';
 import { formatGeneratedCopyForTinyMce, htmlToPlainText } from '@/lib/richText';
 
+const VERSION_ICON_PREFIX = String.raw`(?:[\u2600-\u27BF\u{1F300}-\u{1FAFF}]\uFE0F?\s*)*`;
+const VERSION_HEADER_PREFIX = String.raw`(?:#{1,4}\s*)?(?:[-*]\s*)?(?:\*\*)?\s*${VERSION_ICON_PREFIX}`;
+const VERSION_LABEL = String.raw`(?:Phiên\s*bản|Phien\s*ban|Version)`;
+const VERSION_BOUNDARY = String.raw`${VERSION_HEADER_PREFIX}${VERSION_LABEL}\s*\d+\s*[:.\-]\s*(?:\*\*)?`;
+
+function normalizeVariationBoundaries(text: string) {
+  return String(text || '')
+    .replace(/\r\n/g, '\n')
+    .replace(new RegExp(String.raw`([^\n])\s+(${VERSION_BOUNDARY})`, 'giu'), '$1\n$2')
+    .trim();
+}
+
 function splitGeneratedVariations(text: string, expectedCount: number) {
-  const trimmed = text.trim();
+  const trimmed = normalizeVariationBoundaries(text);
   if (!trimmed) return [];
   if (expectedCount <= 1) return [trimmed];
 
   const patterns = [
-    /(?:^|\n)\s*(?:#{1,4}\s*)?(?:\*\*)?(?:Phiên bản|Version)\s*\d+\s*[:.\-]\s*(?:\*\*)?([\s\S]*?)(?=(?:\n\s*(?:#{1,4}\s*)?(?:\*\*)?(?:Phiên bản|Version)\s*\d+\s*[:.\-])|$)/gi,
+    new RegExp(String.raw`(?:^|\n)\s*${VERSION_HEADER_PREFIX}${VERSION_LABEL}\s*\d+\s*[:.\-]\s*(?:\*\*)?([\s\S]*?)(?=(?:\n\s*${VERSION_BOUNDARY})|$)`, 'giu'),
     /(?:^|\n)\s*(?:\*\*)?\d+[\).\:-]\s*(?:\*\*)?([\s\S]*?)(?=(?:\n\s*(?:\*\*)?\d+[\).\:-]\s*)|$)/g,
   ];
 
   for (const pattern of patterns) {
-    const chunks = Array.from(trimmed.matchAll(pattern))
+    const matchedChunks = Array.from(trimmed.matchAll(pattern))
       .map(match => match[1]?.trim())
-      .filter((chunk): chunk is string => Boolean(chunk && chunk.length > 8))
-      .slice(0, expectedCount);
+      .filter((chunk): chunk is string => Boolean(chunk && chunk.length > 8));
+    const chunks = matchedChunks.length > expectedCount
+      ? matchedChunks.slice(-expectedCount)
+      : matchedChunks;
 
     if (chunks.length > 1) return chunks;
   }

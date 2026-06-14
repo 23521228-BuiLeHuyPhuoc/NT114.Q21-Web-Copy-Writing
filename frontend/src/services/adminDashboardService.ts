@@ -1,4 +1,5 @@
 import { api } from '@/lib/axios';
+import { formatContentModelDisplayName } from '@/lib/modelDisplayName';
 
 export interface AdminDashboardStats {
   totalUsers: number;
@@ -32,6 +33,7 @@ export interface AdminRecentContent {
   title: string;
   type: string;
   modelUsed: string;
+  modelDisplayName?: string;
   wordCount: number;
   createdAt?: string;
   user?: {
@@ -77,7 +79,10 @@ function normalizeDashboard(data?: Partial<AdminDashboardData>): AdminDashboardD
     stats: { ...EMPTY_DASHBOARD.stats, ...(data?.stats || {}) },
     monthlyData: data?.monthlyData || [],
     contentTypeData: data?.contentTypeData || [],
-    recentContents: data?.recentContents || [],
+    recentContents: (data?.recentContents || []).map((item) => ({
+      ...item,
+      modelDisplayName: formatContentModelDisplayName(item.modelDisplayName, item.modelUsed),
+    })),
   };
 }
 

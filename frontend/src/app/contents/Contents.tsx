@@ -26,6 +26,9 @@ import { DataPagination } from '@/app/components/common/DataPagination';
 import { usePagination } from '@/hooks/usePagination';
 import type { UiContent } from '@/services/contentService';
 
+const CONTENT_FETCH_PAGE_SIZE = 100;
+const CONTENT_UI_PAGE_SIZE = 10;
+
 const STATUS_MAP: Record<UiContent['status'], { label: string; color: string }> = {
   published: { label: 'Đã xuất bản', color: 'bg-green-100 text-green-700' },
   draft: { label: 'Nháp', color: 'bg-yellow-100 text-yellow-700' },
@@ -37,7 +40,7 @@ export function CustomerContents() {
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterType, setFilterType] = useState('all');
-  const { data: contents = [], isError, isLoading } = useContents();
+  const { data: contents = [], isError, isLoading } = useContents({ fetchAll: true, limit: CONTENT_FETCH_PAGE_SIZE });
   const deleteContent = useDeleteContent();
 
   const filtered = contents.filter(c => {
@@ -49,7 +52,7 @@ export function CustomerContents() {
   });
 
   const pagination = usePagination(filtered, {
-    initialPageSize: 6,
+    initialPageSize: CONTENT_UI_PAGE_SIZE,
     resetKey: `${search}|${filterStatus}|${filterType}`,
   });
 
@@ -160,7 +163,7 @@ export function CustomerContents() {
                     <div className="flex flex-wrap items-center gap-2 mb-1.5">
                       <Badge className={`${status.color} border-0 text-xs`}>{status.label}</Badge>
                       <Badge className="bg-muted text-foreground/70 border-0 text-xs">{item.type}</Badge>
-                      <Badge className="bg-primary/10 text-primary border-0 text-xs">{item.model}</Badge>
+                      <Badge className="max-w-full whitespace-normal bg-primary/10 text-left text-primary border-0 text-xs leading-tight" title={item.model}>{item.model}</Badge>
                       <Badge className="bg-emerald-50 text-emerald-700 border-0 text-xs">CL {item.quality}%</Badge>
                     </div>
                     <h3 className="font-semibold text-foreground truncate">{item.title}</h3>
@@ -200,6 +203,7 @@ export function CustomerContents() {
           endIndex={pagination.endIndex}
           onPageChange={pagination.setPage}
           onPageSizeChange={pagination.setPageSize}
+          pageSizeOptions={[10, 20, 50]}
           itemLabel="nội dung"
         />
       </div>

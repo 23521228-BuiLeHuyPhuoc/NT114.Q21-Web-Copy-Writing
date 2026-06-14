@@ -1,6 +1,10 @@
 const Content = require('../models/Content');
 const createError = require('../utils/createError');
 const auditLogService = require('./auditLogService');
+const {
+  buildModelDisplayNameMap,
+  resolveModelDisplayName,
+} = require('../utils/modelDisplayName');
 
 function escapeRegExp(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -41,7 +45,9 @@ function serializeAdminUser(user) {
   };
 }
 
-function serializeContent(content) {
+function serializeContent(content, modelDisplayNames = new Map()) {
+  const modelUsed = content.modelUsed;
+
   return {
     id: toId(content._id),
     _id: toId(content._id),
@@ -55,7 +61,8 @@ function serializeContent(content) {
     type: content.type,
     tone: content.tone,
     language: content.language,
-    modelUsed: content.modelUsed,
+    modelUsed,
+    modelDisplayName: resolveModelDisplayName(modelUsed, modelDisplayNames),
     tags: content.tags || [],
     isFavorite: Boolean(content.isFavorite),
     wordCount: content.wordCount || 0,
@@ -64,6 +71,16 @@ function serializeContent(content) {
     createdAt: content.createdAt,
     updatedAt: content.updatedAt,
   };
+}
+
+async function serializeContents(contents) {
+  const modelDisplayNames = await buildModelDisplayNameMap(contents.map(content => content.modelUsed));
+  return contents.map(content => serializeContent(content, modelDisplayNames));
+}
+
+async function serializeContentWithModelDisplayName(content) {
+  const items = await serializeContents([content]);
+  return items[0];
 }
 
 function buildFilter(query = {}) {
@@ -99,7 +116,7 @@ async function listContents(query = {}) {
   ]);
 
   return {
-    items: contents.map(serializeContent),
+    items: await serializeContents(contents),
     pagination: {
       page,
       limit,
@@ -122,7 +139,7 @@ async function findContentOrThrow(id, includeDeleted = false) {
 
 async function getContent(id) {
   const content = await findContentOrThrow(id, true);
-  return serializeContent(content);
+  return serializeContentWithModelDisplayName(content);
 }
 
 async function updateContent(id, payload, req) {
@@ -149,7 +166,7 @@ async function updateContent(id, payload, req) {
     },
   });
 
-  return serializeContent(content);
+  return serializeContentWithModelDisplayName(content);
 }
 
 async function softDeleteContent(id, req) {
@@ -169,7 +186,7 @@ async function softDeleteContent(id, req) {
     },
   });
 
-  return serializeContent(content);
+  return serializeContentWithModelDisplayName(content);
 }
 
 async function restoreContent(id, req) {
@@ -189,7 +206,7 @@ async function restoreContent(id, req) {
     },
   });
 
-  return serializeContent(content);
+  return serializeContentWithModelDisplayName(content);
 }
 
 async function permanentDeleteContent(id, req) {
@@ -210,6 +227,7 @@ async function permanentDeleteContent(id, req) {
 
 module.exports = {
   serializeContent,
+  serializeContents,
   listContents,
   getContent,
   updateContent,

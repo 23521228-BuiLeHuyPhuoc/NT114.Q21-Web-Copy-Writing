@@ -456,9 +456,16 @@ function getProviderPrompt(payload) {
   return buildProviderPrompt(payload);
 }
 
+function findVersionOneLabels(text) {
+  const versionOnePattern = /(^|\n)\s*(?:#{1,4}\s*)?(?:[-*]\s*)?(?:\*\*)?\s*(?:[\u2600-\u27BF\u{1F300}-\u{1FAFF}]\uFE0F?\s*)*(?:Phiên\s*bản|Phien\s*ban|Version)\s*1\s*[:.\-]/giu;
+  return [...String(text || '').matchAll(versionOnePattern)].map((match) => ({
+    index: match.index + (match[1] ? match[1].length : 0),
+  }));
+}
+
 function cleanProviderOutput(outputText) {
   let text = String(outputText || '').trim();
-  const versionMatches = [...text.matchAll(/Phiên bản\s*1\s*:/gi)];
+  const versionMatches = findVersionOneLabels(text);
 
   if (versionMatches.length > 1) {
     text = text.slice(versionMatches[versionMatches.length - 1].index).trim();

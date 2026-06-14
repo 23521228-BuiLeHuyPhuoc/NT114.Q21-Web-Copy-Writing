@@ -77,7 +77,7 @@ export function CustomerContentDetail() {
             <div className="flex flex-wrap items-center gap-2 mb-2">
               <Badge className="bg-primary/10 text-primary border-0">Đã xuất bản</Badge>
               <Badge className="bg-muted text-foreground/70 border-0">{content.type}</Badge>
-              <Badge className="bg-emerald-100 text-emerald-700 border-0">{content.model}</Badge>
+              <Badge className="max-w-full whitespace-normal bg-emerald-100 text-left text-emerald-700 border-0 leading-tight" title={content.model}>{content.model}</Badge>
             </div>
             <h1 className="text-2xl font-bold text-foreground">{content.title}</h1>
             <p className="text-sm text-muted-foreground mt-1">
@@ -158,7 +158,7 @@ export function CustomerContentDetail() {
                 ].map((item) => (
                   <div key={item.label} className="flex justify-between gap-3 text-sm">
                     <span className="text-muted-foreground">{item.label}</span>
-                    <span className="font-medium text-foreground text-right">{item.value}</span>
+                    <span className="font-medium text-foreground text-right break-words">{item.value}</span>
                   </div>
                 ))}
               </div>

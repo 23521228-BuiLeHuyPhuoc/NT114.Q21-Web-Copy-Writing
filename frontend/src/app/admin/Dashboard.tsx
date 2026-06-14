@@ -131,7 +131,7 @@ export function AdminDashboard() {
                   <div key={item.id} className="flex items-center justify-between gap-4 border-b border-border last:border-0 pb-3 last:pb-0">
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-foreground truncate">{item.title}</p>
-                      <p className="text-xs text-muted-foreground truncate">{item.user?.email || '-'} · {item.type} · {item.modelUsed}</p>
+                      <p className="text-xs text-muted-foreground truncate">{item.user?.email || '-'} · {item.type} · {item.modelDisplayName || item.modelUsed}</p>
                     </div>
                     <div className="text-right text-xs text-muted-foreground flex-shrink-0">
                       <p>{formatNumber(item.wordCount || 0)} từ</p>
