@@ -21,6 +21,13 @@ const RISK: Record<PlagiarismRiskLevel, { label: string; cls: string }> = {
   critical: { label: 'Trùng lặp cao', cls: 'bg-red-100 text-red-800 border-red-200' },
 };
 
+function riskLevelFromScore(score: number): PlagiarismRiskLevel {
+  if (score >= 70) return 'critical';
+  if (score >= 45) return 'high';
+  if (score >= 20) return 'review';
+  return 'safe';
+}
+
 const SENSITIVITY: Record<PlagiarismSensitivity, { label: string; threshold: number }> = {
   lenient: { label: 'Nhẹ', threshold: 45 },
   balanced: { label: 'Cân bằng', threshold: 35 },
@@ -76,7 +83,8 @@ function normalizeIgnoredPhrases(values: string[]) {
 }
 
 function splitIgnoredPhraseInput(value: string) {
-  return value.split(/[\n;,]+/).map(normalizeIgnoredPhrase).filter((phrase) => phrase.length >= 2);
+  const phrase = normalizeIgnoredPhrase(value);
+  return phrase.length >= 2 ? [phrase] : [];
 }
 
 function scoreClass(score: number, similarity = false) {
@@ -423,13 +431,13 @@ function checkedUrlStatusLabel(item: PlagiarismReport['analysis']['commonCrawl']
   return 'Không dùng';
 }
 
-function plagiarismConclusion(report: PlagiarismReport) {
-  const plagiarism = Math.round(report.analysis.plagiarismScore || report.similarityScore || 0);
+function plagiarismConclusion(report: PlagiarismReport, visibleMatchCount?: number, visibleTopicMatchCount?: number, visiblePlagiarismScore?: number) {
+  const plagiarism = Math.round(visiblePlagiarismScore ?? report.analysis.plagiarismScore ?? report.similarityScore ?? 0);
   const topicSimilarity = Math.round(report.analysis.topicSimilarityScore || report.analysis.wordOverlapScore || 0);
-  const originality = Math.round(report.originalityScore || 0);
+  const originality = Math.round(100 - plagiarism);
   const threshold = report.analysis.effectiveThreshold || report.threshold || 35;
-  const matchCount = report.analysis.matchCount || report.matches.length;
-  const topicMatchCount = report.analysis.topicMatchCount || report.topicMatches.length;
+  const matchCount = visibleMatchCount ?? (report.analysis.matchCount || report.matches.length);
+  const topicMatchCount = visibleTopicMatchCount ?? (report.analysis.topicMatchCount || report.topicMatches.length);
   const loadedSources = report.analysis.candidateCount || 0;
   const sourceText = `${loadedSources} nguồn đã nạp, ${matchCount} đoạn vượt ngưỡng ${threshold}%, ${topicMatchCount} đoạn tương đồng chủ đề, tương đồng chủ đề ${topicSimilarity}%`;
 
@@ -501,9 +509,18 @@ export function CustomerPlagiarismCheck() {
   const words = countWords(text);
   const historyItems = history?.items || [];
   const selectedSourceCount = Object.values(sourceConfig).filter(Boolean).length;
-  const conclusion = result ? plagiarismConclusion(result) : null;
   const displayMatches = result ? result.matches.filter((match) => hasDisplayableMatch(match, result.ignoredPhrases)) : [];
   const displayTopicMatches = result ? result.topicMatches.filter((match) => hasDisplayableMatch(match, result.ignoredPhrases)) : [];
+  const visiblePlagiarismScore = result && displayMatches.length > 0 ? (result.analysis.plagiarismScore || result.similarityScore) : 0;
+  const visibleOriginalityScore = 100 - visiblePlagiarismScore;
+  const visibleRiskLevel = riskLevelFromScore(visiblePlagiarismScore);
+  const displaySources = result && (displayMatches.length > 0 || displayTopicMatches.length > 0)
+    ? result.sources.filter((source) => countWords(removeIgnoredPhrasesFromText(source.sourceText || source.snippet, result.ignoredPhrases)) >= 3)
+    : [];
+  const visibleSummary = result && visiblePlagiarismScore === 0 && displayTopicMatches.length === 0
+    ? 'Không còn đoạn nào vượt ngưỡng sau khi áp dụng danh sách bỏ qua.'
+    : result?.summary || '';
+  const conclusion = result ? plagiarismConclusion(result, displayMatches.length, displayTopicMatches.length, visiblePlagiarismScore) : null;
 
   const updateSource = (key: keyof PlagiarismSourceConfig, value: boolean) => {
     setSourceConfig(prev => ({ ...prev, [key]: value }));
@@ -619,7 +636,7 @@ export function CustomerPlagiarismCheck() {
                 </div>
                 <Textarea
                   className='mt-3 min-h-[72px] resize-none text-sm'
-                  placeholder='Mỗi dòng là một đoạn hoặc cụm cần bỏ qua. Ví dụ: đại sứ văn hóa đọc; ngày hội đọc sách'
+                  placeholder='Dán nguyên đoạn/cụm cần bỏ qua. Hệ thống không tự tách theo dấu phẩy, dấu chấm hay dấu ;.'
                   value={ignoredPhraseInput}
                   onChange={(event) => setIgnoredPhraseInput(event.target.value)}
                   disabled={ignoredPhrases.length >= MAX_IGNORED_PHRASES}
@@ -673,8 +690,8 @@ export function CustomerPlagiarismCheck() {
         {result && (
           <Card className='p-5'>
             <div className='mb-4 flex items-start justify-between gap-4'>
-              <div><h2 className='font-semibold text-foreground'>Kết quả phân tích</h2><p className='text-sm text-muted-foreground'>{result.summary}</p></div>
-              <Badge variant='outline' className={RISK[result.riskLevel].cls}>{RISK[result.riskLevel].label}</Badge>
+              <div><h2 className='font-semibold text-foreground'>Kết quả phân tích</h2><p className='text-sm text-muted-foreground'>{visibleSummary}</p></div>
+              <Badge variant='outline' className={RISK[visibleRiskLevel].cls}>{RISK[visibleRiskLevel].label}</Badge>
             </div>
             {conclusion && (
               <div className={`mb-4 flex gap-3 rounded-lg border p-4 ${conclusion.className}`}>
@@ -689,8 +706,8 @@ export function CustomerPlagiarismCheck() {
               </div>
             )}
             <div className='grid gap-4 md:grid-cols-4'>
-              <div className='rounded-lg border p-4'><p className='text-xs uppercase text-muted-foreground'>Tính độc đáo</p><p className={`mt-2 text-3xl font-bold ${scoreClass(result.originalityScore)}`}>{result.originalityScore}%</p><Progress value={result.originalityScore} className='mt-3' /></div>
-              <div className='rounded-lg border p-4'><p className='text-xs uppercase text-muted-foreground'>Nguy cơ đạo văn</p><p className={`mt-2 text-3xl font-bold ${scoreClass(result.analysis.plagiarismScore || result.similarityScore, true)}`}>{result.analysis.plagiarismScore || result.similarityScore}%</p><Progress value={result.analysis.plagiarismScore || result.similarityScore} className='mt-3' /></div>
+              <div className='rounded-lg border p-4'><p className='text-xs uppercase text-muted-foreground'>Tính độc đáo</p><p className={`mt-2 text-3xl font-bold ${scoreClass(visibleOriginalityScore)}`}>{visibleOriginalityScore}%</p><Progress value={visibleOriginalityScore} className='mt-3' /></div>
+              <div className='rounded-lg border p-4'><p className='text-xs uppercase text-muted-foreground'>Nguy cơ đạo văn</p><p className={`mt-2 text-3xl font-bold ${scoreClass(visiblePlagiarismScore, true)}`}>{visiblePlagiarismScore}%</p><Progress value={visiblePlagiarismScore} className='mt-3' /></div>
               <div className='rounded-lg border p-4'><p className='text-xs uppercase text-muted-foreground'>Tương đồng chủ đề</p><p className={`mt-2 text-3xl font-bold ${scoreClass(result.analysis.topicSimilarityScore || result.analysis.wordOverlapScore, true)}`}>{result.analysis.topicSimilarityScore || result.analysis.wordOverlapScore}%</p><Progress value={result.analysis.topicSimilarityScore || result.analysis.wordOverlapScore} className='mt-3' /></div>
               <div className='rounded-lg border p-4'><p className='text-xs uppercase text-muted-foreground'>Đoạn cần xem</p><p className='mt-2 text-3xl font-bold text-foreground'>{displayMatches.length + displayTopicMatches.length}</p><p className='mt-3 text-xs text-muted-foreground'>{displayMatches.length} đạo văn · {displayTopicMatches.length} tương đồng</p></div>
             </div>
@@ -720,7 +737,7 @@ export function CustomerPlagiarismCheck() {
                 <h3 className='font-semibold text-foreground'>Thông số lần kiểm tra</h3>
                 <div className='mt-3 min-w-0 space-y-2 overflow-hidden text-xs text-muted-foreground'>
                   <p>Đã nạp {result.analysis.candidateCount} nguồn để so khớp; {result.analysis.sourceCount} nguồn có tín hiệu tương đồng: {result.analysis.checkedSourceTypes.map(sourceTypeLabel).join(', ') || 'không có nguồn'}.</p>
-                  <p>Tìm thấy {result.analysis.matchCount || result.matches.length} đoạn vượt ngưỡng và {result.analysis.topicMatchCount || result.topicMatches.length} đoạn tương đồng chủ đề trong {result.wordCount} từ kiểm tra.</p>
+                  <p>Tìm thấy {displayMatches.length} đoạn vượt ngưỡng và {displayTopicMatches.length} đoạn tương đồng chủ đề trong {result.wordCount} từ kiểm tra.</p>
                   <p>Chế độ: {SENSITIVITY[result.sensitivity].label}; {result.ignoreCommonPhrases ? 'đã bỏ qua cụm CTA/câu mẫu phổ biến' : 'không bỏ qua cụm phổ biến'}.</p>
                   {result.ignoredPhrases.length > 0 && <p>Đoạn/cụm tự bỏ qua: {breakableShortList(result.ignoredPhrases, 3)}</p>}
                   {result.analysis.commonCrawl.enabled && (
@@ -842,11 +859,11 @@ export function CustomerPlagiarismCheck() {
         )}
         {result && (
           <Card className='p-5'>
-            <h2 className='mb-4 flex items-center gap-2 font-semibold text-foreground'><AlertTriangle className='h-4 w-4 text-amber-600' /> Nguồn tương đồng ({result.sources.length})</h2>
+            <h2 className='mb-4 flex items-center gap-2 font-semibold text-foreground'><AlertTriangle className='h-4 w-4 text-amber-600' /> Nguồn tương đồng ({displaySources.length})</h2>
             <div className='space-y-3'>
-              {result.sources.length === 0 ? (
+              {displaySources.length === 0 ? (
                 <p className='rounded-lg border border-dashed p-4 text-sm text-muted-foreground'>Không tìm thấy nguồn tương đồng đáng kể.</p>
-              ) : result.sources.map((source, index) => {
+              ) : displaySources.map((source, index) => {
                 const sourceKey = `${source.sourceUrl || source.source || source.sourceTitle || 'source'}-${index}`;
                 const expanded = Boolean(expandedSources[sourceKey]);
                 const sourceText = source.sourceText || source.snippet;

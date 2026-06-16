@@ -151,8 +151,8 @@ function comparisonIgnoredPhrases(customPhrases = [], includeCommonPhrases = tru
   const phrases = [];
 
   [
-    ...(includeCommonPhrases ? COMMON_PHRASES : []),
     ...sanitizeIgnoredPhrases(customPhrases),
+    ...(includeCommonPhrases ? COMMON_PHRASES : []),
   ].forEach((phrase) => {
     const normalized = normalizeText(phrase);
     if (normalized.length < 2 || seen.has(normalized)) return;
@@ -160,7 +160,7 @@ function comparisonIgnoredPhrases(customPhrases = [], includeCommonPhrases = tru
     phrases.push(normalized);
   });
 
-  return phrases;
+  return phrases.sort((left, right) => right.length - left.length);
 }
 
 function removeCommonPhrases(normalizedText, customPhrases = [], includeCommonPhrases = true) {
@@ -629,8 +629,6 @@ function serializeMatch(match, displayOptions = {}) {
 }
 
 function serializeReport(report) {
-  const similarityScore = Math.round(report.similarityScore || 0);
-  const originalityScore = Math.round(report.originalityScore || 0);
   const ignoredPhrases = sanitizeIgnoredPhrases(report.ignoredPhrases);
   const displayOptions = {
     ignoreCommonPhrases: report.ignoreCommonPhrases !== false,
@@ -642,8 +640,19 @@ function serializeReport(report) {
   const topicMatches = (report.topicMatches || [])
     .map((match) => serializeMatch(match, displayOptions))
     .filter((match) => countWords(match.matchedText) >= 3);
-  const sources = (report.sources || []).map((source) => serializeSource(source, displayOptions));
-  const analysis = report.analysis || {};
+  const similarityScore = matches.length > 0 ? Math.round(report.similarityScore || 0) : 0;
+  const originalityScore = clamp(100 - similarityScore);
+  const sources = matches.length > 0 || topicMatches.length > 0
+    ? (report.sources || []).map((source) => serializeSource(source, displayOptions))
+    : [];
+  const rawAnalysis = report.analysis || {};
+  const analysis = {
+    ...rawAnalysis,
+    matchCount: matches.length,
+    topicMatchCount: topicMatches.length,
+    sourceCount: sources.length,
+    plagiarismScore: matches.length > 0 ? rawAnalysis.plagiarismScore || similarityScore : 0,
+  };
 
   return {
     id: report._id.toString(),
@@ -655,7 +664,7 @@ function serializeReport(report) {
     similarityScore,
     originalityScore,
     status: report.status,
-    riskLevel: report.riskLevel,
+    riskLevel: getRiskLevel(similarityScore),
     matches,
     topicMatches,
     sources,
@@ -827,10 +836,12 @@ async function checkPlagiarism(userId, payload) {
   const referenceCandidates = sourceConfig.references ? REFERENCE_SOURCES : [];
   const webCandidates = commonCrawlResult.candidates || [];
   const candidates = [...databaseCandidates, ...referenceCandidates, ...webCandidates];
+  const comparisonCheckText = removeIgnoredPhrasesForDisplay(checkText, scoringOptions);
 
   const scoredSources = candidates
     .map((candidate) => {
-      const textScore = scoreTexts(checkText, candidate.text, scoringOptions);
+      const comparisonCandidateText = removeIgnoredPhrasesForDisplay(candidate.text, scoringOptions);
+      const textScore = scoreTexts(comparisonCheckText, comparisonCandidateText, scoringOptions);
       const matches = findSegmentMatches(checkText, candidate, effectiveThreshold, scoringOptions);
       const topicMatches = findTopicSegmentMatches(checkText, candidate, effectiveThreshold, scoringOptions);
       const bestSegment = matches[0] || {};

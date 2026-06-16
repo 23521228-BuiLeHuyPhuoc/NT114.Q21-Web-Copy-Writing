@@ -93,9 +93,21 @@ const longSegmentIgnored = __test.scoreTexts(longIgnoredSegment, longSegmentSour
   ignoredPhrases: [longIgnoredSegment],
 });
 
+const punctuatedIgnoredSegment = 'mua sách hôm nay, nhận ưu đãi; giao hàng nhanh. đổi trả dễ dàng';
+const punctuatedIgnoredSource = `nguồn ghi rõ ${punctuatedIgnoredSegment} trong phần mô tả chiến dịch`;
+const punctuatedIgnoredScore = __test.scoreTexts(punctuatedIgnoredSegment, punctuatedIgnoredSource, {
+  ...scoringOptions,
+  ignoredPhrases: [punctuatedIgnoredSegment],
+});
+
 assert(longIgnoredSegment.length > 120, 'long ignored segment fixture should exceed the old limit');
 assert(longSegmentBaseline.plagiarismScore >= threshold, 'long copied segment should exceed plagiarism threshold before ignoring');
 assert.strictEqual(longSegmentIgnored.plagiarismScore, 0, 'long ignored segment should be removed from plagiarism scoring');
+assert.strictEqual(
+  punctuatedIgnoredScore.plagiarismScore,
+  0,
+  'ignored phrase with comma, semicolon, and period should stay one ignored segment',
+);
 
 const vietnameseIgnoredPhrase = 'đại sứ văn hóa đọc';
 const vietnameseMixedInput = 'Đại sứ văn hóa đọc giúp học sinh yêu thư viện xanh mỗi ngày.';
@@ -148,6 +160,9 @@ console.log(JSON.stringify({
     length: longIgnoredSegment.length,
     baselinePlagiarismScore: longSegmentBaseline.plagiarismScore,
     ignoredPlagiarismScore: longSegmentIgnored.plagiarismScore,
+  },
+  punctuatedIgnoredSegment: {
+    ignoredPlagiarismScore: punctuatedIgnoredScore.plagiarismScore,
   },
   vietnameseIgnoredDisplay: {
     matches: vietnameseMixedMatches.length,
