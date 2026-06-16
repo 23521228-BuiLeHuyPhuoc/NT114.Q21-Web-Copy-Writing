@@ -14,6 +14,7 @@ const checkPlagiarismSchema = Joi.object({
   includeReferences: Joi.boolean().default(true),
   sensitivity: Joi.string().valid('lenient', 'balanced', 'strict').default('balanced'),
   ignoreCommonPhrases: Joi.boolean().default(true),
+  ignoredPhrases: Joi.array().items(Joi.string().trim().min(2).max(10000)).max(30).default([]),
   sources: Joi.object({
     database: Joi.boolean().default(true),
     references: Joi.boolean().default(true),

@@ -49,7 +49,7 @@ export interface UiProject {
   industry: string;
   createdAt: string;
   updatedAt: string;
-  status: 'active' | 'archived' | 'completed';
+  status: 'active' | 'archived';
   isArchived: boolean;
   color: string;
 }

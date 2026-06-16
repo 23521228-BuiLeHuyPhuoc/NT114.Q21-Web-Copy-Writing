@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from '@/lib/next-router-compat';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { Button } from '@/app/components/ui/button';
 import { Badge } from '@/app/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/app/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/app/components/ui/avatar';
 import { Sheet, SheetContent, SheetTrigger } from '@/app/components/ui/sheet';
 import {
   LayoutDashboard, Wand2, FileText, User,
@@ -49,6 +49,7 @@ export function Layout({ children }: LayoutProps) {
   const adminRoleDef = user?.role === 'admin' && user.adminRole
     ? getAdminRoleDef(user.adminRole)
     : null;
+  const userInitial = user?.name?.charAt(0).toUpperCase() || 'U';
 
   const Sidebar = () => (
     <div className="h-full flex flex-col overflow-y-auto">
@@ -100,8 +101,9 @@ export function Layout({ children }: LayoutProps) {
       <div className="p-4 border-t flex-shrink-0">
         <div className="flex items-center gap-3 mb-3">
           <Avatar className="w-9 h-9 flex-shrink-0">
+            <AvatarImage src={user?.avatar || undefined} alt={user?.name || 'Avatar'} className="object-cover" />
             <AvatarFallback className="bg-gradient-to-br from-primary to-success text-primary-foreground text-sm">
-              {user?.name.charAt(0).toUpperCase()}
+              {userInitial}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">

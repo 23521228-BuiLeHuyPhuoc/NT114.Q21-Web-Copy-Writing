@@ -21,10 +21,17 @@ import { Button } from '@/app/components/ui/button';
 import { Input } from '@/app/components/ui/input';
 import { Badge } from '@/app/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select';
-import { useContents, useDeleteContent } from '@/hooks/queries/useContents';
+import {
+  useContents,
+  useDeleteContent,
+  usePermanentDeleteContent,
+  useRestoreContent,
+  useTrashContents,
+} from '@/hooks/queries/useContents';
 import { DataPagination } from '@/app/components/common/DataPagination';
 import { usePagination } from '@/hooks/usePagination';
 import type { UiContent } from '@/services/contentService';
+import { TrashBin } from '@/app/components/admin/TrashBin';
 
 const CONTENT_FETCH_PAGE_SIZE = 100;
 const CONTENT_UI_PAGE_SIZE = 10;
@@ -40,8 +47,13 @@ export function CustomerContents() {
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterType, setFilterType] = useState('all');
+  const [trashOpen, setTrashOpen] = useState(false);
+  const [trashLoading, setTrashLoading] = useState<string | null>(null);
   const { data: contents = [], isError, isLoading } = useContents({ fetchAll: true, limit: CONTENT_FETCH_PAGE_SIZE });
+  const { data: trashContents = [] } = useTrashContents({ fetchAll: true, limit: CONTENT_FETCH_PAGE_SIZE });
   const deleteContent = useDeleteContent();
+  const restoreContent = useRestoreContent();
+  const permanentDeleteContent = usePermanentDeleteContent();
 
   const filtered = contents.filter(c => {
     const title = c.title || '';
@@ -59,10 +71,43 @@ export function CustomerContents() {
   const handleDelete = async (id: string) => {
     try {
       await deleteContent.mutateAsync(id);
-      toast.success('Đã xóa nội dung!');
+      toast.success('Đã đưa nội dung vào thùng rác!');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Không thể xóa nội dung';
       toast.error(message);
+    }
+  };
+
+  const handleRestore = async (targetId: number | string) => {
+    const contentId = String(targetId);
+    setTrashLoading(contentId);
+
+    try {
+      await restoreContent.mutateAsync(contentId);
+      toast.success('Đã khôi phục nội dung!');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Không thể khôi phục nội dung';
+      toast.error(message);
+    } finally {
+      setTrashLoading(null);
+    }
+  };
+
+  const handlePermanentDelete = async (targetId: number | string) => {
+    const contentId = String(targetId);
+    const confirmed = window.confirm('Xóa vĩnh viễn nội dung này? Thao tác này không thể hoàn tác.');
+    if (!confirmed) return;
+
+    setTrashLoading(contentId);
+
+    try {
+      await permanentDeleteContent.mutateAsync(contentId);
+      toast.success('Đã xóa vĩnh viễn nội dung!');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Không thể xóa vĩnh viễn nội dung';
+      toast.error(message);
+    } finally {
+      setTrashLoading(null);
     }
   };
 
@@ -78,9 +123,19 @@ export function CustomerContents() {
             <h1 className="text-3xl font-bold text-foreground mb-1">Quản Lý Nội Dung</h1>
             <p className="text-foreground/70">Tất cả copy AI đã tạo, được lưu trực tiếp từ backend.</p>
           </div>
-          <Button className="bg-gradient-to-r from-green-600 to-emerald-600 text-white" onClick={() => navigate('/generate')}>
-            <Plus className="w-4 h-4 mr-2" /> Tạo Nội Dung Mới
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" className="relative" onClick={() => setTrashOpen(true)}>
+              <Trash2 className="w-4 h-4 mr-2" /> Thùng rác
+              {trashContents.length > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1 bg-destructive text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                  {trashContents.length}
+                </span>
+              )}
+            </Button>
+            <Button className="bg-gradient-to-r from-green-600 to-emerald-600 text-white" onClick={() => navigate('/generate')}>
+              <Plus className="w-4 h-4 mr-2" /> Tạo Nội Dung Mới
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -205,6 +260,21 @@ export function CustomerContents() {
           onPageSizeChange={pagination.setPageSize}
           pageSizeOptions={[10, 20, 50]}
           itemLabel="nội dung"
+        />
+
+        <TrashBin
+          open={trashOpen}
+          onClose={() => setTrashOpen(false)}
+          items={trashContents.map(item => ({
+            id: item.id,
+            label: item.title,
+            subLabel: `${item.type} · ${item.words} từ`,
+            deletedAt: item.deletedAt || item.updatedAt || '-',
+          }))}
+          onRestore={handleRestore}
+          onPermanentDelete={handlePermanentDelete}
+          entityName="nội dung"
+          loading={trashLoading}
         />
       </div>
     </Layout>

@@ -718,6 +718,96 @@ async function getSeedTokenUsage(userId, jobId) {
   return Number(metric?.tokenUsage || 0);
 }
 
+async function calculateDatasetTokenUsage(userId, datasetId) {
+  const examples = await FineTuneExample.find({ datasetId, userId, isValid: true })
+    .select('inputText outputText')
+    .lean();
+
+  return examples.reduce((sum, item) => sum + estimateTokens(item.inputText) + estimateTokens(item.outputText), 0);
+}
+
+function getProviderTokenUsage(providerJob) {
+  return pickNumber(providerJob, [
+    'trained_tokens',
+    'data.trained_tokens',
+    'data.total_tokens',
+    'data.usage.total_tokens',
+    'usage.total_tokens',
+    'usage.training_tokens',
+    'metrics.trained_tokens',
+    'metrics.total_tokens',
+    'tuningDataStats.supervisedTuningDataStats.totalBillableTokenCount',
+    'tuning_data_stats.supervised_tuning_data_stats.total_billable_token_count',
+    'tuningDataStats.totalBillableTokenCount',
+    'tuning_data_stats.total_billable_token_count',
+  ]);
+}
+
+function estimateTokenUsageFromProgress(job, seedTokenUsage, providerJob = {}) {
+  const datasetTokens = Number(seedTokenUsage || 0);
+  if (!datasetTokens || datasetTokens <= 0) return 0;
+
+  const totalTrainingTokens = datasetTokens * getTrainingEpochCount(job, providerJob);
+  if (job.status === 'completed') return Math.round(totalTrainingTokens);
+  if (['failed', 'cancelled'].includes(job.status)) return Math.round(Math.min(totalTrainingTokens, Math.max(0, job.progress || 0) / 100 * totalTrainingTokens));
+
+  const progress = clampProgress(job.progress || 0);
+  const fraction = ['running'].includes(job.status)
+    ? Math.max(0.01, Math.min(0.95, (progress - 10) / 85))
+    : Math.max(0, Math.min(0.1, progress / 100));
+
+  return Math.round(Math.min(totalTrainingTokens, Math.max(0, totalTrainingTokens * fraction)));
+}
+
+function getTokenMetricEpoch(job, providerJob = {}) {
+  const explicitEpoch = pickNumber(providerJob, [
+    'epoch',
+    'current_epoch',
+    'metrics.epoch',
+    'data.epoch',
+  ]);
+  if (explicitEpoch !== null) return Math.max(1, Math.round(explicitEpoch));
+
+  const totalEpochs = getTrainingEpochCount(job, providerJob);
+  if (job.status === 'completed') return totalEpochs;
+  return Math.max(1, Math.min(totalEpochs, Math.ceil((clampProgress(job.progress || 0) / 100) * totalEpochs)));
+}
+
+async function syncTokenUsageMetric(job, options = {}) {
+  if (!job?._id) return null;
+  const userId = job.userId?._id || job.userId;
+  const providerJob = options.providerJob || {};
+  let tokenUsage = Number(options.tokenUsage || 0);
+  let source = options.source || 'provider';
+
+  if (!tokenUsage || tokenUsage <= 0) {
+    const seedTokenUsage = await getSeedTokenUsage(userId, job._id);
+    tokenUsage = estimateTokenUsageFromProgress(job, seedTokenUsage, providerJob);
+    source = 'progress_estimate';
+  }
+
+  if (!tokenUsage || tokenUsage <= 0) return null;
+
+  const epoch = getTokenMetricEpoch(job, providerJob);
+  const timestamp = options.timestamp || new Date();
+
+  return FineTuneMetric.findOneAndUpdate(
+    { userId, jobId: job._id, epoch, source },
+    {
+      userId,
+      jobId: job._id,
+      epoch,
+      trainLoss: 0,
+      validationLoss: 0,
+      accuracy: 0,
+      tokenUsage,
+      source,
+      timestamp,
+    },
+    { upsert: true, new: true, setDefaultsOnInsert: true },
+  );
+}
+
 async function getOpenAITrainedTokenProgress(job, providerJob) {
   const trainedTokens = pickNumber(providerJob, ['trained_tokens']);
   if (!trainedTokens || trainedTokens <= 0) return null;
@@ -1016,6 +1106,14 @@ async function submitOpenAIFineTuneJob(job) {
   job.fineTunedModelId = providerJob.fine_tuned_model || '';
   job.errorMessage = providerJob.error?.message || '';
   await job.save();
+  await syncTokenUsageMetric(job, {
+    providerJob,
+    tokenUsage: getProviderTokenUsage(providerJob),
+    source: getProviderTokenUsage(providerJob) ? 'provider' : 'progress_estimate',
+    timestamp: dateFromUnixSeconds(providerJob.created_at) || new Date(),
+  }).catch((error) => {
+    console.warn(`OpenAI token usage metric seed failed: ${error.message}`);
+  });
   return job;
 }
 
@@ -1040,6 +1138,14 @@ async function syncOpenAIFineTuneJob(job) {
   job.actualCost = estimateTrainingCostFromTokens(providerJob.trained_tokens, job.baseModel) || job.actualCost || 0;
 
   await job.save();
+  await syncTokenUsageMetric(job, {
+    providerJob,
+    tokenUsage: getProviderTokenUsage(providerJob),
+    source: getProviderTokenUsage(providerJob) ? 'provider' : 'progress_estimate',
+    timestamp: dateFromUnixSeconds(providerJob.finished_at || providerJob.created_at) || new Date(),
+  }).catch((error) => {
+    console.warn(`OpenAI token usage metric sync failed: ${error.message}`);
+  });
   if (job.status === 'completed') {
     await createFineTunedModelFromJob(job).catch((error) => {
       console.warn(`OpenAI fine-tuned model registration failed: ${error.message}`);
@@ -1107,6 +1213,13 @@ async function submitVertexGeminiFineTuneJob(job) {
   job.fineTunedModelId = getVertexTunedModelId(providerJob) || '';
   job.errorMessage = getVertexErrorMessage(providerJob);
   await job.save();
+  await syncTokenUsageMetric(job, {
+    providerJob,
+    tokenUsage: getVertexBillableTokens(providerJob),
+    source: getVertexBillableTokens(providerJob) ? 'provider' : 'progress_estimate',
+  }).catch((error) => {
+    console.warn(`Vertex Gemini token usage metric seed failed: ${error.message}`);
+  });
   return job;
 }
 
@@ -1126,6 +1239,13 @@ async function syncVertexGeminiFineTuneJob(job) {
   if (['running', 'completed'].includes(mappedStatus)) job.startedAt = job.startedAt || job.createdAt || new Date();
 
   await job.save();
+  await syncTokenUsageMetric(job, {
+    providerJob,
+    tokenUsage: billableTokens,
+    source: billableTokens ? 'provider' : 'progress_estimate',
+  }).catch((error) => {
+    console.warn(`Vertex Gemini token usage metric sync failed: ${error.message}`);
+  });
   if (job.status === 'completed') {
     await createFineTunedModelFromJob(job).catch((error) => {
       console.warn(`Vertex fine-tuned model registration failed: ${error.message}`);
@@ -1135,13 +1255,20 @@ async function syncVertexGeminiFineTuneJob(job) {
 }
 
 async function submitVertexOpenModelFineTuneJob(job) {
-  return vertexOpenModelFineTuneService.submitJob(job);
+  const syncedJob = await vertexOpenModelFineTuneService.submitJob(job);
+  await syncTokenUsageMetric(syncedJob, { source: 'progress_estimate' }).catch((error) => {
+    console.warn(`Vertex Llama token usage metric seed failed: ${error.message}`);
+  });
+  return syncedJob;
 }
 
 async function syncVertexOpenModelFineTuneJob(job) {
   if (!isRemoteVertexOpenModelJob(job)) return job;
 
   await vertexOpenModelFineTuneService.syncJob(job);
+  await syncTokenUsageMetric(job, { source: 'progress_estimate' }).catch((error) => {
+    console.warn(`Vertex Llama token usage metric sync failed: ${error.message}`);
+  });
   if (job.status === 'completed') {
     await vertexOpenModelFineTuneService.ensureTunedModelDeployed(job).catch(async (error) => {
       job.deploymentStatus = 'failed';
@@ -1157,13 +1284,20 @@ async function syncVertexOpenModelFineTuneJob(job) {
 }
 
 async function submitQwenFineTuneJob(job) {
-  return vertexOpenModelFineTuneService.submitJob(job);
+  const syncedJob = await vertexOpenModelFineTuneService.submitJob(job);
+  await syncTokenUsageMetric(syncedJob, { source: 'progress_estimate' }).catch((error) => {
+    console.warn(`Qwen token usage metric seed failed: ${error.message}`);
+  });
+  return syncedJob;
 }
 
 async function syncQwenFineTuneJob(job) {
   if (!isRemoteQwenJob(job)) return job;
 
   await vertexOpenModelFineTuneService.syncJob(job);
+  await syncTokenUsageMetric(job, { source: 'progress_estimate' }).catch((error) => {
+    console.warn(`Qwen token usage metric sync failed: ${error.message}`);
+  });
   if (job.status === 'completed') {
     await vertexOpenModelFineTuneService.ensureTunedModelDeployed(job).catch(async (error) => {
       job.deploymentStatus = 'failed';
@@ -1287,6 +1421,7 @@ function serializeMetric(metric) {
     validationLoss: metric.validationLoss,
     accuracy: metric.accuracy,
     tokenUsage: metric.tokenUsage,
+    source: metric.source || '',
     timestamp: metric.timestamp,
   };
 }
@@ -1853,12 +1988,10 @@ async function createFineTuneJob(userId, payload) {
 }
 
 async function seedInitialMetrics(userId, job) {
-  const tokenUsage = await FineTuneExample.find({ datasetId: job.datasetId, userId })
-    .limit(200)
-    .then((examples) => examples.reduce((sum, item) => sum + estimateTokens(item.inputText) + estimateTokens(item.outputText), 0));
+  const tokenUsage = await calculateDatasetTokenUsage(userId, job.datasetId);
 
   return FineTuneMetric.findOneAndUpdate(
-    { userId, jobId: job._id, epoch: 0 },
+    { userId, jobId: job._id, epoch: 0, source: 'seed' },
     {
       userId,
       jobId: job._id,
@@ -1867,6 +2000,7 @@ async function seedInitialMetrics(userId, job) {
       validationLoss: 0,
       accuracy: 0,
       tokenUsage,
+      source: 'seed',
       timestamp: new Date(),
     },
     { upsert: true, new: true, setDefaultsOnInsert: true },
@@ -2028,24 +2162,30 @@ async function retryFineTuneJob(userId, id) {
 async function listJobMetrics(userId, jobId) {
   const job = await findFineTuneJobOrThrow(userId, jobId);
   if (job.provider === 'openai') {
+    await syncOpenAIFineTuneJob(job).catch((error) => {
+      console.warn(`OpenAI fine-tune metrics job sync failed: ${error.message}`);
+    });
     await listOpenAIEvents(job)
       .then((events) => Promise.all(events.map(async (event) => {
         const data = event.data || {};
         const trainLoss = Number(data.train_loss ?? data.training_loss);
         const validationLoss = Number(data.valid_loss ?? data.validation_loss);
-        if (!Number.isFinite(trainLoss) && !Number.isFinite(validationLoss)) return null;
+        const tokenUsage = getProviderTokenUsage(event) || 0;
+        if (!Number.isFinite(trainLoss) && !Number.isFinite(validationLoss) && !tokenUsage) return null;
 
-        const epoch = Number(data.epoch ?? data.step ?? data.train_step ?? 0);
+        const epoch = Number(data.epoch ?? data.step ?? data.train_step ?? 1);
+        const metricEpoch = Math.max(1, Number.isFinite(epoch) ? Math.round(epoch) : 1);
         return FineTuneMetric.findOneAndUpdate(
-          { userId, jobId, epoch: Number.isFinite(epoch) ? epoch : 0 },
+          { userId, jobId, epoch: metricEpoch, source: 'provider' },
           {
             userId,
             jobId,
-            epoch: Number.isFinite(epoch) ? epoch : 0,
+            epoch: metricEpoch,
             trainLoss: Number.isFinite(trainLoss) ? trainLoss : 0,
             validationLoss: Number.isFinite(validationLoss) ? validationLoss : 0,
             accuracy: Number(data.accuracy || 0),
-            tokenUsage: Number(data.trained_tokens || 0),
+            tokenUsage,
+            source: 'provider',
             timestamp: dateFromUnixSeconds(event.created_at) || new Date(),
           },
           { upsert: true, new: true, setDefaultsOnInsert: true },

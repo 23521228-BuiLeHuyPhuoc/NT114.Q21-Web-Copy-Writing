@@ -1,6 +1,8 @@
 const asyncHandler = require('../../utils/asyncHandler');
 const authService = require('../../services/authService');
+const cloudinaryService = require('../../services/cloudinaryService');
 const { clearAuthCookie, setAuthCookie } = require('../../utils/authCookie');
+const createError = require('../../utils/createError');
 
 const register = asyncHandler(async (req, res) => {
   const user = await authService.registerUser(req.body);
@@ -42,6 +44,24 @@ const logout = asyncHandler(async (req, res) => {
   });
 });
 
+const updateAvatar = asyncHandler(async (req, res) => {
+  if (!req.file) {
+    throw createError(400, 'Avatar file is required');
+  }
+
+  const uploaded = await cloudinaryService.uploadUserAvatar(req.user._id, req.file);
+  const user = await authService.updateUserAvatar(req.user._id, uploaded.url);
+
+  return res.status(200).json({
+    success: true,
+    message: 'Avatar updated',
+    data: {
+      user,
+      avatar: uploaded.url,
+    },
+  });
+});
+
 const forgotPassword = asyncHandler(async (req, res) => {
   const data = await authService.forgotPassword('user', req.body.email);
 
@@ -76,6 +96,7 @@ module.exports = {
   register,
   login,
   me,
+  updateAvatar,
   logout,
   forgotPassword,
   verifyOtp,

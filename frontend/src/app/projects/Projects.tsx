@@ -9,8 +9,8 @@ import { Label } from '@/app/components/ui/label';
 import { Textarea } from '@/app/components/ui/textarea';
 import { useNavigate } from '@/lib/next-router-compat';
 import {
-  FolderOpen, Plus, FileText, Calendar, Users, MoreHorizontal,
-  Search, ArrowRight, Edit2, Trash2, Star,
+  FolderOpen, Plus, FileText, Calendar,
+  Search, ArrowRight,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -52,7 +52,11 @@ export function CustomerProjects() {
     }
 
     try {
-      await createProject.mutateAsync({ name, description, industry: newIndustry.trim() || 'General' });
+      await createProject.mutateAsync({
+        name,
+        description,
+        industry: newIndustry.trim() || 'General',
+      });
       toast.success('Đã tạo dự án');
       setNewName('');
       setNewDesc('');
@@ -100,7 +104,7 @@ export function CustomerProjects() {
                   <FolderOpen className="w-5 h-5 text-white" />
                 </div>
                 <Badge className={project.status === 'active' ? 'bg-primary/10 text-primary border-0' : 'bg-muted text-foreground/70 border-0'}>
-                  {project.status === 'active' ? 'Đang hoạt động' : 'Hoàn thành'}
+                  {project.status === 'active' ? 'Đang hoạt động' : 'Đã lưu trữ'}
                 </Badge>
               </div>
               <h3 className="font-semibold text-foreground mb-1">{project.name}</h3>

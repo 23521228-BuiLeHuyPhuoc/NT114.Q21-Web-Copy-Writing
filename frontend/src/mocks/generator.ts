@@ -5,12 +5,6 @@ import {
 } from 'lucide-react';
 
 export const MODELS = [
-  { id: 'projects/copy-writing-499306/locations/us-central1/publishers/google/models/gemini-2.5-flash', name: 'Gemini 2.5 Flash (Vertex)', badge: 'Vertex', color: 'text-green-600', desc: 'Gemini 2.5 Flash qua Vertex AI o us-central1, khong can deploy endpoint rieng', latency: '~2s', tokens: '1M' },
-  { id: 'projects/copy-writing-499306/locations/us-central1/publishers/google/models/gemini-2.5-flash-lite', name: 'Gemini 2.5 Flash Lite (Vertex)', badge: 'Vertex', color: 'text-teal-600', desc: 'Gemini 2.5 Flash Lite qua Vertex AI o us-central1, nhe va nhanh cho demo', latency: '~1s', tokens: '1M' },
-  { id: 'projects/167488791850/locations/us-central1/endpoints/mg-endpoint-2586ea99-6b17-4460-aa86-1e2c1aa12ae7', name: 'Llama 3.3 70B Endpoint', badge: 'Vertex', color: 'text-orange-600', desc: 'Endpoint Llama 3.3 70B Instruct deploy o us-central1, dung de generate truc tiep', latency: '~1-8s', tokens: '128K' },
-  { id: 'projects/167488791850/locations/us-central1/endpoints/mg-endpoint-a9c832c8-717e-4f12-8229-3ba0c89304eb', name: 'Qwen 3 0.6B Endpoint', badge: 'Vertex', color: 'text-cyan-600', desc: 'Endpoint Qwen 3 0.6B deploy o us-central1, hop test nhanh va noi dung ngan', latency: '~1-5s', tokens: '32K' },
-  { id: 'claude-haiku-4-5', name: 'Claude Haiku 4.5', badge: 'Vertex', color: 'text-violet-600', desc: 'Claude Haiku 4.5 chạy qua Google Cloud Vertex AI, hợp copy marketing nhanh và tự nhiên', latency: '~2-8s', tokens: '200K' },
-  { id: 'meta/llama-3.3-70b-instruct-maas', name: 'Llama 3.3 70B Instruct', badge: 'Vertex', color: 'text-orange-600', desc: 'Meta Llama 3.3 chay qua Google Cloud Vertex AI MaaS', latency: '~1-8s', tokens: '128K' },
   { id: 'gemini-flash', name: 'Gemini 2.5 Flash', badge: 'Free', color: 'text-green-600', desc: 'Free tier chạy ổn với key hiện tại, hợp đa số nội dung marketing', latency: '~2s', tokens: '1M' },
   { id: 'gemini-flash-lite', name: 'Gemini 2.5 Flash Lite', badge: 'Free', color: 'text-teal-600', desc: 'Free tier nhẹ và nhanh, hợp demo hoặc request nhiều', latency: '~1s', tokens: '1M' },
   { id: 'groq-llama-3-3-70b', name: 'Llama 3.3 70B (Groq)', badge: 'Groq', color: 'text-orange-600', desc: 'Llama chạy qua Groq API, hợp copy dài và cần chất lượng tốt', latency: '~1-3s', tokens: '128K' },
@@ -19,8 +13,8 @@ export const MODELS = [
   { id: 'gemini-3-1-flash-lite', name: 'Gemini 3.1 Flash Lite', badge: 'Free', color: 'text-cyan-600', desc: 'Model free/lite mới, hợp nội dung ngắn và phản hồi nhanh', latency: '~5-15s', tokens: '1M' },
   { id: 'gemma-4-26b', name: 'Gemma 4 26B', badge: 'Free', color: 'text-orange-600', desc: 'Gemma qua Gemini API, miễn phí nhưng có thể chậm hơn dòng Flash', latency: '~30-90s', tokens: '262K' },
   { id: 'openrouter-free', name: 'OpenRouter Free Router', badge: 'Free', color: 'text-blue-600', desc: 'Tự chọn model free khả dụng trên OpenRouter; dùng khi Gemini lỗi/quota', latency: '~3s', tokens: '200K' },
-  { id: 'freegpt4-gpt-4', name: 'GPT-4 Free Local API', badge: 'Local', color: 'text-indigo-600', desc: 'Goi server Free-GPT4-WEB-API dang chay o localhost:5500, khong can OpenAI key', latency: '~5-30s', tokens: 'provider' },
-  { id: 'freegpt4-gpt-4o', name: 'GPT-4o Free Local API', badge: 'Local', color: 'text-violet-600', desc: 'Dung FreeGPT4 local voi model gpt-4o neu provider phia sau ho tro', latency: '~5-30s', tokens: 'provider' },
+  { id: 'freegpt4-gpt-4', name: 'GPT-4 Free Local API', badge: 'Local', color: 'text-indigo-600', desc: 'Tu bat Free-GPT4-WEB-API o localhost:5500 khi generate, khong can OpenAI key', latency: '~5-30s', tokens: 'provider' },
+  { id: 'freegpt4-gpt-4o', name: 'GPT-4o Free Local API', badge: 'Local', color: 'text-violet-600', desc: 'Tu bat Free-GPT4-WEB-API va goi model gpt-4o neu provider phia sau ho tro', latency: '~5-30s', tokens: 'provider' },
 ];
 
 export const COPY_TYPES = [

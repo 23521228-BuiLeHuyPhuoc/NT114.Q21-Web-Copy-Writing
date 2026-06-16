@@ -11,6 +11,7 @@ import { templateKeys } from '@/hooks/queries/useTemplates';
 export const contentKeys = {
   all: ['contents'] as const,
   list: (params?: ContentListParams) => [...contentKeys.all, 'list', params ?? {}] as const,
+  trash: (params?: ContentListParams) => [...contentKeys.all, 'trash', params ?? {}] as const,
   detail: (id: string) => [...contentKeys.all, 'detail', id] as const,
 };
 
@@ -18,6 +19,14 @@ export function useContents(params?: ContentListParams) {
   return useQuery({
     queryKey: contentKeys.list(params),
     queryFn: () => contentService.list(params),
+  });
+}
+
+export function useTrashContents(params?: ContentListParams, enabled = true) {
+  return useQuery({
+    queryKey: contentKeys.trash(params),
+    queryFn: () => contentService.listTrash(params),
+    enabled,
   });
 }
 
@@ -83,6 +92,34 @@ export function useDeleteContent() {
       if (content.id) {
         queryClient.removeQueries({ queryKey: contentKeys.detail(content.id) });
       }
+    },
+  });
+}
+
+export function useRestoreContent() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => contentService.restore(id),
+    onSuccess: (content) => {
+      queryClient.invalidateQueries({ queryKey: contentKeys.all });
+      queryClient.invalidateQueries({ queryKey: projectKeys.all });
+      if (content.id) {
+        queryClient.setQueryData(contentKeys.detail(content.id), content);
+      }
+    },
+  });
+}
+
+export function usePermanentDeleteContent() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => contentService.permanentDelete(id),
+    onSuccess: (_result, id) => {
+      queryClient.invalidateQueries({ queryKey: contentKeys.all });
+      queryClient.invalidateQueries({ queryKey: projectKeys.all });
+      queryClient.removeQueries({ queryKey: contentKeys.detail(id) });
     },
   });
 }

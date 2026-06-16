@@ -1,3 +1,6 @@
+const fs = require('fs');
+const path = require('path');
+const { spawn } = require('child_process');
 const { GoogleAuth } = require('google-auth-library');
 const createError = require('../utils/createError');
 const { throwGoogleCredentialError } = require('../utils/googleCredentialError');
@@ -8,6 +11,8 @@ const DEFAULT_VERTEX_CLAUDE_LOCATION = 'global';
 const DEFAULT_VERTEX_CLAUDE_LOCATIONS = ['us-east5', 'europe-west1', 'asia-east1', 'global'];
 const DEFAULT_VERTEX_MAAS_MODEL = 'meta/llama-3.3-70b-instruct-maas';
 let googleAuth;
+let freeGPT4Process = null;
+let freeGPT4StartPromise = null;
 const vertexEndpointDnsCache = new Map();
 const vertexEndpointMetadataCache = new Map();
 
@@ -635,6 +640,140 @@ function getFreeGPT4BaseUrl() {
 
 function getFreeGPT4Model(model) {
   return process.env.FREEGPT4_MODEL || FREEGPT4_MODEL_MAP[model] || model || 'gpt-4';
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function getFreeGPT4Url() {
+  return new URL(getFreeGPT4BaseUrl());
+}
+
+function isLocalFreeGPT4Url(url) {
+  const hostname = String(url.hostname || '').toLowerCase();
+  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1' || hostname === '[::1]';
+}
+
+function getFreeGPT4ServerDir() {
+  return path.resolve(
+    process.env.FREEGPT4_APP_DIR || path.resolve(__dirname, '..', '..', '..', 'Free-GPT4-WEB-API', 'src'),
+  );
+}
+
+function getFreeGPT4ServerScript() {
+  return path.join(getFreeGPT4ServerDir(), 'FreeGPT4_Server.py');
+}
+
+function getFreeGPT4PythonBin() {
+  return process.env.FREEGPT4_PYTHON_BIN || (process.platform === 'win32' ? 'python' : 'python3');
+}
+
+function getFreeGPT4Port(url) {
+  return Number(url.port || 5500);
+}
+
+function isSpawnedFreeGPT4Alive() {
+  return freeGPT4Process && freeGPT4Process.exitCode === null && !freeGPT4Process.killed;
+}
+
+async function isFreeGPT4ServerReady(baseUrl) {
+  if (typeof fetch !== 'function') return false;
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), Number(process.env.FREEGPT4_HEALTH_TIMEOUT_MS || 1500));
+
+  try {
+    const healthUrl = new URL(`${baseUrl}/models`);
+    const response = await fetch(healthUrl, {
+      method: 'GET',
+      signal: controller.signal,
+      headers: { Accept: 'application/json, text/plain, */*' },
+    });
+    return response.ok;
+  } catch (error) {
+    return false;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function waitForFreeGPT4Server(baseUrl) {
+  const timeoutMs = Number(process.env.FREEGPT4_START_TIMEOUT_MS || 45000);
+  const intervalMs = Number(process.env.FREEGPT4_START_POLL_MS || 750);
+  const deadline = Date.now() + timeoutMs;
+
+  while (Date.now() < deadline) {
+    if (await isFreeGPT4ServerReady(baseUrl)) return true;
+    await sleep(intervalMs);
+  }
+
+  return false;
+}
+
+async function ensureFreeGPT4ServerRunning(model) {
+  const baseUrl = getFreeGPT4BaseUrl();
+  const url = getFreeGPT4Url();
+
+  if (!isLocalFreeGPT4Url(url)) return true;
+  if (await isFreeGPT4ServerReady(baseUrl)) return true;
+
+  if (freeGPT4StartPromise) return freeGPT4StartPromise;
+
+  freeGPT4StartPromise = (async () => {
+    if (await isFreeGPT4ServerReady(baseUrl)) return true;
+
+    const scriptPath = getFreeGPT4ServerScript();
+    if (!fs.existsSync(scriptPath)) {
+      console.warn('FreeGPT4 server script not found', { scriptPath });
+      return false;
+    }
+
+    if (!isSpawnedFreeGPT4Alive()) {
+      const port = getFreeGPT4Port(url);
+      const args = [scriptPath, '--port', String(port), '--model', model];
+
+      if (process.env.FREEGPT4_PROVIDER) {
+        args.push('--provider', process.env.FREEGPT4_PROVIDER);
+      }
+
+      freeGPT4Process = spawn(getFreeGPT4PythonBin(), args, {
+        cwd: getFreeGPT4ServerDir(),
+        detached: true,
+        stdio: 'ignore',
+        windowsHide: true,
+        env: {
+          ...process.env,
+          PORT: String(port),
+          DEFAULT_MODEL: model,
+        },
+      });
+
+      freeGPT4Process.on('error', (error) => {
+        console.warn('FreeGPT4 server launch failed', { message: error.message });
+      });
+
+      freeGPT4Process.on('exit', (code, signal) => {
+        if (freeGPT4Process) freeGPT4Process = null;
+        if (code !== 0 && code !== null) {
+          console.warn('FreeGPT4 server exited', { code, signal });
+        }
+      });
+
+      freeGPT4Process.unref();
+      console.info('Started FreeGPT4 local server', { port, model, scriptPath });
+    }
+
+    const ready = await waitForFreeGPT4Server(baseUrl);
+    if (!ready) {
+      console.warn('FreeGPT4 local server did not become ready before timeout', { baseUrl });
+    }
+    return ready;
+  })().finally(() => {
+    freeGPT4StartPromise = null;
+  });
+
+  return freeGPT4StartPromise;
 }
 
 function getVertexLocation() {
@@ -1699,12 +1838,22 @@ async function callFreeGPT4(payload) {
 
   const model = getFreeGPT4Model(payload.model);
   const providerPrompt = getProviderPrompt(payload);
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), Number(process.env.FREEGPT4_TIMEOUT_MS || 90000));
+  let timeout;
 
   try {
+    const serverReady = await ensureFreeGPT4ServerRunning(model);
+    if (!serverReady) {
+      const message = `FreeGPT4 local server is not ready at ${getFreeGPT4BaseUrl()}`;
+      if (payload.requireProviderSuccess) throw createError(503, message);
+      return null;
+    }
+
+    const controller = new AbortController();
+    timeout = setTimeout(() => controller.abort(), Number(process.env.FREEGPT4_TIMEOUT_MS || 90000));
     const url = new URL(getFreeGPT4BaseUrl());
     url.searchParams.set(process.env.FREEGPT4_KEYWORD || 'text', providerPrompt);
+    url.searchParams.set('model', model);
+    if (process.env.FREEGPT4_PROVIDER) url.searchParams.set('provider', process.env.FREEGPT4_PROVIDER);
     if (process.env.FREEGPT4_TOKEN) url.searchParams.set('token', process.env.FREEGPT4_TOKEN);
 
     const response = await fetch(url, {
@@ -1743,13 +1892,17 @@ async function callFreeGPT4(payload) {
       fallback: false,
     };
   } catch (error) {
+    if (payload.requireProviderSuccess) {
+      if (error.statusCode) throw error;
+      throw createError(502, `FreeGPT4 request failed: ${error.message}`);
+    }
     console.warn('FreeGPT4 request failed', {
       model,
       message: error.message,
     });
     return null;
   } finally {
-    clearTimeout(timeout);
+    if (timeout) clearTimeout(timeout);
   }
 }
 
@@ -1768,6 +1921,7 @@ async function generateCopy(payload) {
     || selectedModel === 'llama3'
     || selectedModel === 'llama3-8b';
   const isVertexClaudeModel = selectedModel.startsWith('claude-') || selectedModel.startsWith('anthropic/') || selectedModel.startsWith('vertex-claude/');
+  const isFreeGPT4Model = selectedModel.startsWith('freegpt4-');
   const providersBySelectedModel = isMaaSModel
     ? [callVertexMaaS]
     : isVertexEndpointModel
@@ -1778,7 +1932,7 @@ async function generateCopy(payload) {
     ? [callGroq]
     : isVertexClaudeModel
     ? [callVertexClaude]
-    : selectedModel.startsWith('freegpt4-')
+    : isFreeGPT4Model
       ? [callFreeGPT4]
     : selectedModel.startsWith('openrouter-')
     ? [callOpenRouter]
@@ -1810,6 +1964,8 @@ async function generateCopy(payload) {
     || isVertexProvider(forcedProvider)
     || forcedProvider === 'vertex-claude'
     || forcedProvider === 'anthropic'
+    || forcedProvider === 'freegpt4'
+    || isFreeGPT4Model
     || shouldUseVertexGeminiProvider
     || (!providersBySelectedModel && isVertexProvider(provider));
   const providerPayload = shouldRequireSelectedProvider

@@ -1,4 +1,5 @@
 import { api } from '@/lib/axios';
+import { scoreGeneratedContent } from '@/lib/contentQuality';
 import { formatContentModelDisplayName } from '@/lib/modelDisplayName';
 
 export interface ContentListParams {
@@ -41,8 +42,14 @@ export interface CreateContentPayload {
 
 export interface UpdateContentPayload {
   title?: string;
+  prompt?: string;
+  outputText?: string;
+  type?: string;
+  tone?: string;
+  language?: string;
   tags?: string[];
   isFavorite?: boolean;
+  isProjectCompleted?: boolean;
   projectId?: string | null;
 }
 
@@ -61,8 +68,11 @@ interface BackendContent {
   model?: string;
   tags?: string[];
   isFavorite?: boolean;
+  isProjectCompleted?: boolean;
   wordCount?: number;
   words?: number;
+  isDeleted?: boolean;
+  deletedAt?: string | null;
   projectId?: string | null;
   project?: string | null;
   createdAt?: string;
@@ -116,6 +126,9 @@ export interface UiContent {
   prompt: string;
   tags: string[];
   isFavorite: boolean;
+  isProjectCompleted: boolean;
+  isDeleted: boolean;
+  deletedAt: string | null;
   versions: ContentVersion[];
 }
 
@@ -166,7 +179,13 @@ function formatIndustry(value?: string) {
 function normalizeContent(item: BackendContent): UiContent {
   const content = item.outputText || item.content || '';
   const id = item.id || item._id || '';
-  const quality = 90;
+  const quality = scoreGeneratedContent({
+    text: content,
+    prompt: item.prompt,
+    type: item.type,
+    tone: item.tone,
+    industry: item.tags?.[0],
+  });
 
   return {
     id,
@@ -187,6 +206,9 @@ function normalizeContent(item: BackendContent): UiContent {
     prompt: item.prompt || '',
     tags: item.tags || [],
     isFavorite: Boolean(item.isFavorite),
+    isProjectCompleted: Boolean(item.isProjectCompleted),
+    isDeleted: Boolean(item.isDeleted),
+    deletedAt: item.deletedAt ? formatDate(item.deletedAt) : null,
     versions: [{ id: 1, label: 'Phiên bản 1', quality, selected: true }],
   };
 }
@@ -203,15 +225,15 @@ function getContentListLimit(limit?: number) {
   return Math.min(Math.max(Math.floor(value), 1), MAX_CONTENT_LIST_LIMIT);
 }
 
-async function fetchContentPage(params?: Omit<ContentListParams, 'fetchAll'>) {
-  const response = await api.get<ListResponse>('/contents', { params });
+async function fetchContentPage(path: string, params?: Omit<ContentListParams, 'fetchAll'>) {
+  const response = await api.get<ListResponse>(path, { params });
   return response.data.data || {};
 }
 
-async function fetchAllContentPages(params?: ContentListParams) {
+async function fetchAllContentPages(path: string, params?: ContentListParams) {
   const { fetchAll: _fetchAll, page: _page, limit, ...rest } = params || {};
   const pageSize = getContentListLimit(limit);
-  const firstPage = await fetchContentPage({ ...rest, page: 1, limit: pageSize });
+  const firstPage = await fetchContentPage(path, { ...rest, page: 1, limit: pageSize });
   const totalPages = firstPage.pagination?.totalPages || 1;
   const items = [...(firstPage.items || [])];
 
@@ -219,7 +241,7 @@ async function fetchAllContentPages(params?: ContentListParams) {
 
   const remainingPages = await Promise.all(
     Array.from({ length: totalPages - 1 }, (_, index) => (
-      fetchContentPage({ ...rest, page: index + 2, limit: pageSize })
+      fetchContentPage(path, { ...rest, page: index + 2, limit: pageSize })
     )),
   );
 
@@ -233,12 +255,23 @@ async function fetchAllContentPages(params?: ContentListParams) {
 export const contentService = {
   async list(params?: ContentListParams) {
     if (params?.fetchAll) {
-      const items = await fetchAllContentPages(params);
+      const items = await fetchAllContentPages('/contents', params);
       return items.map(normalizeContent);
     }
 
     const { fetchAll: _fetchAll, ...apiParams } = params || {};
-    const data = await fetchContentPage(apiParams);
+    const data = await fetchContentPage('/contents', apiParams);
+    return (data.items || []).map(normalizeContent);
+  },
+
+  async listTrash(params?: ContentListParams) {
+    if (params?.fetchAll) {
+      const items = await fetchAllContentPages('/contents/trash', params);
+      return items.map(normalizeContent);
+    }
+
+    const { fetchAll: _fetchAll, ...apiParams } = params || {};
+    const data = await fetchContentPage('/contents/trash', apiParams);
     return (data.items || []).map(normalizeContent);
   },
 
@@ -260,6 +293,15 @@ export const contentService = {
   async remove(id: string) {
     const response = await api.delete<{ data?: { item?: BackendContent } }>(`/contents/${id}`);
     return unwrapItem(response);
+  },
+
+  async restore(id: string) {
+    const response = await api.patch<{ data?: { item?: BackendContent } }>(`/contents/${id}/restore`);
+    return unwrapItem(response);
+  },
+
+  async permanentDelete(id: string) {
+    await api.delete(`/contents/${id}/permanent`);
   },
 
   async generate(payload: GenerateContentPayload): Promise<GenerateContentResult> {

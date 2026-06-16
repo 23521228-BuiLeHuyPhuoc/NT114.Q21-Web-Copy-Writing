@@ -11,6 +11,16 @@ const listContents = asyncHandler(async (req, res) => {
   });
 });
 
+const listTrash = asyncHandler(async (req, res) => {
+  const data = await contentService.listTrashContents(req.user._id, req.query);
+
+  return res.status(200).json({
+    success: true,
+    message: 'OK',
+    data,
+  });
+});
+
 const getContent = asyncHandler(async (req, res) => {
   const item = await contentService.getContent(req.user._id, req.params.id);
 
@@ -51,6 +61,25 @@ const deleteContent = asyncHandler(async (req, res) => {
   });
 });
 
+const restoreContent = asyncHandler(async (req, res) => {
+  const item = await contentService.restoreContent(req.user._id, req.params.id);
+
+  return res.status(200).json({
+    success: true,
+    message: 'Content restored',
+    data: { item },
+  });
+});
+
+const permanentDeleteContent = asyncHandler(async (req, res) => {
+  await contentService.permanentDeleteContent(req.user._id, req.params.id);
+
+  return res.status(200).json({
+    success: true,
+    message: 'Content permanently deleted',
+  });
+});
+
 const generateContent = asyncHandler(async (req, res) => {
   const data = await contentService.generateContent(req.user._id, req.body);
 
@@ -63,9 +92,12 @@ const generateContent = asyncHandler(async (req, res) => {
 
 module.exports = {
   listContents,
+  listTrash,
   getContent,
   createContent,
   updateContent,
   deleteContent,
+  restoreContent,
+  permanentDeleteContent,
   generateContent,
 };

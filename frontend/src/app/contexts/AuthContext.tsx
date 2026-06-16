@@ -28,6 +28,7 @@ export function useAuth() {
       isLoading: s.isLoading,
       login: s.login,
       register: s.register,
+      updateUser: s.updateUser,
       logout: s.logout,
     })),
   );

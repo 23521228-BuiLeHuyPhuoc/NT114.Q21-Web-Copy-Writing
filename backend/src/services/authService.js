@@ -236,6 +236,18 @@ async function resetPassword(accountType, email, otp, newPassword) {
   await record.save();
 }
 
+async function updateUserAvatar(userId, avatarUrl) {
+  const account = await AccountUser.findById(userId);
+  if (!account) {
+    throw createError(404, 'Account not found');
+  }
+
+  account.avatar = avatarUrl;
+  await account.save();
+
+  return serializeAccount(account, 'user');
+}
+
 module.exports = {
   serializeAccount,
   registerUser,
@@ -244,4 +256,5 @@ module.exports = {
   forgotPassword,
   verifyOtp,
   resetPassword,
+  updateUserAvatar,
 };

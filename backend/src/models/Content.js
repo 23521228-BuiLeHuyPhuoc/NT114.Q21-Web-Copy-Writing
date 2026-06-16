@@ -78,6 +78,11 @@ const contentSchema = new mongoose.Schema(
       default: false,
       index: true,
     },
+    isProjectCompleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
     wordCount: {
       type: Number,
       min: 0,

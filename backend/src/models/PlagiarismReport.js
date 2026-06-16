@@ -411,6 +411,10 @@ const plagiarismReportSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    ignoredPhrases: {
+      type: [{ type: String, trim: true, maxlength: 10000 }],
+      default: [],
+    },
     sourceConfig: {
       type: sourceConfigSchema,
       default: () => ({}),

@@ -71,6 +71,7 @@ interface AuthState {
   hydrate: () => Promise<void>;
   login: (email: string, password: string, accountType?: AccountType) => Promise<User>;
   register: (data: RegisterData) => Promise<void>;
+  updateUser: (user: User) => void;
   logout: () => Promise<void>;
 }
 
@@ -130,6 +131,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch (error) {
       throw new Error(getErrorMessage(error, 'Dang ky that bai'));
     }
+  },
+
+  updateUser: (user) => {
+    saveSession(user);
+    set({ user, isLoading: false });
   },
 
   logout: async () => {

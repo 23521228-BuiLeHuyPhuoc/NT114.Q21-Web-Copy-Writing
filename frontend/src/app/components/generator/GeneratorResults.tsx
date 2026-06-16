@@ -65,7 +65,7 @@ export function GeneratorResults({
 }: Props) {
   const [viewMode, setViewMode] = useState<'edit' | 'preview'>('preview');
   const activeResult = results[selectedResult] || '';
-  const activeQuality = qualityScores[selectedResult] || 90;
+  const activeQuality = Number.isFinite(qualityScores[selectedResult]) ? qualityScores[selectedResult] : 0;
 
   useEffect(() => {
     if (!isGenerating && results.length > 0) {
@@ -118,7 +118,7 @@ export function GeneratorResults({
                   }`}
                 >
                   Phiên bản {i + 1}
-                  {qualityScores[i] && <span className="ml-1.5 text-xs opacity-80">CL {qualityScores[i]}%</span>}
+                  {Number.isFinite(qualityScores[i]) && <span className="ml-1.5 text-xs opacity-80">CL {qualityScores[i]}%</span>}
                 </button>
               ))}
             </div>

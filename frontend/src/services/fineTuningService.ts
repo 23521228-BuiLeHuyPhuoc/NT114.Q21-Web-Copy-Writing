@@ -16,6 +16,7 @@ export interface FineTuneMetric {
   validationLoss: number;
   accuracy: number;
   tokenUsage: number;
+  source?: 'seed' | 'provider' | 'progress_estimate' | string;
   timestamp: string;
 }
 
@@ -67,11 +68,23 @@ export interface FineTuneModel {
   datasetId?: string;
   provider: FineTuneProvider | string;
   providerJobId: string;
+  providerModelId?: string;
+  alias?: string;
+  version?: number;
+  tuningEndpoint?: string;
+  tunedModelResourceId?: string;
+  deploymentOperationId?: string;
+  deploymentStatus?: string;
+  deploymentErrorMessage?: string;
+  deployedModelId?: string;
   fineTunedModelId: string;
   started: string;
   finished: string | null;
   startedAt?: string | null;
   finishedAt?: string | null;
+  deployedAt?: string | null;
+  deactivatedAt?: string | null;
+  updatedAt?: string | null;
   user: string;
   isActive?: boolean;
   registryModelId?: string;
@@ -233,19 +246,28 @@ interface BackendFineTunedModel {
   providerModelId?: string;
   provider?: string;
   providerJobId?: string;
+  tuningEndpoint?: string;
+  tunedModelResourceId?: string;
+  deploymentOperationId?: string;
+  deploymentStatus?: string;
+  deploymentErrorMessage?: string;
+  deployedModelId?: string;
   generatorReady?: boolean;
   generatorMessage?: string;
   baseModel?: string;
   industry?: string;
   version?: number;
   isActive?: boolean;
+  isDeprecated?: boolean;
   performance?: {
     accuracy?: number;
     loss?: number;
     sampleCount?: number;
   };
   deployedAt?: string;
+  deactivatedAt?: string;
   createdAt?: string;
+  updatedAt?: string;
 }
 
 interface BackendMetric {
@@ -256,6 +278,7 @@ interface BackendMetric {
   validationLoss?: number;
   accuracy?: number;
   tokenUsage?: number;
+  source?: string;
   timestamp?: string;
 }
 
@@ -438,11 +461,23 @@ function normalizeRegistryModel(item: BackendFineTunedModel): FineTuneModel {
     datasetUrl: '',
     provider: item.provider || (item.providerModelId?.startsWith('ft:') ? 'openai' : ''),
     providerJobId: item.providerJobId || '',
+    providerModelId: item.providerModelId || '',
+    alias: item.alias || '',
+    version: item.version || 1,
+    tuningEndpoint: item.tuningEndpoint || '',
+    tunedModelResourceId: item.tunedModelResourceId || '',
+    deploymentOperationId: item.deploymentOperationId || '',
+    deploymentStatus: item.deploymentStatus || '',
+    deploymentErrorMessage: item.deploymentErrorMessage || '',
+    deployedModelId: item.deployedModelId || '',
     fineTunedModelId: item.providerModelId || '',
     started: '-',
     finished: formatDateTime(item.deployedAt),
     user: '',
     isActive: Boolean(item.isActive),
+    deployedAt: item.deployedAt || null,
+    deactivatedAt: item.deactivatedAt || null,
+    updatedAt: item.updatedAt || null,
     generatorReady: item.generatorReady !== false,
     generatorMessage: item.generatorMessage || '',
   };
@@ -456,6 +491,7 @@ function normalizeMetric(item: BackendMetric): FineTuneMetric {
     validationLoss: Number(item.validationLoss || 0),
     accuracy: Number(item.accuracy || 0),
     tokenUsage: Number(item.tokenUsage || 0),
+    source: item.source || '',
     timestamp: item.timestamp || '',
   };
 }

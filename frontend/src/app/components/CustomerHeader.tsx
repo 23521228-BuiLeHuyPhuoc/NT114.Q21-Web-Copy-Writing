@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from '@/lib/next-router-compat';
 import { useAuth } from '@/app/contexts/AuthContext';
-import { Avatar, AvatarFallback } from '@/app/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/app/components/ui/avatar';
 import { Badge } from '@/app/components/ui/badge';
 import {
   Bell,
@@ -215,6 +215,7 @@ export function CustomerHeader() {
             className="flex items-center gap-2 h-9 pl-1 pr-2 rounded-lg hover:bg-muted transition-colors"
           >
             <Avatar className="w-7 h-7">
+              <AvatarImage src={user?.avatar || undefined} alt={user?.name || 'Avatar'} className="object-cover" />
               <AvatarFallback className="bg-gradient-to-br from-primary to-success text-primary-foreground text-xs font-bold">
                 {userInitial}
               </AvatarFallback>
@@ -228,6 +229,7 @@ export function CustomerHeader() {
               <div className="px-4 py-4 border-b bg-gradient-to-br from-primary/10 to-success/10">
                 <div className="flex items-center gap-3">
                   <Avatar className="w-10 h-10">
+                    <AvatarImage src={user?.avatar || undefined} alt={user?.name || 'Avatar'} className="object-cover" />
                     <AvatarFallback className="bg-gradient-to-br from-primary to-success text-primary-foreground font-bold">
                       {userInitial}
                     </AvatarFallback>

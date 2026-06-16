@@ -49,9 +49,77 @@ const copiedMatches = __test.findSegmentMatches(
   threshold,
   scoringOptions,
 );
+const copiedMatchesAfterIgnoringMatchedText = __test.findSegmentMatches(
+  copied,
+  { text: copiedSource, sourceTitle: 'Copied source', sourceType: 'web' },
+  threshold,
+  { ...scoringOptions, ignoredPhrases: [copiedMatches[0]?.matchedText || copied] },
+);
 
 assert(copiedScore.plagiarismScore >= threshold, 'copied text should exceed plagiarism threshold');
 assert(copiedMatches.length > 0, 'copied text should create highlighted plagiarism matches');
+assert.strictEqual(
+  copiedMatchesAfterIgnoringMatchedText.length,
+  0,
+  'pasting the detected matched text into ignored phrases should remove that plagiarism match on recheck',
+);
+
+const customPhraseInput = 'dai su van hoa doc dai su van hoa doc hoc sinh lop bon yeu thu vien xanh';
+const customPhraseSource = 'dai su van hoa doc dai su van hoa doc phat dong phong trao thieu nhi doc sach';
+const customPhraseBaseline = __test.scoreTexts(customPhraseInput, customPhraseSource, scoringOptions);
+const customPhraseIgnored = __test.scoreTexts(customPhraseInput, customPhraseSource, {
+  ...scoringOptions,
+  ignoredPhrases: ['dai su van hoa doc'],
+});
+const customPhraseIgnoredWithCommonOff = __test.scoreTexts(customPhraseInput, customPhraseSource, {
+  ignoreCommonPhrases: false,
+  ignoredPhrases: ['dai su van hoa doc'],
+});
+
+assert(
+  customPhraseIgnored.plagiarismScore < customPhraseBaseline.plagiarismScore,
+  'custom ignored phrase should reduce plagiarism score for repeated allowed phrases',
+);
+assert(
+  customPhraseIgnoredWithCommonOff.plagiarismScore < customPhraseBaseline.plagiarismScore,
+  'custom ignored phrase should still work when built-in common phrase ignore is disabled',
+);
+
+const longIgnoredSegment = 'alpha beta gamma delta epsilon zeta eta theta iota kappa lambda mu nu xi omicron pi rho sigma tau upsilon phi chi psi omega repeated allowed campaign paragraph with enough words to exceed one hundred and twenty characters';
+const longSegmentSource = `source intro ${longIgnoredSegment} source outro`;
+const longSegmentBaseline = __test.scoreTexts(longIgnoredSegment, longSegmentSource, scoringOptions);
+const longSegmentIgnored = __test.scoreTexts(longIgnoredSegment, longSegmentSource, {
+  ...scoringOptions,
+  ignoredPhrases: [longIgnoredSegment],
+});
+
+assert(longIgnoredSegment.length > 120, 'long ignored segment fixture should exceed the old limit');
+assert(longSegmentBaseline.plagiarismScore >= threshold, 'long copied segment should exceed plagiarism threshold before ignoring');
+assert.strictEqual(longSegmentIgnored.plagiarismScore, 0, 'long ignored segment should be removed from plagiarism scoring');
+
+const vietnameseIgnoredPhrase = 'đại sứ văn hóa đọc';
+const vietnameseMixedInput = 'Đại sứ văn hóa đọc giúp học sinh yêu thư viện xanh mỗi ngày.';
+const vietnameseMixedSource = 'Đại sứ văn hóa đọc giúp học sinh yêu thư viện xanh mỗi ngày.';
+const vietnameseMixedMatches = __test.findSegmentMatches(
+  vietnameseMixedInput,
+  { text: vietnameseMixedSource, sourceTitle: 'Vietnamese ignored display source', sourceType: 'web' },
+  threshold,
+  { ...scoringOptions, ignoredPhrases: [vietnameseIgnoredPhrase] },
+);
+
+assert(vietnameseMixedMatches.length > 0, 'remaining copied text should still create a match');
+assert(
+  !vietnameseMixedMatches[0].matchedText.toLowerCase().includes(vietnameseIgnoredPhrase),
+  'matched text should not display the ignored Vietnamese phrase as plagiarism',
+);
+const filteredSourcePreview = __test.removeIgnoredPhrasesForDisplay(
+  vietnameseMixedSource,
+  { ...scoringOptions, ignoredPhrases: [vietnameseIgnoredPhrase] },
+);
+assert(
+  !filteredSourcePreview.toLowerCase().includes(vietnameseIgnoredPhrase),
+  'source preview should not display the ignored Vietnamese phrase as plagiarism',
+);
 
 console.log(JSON.stringify({
   sameTopic: {
@@ -69,5 +137,21 @@ console.log(JSON.stringify({
     plagiarismScore: copiedScore.plagiarismScore,
     topicSimilarityScore: copiedScore.topicSimilarityScore,
     matches: copiedMatches.length,
+    matchesAfterIgnoringMatchedText: copiedMatchesAfterIgnoringMatchedText.length,
+  },
+  customIgnoredPhrase: {
+    baselinePlagiarismScore: customPhraseBaseline.plagiarismScore,
+    ignoredPlagiarismScore: customPhraseIgnored.plagiarismScore,
+    ignoredWithCommonOffPlagiarismScore: customPhraseIgnoredWithCommonOff.plagiarismScore,
+  },
+  longIgnoredSegment: {
+    length: longIgnoredSegment.length,
+    baselinePlagiarismScore: longSegmentBaseline.plagiarismScore,
+    ignoredPlagiarismScore: longSegmentIgnored.plagiarismScore,
+  },
+  vietnameseIgnoredDisplay: {
+    matches: vietnameseMixedMatches.length,
+    matchedText: vietnameseMixedMatches[0]?.matchedText || '',
+    sourcePreview: filteredSourcePreview,
   },
 }, null, 2));

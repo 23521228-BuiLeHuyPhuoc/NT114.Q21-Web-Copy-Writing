@@ -215,8 +215,10 @@ function serializeContent(content, modelDisplayNames = new Map()) {
     modelDisplayName: resolveModelDisplayName(modelUsed, modelDisplayNames),
     tags: content.tags || [],
     isFavorite: Boolean(content.isFavorite),
+    isProjectCompleted: Boolean(content.isProjectCompleted),
     wordCount: content.wordCount || 0,
     isDeleted: Boolean(content.isDeleted),
+    deletedAt: content.deletedAt,
     createdAt: content.createdAt,
     updatedAt: content.updatedAt,
   };
@@ -300,6 +302,40 @@ async function listContents(userId, query) {
   };
 }
 
+async function listTrashContents(userId, query) {
+  const page = Number(query.page || 1);
+  const limit = Number(query.limit || 10);
+  const filter = {
+    userId,
+    isDeleted: true,
+    ...buildSearchFilter(query.search),
+  };
+
+  if (query.projectId) {
+    filter.projectId = query.projectId;
+  }
+
+  const [totalItems, contents] = await Promise.all([
+    Content.countDocuments(filter),
+    Content.find(filter)
+      .sort({ deletedAt: -1, createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit),
+  ]);
+
+  const modelDisplayNames = await buildModelDisplayNameMap(contents.map(content => content.modelUsed), { userId });
+
+  return {
+    items: contents.map(content => serializeContent(content, modelDisplayNames)),
+    pagination: {
+      page,
+      limit,
+      totalItems,
+      totalPages: Math.max(1, Math.ceil(totalItems / limit)),
+    },
+  };
+}
+
 async function findContentOrThrow(userId, id) {
   const content = await Content.findOne({
     ...baseUserFilter(userId),
@@ -308,6 +344,20 @@ async function findContentOrThrow(userId, id) {
 
   if (!content) {
     throw createError(404, 'Content not found');
+  }
+
+  return content;
+}
+
+async function findDeletedContentOrThrow(userId, id) {
+  const content = await Content.findOne({
+    userId,
+    _id: id,
+    isDeleted: true,
+  });
+
+  if (!content) {
+    throw createError(404, 'Deleted content not found');
   }
 
   return content;
@@ -346,9 +396,25 @@ async function updateContent(userId, id, payload) {
   }
 
   if (payload.title !== undefined) content.title = payload.title;
+  if (payload.prompt !== undefined) content.prompt = payload.prompt;
+  if (payload.outputText !== undefined) content.outputText = payload.outputText;
+  if (payload.type !== undefined) content.type = payload.type;
+  if (payload.tone !== undefined) content.tone = payload.tone;
+  if (payload.language !== undefined) content.language = payload.language;
   if (payload.tags !== undefined) content.tags = payload.tags;
   if (payload.isFavorite !== undefined) content.isFavorite = payload.isFavorite;
-  if (payload.projectId !== undefined) content.projectId = payload.projectId || null;
+  if (payload.projectId !== undefined) {
+    const currentProjectId = toId(content.projectId);
+    const nextProjectId = payload.projectId || null;
+    content.projectId = nextProjectId;
+
+    if (currentProjectId !== toId(nextProjectId)) {
+      content.isProjectCompleted = false;
+    }
+  }
+  if (payload.isProjectCompleted !== undefined) {
+    content.isProjectCompleted = Boolean(payload.isProjectCompleted) && Boolean(content.projectId);
+  }
 
   await content.save();
   return serializeContentWithModelDisplayName(content, { userId });
@@ -360,6 +426,19 @@ async function softDeleteContent(userId, id) {
   content.deletedAt = new Date();
   await content.save();
   return serializeContentWithModelDisplayName(content, { userId });
+}
+
+async function restoreContent(userId, id) {
+  const content = await findDeletedContentOrThrow(userId, id);
+  content.isDeleted = false;
+  content.deletedAt = null;
+  await content.save();
+  return serializeContentWithModelDisplayName(content, { userId });
+}
+
+async function permanentDeleteContent(userId, id) {
+  const content = await findDeletedContentOrThrow(userId, id);
+  await Content.deleteOne({ _id: content._id, userId });
 }
 
 function buildTitleFromOutput(type, outputText) {
@@ -612,9 +691,12 @@ module.exports = {
   serializeContent,
   serializeUsage,
   listContents,
+  listTrashContents,
   getContent,
   createContent,
   updateContent,
   softDeleteContent,
+  restoreContent,
+  permanentDeleteContent,
   generateContent,
 };

@@ -3,11 +3,12 @@ import { Layout } from '@/app/components/Layout';
 import { Badge } from '@/app/components/ui/badge';
 import { Button } from '@/app/components/ui/button';
 import { Card } from '@/app/components/ui/card';
+import { Input } from '@/app/components/ui/input';
 import { Progress } from '@/app/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select';
 import { Switch } from '@/app/components/ui/switch';
 import { Textarea } from '@/app/components/ui/textarea';
-import { AlertTriangle, CheckCircle2, ChevronDown, ChevronUp, Clock, Database, FileCheck, FileText, RefreshCw, Search, Shield } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, ChevronDown, ChevronUp, Clock, Database, FileCheck, FileText, Plus, RefreshCw, Search, Shield, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 import { useCheckPlagiarism, usePlagiarismHistory } from '@/hooks/queries/usePlagiarism';
@@ -33,6 +34,9 @@ const SOURCE_LABELS: Record<keyof PlagiarismSourceConfig, string> = {
   uploads: 'File tải lên',
 };
 
+const MAX_IGNORED_PHRASES = 30;
+const MAX_IGNORED_PHRASE_LENGTH = 10000;
+
 const SCORE_BASIS_LABELS: Record<PlagiarismScoreBasis, string> = {
   exact: 'Trùng nguyên văn',
   phrase: 'Trùng cụm từ',
@@ -49,6 +53,30 @@ const SCORE_BASIS_DESCRIPTIONS: Record<PlagiarismScoreBasis, string> = {
 
 function countWords(text: string) {
   return text.trim().split(/\s+/).filter(Boolean).length;
+}
+
+function normalizeIgnoredPhrase(value: string) {
+  return value.replace(/\s+/g, ' ').trim().slice(0, MAX_IGNORED_PHRASE_LENGTH).trim();
+}
+
+function normalizeIgnoredPhrases(values: string[]) {
+  const seen = new Set<string>();
+  const phrases: string[] = [];
+
+  values.forEach((value) => {
+    if (phrases.length >= MAX_IGNORED_PHRASES) return;
+    const phrase = normalizeIgnoredPhrase(value);
+    const key = phrase.toLocaleLowerCase('vi-VN');
+    if (phrase.length < 2 || seen.has(key)) return;
+    seen.add(key);
+    phrases.push(phrase);
+  });
+
+  return phrases;
+}
+
+function splitIgnoredPhraseInput(value: string) {
+  return value.split(/[\n;,]+/).map(normalizeIgnoredPhrase).filter((phrase) => phrase.length >= 2);
 }
 
 function scoreClass(score: number, similarity = false) {
@@ -90,7 +118,10 @@ function basisDescription(value?: PlagiarismScoreBasis) {
 
 function errorMessage(error: unknown) {
   if (typeof error === 'object' && error && 'response' in error) {
-    return (error as { response?: { data?: { message?: string } } }).response?.data?.message || 'Không thể kiểm tra đạo văn';
+    const data = (error as { response?: { data?: { message?: string; errors?: Array<{ field?: string; message?: string }> } } }).response?.data;
+    const details = data?.errors?.map((item) => [item.field, item.message].filter(Boolean).join(': ')).filter(Boolean) || [];
+    if (details.length > 0) return `${data?.message || 'Validation error'}: ${details.slice(0, 2).join('; ')}`;
+    return data?.message || 'Không thể kiểm tra đạo văn';
   }
   return error instanceof Error ? error.message : 'Không thể kiểm tra đạo văn';
 }
@@ -103,6 +134,91 @@ function dateLabel(value?: string) {
 }
 
 type HighlightKind = 'plagiarism' | 'topic';
+type TextRange = { start: number; end: number };
+
+function normalizeToken(value: string) {
+  return value
+    .toLocaleLowerCase('vi-VN')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd');
+}
+
+function tokenizeWithRanges(value: string) {
+  const tokens: Array<TextRange & { value: string }> = [];
+  const regex = /[\p{L}\p{N}]+/gu;
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(value)) !== null) {
+    const token = normalizeToken(match[0]);
+    if (!token) continue;
+    tokens.push({ value: token, start: match.index, end: match.index + match[0].length });
+  }
+
+  return tokens;
+}
+
+function mergeRanges(ranges: TextRange[]) {
+  const sorted = ranges
+    .filter((range) => range.end > range.start)
+    .sort((left, right) => left.start - right.start || left.end - right.end);
+  const merged: TextRange[] = [];
+
+  sorted.forEach((range) => {
+    const last = merged[merged.length - 1];
+    if (!last || range.start > last.end) {
+      merged.push({ ...range });
+      return;
+    }
+    last.end = Math.max(last.end, range.end);
+  });
+
+  return merged;
+}
+
+function findIgnoredTextRanges(text: string, ignoredPhrases: string[]) {
+  if (!text || ignoredPhrases.length === 0) return [];
+
+  const textTokens = tokenizeWithRanges(text);
+  const ranges: TextRange[] = [];
+
+  ignoredPhrases.forEach((phrase) => {
+    const phraseTokens = tokenizeWithRanges(phrase).map((token) => token.value);
+    if (phraseTokens.length === 0 || phraseTokens.length > textTokens.length) return;
+
+    for (let index = 0; index <= textTokens.length - phraseTokens.length; index += 1) {
+      const isMatch = phraseTokens.every((token, tokenIndex) => textTokens[index + tokenIndex].value === token);
+      if (!isMatch) continue;
+      ranges.push({
+        start: textTokens[index].start,
+        end: textTokens[index + phraseTokens.length - 1].end,
+      });
+    }
+  });
+
+  return mergeRanges(ranges);
+}
+
+function subtractRanges<T extends TextRange>(range: T, exclusions: TextRange[]) {
+  let pieces: T[] = [{ ...range }];
+
+  exclusions.forEach((exclusion) => {
+    pieces = pieces.flatMap((piece) => {
+      if (!rangesOverlap(piece, exclusion)) return [piece];
+
+      const next: T[] = [];
+      if (exclusion.start > piece.start) {
+        next.push({ ...piece, end: Math.min(exclusion.start, piece.end) });
+      }
+      if (exclusion.end < piece.end) {
+        next.push({ ...piece, start: Math.max(exclusion.end, piece.start) });
+      }
+      return next.filter((item) => item.end > item.start);
+    });
+  });
+
+  return pieces;
+}
 
 function mergeMatchRanges(matches: PlagiarismMatch[], kind: HighlightKind) {
   const ranges = matches
@@ -139,12 +255,14 @@ function rangesOverlap(left: { start: number; end: number }, right: { start: num
   return left.start < right.end && right.start < left.end;
 }
 
-function buildHighlightRanges(matches: PlagiarismMatch[], topicMatches: PlagiarismMatch[]) {
+function buildHighlightRanges(text: string, matches: PlagiarismMatch[], topicMatches: PlagiarismMatch[], ignoredPhrases: string[]) {
   const plagiarismRanges = mergeMatchRanges(matches, 'plagiarism');
   const topicRanges = mergeMatchRanges(topicMatches, 'topic')
     .filter((topicRange) => !plagiarismRanges.some((plagiarismRange) => rangesOverlap(topicRange, plagiarismRange)));
+  const ignoredRanges = findIgnoredTextRanges(text, ignoredPhrases);
 
   return [...plagiarismRanges, ...topicRanges]
+    .flatMap((range) => subtractRanges(range, ignoredRanges))
     .sort((left, right) => left.start - right.start || right.end - left.end);
 }
 
@@ -154,8 +272,8 @@ function highlightClass(range: { kind: HighlightKind; score: number }) {
     : topicHighlightClass(range.score);
 }
 
-function renderHighlightedText(text: string, matches: PlagiarismMatch[], topicMatches: PlagiarismMatch[] = []) {
-  const ranges = buildHighlightRanges(matches, topicMatches);
+function renderHighlightedText(text: string, matches: PlagiarismMatch[], topicMatches: PlagiarismMatch[] = [], ignoredPhrases: string[] = []) {
+  const ranges = buildHighlightRanges(text, matches, topicMatches, ignoredPhrases);
   if (ranges.length === 0) return <span>{text}</span>;
 
   const nodes: ReactNode[] = [];
@@ -182,6 +300,47 @@ function renderHighlightedText(text: string, matches: PlagiarismMatch[], topicMa
   }
 
   return <>{nodes}</>;
+}
+
+function renderTextWithIgnoredPhrases(text: string, ignoredPhrases: string[]) {
+  const ranges = findIgnoredTextRanges(text, ignoredPhrases);
+  if (ranges.length === 0) return <>{text}</>;
+
+  const nodes: ReactNode[] = [];
+  let cursor = 0;
+
+  ranges.forEach((range, index) => {
+    if (range.start > cursor) {
+      nodes.push(<span key={`plain-${index}-${cursor}`}>{text.slice(cursor, range.start)}</span>);
+    }
+    cursor = range.end;
+  });
+
+  if (cursor < text.length) {
+    nodes.push(<span key={`plain-end-${cursor}`}>{text.slice(cursor)}</span>);
+  }
+
+  return nodes.length > 0 ? <>{nodes}</> : <span className='text-muted-foreground'>Đã bỏ qua toàn bộ cụm này.</span>;
+}
+
+function removeIgnoredPhrasesFromText(text: string, ignoredPhrases: string[]) {
+  const ranges = findIgnoredTextRanges(text, ignoredPhrases);
+  if (ranges.length === 0) return text;
+
+  let cursor = 0;
+  let output = '';
+  ranges.forEach((range) => {
+    output += text.slice(cursor, range.start);
+    output += ' ';
+    cursor = range.end;
+  });
+  output += text.slice(cursor);
+
+  return output.replace(/\s+([,.!?;:])/g, '$1').replace(/\s+/g, ' ').trim();
+}
+
+function hasDisplayableMatch(match: PlagiarismMatch, ignoredPhrases: string[]) {
+  return countWords(removeIgnoredPhrasesFromText(match.matchedText, ignoredPhrases)) >= 3;
 }
 
 function sourceTypeLabel(type: string) {
@@ -335,15 +494,50 @@ export function CustomerPlagiarismCheck() {
     uploads: false,
   });
   const [ignoreCommonPhrases, setIgnoreCommonPhrases] = useState(true);
+  const [ignoredPhraseInput, setIgnoredPhraseInput] = useState('');
+  const [ignoredPhrases, setIgnoredPhrases] = useState<string[]>([]);
   const { data: history } = usePlagiarismHistory({ limit: 5 });
   const check = useCheckPlagiarism();
   const words = countWords(text);
   const historyItems = history?.items || [];
   const selectedSourceCount = Object.values(sourceConfig).filter(Boolean).length;
   const conclusion = result ? plagiarismConclusion(result) : null;
+  const displayMatches = result ? result.matches.filter((match) => hasDisplayableMatch(match, result.ignoredPhrases)) : [];
+  const displayTopicMatches = result ? result.topicMatches.filter((match) => hasDisplayableMatch(match, result.ignoredPhrases)) : [];
 
   const updateSource = (key: keyof PlagiarismSourceConfig, value: boolean) => {
     setSourceConfig(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleAddIgnoredPhrases = () => {
+    const additions = splitIgnoredPhraseInput(ignoredPhraseInput);
+    if (additions.length === 0) {
+      toast.error('Nhập ít nhất một cụm từ 2 ký tự trở lên');
+      return;
+    }
+
+    const next = normalizeIgnoredPhrases([...ignoredPhrases, ...additions]);
+    if (next.length === ignoredPhrases.length) {
+      toast.error('Các cụm này đã có trong danh sách');
+      return;
+    }
+
+    if (next.length === MAX_IGNORED_PHRASES && ignoredPhrases.length + additions.length > MAX_IGNORED_PHRASES) {
+      toast.error(`Chỉ lưu tối đa ${MAX_IGNORED_PHRASES} cụm bỏ qua`);
+    }
+
+    setIgnoredPhrases(next);
+    setIgnoredPhraseInput('');
+  };
+
+  const updateIgnoredPhrase = (index: number, value: string) => {
+    setIgnoredPhrases(prev => prev.map((phrase, phraseIndex) => (
+      phraseIndex === index ? value.slice(0, MAX_IGNORED_PHRASE_LENGTH) : phrase
+    )));
+  };
+
+  const removeIgnoredPhrase = (index: number) => {
+    setIgnoredPhrases(prev => prev.filter((_, phraseIndex) => phraseIndex !== index));
   };
 
   const toggleSourceExpanded = (key: string) => {
@@ -352,6 +546,8 @@ export function CustomerPlagiarismCheck() {
 
   const handleCheck = () => {
     const trimmed = text.trim();
+    const pendingIgnoredPhrases = splitIgnoredPhraseInput(ignoredPhraseInput);
+    const normalizedIgnoredPhrases = normalizeIgnoredPhrases([...ignoredPhrases, ...pendingIgnoredPhrases]);
     if (trimmed.length < 20 || words < 5) {
       toast.error('Vui lòng nhập ít nhất 20 ký tự và 5 từ để kiểm tra');
       return;
@@ -360,12 +556,15 @@ export function CustomerPlagiarismCheck() {
       toast.error('Chọn ít nhất một nguồn để kiểm tra');
       return;
     }
+    setIgnoredPhrases(normalizedIgnoredPhrases);
+    setIgnoredPhraseInput('');
     check.mutate({
       text: trimmed,
       threshold: SENSITIVITY[sensitivity].threshold,
       includeReferences: sourceConfig.references,
       sensitivity,
       ignoreCommonPhrases,
+      ignoredPhrases: normalizedIgnoredPhrases,
       sources: sourceConfig,
     }, {
       onSuccess: (report) => { setResult(report); setExpandedSources({}); toast.success('Kiểm tra đạo văn hoàn tất'); },
@@ -413,6 +612,57 @@ export function CustomerPlagiarismCheck() {
                 <span>Bỏ qua cụm CTA/câu mẫu phổ biến</span>
                 <Switch checked={ignoreCommonPhrases} onCheckedChange={(value) => setIgnoreCommonPhrases(Boolean(value))} />
               </label>
+              <div className='mt-3 rounded-md border bg-background p-3'>
+                <div className='flex items-center justify-between gap-3'>
+                  <p className='text-sm font-medium text-foreground'>Đoạn/cụm bỏ qua tự thêm</p>
+                  <Badge variant='outline'>{ignoredPhrases.length}/{MAX_IGNORED_PHRASES}</Badge>
+                </div>
+                <Textarea
+                  className='mt-3 min-h-[72px] resize-none text-sm'
+                  placeholder='Mỗi dòng là một đoạn hoặc cụm cần bỏ qua. Ví dụ: đại sứ văn hóa đọc; ngày hội đọc sách'
+                  value={ignoredPhraseInput}
+                  onChange={(event) => setIgnoredPhraseInput(event.target.value)}
+                  disabled={ignoredPhrases.length >= MAX_IGNORED_PHRASES}
+                  maxLength={MAX_IGNORED_PHRASES * MAX_IGNORED_PHRASE_LENGTH}
+                />
+                <div className='mt-2 flex justify-end'>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    onClick={handleAddIgnoredPhrases}
+                    disabled={!ignoredPhraseInput.trim() || ignoredPhrases.length >= MAX_IGNORED_PHRASES}
+                  >
+                    <Plus className='mr-2 h-4 w-4' /> Thêm đoạn/cụm
+                  </Button>
+                </div>
+                {ignoredPhrases.length > 0 && (
+                  <div className='mt-3 max-h-[220px] space-y-2 overflow-auto pr-1'>
+                    {ignoredPhrases.map((phrase, index) => (
+                      <div key={`ignored-phrase-${index}`} className='flex items-center gap-2'>
+                        <Input
+                          value={phrase}
+                          onChange={(event) => updateIgnoredPhrase(index, event.target.value)}
+                          onBlur={() => setIgnoredPhrases(prev => normalizeIgnoredPhrases(prev))}
+                          maxLength={MAX_IGNORED_PHRASE_LENGTH}
+                          className='h-9 text-sm'
+                        />
+                        <Button
+                          type='button'
+                          variant='outline'
+                          size='icon'
+                          className='h-9 w-9 shrink-0'
+                          onClick={() => removeIgnoredPhrase(index)}
+                          aria-label={`Xóa cụm ${phrase}`}
+                          title='Xóa cụm'
+                        >
+                          <Trash2 className='h-4 w-4' />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
           <div className='mt-4 flex gap-3'>
@@ -442,9 +692,9 @@ export function CustomerPlagiarismCheck() {
               <div className='rounded-lg border p-4'><p className='text-xs uppercase text-muted-foreground'>Tính độc đáo</p><p className={`mt-2 text-3xl font-bold ${scoreClass(result.originalityScore)}`}>{result.originalityScore}%</p><Progress value={result.originalityScore} className='mt-3' /></div>
               <div className='rounded-lg border p-4'><p className='text-xs uppercase text-muted-foreground'>Nguy cơ đạo văn</p><p className={`mt-2 text-3xl font-bold ${scoreClass(result.analysis.plagiarismScore || result.similarityScore, true)}`}>{result.analysis.plagiarismScore || result.similarityScore}%</p><Progress value={result.analysis.plagiarismScore || result.similarityScore} className='mt-3' /></div>
               <div className='rounded-lg border p-4'><p className='text-xs uppercase text-muted-foreground'>Tương đồng chủ đề</p><p className={`mt-2 text-3xl font-bold ${scoreClass(result.analysis.topicSimilarityScore || result.analysis.wordOverlapScore, true)}`}>{result.analysis.topicSimilarityScore || result.analysis.wordOverlapScore}%</p><Progress value={result.analysis.topicSimilarityScore || result.analysis.wordOverlapScore} className='mt-3' /></div>
-              <div className='rounded-lg border p-4'><p className='text-xs uppercase text-muted-foreground'>Đoạn cần xem</p><p className='mt-2 text-3xl font-bold text-foreground'>{result.matches.length + result.topicMatches.length}</p><p className='mt-3 text-xs text-muted-foreground'>{result.matches.length} đạo văn · {result.topicMatches.length} tương đồng</p></div>
+              <div className='rounded-lg border p-4'><p className='text-xs uppercase text-muted-foreground'>Đoạn cần xem</p><p className='mt-2 text-3xl font-bold text-foreground'>{displayMatches.length + displayTopicMatches.length}</p><p className='mt-3 text-xs text-muted-foreground'>{displayMatches.length} đạo văn · {displayTopicMatches.length} tương đồng</p></div>
             </div>
-            <div className='mt-4 grid gap-3 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]'>
+            <div className='mt-4 grid gap-3'>
               <div className='min-w-0 rounded-lg border bg-muted/30 p-4'>
                 <h3 className='text-sm font-semibold text-foreground'>Căn cứ chấm điểm</h3>
                 <div className='mt-3 grid gap-2 sm:grid-cols-3'>
@@ -472,6 +722,7 @@ export function CustomerPlagiarismCheck() {
                   <p>Đã nạp {result.analysis.candidateCount} nguồn để so khớp; {result.analysis.sourceCount} nguồn có tín hiệu tương đồng: {result.analysis.checkedSourceTypes.map(sourceTypeLabel).join(', ') || 'không có nguồn'}.</p>
                   <p>Tìm thấy {result.analysis.matchCount || result.matches.length} đoạn vượt ngưỡng và {result.analysis.topicMatchCount || result.topicMatches.length} đoạn tương đồng chủ đề trong {result.wordCount} từ kiểm tra.</p>
                   <p>Chế độ: {SENSITIVITY[result.sensitivity].label}; {result.ignoreCommonPhrases ? 'đã bỏ qua cụm CTA/câu mẫu phổ biến' : 'không bỏ qua cụm phổ biến'}.</p>
+                  {result.ignoredPhrases.length > 0 && <p>Đoạn/cụm tự bỏ qua: {breakableShortList(result.ignoredPhrases, 3)}</p>}
                   {result.analysis.commonCrawl.enabled && (
                     <div className='space-y-2'>
                       <p>
@@ -530,11 +781,11 @@ export function CustomerPlagiarismCheck() {
               <span className='inline-flex items-center gap-1'><span className='h-2.5 w-2.5 rounded bg-red-200 ring-1 ring-red-300' /> Nghi đạo văn</span>
               <span className='inline-flex items-center gap-1'><span className='h-2.5 w-2.5 rounded bg-amber-200 ring-1 ring-amber-300' /> Tương đồng chủ đề/từ khóa</span>
             </div>
-            <div className='max-h-[300px] overflow-auto whitespace-pre-wrap rounded-lg border bg-background p-4 text-sm leading-7 text-foreground'>{renderHighlightedText(result.checkText, result.matches, result.topicMatches)}</div>
-            {result.matches.length > 0 ? (
+            <div className='max-h-[300px] overflow-auto whitespace-pre-wrap rounded-lg border bg-background p-4 text-sm leading-7 text-foreground'>{renderHighlightedText(result.checkText, displayMatches, displayTopicMatches, result.ignoredPhrases)}</div>
+            {displayMatches.length > 0 ? (
               <div className='mt-4 space-y-3'>
                 <h3 className='text-sm font-semibold text-foreground'>Đoạn có khả năng đạo văn</h3>
-                {result.matches.map((match, index) => (
+                {displayMatches.map((match, index) => (
                   <div key={`${match.start}-${match.end}-${index}`} className='rounded-lg border border-red-100 bg-red-50/50 p-4'>
                     <div className='flex flex-wrap items-center justify-between gap-2'>
                       <div>
@@ -543,7 +794,7 @@ export function CustomerPlagiarismCheck() {
                       </div>
                       <Badge className={scoreBadgeClass(match.score)}>{match.score}%</Badge>
                     </div>
-                    <p className='mt-3 whitespace-pre-wrap rounded-md bg-background p-3 text-sm text-foreground'>{match.matchedText}</p>
+                    <p className='mt-3 whitespace-pre-wrap rounded-md bg-background p-3 text-sm text-foreground'>{renderTextWithIgnoredPhrases(match.matchedText, result.ignoredPhrases)}</p>
                     <div className='mt-3 grid gap-2 sm:grid-cols-3'>
                       <div className='rounded-md border bg-background p-2 text-xs'><span className='text-muted-foreground'>Exact</span><p className='font-semibold text-foreground'>{match.exactMatchScore}%</p></div>
                       <div className='rounded-md border bg-background p-2 text-xs'><span className='text-muted-foreground'>N-gram</span><p className='font-semibold text-foreground'>{match.phraseOverlapScore}%</p></div>
@@ -552,7 +803,7 @@ export function CustomerPlagiarismCheck() {
                     <p className='mt-3 text-xs text-muted-foreground'>Trùng {ratioLabel(match.matchedWords, match.totalWords, 'từ')} và {ratioLabel(match.matchedPhrases, match.totalPhrases, 'cụm')} {match.phraseSize ? `(${match.phraseSize} từ/cụm)` : ''}.</p>
                     <div className='mt-3 rounded-md border bg-background p-3'>
                       <p className='text-xs font-semibold text-muted-foreground'>Nguồn gần nhất: {match.sourceTitle || sourceTypeLabel(match.sourceType)}</p>
-                      <p className='mt-1 line-clamp-3 text-sm italic text-muted-foreground'>{match.sourceText}</p>
+                      <p className='mt-1 line-clamp-3 text-sm italic text-muted-foreground'>{renderTextWithIgnoredPhrases(match.sourceText, result.ignoredPhrases)}</p>
                     </div>
                   </div>
                 ))}
@@ -560,10 +811,10 @@ export function CustomerPlagiarismCheck() {
             ) : (
               <p className='mt-3 rounded-lg border border-dashed p-3 text-sm text-muted-foreground'>Không có đoạn nào vượt ngưỡng để bôi đỏ.</p>
             )}
-            {result.topicMatches.length > 0 && (
+            {displayTopicMatches.length > 0 && (
               <div className='mt-4 space-y-3'>
                 <h3 className='text-sm font-semibold text-foreground'>Đoạn tương đồng chủ đề/từ khóa</h3>
-                {result.topicMatches.map((match, index) => (
+                {displayTopicMatches.map((match, index) => (
                   <div key={`topic-${match.start}-${match.end}-${index}`} className='rounded-lg border border-amber-100 bg-amber-50/60 p-4'>
                     <div className='flex flex-wrap items-center justify-between gap-2'>
                       <div>
@@ -572,7 +823,7 @@ export function CustomerPlagiarismCheck() {
                       </div>
                       <Badge className={scoreBadgeClass(match.score)}>{match.score}%</Badge>
                     </div>
-                    <p className='mt-3 whitespace-pre-wrap rounded-md bg-background p-3 text-sm text-foreground'>{match.matchedText}</p>
+                    <p className='mt-3 whitespace-pre-wrap rounded-md bg-background p-3 text-sm text-foreground'>{renderTextWithIgnoredPhrases(match.matchedText, result.ignoredPhrases)}</p>
                     <div className='mt-3 grid gap-2 sm:grid-cols-3'>
                       <div className='rounded-md border bg-background p-2 text-xs'><span className='text-muted-foreground'>Exact</span><p className='font-semibold text-foreground'>{match.exactMatchScore}%</p></div>
                       <div className='rounded-md border bg-background p-2 text-xs'><span className='text-muted-foreground'>N-gram</span><p className='font-semibold text-foreground'>{match.phraseOverlapScore}%</p></div>
@@ -581,7 +832,7 @@ export function CustomerPlagiarismCheck() {
                     <p className='mt-3 text-xs text-muted-foreground'>Trùng {ratioLabel(match.matchedWords, match.totalWords, 'từ')} và {ratioLabel(match.matchedPhrases, match.totalPhrases, 'cụm')} trong đoạn so khớp.</p>
                     <div className='mt-3 rounded-md border bg-background p-3'>
                       <p className='text-xs font-semibold text-muted-foreground'>Nguồn gần nhất: {match.sourceTitle || sourceTypeLabel(match.sourceType)}</p>
-                      <p className='mt-1 line-clamp-3 text-sm italic text-muted-foreground'>{match.sourceText}</p>
+                      <p className='mt-1 line-clamp-3 text-sm italic text-muted-foreground'>{renderTextWithIgnoredPhrases(match.sourceText, result.ignoredPhrases)}</p>
                     </div>
                   </div>
                 ))}
@@ -611,7 +862,7 @@ export function CustomerPlagiarismCheck() {
                     <Badge className={scoreBadgeClass(source.similarity)}>{source.similarity}%</Badge>
                   </div>
                   <div className='rounded-md border bg-background p-3'>
-                    <p className={`whitespace-pre-wrap text-sm text-muted-foreground ${expanded ? 'max-h-[360px] overflow-auto' : 'line-clamp-3 italic'}`}>{sourceText}</p>
+                    <p className={`whitespace-pre-wrap text-sm text-muted-foreground ${expanded ? 'max-h-[360px] overflow-auto' : 'line-clamp-3 italic'}`}>{renderTextWithIgnoredPhrases(sourceText, result.ignoredPhrases)}</p>
                     {canExpand && (
                       <Button type='button' variant='ghost' size='sm' className='mt-2 h-8 px-2 text-xs' onClick={() => toggleSourceExpanded(sourceKey)}>
                         {expanded ? <ChevronUp className='mr-1 h-3.5 w-3.5' /> : <ChevronDown className='mr-1 h-3.5 w-3.5' />}

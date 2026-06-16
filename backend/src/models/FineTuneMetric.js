@@ -40,6 +40,12 @@ const fineTuneMetricSchema = new mongoose.Schema(
       min: 0,
       default: 0,
     },
+    source: {
+      type: String,
+      enum: ['seed', 'provider', 'progress_estimate', ''],
+      default: '',
+      trim: true,
+    },
     timestamp: {
       type: Date,
       default: Date.now,

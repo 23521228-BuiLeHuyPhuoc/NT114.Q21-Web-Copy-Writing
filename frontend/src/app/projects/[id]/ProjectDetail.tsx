@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type MouseEvent } from 'react';
 import { Layout } from '@/app/components/Layout';
 import { Card } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
@@ -12,8 +12,8 @@ import {
   Plus,
   FileText,
   BarChart3,
-  Star,
-  Clock,
+  CheckCircle2,
+  Circle,
   Search,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -39,24 +39,24 @@ export function CustomerProjectDetail() {
   const [showAddContent, setShowAddContent] = useState(false);
   const [contentSearch, setContentSearch] = useState('');
   const { data: project, isLoading: isProjectLoading } = useProject(id);
-  const { data: contents = [], isLoading: isContentsLoading } = useContents({ projectId: id, limit: 50 });
-  const { data: allContents = [], isLoading: isAllContentsLoading } = useContents({ limit: 100 });
+  const { data: contents = [], isLoading: isContentsLoading } = useContents({ projectId: id, fetchAll: true, limit: 100 });
+  const { data: allContents = [], isLoading: isAllContentsLoading } = useContents({ fetchAll: true, limit: 100 });
   const updateContent = useUpdateContent();
 
   const stats = useMemo(() => {
     const total = contents.length;
-    const published = contents.filter(item => item.status === 'published').length;
-    const draft = total - published;
+    const completed = contents.filter(item => item.isProjectCompleted).length;
+    const inProgress = Math.max(total - completed, 0);
     const avgQuality = total
       ? Math.round(contents.reduce((sum, item) => sum + (item.quality || 0), 0) / total)
       : 0;
 
     return {
       total,
-      published,
-      draft,
+      completed,
+      inProgress,
       avgQuality,
-      progress: total ? Math.round((published / total) * 100) : 0,
+      progress: total > 0 ? Math.round((completed / total) * 100) : 0,
     };
   }, [contents]);
 
@@ -91,6 +91,24 @@ export function CustomerProjectDetail() {
       toast.success('Đã thêm nội dung vào dự án');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Không thể thêm nội dung vào dự án';
+      toast.error(message);
+    }
+  };
+
+  const handleToggleCompletion = async (
+    event: MouseEvent<HTMLButtonElement>,
+    contentId: string,
+    nextCompleted: boolean,
+  ) => {
+    event.stopPropagation();
+    try {
+      await updateContent.mutateAsync({
+        id: contentId,
+        payload: { isProjectCompleted: nextCompleted },
+      });
+      toast.success(nextCompleted ? 'Đã đánh dấu hoàn thành' : 'Đã chuyển về chưa hoàn thành');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Không thể cập nhật trạng thái nội dung';
       toast.error(message);
     }
   };
@@ -147,8 +165,8 @@ export function CustomerProjectDetail() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {[
             { label: 'Tổng nội dung', value: stats.total, icon: FileText, color: 'text-primary bg-primary/5' },
-            { label: 'Đã xuất bản', value: stats.published, icon: Star, color: 'text-primary bg-primary/5' },
-            { label: 'Bản nháp', value: stats.draft, icon: Clock, color: 'text-amber-600 bg-warning/10' },
+            { label: 'Hoàn thành', value: stats.completed, icon: CheckCircle2, color: 'text-emerald-600 bg-emerald-50' },
+            { label: 'Chưa hoàn thành', value: stats.inProgress, icon: Circle, color: 'text-amber-600 bg-warning/10' },
             { label: 'Chất lượng TB', value: `${stats.avgQuality}%`, icon: BarChart3, color: 'text-emerald-600 bg-emerald-50' },
           ].map((s, i) => {
             const Icon = s.icon;
@@ -165,12 +183,18 @@ export function CustomerProjectDetail() {
         </div>
 
         <Card className="p-5 mb-6 bg-gradient-to-r from-green-50 to-emerald-50 border-primary/20">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-semibold text-foreground">Tiến độ dự án</span>
-            <span className="text-sm text-primary font-semibold">{stats.progress}%</span>
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-semibold text-foreground">Tiến độ nội dung</span>
+              <span className="text-sm text-primary font-semibold">{stats.progress}%</span>
+            </div>
+            <Progress value={stats.progress} className="h-2" />
+            <p className="text-xs text-muted-foreground mt-2">
+              {stats.total > 0
+                ? `${stats.completed}/${stats.total} nội dung đã hoàn thành`
+                : 'Thêm nội dung vào dự án để bắt đầu theo dõi tiến độ.'}
+            </p>
           </div>
-          <Progress value={stats.progress} className="h-2" />
-          <p className="text-xs text-muted-foreground mt-2">{stats.published}/{stats.total} nội dung đã hoàn thành</p>
         </Card>
 
         <h2 className="text-lg font-bold text-foreground mb-4">Nội dung trong dự án</h2>
@@ -183,7 +207,7 @@ export function CustomerProjectDetail() {
         <div className="space-y-3">
           {contentPagination.pageItems.map(item => (
             <Card key={item.id} className="p-4 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`/contents/${item.id}`)}>
-              <div className="flex items-center gap-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
                 <div className="bg-primary/10 p-2 rounded-lg flex-shrink-0">
                   <FileText className="w-4 h-4 text-primary" />
                 </div>
@@ -195,10 +219,19 @@ export function CustomerProjectDetail() {
                     <span className="text-xs text-muted-foreground/80">{item.createdAt}</span>
                   </div>
                 </div>
-                <Badge className={`border-0 text-xs ${item.status === 'published' ? 'bg-primary/10 text-primary' : 'bg-warning/15 text-amber-800'}`}>
-                  {item.status === 'published' ? 'Xuất bản' : 'Nháp'}
-                </Badge>
-                <span className="text-sm font-semibold text-primary">{item.quality}%</span>
+                <div className="flex shrink-0 items-center justify-between gap-3 sm:justify-end">
+                  <Button
+                    size="sm"
+                    variant={item.isProjectCompleted ? 'default' : 'outline'}
+                    className={item.isProjectCompleted ? 'bg-emerald-600 text-white hover:bg-emerald-700' : ''}
+                    disabled={updateContent.isPending}
+                    onClick={event => handleToggleCompletion(event, item.id, !item.isProjectCompleted)}
+                  >
+                    {item.isProjectCompleted ? <CheckCircle2 className="w-4 h-4" /> : <Circle className="w-4 h-4" />}
+                    {item.isProjectCompleted ? 'Hoàn thành' : 'Chưa hoàn thành'}
+                  </Button>
+                  <span className="min-w-10 text-right text-sm font-semibold text-primary">{item.quality}%</span>
+                </div>
               </div>
             </Card>
           ))}

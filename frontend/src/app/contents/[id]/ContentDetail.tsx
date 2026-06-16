@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from '@/lib/next-router-compat';
 import {
   ArrowLeft,
@@ -7,17 +8,21 @@ import {
   Edit2,
   FileText,
   RefreshCw,
+  Save,
   Share2,
   Star,
   Trash2,
+  X,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 import { Layout } from '@/app/components/Layout';
 import { Card } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
+import { Input } from '@/app/components/ui/input';
+import { Textarea } from '@/app/components/ui/textarea';
 import { Badge } from '@/app/components/ui/badge';
-import { useContent, useDeleteContent } from '@/hooks/queries/useContents';
+import { useContent, useDeleteContent, useUpdateContent } from '@/hooks/queries/useContents';
 import { Markdown } from '@/app/components/common/Markdown';
 
 export function CustomerContentDetail() {
@@ -25,13 +30,81 @@ export function CustomerContentDetail() {
   const navigate = useNavigate();
   const { data: content, isError, isLoading } = useContent(id ?? '');
   const deleteContent = useDeleteContent();
+  const updateContent = useUpdateContent();
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editContent, setEditContent] = useState('');
+
+  useEffect(() => {
+    if (!content || isEditing) return;
+    setEditTitle(content.title);
+    setEditContent(content.content);
+  }, [content, isEditing]);
+
+  const handleStartEdit = () => {
+    if (!content) return;
+    setEditTitle(content.title);
+    setEditContent(content.content);
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    if (content) {
+      setEditTitle(content.title);
+      setEditContent(content.content);
+    }
+    setIsEditing(false);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!id) return;
+
+    const title = editTitle.trim();
+    const outputText = editContent.trim();
+
+    if (!title || !outputText) {
+      toast.error('Tiêu đề và nội dung không được để trống');
+      return;
+    }
+
+    try {
+      await updateContent.mutateAsync({
+        id,
+        payload: { title, outputText },
+      });
+      setIsEditing(false);
+      toast.success('Đã lưu chỉnh sửa!');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Không thể lưu chỉnh sửa';
+      toast.error(message);
+    }
+  };
+
+  const handleShareFacebook = () => {
+    if (!content || typeof window === 'undefined') return;
+
+    const shareUrl = new URL('https://www.facebook.com/sharer/sharer.php');
+    shareUrl.searchParams.set('u', window.location.href);
+    shareUrl.searchParams.set('quote', `${content.title}\n\n${content.content.slice(0, 280)}`);
+
+    const opened = window.open(shareUrl.toString(), 'facebook-share', 'width=640,height=720');
+    if (opened) {
+      opened.opener = null;
+      opened.focus();
+      toast.success('Đã mở Facebook để chia sẻ');
+      return;
+    }
+
+    navigator.clipboard.writeText(window.location.href);
+    toast.error('Trình duyệt đã chặn cửa sổ chia sẻ. Đã sao chép liên kết.');
+  };
 
   const handleDelete = async () => {
     if (!id) return;
 
     try {
       await deleteContent.mutateAsync(id);
-      toast.success('Đã xóa nội dung!');
+      toast.success('Đã đưa nội dung vào thùng rác!');
       navigate('/contents');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Không thể xóa nội dung';
@@ -79,15 +152,29 @@ export function CustomerContentDetail() {
               <Badge className="bg-muted text-foreground/70 border-0">{content.type}</Badge>
               <Badge className="max-w-full whitespace-normal bg-emerald-100 text-left text-emerald-700 border-0 leading-tight" title={content.model}>{content.model}</Badge>
             </div>
-            <h1 className="text-2xl font-bold text-foreground">{content.title}</h1>
+            {isEditing ? (
+              <Input
+                value={editTitle}
+                onChange={event => setEditTitle(event.target.value)}
+                className="h-11 max-w-3xl text-xl font-bold"
+                maxLength={160}
+              />
+            ) : (
+              <h1 className="text-2xl font-bold text-foreground">{content.title}</h1>
+            )}
             <p className="text-sm text-muted-foreground mt-1">
               <Calendar className="w-3 h-3 inline mr-1" />{content.createdAt} · {content.industry}
               {content.project ? ` · ${content.project}` : ''}
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm"><Edit2 className="w-4 h-4 mr-1.5" /> Chỉnh sửa</Button>
-            <Button variant="outline" size="sm"><Share2 className="w-4 h-4 mr-1.5" /> Chia sẻ</Button>
+            <Button variant="outline" size="sm" onClick={isEditing ? handleCancelEdit : handleStartEdit}>
+              {isEditing ? <X className="w-4 h-4 mr-1.5" /> : <Edit2 className="w-4 h-4 mr-1.5" />}
+              {isEditing ? 'Hủy' : 'Chỉnh sửa'}
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleShareFacebook}>
+              <Share2 className="w-4 h-4 mr-1.5" /> Facebook
+            </Button>
             <Button
               variant="outline"
               size="sm"
@@ -106,15 +193,30 @@ export function CustomerContentDetail() {
               <div className="flex items-center justify-between mb-4 gap-3">
                 <h3 className="font-semibold text-foreground">Nội dung</h3>
                 <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(content.content); toast.success('Đã sao chép!'); }}>
-                    <Copy className="w-3.5 h-3.5 mr-1.5" /> Sao chép
-                  </Button>
+                  {isEditing ? (
+                    <Button size="sm" onClick={handleSaveEdit} disabled={updateContent.isPending}>
+                      <Save className="w-3.5 h-3.5 mr-1.5" /> Lưu
+                    </Button>
+                  ) : (
+                    <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(content.content); toast.success('Đã sao chép!'); }}>
+                      <Copy className="w-3.5 h-3.5 mr-1.5" /> Sao chép
+                    </Button>
+                  )}
                   <Button size="sm" variant="outline"><Download className="w-3.5 h-3.5 mr-1.5" /> Tải xuống</Button>
                 </div>
               </div>
-              <div className="bg-surface-muted rounded-xl p-5 border text-sm text-foreground leading-relaxed">
-                <Markdown>{content.content}</Markdown>
-              </div>
+              {isEditing ? (
+                <Textarea
+                  value={editContent}
+                  onChange={event => setEditContent(event.target.value)}
+                  className="min-h-[360px] resize-y text-sm leading-relaxed"
+                  maxLength={60000}
+                />
+              ) : (
+                <div className="bg-surface-muted rounded-xl p-5 border text-sm text-foreground leading-relaxed">
+                  <Markdown>{content.content}</Markdown>
+                </div>
+              )}
             </Card>
 
             <Card className="p-6">

@@ -54,8 +54,14 @@ const createContentSchema = Joi.object({
 
 const updateContentSchema = Joi.object({
   title: Joi.string().trim().min(1).max(160),
+  prompt: Joi.string().trim().min(1).max(6000),
+  outputText: Joi.string().trim().min(1).max(60000),
+  type: Joi.string().trim().min(1).max(60),
+  tone: Joi.string().trim().max(60).allow(''),
+  language: Joi.string().trim().max(40).allow(''),
   tags: optionalTags,
   isFavorite: Joi.boolean(),
+  isProjectCompleted: Joi.boolean(),
   projectId: optionalObjectId,
 }).min(1);
 

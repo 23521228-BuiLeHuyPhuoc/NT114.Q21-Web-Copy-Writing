@@ -21,6 +21,7 @@ export interface CheckPlagiarismPayload {
   includeReferences?: boolean;
   sensitivity?: PlagiarismSensitivity;
   ignoreCommonPhrases?: boolean;
+  ignoredPhrases?: string[];
   sources?: Partial<PlagiarismSourceConfig>;
 }
 
@@ -166,6 +167,7 @@ export interface PlagiarismReport {
   threshold: number;
   sensitivity: PlagiarismSensitivity;
   ignoreCommonPhrases: boolean;
+  ignoredPhrases: string[];
   sourceConfig: PlagiarismSourceConfig;
   analysis: PlagiarismAnalysis;
   summary: string;
@@ -255,6 +257,7 @@ interface BackendPlagiarismReport {
   threshold?: number;
   sensitivity?: PlagiarismSensitivity;
   ignoreCommonPhrases?: boolean;
+  ignoredPhrases?: string[];
   sourceConfig?: Partial<PlagiarismSourceConfig>;
   analysis?: Partial<PlagiarismAnalysis>;
   summary?: string;
@@ -416,6 +419,7 @@ function normalizeReport(report: BackendPlagiarismReport): PlagiarismReport {
     threshold: asNumber(report.threshold, 35),
     sensitivity: report.sensitivity || 'balanced',
     ignoreCommonPhrases: report.ignoreCommonPhrases !== false,
+    ignoredPhrases: (report.ignoredPhrases || []).filter(Boolean),
     sourceConfig,
     analysis,
     summary: report.summary || '',

@@ -29,6 +29,7 @@ import { useCreateContent, useGenerateContent } from '@/hooks/queries/useContent
 import { useProjects } from '@/hooks/queries/useProjects';
 import { useTemplates } from '@/hooks/queries/useTemplates';
 import { useFineTuningModels } from '@/hooks/queries/useFineTuning';
+import { scoreGeneratedContent } from '@/lib/contentQuality';
 import { formatGeneratedCopyForTinyMce, htmlToPlainText } from '@/lib/richText';
 
 const VERSION_ICON_PREFIX = String.raw`(?:[\u2600-\u27BF\u{1F300}-\u{1FAFF}]\uFE0F?\s*)*`;
@@ -85,6 +86,10 @@ const FINE_TUNED_MODEL_PREFIX = 'fine-tuned:';
 
 function getFineTunedRegistryModelId(modelId: string) {
   return modelId.startsWith(FINE_TUNED_MODEL_PREFIX) ? modelId.slice(FINE_TUNED_MODEL_PREFIX.length) : '';
+}
+
+function buildQualityKeywords(...values: string[]) {
+  return values.map(value => value.trim()).filter(Boolean).join(' ');
 }
 
 function buildTitleFromText(type: string, text: string) {
@@ -361,8 +366,10 @@ export function CustomerGenerator() {
     const startTime = Date.now();
 
     try {
+      const prompt = buildPrompt();
+      const qualityKeywords = buildQualityKeywords(productName, keywords, targetAudience, additionalContext);
       const result = await generateContent.mutateAsync({
-        prompt: buildPrompt(),
+        prompt,
         type: copyType,
         industry,
         tone,
@@ -380,7 +387,15 @@ export function CustomerGenerator() {
       const splitResults = splitGeneratedVariations(result.content.content, variations)
         .map(formatGeneratedCopyForTinyMce);
       setResults(splitResults);
-      setQualityScores(splitResults.map((_, index) => Math.max(86, result.content.quality - index)));
+      setQualityScores(splitResults.map((text) => scoreGeneratedContent({
+        text,
+        prompt,
+        keywords: qualityKeywords,
+        type: copyType,
+        tone,
+        industry,
+        length: contentLength,
+      })));
       setSelectedResult(0);
       setTokensUsed(result.usage?.totalTokens || result.content.tokens || 0);
       setLatency(Math.round((Date.now() - startTime) / 100) / 10);
@@ -464,7 +479,19 @@ export function CustomerGenerator() {
   };
 
   const handleResultChange = (i: number, value: string) => {
+    const qualityKeywords = buildQualityKeywords(productName, keywords, targetAudience, additionalContext);
     setResults(prev => prev.map((item, index) => (index === i ? value : item)));
+    setQualityScores(prev => prev.map((score, index) => (index === i
+      ? scoreGeneratedContent({
+        text: value,
+        prompt: buildPrompt(),
+        keywords: qualityKeywords,
+        type: copyType,
+        tone,
+        industry,
+        length: contentLength,
+      })
+      : score)));
   };
 
   const IndustryIcon = selectedIndustry?.icon ?? ShoppingBag;

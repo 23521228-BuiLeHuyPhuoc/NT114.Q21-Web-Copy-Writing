@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useRef, useState, type ChangeEvent } from 'react';
 import { Layout } from '@/app/components/Layout';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { Card } from '@/app/components/ui/card';
-import { Avatar, AvatarFallback } from '@/app/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/app/components/ui/avatar';
 import { Badge } from '@/app/components/ui/badge';
 import { Button } from '@/app/components/ui/button';
 import { Input } from '@/app/components/ui/input';
@@ -12,13 +12,24 @@ import { Switch } from '@/app/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select';
 import {
   Mail, User as UserIcon, Calendar, Award, Edit2, Save,
-  Lock, Bell, Globe, Shield, Crown, BarChart3, Brain, Key
+  Lock, Bell, Globe, Shield, Crown, BarChart3, Brain, Key, Camera, Loader2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { api } from '@/lib/axios';
+import type { User } from '@/types/auth';
+
+interface AvatarUploadResponse {
+  data?: {
+    user?: User;
+    avatar?: string;
+  };
+}
 
 export function CustomerProfile() {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
+  const avatarInputRef = useRef<HTMLInputElement>(null);
   const [editing, setEditing] = useState(false);
+  const [avatarUploading, setAvatarUploading] = useState(false);
   const [name, setName] = useState(user?.name ?? '');
   const [phone, setPhone] = useState('0901 234 567');
   const [company, setCompany] = useState('CopyPro Solutions');
@@ -26,10 +37,55 @@ export function CustomerProfile() {
   const [defaultModel, setDefaultModel] = useState('gpt4o');
   const [defaultTone, setDefaultTone] = useState('professional');
   const [defaultLang, setDefaultLang] = useState('vi');
+  const userInitial = user?.name?.charAt(0).toUpperCase() || 'U';
 
   const saveProfile = () => {
     setEditing(false);
     toast.success('Đã cập nhật hồ sơ!');
+  };
+
+  const uploadAvatar = async (file: File) => {
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    const response = await api.patch<AvatarUploadResponse>('/auth/user/me/avatar', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 60000,
+    });
+
+    const updatedUser = response.data.data?.user;
+    if (!updatedUser) {
+      throw new Error('Invalid avatar upload response');
+    }
+
+    updateUser(updatedUser);
+  };
+
+  const handleAvatarChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Vui lòng chọn file ảnh');
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Ảnh đại diện phải nhỏ hơn hoặc bằng 2MB');
+      return;
+    }
+
+    setAvatarUploading(true);
+    try {
+      await uploadAvatar(file);
+      toast.success('Đã cập nhật avatar!');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Không thể upload avatar';
+      toast.error(message);
+    } finally {
+      setAvatarUploading(false);
+    }
   };
 
   const stats = [
@@ -49,12 +105,26 @@ export function CustomerProfile() {
           <Card className="p-6 flex flex-col items-center text-center">
             <div className="relative mb-4">
               <Avatar className="w-24 h-24">
+                <AvatarImage src={user?.avatar || undefined} alt={user?.name || 'Avatar'} className="object-cover" />
                 <AvatarFallback className="bg-gradient-to-r from-green-600 to-emerald-600 text-white text-3xl">
-                  {user?.name.charAt(0).toUpperCase()}
+                  {userInitial}
                 </AvatarFallback>
               </Avatar>
-              <button className="absolute -bottom-1 -right-1 bg-primary text-white rounded-full p-1.5 hover:bg-green-700" onClick={() => toast.success('Tính năng upload ảnh sẽ sớm có!')}>
-                <Edit2 className="w-3 h-3" />
+              <input
+                ref={avatarInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                className="hidden"
+                onChange={handleAvatarChange}
+              />
+              <button
+                type="button"
+                className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white shadow-md hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-70"
+                disabled={avatarUploading}
+                title="Cập nhật avatar"
+                onClick={() => avatarInputRef.current?.click()}
+              >
+                {avatarUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5" />}
               </button>
             </div>
             <h2 className="text-xl font-bold mb-1 text-foreground">{user?.name}</h2>

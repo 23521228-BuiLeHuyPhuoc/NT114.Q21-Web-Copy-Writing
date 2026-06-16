@@ -9,6 +9,7 @@ import { Badge } from '@/app/components/ui/badge';
 import { Progress } from '@/app/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/app/components/ui/dialog';
 import {
   Brain, Plus, Upload, Trash2, Play, CheckCircle2,
   Clock, Zap, Star, AlertCircle, Info, Lightbulb,
@@ -33,6 +34,7 @@ import {
 } from '@/hooks/queries/useFineTuning';
 import { DataPagination } from '@/app/components/common/DataPagination';
 import { usePagination } from '@/hooks/usePagination';
+import type { FineTuneModel } from '@/services/fineTuningService';
 
 type ImportedFineTuneExample = {
   id: string;
@@ -50,9 +52,10 @@ type TrainingMetric = {
   validationLoss: number;
   accuracy: number;
   tokenUsage: number;
+  source?: string;
 };
 
-type MetricTrend = 'down' | 'up' | 'flat' | 'pending' | 'estimated';
+type MetricTrend = 'down' | 'up' | 'flat' | 'pending' | 'estimated' | 'actual';
 
 type MetricCard = {
   label: string;
@@ -192,6 +195,7 @@ function isCloseNumber(value: number, expected: number) {
 }
 
 function isSeedMetric(metric: TrainingMetric) {
+  if ((metric as TrainingMetric & { source?: string }).source === 'seed') return true;
   const isEpochZero = Number(metric.epoch || 0) === 0;
   const isLegacySeed = isCloseNumber(metric.trainLoss, 1.25)
     && isCloseNumber(metric.validationLoss, 1.32)
@@ -201,6 +205,46 @@ function isSeedMetric(metric: TrainingMetric) {
     && isCloseNumber(metric.accuracy, 0);
 
   return isEpochZero && (isLegacySeed || isTokenOnlySeed);
+}
+
+function hasTrainingSignals(metric: TrainingMetric) {
+  if (isSeedMetric(metric)) return false;
+  return Number(metric.trainLoss || 0) > 0
+    || Number(metric.validationLoss || 0) > 0
+    || Number(metric.accuracy || 0) > 0;
+}
+
+function getMetricSourceLabel(metric?: TrainingMetric & { source?: string }) {
+  if (!metric) return 'Provider chưa trả metric thật';
+  if (metric.source === 'provider') return 'Token thực tế từ provider';
+  if (metric.source === 'progress_estimate') return 'Ước tính theo tiến trình training';
+  if (metric.source === 'seed' || isSeedMetric(metric)) return 'Token dataset ước tính';
+  return 'Token usage đã ghi nhận';
+}
+
+function buildTokenUsageCard(metrics: Array<TrainingMetric & { source?: string }>, seedMetric?: TrainingMetric & { source?: string }): MetricCard {
+  const tokenMetrics = metrics.filter(metric => !isSeedMetric(metric) && Number(metric.tokenUsage || 0) > 0);
+  const latestTokenMetric = tokenMetrics[tokenMetrics.length - 1];
+
+  if (latestTokenMetric) {
+    return {
+      label: 'Token Usage',
+      value: formatTokenCount(latestTokenMetric.tokenUsage),
+      prev: getMetricSourceLabel(latestTokenMetric),
+      trend: latestTokenMetric.source === 'provider' ? 'actual' : 'estimated',
+    };
+  }
+
+  if (seedMetric?.tokenUsage) {
+    return {
+      label: 'Token Usage',
+      value: formatTokenCount(seedMetric.tokenUsage),
+      prev: getMetricSourceLabel(seedMetric),
+      trend: 'estimated',
+    };
+  }
+
+  return { label: 'Token Usage', value: 'Đang chờ', prev: 'Provider chưa trả metric thật', trend: 'pending' };
 }
 
 function formatMetricValue(value: number, decimals = 3, suffix = '') {
@@ -237,10 +281,12 @@ function getMetricTrendLabel(trend: MetricTrend) {
     flat: 'ch\u01b0a \u0111\u1ed5i',
     pending: 'ch\u1edd d\u1eef li\u1ec7u',
     estimated: '\u01b0\u1edbc t\u00ednh',
+    actual: 'th\u1ef1c t\u1ebf',
   }[trend];
 }
 
 function getMetricBadgeClass(metric: MetricCard) {
+  if (metric.trend === 'actual') return 'bg-primary/10 text-primary';
   if (metric.trend === 'estimated') return 'bg-warning/15 text-amber-800';
   if (metric.trend === 'pending' || metric.trend === 'flat') return 'bg-muted text-foreground/70';
   return metric.good ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive';
@@ -307,6 +353,7 @@ export function CustomerFineTuningStudio() {
   const [newModelProvider, setNewModelProvider] = useState('');
   const [newModelDesc, setNewModelDesc] = useState('');
   const [activeTab, setActiveTab] = useState('models');
+  const [detailModel, setDetailModel] = useState<FineTuneModel | null>(null);
   const trainingFileInputRef = useRef<HTMLInputElement | null>(null);
   const fineTuneProviders = useMemo(
     () => providers
@@ -535,23 +582,22 @@ export function CustomerFineTuningStudio() {
   const statusLabel = (s: string) => ({ ready: 'Sẵn sàng', training: 'Đang training', failed: 'Thất bại', pending: 'Chờ xử lý' }[s] ?? s);
 
   const seedMetric = metrics.find(isSeedMetric);
-  const realMetrics = metrics.filter(metric => !isSeedMetric(metric));
-  const latestMetric = realMetrics[realMetrics.length - 1];
-  const firstMetric = realMetrics[0];
+  const trainingSignalMetrics = metrics.filter(hasTrainingSignals);
+  const latestMetric = trainingSignalMetrics[trainingSignalMetrics.length - 1];
+  const firstMetric = trainingSignalMetrics[0];
   const waitingValue = '\u0110ang ch\u1edd';
   const noProviderMetricText = 'Provider ch\u01b0a tr\u1ea3 metric th\u1eadt';
-  const metricCards: MetricCard[] = latestMetric ? [
-    buildMetricCard('Training Loss', latestMetric.trainLoss, firstMetric?.trainLoss, true),
-    buildMetricCard('Validation Loss', latestMetric.validationLoss, firstMetric?.validationLoss, true),
-    buildMetricCard('Accuracy', latestMetric.accuracy, firstMetric?.accuracy, false, 1, '%'),
-    buildMetricCard('Token Usage', latestMetric.tokenUsage, firstMetric?.tokenUsage, false, 0),
-  ] : [
-    { label: 'Training Loss', value: waitingValue, prev: noProviderMetricText, trend: 'pending' },
-    { label: 'Validation Loss', value: waitingValue, prev: noProviderMetricText, trend: 'pending' },
-    { label: 'Accuracy', value: waitingValue, prev: noProviderMetricText, trend: 'pending' },
-    seedMetric?.tokenUsage
-      ? { label: 'Token Usage', value: formatTokenCount(seedMetric.tokenUsage), prev: 'Token dataset \u01b0\u1edbc t\u00ednh', trend: 'estimated' }
-      : { label: 'Token Usage', value: waitingValue, prev: noProviderMetricText, trend: 'pending' },
+  const metricCards: MetricCard[] = [
+    latestMetric
+      ? buildMetricCard('Training Loss', latestMetric.trainLoss, firstMetric?.trainLoss, true)
+      : { label: 'Training Loss', value: waitingValue, prev: noProviderMetricText, trend: 'pending' },
+    latestMetric
+      ? buildMetricCard('Validation Loss', latestMetric.validationLoss, firstMetric?.validationLoss, true)
+      : { label: 'Validation Loss', value: waitingValue, prev: noProviderMetricText, trend: 'pending' },
+    latestMetric
+      ? buildMetricCard('Accuracy', latestMetric.accuracy, firstMetric?.accuracy, false, 1, '%')
+      : { label: 'Accuracy', value: waitingValue, prev: noProviderMetricText, trend: 'pending' },
+    buildTokenUsageCard(metrics, seedMetric),
   ];
   const metricHelpText = latestMetric
     ? 'Loss th\u1ea5p h\u01a1n v\u00e0 Accuracy cao h\u01a1n th\u01b0\u1eddng l\u00e0 d\u1ea5u hi\u1ec7u model \u0111ang h\u1ecdc t\u1ed1t. Ch\u1ec9 so s\u00e1nh khi provider \u0111\u00e3 tr\u1ea3 metric th\u1eadt.'
@@ -622,7 +668,7 @@ export function CustomerFineTuningStudio() {
                         <Zap className="w-4 h-4 mr-1" /> Dùng trong Generator
                       </Button>
                     )}
-                    <Button size="sm" variant="outline" onClick={() => toast.success('Mở chi tiết model...')}>
+                    <Button size="sm" variant="outline" onClick={() => setDetailModel(m)}>
                       <Settings className="w-4 h-4 mr-1" /> Chi tiết
                     </Button>
                     <Button size="sm" variant="ghost" className="text-red-500" onClick={() => { setModels(prev => prev.filter(x => x.id !== m.id)); toast.success('Đã xóa model'); }}>
@@ -897,7 +943,7 @@ export function CustomerFineTuningStudio() {
                       <div className="text-right">
                         <span className="font-bold text-foreground">{m.value}</span>
                         <p className="text-xs text-muted-foreground/80">
-                          {m.trend === 'pending' || m.trend === 'estimated' ? m.prev : 'tr\u01b0\u1edbc: ' + m.prev}
+                          {m.trend === 'pending' || m.trend === 'estimated' || m.trend === 'actual' ? m.prev : 'tr\u01b0\u1edbc: ' + m.prev}
                         </p>
                       </div>
                       <Badge className={`ml-3 border-0 text-xs ${getMetricBadgeClass(m)}`}>
@@ -987,6 +1033,78 @@ export function CustomerFineTuningStudio() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        <Dialog open={Boolean(detailModel)} onOpenChange={(open) => { if (!open) setDetailModel(null); }}>
+          <DialogContent className="sm:max-w-3xl max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Chi tiết model</DialogTitle>
+              <DialogDescription>{detailModel?.name || 'Fine-tuned model'}</DialogDescription>
+            </DialogHeader>
+
+            {detailModel && (
+              <div className="space-y-5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge className={`${statusColor(detailModel.status)} border-0`}>{statusLabel(detailModel.status)}</Badge>
+                  {detailModel.isActive && <Badge className="bg-primary/10 text-primary border-0">Đang active</Badge>}
+                  <Badge className="bg-muted text-foreground/70 border-0">{detailModel.provider || 'unknown provider'}</Badge>
+                  <Badge className="bg-primary/10 text-primary border-0">v{detailModel.version || 1}</Badge>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-3 text-sm">
+                  {[
+                    ['Registry ID', detailModel.registryModelId || '-'],
+                    ['Job ID', detailModel.id || '-'],
+                    ['Alias', detailModel.alias || '-'],
+                    ['Ngành', detailModel.industry || '-'],
+                    ['Base model', detailModel.baseModel || '-'],
+                    ['Provider job ID', detailModel.providerJobId || '-'],
+                    ['Provider model ID', detailModel.providerModelId || detailModel.fineTunedModelId || '-'],
+                    ['Endpoint', detailModel.tuningEndpoint || '-'],
+                    ['Tuned resource', detailModel.tunedModelResourceId || '-'],
+                    ['Deployment status', detailModel.deploymentStatus || (detailModel.generatorReady ? 'ready' : 'not ready')],
+                    ['Deployed model ID', detailModel.deployedModelId || '-'],
+                    ['Operation ID', detailModel.deploymentOperationId || '-'],
+                    ['Ví dụ training', String(detailModel.trainedOn || 0)],
+                    ['Accuracy', `${detailModel.accuracy || 0}%`],
+                    ['Loss', String(detailModel.loss || 0)],
+                    ['Tạo lúc', detailModel.createdAt || '-'],
+                    ['Deploy lúc', detailModel.finished || detailModel.deployedAt || '-'],
+                    ['Cập nhật', detailModel.updatedAt || '-'],
+                  ].map(([label, value]) => (
+                    <div key={label} className="rounded-md border bg-surface-muted p-3 min-w-0">
+                      <p className="text-xs text-muted-foreground mb-1">{label}</p>
+                      <p className="font-medium text-foreground break-all">{value}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {(detailModel.deploymentErrorMessage || detailModel.generatorMessage) && (
+                  <div className="rounded-md border border-amber-200 bg-warning/10 p-3 text-sm text-amber-800">
+                    {detailModel.deploymentErrorMessage || detailModel.generatorMessage}
+                  </div>
+                )}
+
+                <div className="flex flex-col sm:flex-row justify-end gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setSelectedTrainingJobId(detailModel.id);
+                      setActiveTab('training');
+                      setDetailModel(null);
+                    }}
+                  >
+                    <BarChart3 className="w-4 h-4 mr-1" /> Xem tiến trình
+                  </Button>
+                  {detailModel.status === 'ready' && (
+                    <Button className="bg-primary hover:bg-green-700 text-white" onClick={() => applyModel(detailModel)} disabled={isApplyingFineTunedModel}>
+                      <Zap className="w-4 h-4 mr-1" /> Dùng trong Generator
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
   );
