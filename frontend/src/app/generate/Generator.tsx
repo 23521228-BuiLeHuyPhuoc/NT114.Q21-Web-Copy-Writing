@@ -17,10 +17,10 @@ import { Layout } from '@/app/components/Layout';
 import { Card } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
 import { Badge } from '@/app/components/ui/badge';
-import { MODELS, COPY_TYPES, TONES, INDUSTRIES } from '@/mocks/generator';
-import { IndustryPicker } from '@/app/components/generator/IndustryPicker';
-import { CopyTypePicker } from '@/app/components/generator/CopyTypePicker';
-import { TonePicker } from '@/app/components/generator/TonePicker';
+import { MODELS, COPY_TYPES as FALLBACK_COPY_TYPES, TONES as FALLBACK_TONES, INDUSTRIES as FALLBACK_INDUSTRIES } from '@/mocks/generator';
+import { IndustryPicker, type IndustryPickerOption } from '@/app/components/generator/IndustryPicker';
+import { CopyTypePicker, type CopyTypePickerOption } from '@/app/components/generator/CopyTypePicker';
+import { TonePicker, type TonePickerOption } from '@/app/components/generator/TonePicker';
 import { ModelPicker, type GeneratorModelOption } from '@/app/components/generator/ModelPicker';
 import { ProductInfoForm } from '@/app/components/generator/ProductInfoForm';
 import { AdvancedSettings, type ContentLength } from '@/app/components/generator/AdvancedSettings';
@@ -28,9 +28,11 @@ import { GeneratorResults } from '@/app/components/generator/GeneratorResults';
 import { useCreateContent, useGenerateContent } from '@/hooks/queries/useContents';
 import { useProjects } from '@/hooks/queries/useProjects';
 import { useTemplates } from '@/hooks/queries/useTemplates';
+import { useGenerateOptions } from '@/hooks/queries/useGenerateOptions';
 import { useFineTuningModels } from '@/hooks/queries/useFineTuning';
 import { useMyBilling } from '@/hooks/queries/useBilling';
 import { scoreGeneratedContent } from '@/lib/contentQuality';
+import { resolveGeneratorIcon, resolveToneIcon } from '@/lib/generatorOptionIcons';
 import { formatGeneratedCopyForTinyMce, htmlToPlainText } from '@/lib/richText';
 
 const VERSION_ICON_PREFIX = String.raw`(?:[\u2600-\u27BF\u{1F300}-\u{1FAFF}]\uFE0F?\s*)*`;
@@ -215,6 +217,7 @@ export function CustomerGenerator() {
   const createContent = useCreateContent();
   const { data: templates = [], isLoading: templatesLoading } = useTemplates();
   const { data: projects = [], isLoading: projectsLoading } = useProjects({ limit: 50 });
+  const { data: generateOptions } = useGenerateOptions();
   const { data: fineTunedModels = [] } = useFineTuningModels();
   const { data: billing } = useMyBilling();
   const [industry, setIndustry] = useState('ecommerce');
@@ -253,6 +256,24 @@ export function CustomerGenerator() {
     const allowed = new Set(planAllowedModels);
     return MODELS.filter(item => allowed.has(item.id));
   }, [planAllowedModels]);
+
+  const industryOptions = useMemo<IndustryPickerOption[]>(() => {
+    const items = generateOptions?.industries || [];
+    if (!items.length) return FALLBACK_INDUSTRIES;
+    return items.map(item => ({ id: item.slug, name: item.name, icon: item.icon, color: item.color }));
+  }, [generateOptions?.industries]);
+
+  const copyTypeOptions = useMemo<CopyTypePickerOption[]>(() => {
+    const items = generateOptions?.copyTypes || [];
+    if (!items.length) return FALLBACK_COPY_TYPES;
+    return items.map(item => ({ id: item.slug, name: item.name, desc: item.description, icon: item.icon }));
+  }, [generateOptions?.copyTypes]);
+
+  const toneOptions = useMemo<TonePickerOption[]>(() => {
+    const items = generateOptions?.tones || [];
+    if (!items.length) return FALLBACK_TONES;
+    return items.map(item => ({ id: item.slug, name: item.name, desc: item.description, icon: item.icon, emoji: resolveToneIcon(item.icon) }));
+  }, [generateOptions?.tones]);
 
   const registeredFineTunedModels = useMemo(() => {
     return fineTunedModels.filter(item => item.status === 'ready' && item.registryModelId);
@@ -295,9 +316,9 @@ export function CustomerGenerator() {
     ? selectedFineTunedModel
     : selectedBaseModel;
   const hasFineTunedModels = fineTunedGeneratorModels.length > 0;
-  const selectedIndustry = INDUSTRIES.find(i => i.id === industry) ?? INDUSTRIES[0];
-  const selectedType = COPY_TYPES.find(t => t.id === copyType) ?? COPY_TYPES[0];
-  const selectedTone = TONES.find(t => t.id === tone);
+  const selectedIndustry = industryOptions.find(i => i.id === industry) ?? industryOptions[0];
+  const selectedType = copyTypeOptions.find(t => t.id === copyType) ?? copyTypeOptions[0];
+  const selectedTone = toneOptions.find(t => t.id === tone) ?? toneOptions[0];
   const selectedTemplate = useMemo(
     () => templates.find(template => template.id === selectedTemplateId) ?? null,
     [templates, selectedTemplateId],
@@ -323,6 +344,24 @@ export function CustomerGenerator() {
       setModel(modelId);
     }
   }, []);
+
+  useEffect(() => {
+    if (industryOptions.length > 0 && !industryOptions.some(item => item.id === industry)) {
+      setIndustry(industryOptions[0].id);
+    }
+  }, [industry, industryOptions]);
+
+  useEffect(() => {
+    if (copyTypeOptions.length > 0 && !copyTypeOptions.some(item => item.id === copyType)) {
+      setCopyType(copyTypeOptions[0].id);
+    }
+  }, [copyType, copyTypeOptions]);
+
+  useEffect(() => {
+    if (toneOptions.length > 0 && !toneOptions.some(item => item.id === tone)) {
+      setTone(toneOptions[0].id);
+    }
+  }, [tone, toneOptions]);
 
   useEffect(() => {
     if (modelMode !== 'base') return;
@@ -540,7 +579,7 @@ export function CustomerGenerator() {
       : score)));
   };
 
-  const IndustryIcon = selectedIndustry?.icon ?? ShoppingBag;
+  const IndustryIcon = resolveGeneratorIcon(selectedIndustry?.icon, ShoppingBag);
 
   return (
     <Layout>
@@ -552,8 +591,8 @@ export function CustomerGenerator() {
 
         <div className="grid lg:grid-cols-5 gap-6">
           <div className="lg:col-span-2 space-y-4">
-            <IndustryPicker value={industry} onChange={setIndustry} />
-            <CopyTypePicker value={copyType} onChange={setCopyType} />
+            <IndustryPicker value={industry} onChange={setIndustry} options={industryOptions} />
+            <CopyTypePicker value={copyType} onChange={setCopyType} options={copyTypeOptions} />
             <Card className="p-4">
               <div className="flex items-center gap-2 mb-3">
                 <FileText className="w-4 h-4 text-primary" />
@@ -611,7 +650,7 @@ export function CustomerGenerator() {
                 <p className="mt-2 text-xs text-muted-foreground">Nội dung sinh ra sẽ được gắn vào dự án đã chọn.</p>
               )}
             </Card>
-            <TonePicker value={tone} onChange={setTone} />
+            <TonePicker value={tone} onChange={setTone} options={toneOptions} />
             <Card className="p-4">
               <div className="grid grid-cols-2 gap-2">
                 <Button type="button" variant={modelMode === 'base' ? 'default' : 'outline'} onClick={() => handleModelModeChange('base')}>

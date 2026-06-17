@@ -17,7 +17,7 @@ const slug = Joi.string()
   .pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
   .max(80)
   .messages({
-    'string.pattern.base': 'Slug chi duoc chua chu thuong, so va dau gach ngang',
+    'string.pattern.base': 'Slug chỉ được chứa chữ thường, số và dấu gạch ngang',
   });
 
 const createGenerateOptionSchema = Joi.object({

@@ -30,6 +30,9 @@ export interface AdminPlan {
   copyLimit: number;
   apiLimit: number;
   fineTune: number;
+  plagiarismChecks: number;
+  seats: number;
+  historyDays: number;
   isDeleted: boolean;
   deletedAt?: string | null;
   createdAt?: string;
@@ -46,6 +49,9 @@ export interface UpsertAdminPlanPayload {
   copyLimit?: number;
   apiLimit?: number;
   fineTune?: number;
+  plagiarismChecks?: number;
+  seats?: number;
+  historyDays?: number;
   allowedModels?: string[];
   isPopular?: boolean;
   popular?: boolean;
@@ -78,6 +84,9 @@ function normalizePlan(item: Partial<AdminPlan>): AdminPlan {
   const copyLimit = numberOrDefault(item.copyLimit ?? limits.copyMonthly, 0);
   const apiLimit = numberOrDefault(item.apiLimit ?? limits.apiCallsMonthly, 0);
   const fineTune = numberOrDefault(item.fineTune ?? limits.fineTuneModels, 0);
+  const plagiarismChecks = numberOrDefault(item.plagiarismChecks ?? limits.plagiarismChecks, 0);
+  const seats = numberOrDefault(item.seats ?? limits.seats, 1);
+  const historyDays = numberOrDefault(item.historyDays ?? limits.historyDays, 7);
 
   return {
     id: item.id || item._id || '',
@@ -93,9 +102,9 @@ function normalizePlan(item: Partial<AdminPlan>): AdminPlan {
       copyMonthly: copyLimit,
       apiCallsMonthly: apiLimit,
       fineTuneModels: fineTune,
-      plagiarismChecks: numberOrDefault(limits.plagiarismChecks, 0),
-      seats: numberOrDefault(limits.seats, 1),
-      historyDays: numberOrDefault(limits.historyDays, 7),
+      plagiarismChecks,
+      seats,
+      historyDays,
     },
     features: item.features || [],
     excludedFeatures: item.excludedFeatures || [],
@@ -109,6 +118,9 @@ function normalizePlan(item: Partial<AdminPlan>): AdminPlan {
     copyLimit,
     apiLimit,
     fineTune,
+    plagiarismChecks,
+    seats,
+    historyDays,
     isDeleted: Boolean(item.isDeleted),
     deletedAt: item.deletedAt || null,
     createdAt: item.createdAt,

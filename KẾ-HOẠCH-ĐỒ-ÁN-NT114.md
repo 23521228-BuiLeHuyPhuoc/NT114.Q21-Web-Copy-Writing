@@ -285,7 +285,9 @@ Socket.io, mount routes
 
   /admin/templates              Quản lý template hệ thống
 
-  /admin/categories             Quản lý danh mục
+  /admin/generate-options/industries    Quản lý ngành nghề Generate
+  /admin/generate-options/copy-types    Quản lý loại nội dung Generate
+  /admin/generate-options/tones         Quản lý tone giọng văn Generate
 
   /admin/plans                  Quản lý gói dịch vụ
 
@@ -377,17 +379,17 @@ Socket.io, mount routes
 
 -   **DB:** FineTuneJobs
 
-**Module 4 -- Template & Danh Mục**
+**Module 4 -- Template**
 
 -   Template prompt có biến {{variable}}, tái sử dụng
 
 -   Template hệ thống (admin) + template cá nhân (user)
 
--   Danh mục phân cấp (parent → child)
+-   Phân loại template bằng trường category dạng chuỗi
 
--   **API:** /api/templates/\*, /api/admin/categories
+-   **API:** /api/templates/\*, /api/admin/templates/\*
 
--   **DB:** Templates, Categories
+-   **DB:** Templates
 
 **Module 5 -- Quản Lý Dự Án**
 

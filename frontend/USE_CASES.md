@@ -276,7 +276,9 @@ SuperAdmin -- Settings
 | Admin | `/admin/users` | Quản lý người dùng và duyệt admin |
 | Admin | `/admin/contents` | Quản lý nội dung hệ thống |
 | Admin | `/admin/templates` | Quản lý mẫu nội dung |
-| Admin | `/admin/categories` | Quản lý danh mục |
+| Admin | `/admin/generate-options/industries` | Quản lý ngành nghề Generate |
+| Admin | `/admin/generate-options/copy-types` | Quản lý loại nội dung Generate |
+| Admin | `/admin/generate-options/tones` | Quản lý tone giọng văn Generate |
 | Admin | `/admin/plans` | Quản lý gói dịch vụ |
 | Admin | `/admin/payments` | Quản lý thanh toán |
 | Admin | `/admin/models` | Quản lý mô hình AI |

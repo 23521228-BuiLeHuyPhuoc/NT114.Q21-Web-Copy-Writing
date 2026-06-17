@@ -242,7 +242,7 @@ Response lỗi:
 | 0 | Nền backend + database + response format | P0 | Server chạy, MongoDB connect, `/api/health` OK. |
 | 1 | Module 1 - Xác thực & Tài khoản | P0 | `AccountUser`, `AccountAdmin`, JWT, forgot password OTP 5 phút, user/admin demo. |
 | 2 | Module 2 - Sinh Nội Dung AI | P0 | Generate có fallback, lưu Content, UsageLog. |
-| 3 | Module 4 - Template & Danh Mục | P0 | List template system, dùng template khi generate. |
+| 3 | Module 4 - Template | P0 | List template system, dùng template khi generate. |
 | 4 | Module 5 - Quản Lý Dự Án | P0 | Tạo/list project, gắn content vào project. |
 | 5 | Module 7 - Thông Báo | P0 | List/read/read-all notification, tạo notification khi generate. |
 | 6 | Module 9 - Dashboard Người Dùng | P0/P1 | Stats thật từ content/usage/notification. |
@@ -607,7 +607,7 @@ Việc cần làm:
 
 ---
 
-## 8. Module 4 - Template & Danh Mục
+## 8. Module 4 - Template
 
 ### Mục tiêu
 
@@ -628,7 +628,6 @@ Có thư viện prompt template để user chọn khi generate, đúng module RE
 | GET | `/api/templates` | Có | `category?`, `type?` | List system + personal templates. |
 | GET | `/api/templates/:id` | Có | Không | Chi tiết template. |
 | POST | `/api/templates` | Có | `name`, `description`, `category`, `type`, `systemPrompt`, `variables?` | Tạo template cá nhân nếu kịp. |
-| GET | `/api/admin/categories` | Admin | Không | List category tối thiểu nếu kịp. |
 
 ### Models cần tạo lúc này
 
@@ -636,7 +635,7 @@ Có thư viện prompt template để user chọn khi generate, đúng module RE
 
 - `name`
 - `description`
-- `category` hoặc `categoryId`
+- `category` dạng chuỗi
 - `type`
 - `systemPrompt`
 - `variables`

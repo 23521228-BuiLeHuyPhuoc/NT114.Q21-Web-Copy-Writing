@@ -63,7 +63,7 @@ Các thư mục dưới đây bị loại khỏi bảng chi tiết vì là metad
 | 37 | `backend/src/models/AccountAdmin.js` | 1.6 KB | Model/schema Mongoose cho dữ liệu MongoDB. |
 | 38 | `backend/src/models/AccountUser.js` | 1.3 KB | Model/schema Mongoose cho dữ liệu MongoDB. |
 | 39 | `backend/src/models/AuditLog.js` | 1.4 KB | Model/schema Mongoose cho dữ liệu MongoDB. |
-| 40 | `backend/src/models/Category.js` | 1.1 KB | Model/schema Mongoose cho dữ liệu MongoDB. |
+| 40 | `backend/src/models/GenerateOption.js` | 1.1 KB | Model/schema Mongoose cho dữ liệu MongoDB. |
 | 41 | `backend/src/models/Content.js` | 2.0 KB | Model/schema Mongoose cho dữ liệu MongoDB. |
 | 42 | `backend/src/models/FineTuneDataset.js` | 1.9 KB | Model/schema Mongoose cho dữ liệu MongoDB. |
 | 43 | `backend/src/models/FineTunedModel.js` | 1.8 KB | Model/schema Mongoose cho dữ liệu MongoDB. |
@@ -81,7 +81,6 @@ Các thư mục dưới đây bị loại khỏi bảng chi tiết vì là metad
 | 55 | `backend/src/models/UsageLog.js` | 1.1 KB | Model/schema Mongoose cho dữ liệu MongoDB. |
 | 56 | `backend/src/routes/admin/auditLogRoutes.js` | 520 B | Khai báo route Express cho API backend. |
 | 57 | `backend/src/routes/admin/authRoutes.js` | 1.0 KB | Khai báo route Express cho API backend. |
-| 58 | `backend/src/routes/admin/categoryRoutes.js` | 1.1 KB | Khai báo route Express cho API backend. |
 | 59 | `backend/src/routes/admin/contentRoutes.js` | 1.2 KB | Khai báo route Express cho API backend. |
 | 60 | `backend/src/routes/admin/paymentRoutes.js` | 382 B | Khai báo route Express cho API backend. |
 | 61 | `backend/src/routes/admin/planRoutes.js` | 1012 B | Khai báo route Express cho API backend. |
@@ -103,7 +102,6 @@ Các thư mục dưới đây bị loại khỏi bảng chi tiết vì là metad
 | 77 | `backend/src/services/auditLogService.js` | 3.5 KB | Service backend chứa logic nghiệp vụ và tích hợp bên ngoài. |
 | 78 | `backend/src/services/authService.js` | 6.0 KB | Service backend chứa logic nghiệp vụ và tích hợp bên ngoài. |
 | 79 | `backend/src/services/billingService.js` | 28.8 KB | Service backend chứa logic nghiệp vụ và tích hợp bên ngoài. |
-| 80 | `backend/src/services/categoryService.js` | 4.9 KB | Service backend chứa logic nghiệp vụ và tích hợp bên ngoài. |
 | 81 | `backend/src/services/commonCrawlService.js` | 29.0 KB | Service backend chứa logic nghiệp vụ và tích hợp bên ngoài. |
 | 82 | `backend/src/services/contentService.js` | 9.6 KB | Service backend chứa logic nghiệp vụ và tích hợp bên ngoài. |
 | 83 | `backend/src/services/fineTuneService.js` | 79.8 KB | Service backend chứa logic nghiệp vụ và tích hợp bên ngoài. |
@@ -285,8 +283,6 @@ Các thư mục dưới đây bị loại khỏi bảng chi tiết vì là metad
 | 259 | `frontend/src/app/about/page.tsx` | 117 B | Trang hoặc component React/Next.js trong App Router. |
 | 260 | `frontend/src/app/admin/audit-logs/AuditLogs.tsx` | 6.9 KB | Trang hoặc component React/Next.js trong App Router. |
 | 261 | `frontend/src/app/admin/audit-logs/page.tsx` | 269 B | Trang hoặc component React/Next.js trong App Router. |
-| 262 | `frontend/src/app/admin/categories/Categories.tsx` | 22.7 KB | Trang hoặc component React/Next.js trong App Router. |
-| 263 | `frontend/src/app/admin/categories/page.tsx` | 273 B | Trang hoặc component React/Next.js trong App Router. |
 | 264 | `frontend/src/app/admin/contents/Contents.tsx` | 18.8 KB | Trang hoặc component React/Next.js trong App Router. |
 | 265 | `frontend/src/app/admin/contents/page.tsx` | 263 B | Trang hoặc component React/Next.js trong App Router. |
 | 266 | `frontend/src/app/admin/Dashboard.tsx` | 6.7 KB | Trang hoặc component React/Next.js trong App Router. |
@@ -471,7 +467,6 @@ Các thư mục dưới đây bị loại khỏi bảng chi tiết vì là metad
 | 445 | `frontend/src/services/adminUserService.ts` | 2.1 KB | Client service gọi API hoặc chuẩn hóa dữ liệu frontend. |
 | 446 | `frontend/src/services/apiKeyService.ts` | 303 B | Client service gọi API hoặc chuẩn hóa dữ liệu frontend. |
 | 447 | `frontend/src/services/auditLogService.ts` | 1.8 KB | Client service gọi API hoặc chuẩn hóa dữ liệu frontend. |
-| 448 | `frontend/src/services/categoryService.ts` | 3.3 KB | Client service gọi API hoặc chuẩn hóa dữ liệu frontend. |
 | 449 | `frontend/src/services/contentService.ts` | 5.5 KB | Client service gọi API hoặc chuẩn hóa dữ liệu frontend. |
 | 450 | `frontend/src/services/fineTuningService.ts` | 17.6 KB | Client service gọi API hoặc chuẩn hóa dữ liệu frontend. |
 | 451 | `frontend/src/services/historyService.ts` | 223 B | Client service gọi API hoặc chuẩn hóa dữ liệu frontend. |

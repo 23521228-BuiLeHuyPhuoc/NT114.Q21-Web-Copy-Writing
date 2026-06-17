@@ -1,4 +1,3 @@
-const Category = require('../models/Category');
 const Template = require('../models/Template');
 const createError = require('../utils/createError');
 
@@ -37,22 +36,6 @@ function serializeTemplate(template) {
     usageCount: template.usageCount || 0,
     createdAt: template.createdAt,
     updatedAt: template.updatedAt,
-  };
-}
-
-function serializeCategory(category, templateCount = 0) {
-  return {
-    id: category._id.toString(),
-    _id: category._id.toString(),
-    name: category.name,
-    slug: category.slug,
-    description: category.description,
-    parentId: toId(category.parentId),
-    isActive: Boolean(category.isActive),
-    order: category.order || 0,
-    templateCount,
-    createdAt: category.createdAt,
-    updatedAt: category.updatedAt,
   };
 }
 
@@ -144,19 +127,6 @@ async function incrementTemplateUsage(id) {
   await Template.updateOne({ _id: id }, { $inc: { usageCount: 1 } });
 }
 
-async function listCategories() {
-  const categories = await Category.find({ isActive: true, isDeleted: { $ne: true } }).sort({ order: 1, name: 1 });
-  const counts = await Template.aggregate([
-    { $match: { status: 'active' } },
-    { $group: { _id: '$category', count: { $sum: 1 } } },
-  ]);
-  const countMap = new Map(counts.map((item) => [item._id, item.count]));
-
-  return {
-    items: categories.map((category) => serializeCategory(category, countMap.get(category.slug) || 0)),
-  };
-}
-
 module.exports = {
   serializeTemplate,
   listTemplates,
@@ -164,6 +134,5 @@ module.exports = {
   createTemplate,
   getTemplateForGenerate,
   incrementTemplateUsage,
-  listCategories,
   slugify,
 };

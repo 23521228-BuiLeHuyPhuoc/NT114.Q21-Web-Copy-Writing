@@ -1,31 +1,70 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Layout } from '@/app/components/Layout';
 import { Card } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
-import { Input } from '@/app/components/ui/input';
 import { Badge } from '@/app/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/components/ui/table';
 import {
-  Search, Shield, Download, AlertTriangle,
+  Shield, Download, AlertTriangle,
 } from 'lucide-react';
+import { AdminFilterBar } from '@/app/components/admin/AdminFilterBar';
 import { DataPagination } from '@/app/components/common/DataPagination';
 import { AUDIT_ACTION_ICONS, AUDIT_LEVEL_MAP } from '@/lib/adminUiMaps';
 import { useAuditLogs } from '@/hooks/queries/useAuditLogs';
 import { usePagination } from '@/hooks/usePagination';
 
+function getLogTime(value?: string) {
+  if (!value) return 0;
+  const time = new Date(value).getTime();
+  return Number.isNaN(time) ? 0 : time;
+}
+
 export function AdminAuditLogs() {
   const [search, setSearch] = useState('');
   const [filterLevel, setFilterLevel] = useState('all');
+  const [filterAction, setFilterAction] = useState('all');
+  const [filterRole, setFilterRole] = useState('all');
+  const [sortLogs, setSortLogs] = useState('time-desc');
   const { data: logs = [], isLoading } = useAuditLogs();
 
-  const filtered = logs.filter(log => {
+  const actionOptions = useMemo(() => (
+    Array.from(new Set(logs.map(log => log.action).filter(Boolean))).sort((a, b) => a.localeCompare(b, 'vi'))
+  ), [logs]);
+
+  const roleOptions = useMemo(() => (
+    Array.from(new Set(logs.map(log => log.role).filter(Boolean))).sort((a, b) => a.localeCompare(b, 'vi'))
+  ), [logs]);
+
+  const filtered = useMemo(() => {
     const keyword = search.trim().toLowerCase();
-    const haystack = [log.action, log.user, log.details, log.ip].join(' ').toLowerCase();
-    const matchSearch = !keyword || haystack.includes(keyword);
-    const matchLevel = filterLevel === 'all' || log.level === filterLevel;
-    return matchSearch && matchLevel;
-  });
+    const filteredLogs = logs.filter(log => {
+      const haystack = [log.action, log.user, log.role, log.details, log.ip, log.level].join(' ').toLowerCase();
+      const matchSearch = !keyword || haystack.includes(keyword);
+      const matchLevel = filterLevel === 'all' || log.level === filterLevel;
+      const matchAction = filterAction === 'all' || log.action === filterAction;
+      const matchRole = filterRole === 'all' || log.role === filterRole;
+      return matchSearch && matchLevel && matchAction && matchRole;
+    });
+
+    return [...filteredLogs].sort((a, b) => {
+      switch (sortLogs) {
+        case 'time-asc':
+          return getLogTime(a.createdAt) - getLogTime(b.createdAt);
+        case 'action-asc':
+          return a.action.localeCompare(b.action, 'vi');
+        case 'action-desc':
+          return b.action.localeCompare(a.action, 'vi');
+        case 'user-asc':
+          return a.user.localeCompare(b.user, 'vi');
+        case 'user-desc':
+          return b.user.localeCompare(a.user, 'vi');
+        case 'time-desc':
+        default:
+          return getLogTime(b.createdAt) - getLogTime(a.createdAt);
+      }
+    });
+  }, [filterAction, filterLevel, filterRole, logs, search, sortLogs]);
 
   const summary = {
     total: logs.length,
@@ -35,7 +74,7 @@ export function AdminAuditLogs() {
 
   const pagination = usePagination(filtered, {
     initialPageSize: 10,
-    resetKey: `${search}|${filterLevel}`,
+    resetKey: `${search}|${filterLevel}|${filterAction}|${filterRole}|${sortLogs}`,
   });
 
   return (
@@ -69,24 +108,49 @@ export function AdminAuditLogs() {
           })}
         </div>
 
-        {/* Filters */}
-        <Card className="p-4 mb-6">
-          <div className="flex flex-wrap gap-3">
-            <div className="relative flex-1 min-w-48">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/80" />
-              <Input placeholder="Tìm kiếm action, user, chi tiết..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+        <AdminFilterBar
+          search={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Tìm kiếm action, user, chi tiết..."
+          rightSlot={
+            <div className="flex flex-wrap gap-2">
+              <Select value={filterLevel} onValueChange={setFilterLevel}>
+                <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả level</SelectItem>
+                  <SelectItem value="info">Info</SelectItem>
+                  <SelectItem value="warning">Warning</SelectItem>
+                  <SelectItem value="error">Error</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={filterAction} onValueChange={setFilterAction}>
+                <SelectTrigger className="w-52"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả action</SelectItem>
+                  {actionOptions.map(action => <SelectItem key={action} value={action}>{action}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={filterRole} onValueChange={setFilterRole}>
+                <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả vai trò</SelectItem>
+                  {roleOptions.map(role => <SelectItem key={role} value={role}>{role}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={sortLogs} onValueChange={setSortLogs}>
+                <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="time-desc">Mới nhất</SelectItem>
+                  <SelectItem value="time-asc">Cũ nhất</SelectItem>
+                  <SelectItem value="action-asc">Action A-Z</SelectItem>
+                  <SelectItem value="action-desc">Action Z-A</SelectItem>
+                  <SelectItem value="user-asc">User A-Z</SelectItem>
+                  <SelectItem value="user-desc">User Z-A</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <Select value={filterLevel} onValueChange={setFilterLevel}>
-              <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả</SelectItem>
-                <SelectItem value="info">Info</SelectItem>
-                <SelectItem value="warning">Warning</SelectItem>
-                <SelectItem value="error">Error</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </Card>
+          }
+        />
 
         {/* Table */}
         <Card>
@@ -105,6 +169,10 @@ export function AdminAuditLogs() {
               {isLoading ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-12 text-sm text-muted-foreground">Đang tải audit logs...</TableCell>
+                </TableRow>
+              ) : filtered.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-12 text-sm text-muted-foreground">Không có log phù hợp.</TableCell>
                 </TableRow>
               ) : pagination.pageItems.map(log => {
                 const level = AUDIT_LEVEL_MAP[log.level] || AUDIT_LEVEL_MAP.info;

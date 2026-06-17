@@ -198,7 +198,7 @@ AIModel
 |---|---|---|---|
 | `name` | String | Yes | Tên template. |
 | `description` | String | No | Mô tả ngắn. |
-| `categoryId` | ObjectId ref `Category` | No | Danh mục. |
+| `category` | String | No | Nhóm phân loại template dạng chuỗi. |
 | `type` | String | Yes | `blog`, `product`, `email`, `social`, `seo`, `ads`. |
 | `systemPrompt` | String | Yes | Prompt có biến `{{variable}}`. |
 | `variables` | [String] | No | Danh sách biến cần nhập. |
@@ -210,38 +210,38 @@ AIModel
 
 ### Indexes
 
-- `categoryId`
+- `category`
 - `{ isSystem: 1, status: 1 }`
 - `{ authorId: 1, createdAt: -1 }`
 - Text index: `name`, `description`.
 
 ---
 
-## 4.4. Category
+## 4.4. GenerateOption
 
-**Collection:** `categories`  
+**Collection:** `GenerateOption`  
 **Priority:** P0  
-**Mục đích:** Phân cấp danh mục cho template/content.
+**Mục đích:** Quản lý ngành nghề, loại nội dung và tone giọng văn trong trang Generate.
 
 ### Fields đề xuất
 
 | Field | Type | Required | Ghi chú |
 |---|---|---|---|
-| `name` | String | Yes | Tên danh mục. |
-| `slug` | String | Yes | Unique. |
+| `group` | String enum | Yes | `industry`, `copy_type`, `tone`. |
+| `name` | String | Yes | Tên hiển thị. |
+| `slug` | String | Yes | Unique theo từng group. |
 | `description` | String | No | Mô tả. |
-| `parentId` | ObjectId ref `Category` | No | Danh mục cha. |
-| `icon` | String | No | Tên icon nếu UI cần. |
-| `color` | String | No | Mã màu UI. |
-| `sortOrder` | Number | No | Thứ tự hiển thị. |
+| `icon` | String | No | Tên icon hiển thị. |
+| `color` | String | No | Class màu UI. |
+| `order` | Number | No | Thứ tự hiển thị. |
 | `isActive` | Boolean | Yes | Default `true`. |
+| `isDeleted` | Boolean | Yes | Soft delete. |
 | `createdAt`, `updatedAt` | Date | Auto | timestamps. |
 
 ### Indexes
 
-- `slug` unique.
-- `parentId`.
-- `{ isActive: 1, sortOrder: 1 }`.
+- `{ group: 1, slug: 1 }` unique.
+- `{ group: 1, isDeleted: 1, isActive: 1, order: 1 }`.
 
 ---
 
@@ -733,7 +733,7 @@ AIModel
 backend/src/models/User.js
 backend/src/models/Content.js
 backend/src/models/Template.js
-backend/src/models/Category.js
+backend/src/models/GenerateOption.js
 backend/src/models/Project.js
 backend/src/models/Plan.js
 backend/src/models/Subscription.js

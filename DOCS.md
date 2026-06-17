@@ -106,7 +106,7 @@ backend/
 | Users | Tài khoản, role, avatar, googleId |
 | Contents | Nội dung AI sinh ra, prompt, model, tags, versions |
 | Templates | Prompt template có biến, phân loại |
-| Categories | Danh mục phân cấp cho template |
+| GenerateOption | Cấu hình ngành nghề, loại nội dung và tone giọng văn cho Generate |
 | Projects | Dự án nhóm nội dung |
 | Plans | Gói dịch vụ (Free/Pro/Enterprise) |
 | Subscriptions | Đăng ký gói của user |
@@ -158,7 +158,9 @@ backend/
 | `/admin/users` | Quản lý user |
 | `/admin/contents` | Quản lý nội dung |
 | `/admin/templates` | Quản lý template hệ thống |
-| `/admin/categories` | Quản lý danh mục |
+| `/admin/generate-options/industries` | Quản lý ngành nghề Generate |
+| `/admin/generate-options/copy-types` | Quản lý loại nội dung Generate |
+| `/admin/generate-options/tones` | Quản lý tone giọng văn Generate |
 | `/admin/plans` | Quản lý gói dịch vụ |
 | `/admin/payments` | Quản lý thanh toán |
 | `/admin/models` | Quản lý model AI |
@@ -223,13 +225,13 @@ backend/
 + API: `/api/fine-tune/*`
 + DB: FineTuneJobs
 
-### Module 4 – Template & Danh Mục
+### Module 4 – Template
 
 + Template prompt có biến `{{variable}}`, tái sử dụng
 + Template hệ thống (admin) + template cá nhân (user)
-+ Danh mục phân cấp (parent → child)
-+ API: `/api/templates/*`, `/api/admin/categories`
-+ DB: Templates, Categories
++ Phân loại template bằng trường `category` dạng chuỗi
++ API: `/api/templates/*`, `/api/admin/templates/*`
++ DB: Templates
 
 ### Module 5 – Quản Lý Dự Án
 

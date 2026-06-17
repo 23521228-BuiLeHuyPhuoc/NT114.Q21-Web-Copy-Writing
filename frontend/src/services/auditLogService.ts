@@ -65,7 +65,7 @@ function normalizeLog(item: BackendAuditLog): AuditLogItem {
     details: item.details || item.action || 'System event',
     level: item.level || 'info',
     timestamp: formatDate(item.timestamp || item.createdAt),
-    createdAt: item.createdAt,
+    createdAt: item.createdAt || item.timestamp,
   };
 }
 

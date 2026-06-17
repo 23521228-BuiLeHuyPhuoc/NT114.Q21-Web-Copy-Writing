@@ -9,41 +9,71 @@ const GROUP_PARAM_MAP = {
 
 const DEFAULT_OPTIONS = {
   industry: [
-    { name: 'Thuong Mai Dien Tu', slug: 'ecommerce', description: 'San pham, shop online, san thuong mai dien tu.', icon: 'ShoppingBag', color: 'bg-emerald-500', order: 1 },
-    { name: 'Bat Dong San', slug: 'realestate', description: 'Can ho, du an, nha pho, bat dong san dau tu.', icon: 'Building2', color: 'bg-green-500', order: 2 },
-    { name: 'Cong Nghe', slug: 'technology', description: 'SaaS, ung dung, thiet bi, giai phap cong nghe.', icon: 'Laptop', color: 'bg-teal-500', order: 3 },
-    { name: 'Am Thuc F&B', slug: 'fnb', description: 'Nha hang, cafe, do an, do uong.', icon: 'Utensils', color: 'bg-orange-500', order: 4 },
-    { name: 'Y Te & Suc Khoe', slug: 'healthcare', description: 'Phong kham, san pham suc khoe, cham soc ca nhan.', icon: 'Heart', color: 'bg-red-500', order: 5 },
-    { name: 'Giao Duc', slug: 'education', description: 'Khoa hoc, trung tam, chuong trinh dao tao.', icon: 'GraduationCap', color: 'bg-green-500', order: 6 },
-    { name: 'Tai Chinh', slug: 'finance', description: 'Ngan hang, bao hiem, dau tu, fintech.', icon: 'DollarSign', color: 'bg-emerald-500', order: 7 },
-    { name: 'Thoi Trang', slug: 'fashion', description: 'Quan ao, phu kien, lam dep, phong cach.', icon: 'Shirt', color: 'bg-pink-500', order: 8 },
-    { name: 'Doanh Nghiep', slug: 'business', description: 'Dich vu B2B, tu van, van hanh doanh nghiep.', icon: 'Briefcase', color: 'bg-slate-500', order: 9 },
-    { name: 'Du Lich', slug: 'travel', description: 'Tour, khach san, diem den, dich vu du lich.', icon: 'Plane', color: 'bg-cyan-500', order: 10 },
+    { name: 'Thương mại điện tử', slug: 'ecommerce', description: 'Sản phẩm, shop online và sàn thương mại điện tử.', icon: 'ShoppingBag', color: 'bg-emerald-500', order: 1 },
+    { name: 'Bất động sản', slug: 'realestate', description: 'Căn hộ, dự án, nhà phố và bất động sản đầu tư.', icon: 'Building2', color: 'bg-green-500', order: 2 },
+    { name: 'Công nghệ', slug: 'technology', description: 'SaaS, ứng dụng, thiết bị và giải pháp công nghệ.', icon: 'Laptop', color: 'bg-teal-500', order: 3 },
+    { name: 'Ẩm thực F&B', slug: 'fnb', description: 'Nhà hàng, quán cafe, đồ ăn và đồ uống.', icon: 'Utensils', color: 'bg-orange-500', order: 4 },
+    { name: 'Y tế & Sức khỏe', slug: 'healthcare', description: 'Phòng khám, sản phẩm sức khỏe và chăm sóc cá nhân.', icon: 'Heart', color: 'bg-red-500', order: 5 },
+    { name: 'Giáo dục', slug: 'education', description: 'Khóa học, trung tâm và chương trình đào tạo.', icon: 'GraduationCap', color: 'bg-green-500', order: 6 },
+    { name: 'Tài chính', slug: 'finance', description: 'Ngân hàng, bảo hiểm, đầu tư và fintech.', icon: 'DollarSign', color: 'bg-emerald-500', order: 7 },
+    { name: 'Thời trang', slug: 'fashion', description: 'Quần áo, phụ kiện, làm đẹp và phong cách.', icon: 'Shirt', color: 'bg-pink-500', order: 8 },
+    { name: 'Doanh nghiệp', slug: 'business', description: 'Dịch vụ B2B, tư vấn và vận hành doanh nghiệp.', icon: 'Briefcase', color: 'bg-slate-500', order: 9 },
+    { name: 'Du lịch', slug: 'travel', description: 'Tour, khách sạn, điểm đến và dịch vụ du lịch.', icon: 'Plane', color: 'bg-cyan-500', order: 10 },
   ],
   copy_type: [
-    { name: 'Tieu De Quang Cao', slug: 'headline', description: 'Headline ngan gon, thu hut click.', icon: 'Megaphone', order: 1 },
-    { name: 'Mo Ta San Pham', slug: 'description', description: 'Mo ta chi tiet, thuyet phuc, co loi ich ro.', icon: 'FileText', order: 2 },
+    { name: 'Tiêu đề quảng cáo', slug: 'headline', description: 'Headline ngắn gọn, thu hút click.', icon: 'Megaphone', order: 1 },
+    { name: 'Mô tả sản phẩm', slug: 'description', description: 'Mô tả chi tiết, thuyết phục và có lợi ích rõ.', icon: 'FileText', order: 2 },
     { name: 'Social Media Post', slug: 'social', description: 'Caption cho Facebook, Instagram, TikTok.', icon: 'MessageSquare', order: 3 },
     { name: 'Email Marketing', slug: 'email', description: 'Subject, preview text va noi dung email.', icon: 'Mail', order: 4 },
-    { name: 'Loi Keu Goi Hanh Dong', slug: 'cta', description: 'Nut bam va microcopy keu goi hanh dong.', icon: 'Target', order: 5 },
-    { name: 'Landing Page', slug: 'landing', description: 'Hero, loi ich, proof, offer va CTA.', icon: 'Globe', order: 6 },
-    { name: 'SEO Content', slug: 'seo', description: 'SEO title, meta description, outline va slug.', icon: 'BarChart3', order: 7 },
-    { name: 'Review/Testimonial', slug: 'review', description: 'Danh gia, testimonial, social proof.', icon: 'Star', order: 8 },
+    { name: 'Lời kêu gọi hành động', slug: 'cta', description: 'Nút bấm và microcopy kêu gọi hành động.', icon: 'Target', order: 5 },
+    { name: 'Landing page', slug: 'landing', description: 'Hero, lợi ích, bằng chứng, offer và CTA.', icon: 'Globe', order: 6 },
+    { name: 'Nội dung SEO', slug: 'seo', description: 'SEO title, meta description, outline và slug.', icon: 'BarChart3', order: 7 },
+    { name: 'Review/Testimonial', slug: 'review', description: 'Đánh giá, testimonial và social proof.', icon: 'Star', order: 8 },
   ],
   tone: [
-    { name: 'Khan cap', slug: 'urgent', description: 'FOMO, limited time, flash sale.', icon: 'fire', order: 1 },
-    { name: 'Chuyen nghiep', slug: 'professional', description: 'Trang trong, B2B, uy tin.', icon: 'briefcase', order: 2 },
-    { name: 'Than thien', slug: 'friendly', description: 'Gan gui, tro chuyen, de tiep can.', icon: 'smile', order: 3 },
-    { name: 'Sang trong', slug: 'luxury', description: 'Premium, cao cap, dang cap.', icon: 'sparkles', order: 4 },
-    { name: 'Hai huoc', slug: 'humorous', description: 'Vui ve, trendy, de chia se.', icon: 'laugh', order: 5 },
-    { name: 'Cam xuc', slug: 'emotional', description: 'Storytelling, cham vao insight va cam xuc.', icon: 'heart', order: 6 },
+    { name: 'Khẩn cấp', slug: 'urgent', description: 'FOMO, ưu đãi giới hạn thời gian, flash sale.', icon: 'fire', order: 1 },
+    { name: 'Chuyên nghiệp', slug: 'professional', description: 'Trang trọng, B2B và tạo cảm giác uy tín.', icon: 'briefcase', order: 2 },
+    { name: 'Thân thiện', slug: 'friendly', description: 'Gần gũi, trò chuyện và dễ tiếp cận.', icon: 'smile', order: 3 },
+    { name: 'Sang trọng', slug: 'luxury', description: 'Premium, cao cấp và tạo cảm giác đẳng cấp.', icon: 'sparkles', order: 4 },
+    { name: 'Hài hước', slug: 'humorous', description: 'Vui vẻ, bắt trend và dễ chia sẻ.', icon: 'laugh', order: 5 },
+    { name: 'Cảm xúc', slug: 'emotional', description: 'Storytelling, chạm vào insight và cảm xúc.', icon: 'heart', order: 6 },
   ],
+};
+
+const LEGACY_DEFAULT_NAMES = {
+  industry: {
+    ecommerce: 'Thuong Mai Dien Tu',
+    realestate: 'Bat Dong San',
+    technology: 'Cong Nghe',
+    fnb: 'Am Thuc F&B',
+    healthcare: 'Y Te & Suc Khoe',
+    education: 'Giao Duc',
+    finance: 'Tai Chinh',
+    fashion: 'Thoi Trang',
+    business: 'Doanh Nghiep',
+    travel: 'Du Lich',
+  },
+  copy_type: {
+    headline: 'Tieu De Quang Cao',
+    description: 'Mo Ta San Pham',
+    cta: 'Loi Keu Goi Hanh Dong',
+    landing: 'Landing Page',
+    seo: 'SEO Content',
+  },
+  tone: {
+    urgent: 'Khan cap',
+    professional: 'Chuyen nghiep',
+    friendly: 'Than thien',
+    luxury: 'Sang trong',
+    humorous: 'Hai huoc',
+    emotional: 'Cam xuc',
+  },
 };
 
 function resolveGroup(groupParam) {
   const group = GROUP_PARAM_MAP[groupParam] || groupParam;
   if (!Object.values(GROUP_PARAM_MAP).includes(group)) {
-    throw createError(400, 'Invalid generate option group');
+    throw createError(400, 'Nhóm cấu hình Generate không hợp lệ');
   }
   return group;
 }
@@ -85,7 +115,10 @@ function serializeOption(option) {
 
 async function ensureDefaultOptions(group) {
   const existingCount = await GenerateOption.countDocuments({ group });
-  if (existingCount > 0) return;
+  if (existingCount > 0) {
+    await migrateLegacyDefaultLabels(group);
+    return;
+  }
 
   const defaults = DEFAULT_OPTIONS[group] || [];
   await GenerateOption.insertMany(defaults.map((item) => ({
@@ -96,10 +129,25 @@ async function ensureDefaultOptions(group) {
   })));
 }
 
+async function migrateLegacyDefaultLabels(group) {
+  const legacyNames = LEGACY_DEFAULT_NAMES[group] || {};
+  const defaults = DEFAULT_OPTIONS[group] || [];
+
+  await Promise.all(defaults.map((item) => {
+    const legacyName = legacyNames[item.slug];
+    if (!legacyName) return null;
+
+    return GenerateOption.updateOne(
+      { group, slug: item.slug, name: legacyName },
+      { $set: { name: item.name, description: item.description } },
+    );
+  }).filter(Boolean));
+}
+
 async function ensureSlugAvailable(group, slug, exceptId) {
   const existing = await GenerateOption.findOne({ group, slug });
   if (existing && existing._id.toString() !== String(exceptId || '')) {
-    throw createError(409, 'Slug cau hinh Generate da ton tai trong nhom nay');
+    throw createError(409, 'Slug cấu hình Generate đã tồn tại trong nhóm này');
   }
 }
 
@@ -134,7 +182,7 @@ async function listAllActiveOptions() {
 async function createOption(groupParam, payload) {
   const group = resolveGroup(groupParam);
   const slug = normalizeSlug(payload);
-  if (!slug) throw createError(400, 'Slug cau hinh Generate khong hop le');
+  if (!slug) throw createError(400, 'Slug cấu hình Generate không hợp lệ');
   await ensureSlugAvailable(group, slug);
 
   const option = await GenerateOption.create({
@@ -155,7 +203,7 @@ async function findOptionOrThrow(groupParam, id, includeDeleted = false) {
   const group = resolveGroup(groupParam);
   const filter = includeDeleted ? { _id: id, group } : { _id: id, group, isDeleted: { $ne: true } };
   const option = await GenerateOption.findOne(filter);
-  if (!option) throw createError(404, 'Generate option not found');
+  if (!option) throw createError(404, 'Không tìm thấy cấu hình Generate');
   return option;
 }
 
@@ -164,7 +212,7 @@ async function updateOption(groupParam, id, payload) {
 
   if (payload.slug || payload.name) {
     const slug = normalizeSlug({ slug: payload.slug || option.slug, name: payload.name || option.name });
-    if (!slug) throw createError(400, 'Slug cau hinh Generate khong hop le');
+    if (!slug) throw createError(400, 'Slug cấu hình Generate không hợp lệ');
     await ensureSlugAvailable(option.group, slug, id);
     option.slug = slug;
   }

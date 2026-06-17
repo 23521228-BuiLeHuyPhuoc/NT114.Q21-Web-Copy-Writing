@@ -3,7 +3,6 @@ require('dotenv').config();
 const { connectDB } = require('../config/database');
 const AccountAdmin = require('../models/AccountAdmin');
 const AccountUser = require('../models/AccountUser');
-const Category = require('../models/Category');
 const Content = require('../models/Content');
 const FineTuneDataset = require('../models/FineTuneDataset');
 const FineTuneExample = require('../models/FineTuneExample');
@@ -1034,88 +1033,6 @@ async function seedBilling(user) {
   return { plans: [free, pro, business, enterprise], subscription, payments };
 }
 
-async function upsertCategory(data) {
-  return Category.findOneAndUpdate(
-    { slug: data.slug },
-    data,
-    { upsert: true, new: true, setDefaultsOnInsert: true },
-  );
-}
-
-async function seedCategories() {
-  const categories = [
-    {
-      name: 'Blog SEO',
-      slug: 'seo',
-      description: 'Template cho SEO title, meta description, outline và nội dung tìm kiếm.',
-      order: 1,
-      isActive: true,
-    },
-    {
-      name: 'Product Copy',
-      slug: 'product',
-      description: 'Template cho mô tả sản phẩm, PDP và nội dung thương mại điện tử.',
-      order: 2,
-      isActive: true,
-    },
-    {
-      name: 'Social Media',
-      slug: 'social',
-      description: 'Template cho caption, launch post, short video script và community post.',
-      order: 3,
-      isActive: true,
-    },
-    {
-      name: 'Email Marketing',
-      slug: 'email',
-      description: 'Template cho email bán hàng, nuôi dưỡng lead, onboarding và win-back.',
-      order: 4,
-      isActive: true,
-    },
-    {
-      name: 'Advertising',
-      slug: 'ads',
-      description: 'Template cho paid ads, headline, hook, CTA và creative brief.',
-      order: 5,
-      isActive: true,
-    },
-    {
-      name: 'Landing Page',
-      slug: 'landing',
-      description: 'Template cho hero, landing page, offer, proof và conversion section.',
-      order: 6,
-      isActive: true,
-    },
-    {
-      name: 'Review & Proof',
-      slug: 'review',
-      description: 'Template cho testimonial, case study, social proof và phản hồi khách hàng.',
-      order: 7,
-      isActive: true,
-    },
-    {
-      name: 'B2B Sales',
-      slug: 'b2b',
-      description: 'Template cho cold email, proposal, case study và dịch vụ doanh nghiệp.',
-      order: 8,
-      isActive: true,
-    },
-    {
-      name: 'Industry Specific',
-      slug: 'industry',
-      description: 'Template chuyên ngành cho bất động sản, y tế, giáo dục, tài chính, F&B và du lịch.',
-      order: 9,
-      isActive: true,
-    },
-  ];
-
-  const seeded = [];
-  for (const category of categories) {
-    seeded.push(await upsertCategory(category));
-  }
-  return seeded;
-}
-
 async function upsertTemplate(data) {
   return Template.findOneAndUpdate(
     { slug: data.slug, isSystem: true },
@@ -1559,8 +1476,7 @@ async function seed() {
   const deletedPendingAdmins = await cleanupAdminRegistrationData();
   const [user, admin] = await Promise.all([upsertUser(), upsertAdmin()]);
   const projects = await seedDemoProjects(user);
-  const [categories, templates, contents] = await Promise.all([
-    seedCategories(),
+  const [templates, contents] = await Promise.all([
     seedTemplates(),
     seedDemoContents(user, projects),
   ]);
@@ -1573,7 +1489,6 @@ async function seed() {
   console.log(`Seeded AccountAdmin: ${admin.email}`);
   console.log(`Deleted PendingAdmin: ${deletedPendingAdmins}`);
   console.log(`Seeded Project: ${Object.keys(projects).length}`);
-  console.log(`Seeded Category: ${categories.length}`);
   console.log(`Seeded Template: ${templates.length}`);
   console.log(`Seeded Content: ${contents.length}`);
   console.log(`Seeded Notification: ${notifications.length}`);

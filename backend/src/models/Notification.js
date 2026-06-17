@@ -2,10 +2,34 @@ const mongoose = require('mongoose');
 
 const notificationSchema = new mongoose.Schema(
   {
+    recipientType: {
+      type: String,
+      enum: ['user', 'admin'],
+      default: 'user',
+      index: true,
+    },
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'AccountUser',
-      required: true,
+      required() {
+        return this.recipientType !== 'admin';
+      },
+      default: null,
+      index: true,
+    },
+    adminId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'AccountAdmin',
+      required() {
+        return this.recipientType === 'admin';
+      },
+      default: null,
+      index: true,
+    },
+    senderAdminId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'AccountAdmin',
+      default: null,
       index: true,
     },
     title: {
@@ -47,5 +71,8 @@ const notificationSchema = new mongoose.Schema(
 
 notificationSchema.index({ userId: 1, createdAt: -1 });
 notificationSchema.index({ userId: 1, isRead: 1, createdAt: -1 });
+notificationSchema.index({ adminId: 1, createdAt: -1 });
+notificationSchema.index({ adminId: 1, isRead: 1, createdAt: -1 });
+notificationSchema.index({ recipientType: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Notification', notificationSchema, 'Notification');

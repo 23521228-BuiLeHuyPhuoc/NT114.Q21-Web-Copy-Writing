@@ -103,7 +103,7 @@ backend/
 | Users | Tài khoản, role, avatar, googleId |
 | Contents | Nội dung AI sinh ra, prompt, model, tags, versions |
 | Templates | Prompt template có biến, phân loại |
-| Categories | Danh mục phân cấp cho template |
+| GenerateOption | Cấu hình ngành nghề, loại nội dung và tone giọng văn cho Generate |
 | Projects | Dự án nhóm nội dung |
 | Plans | Gói dịch vụ (Free/Pro/Enterprise) |
 | Subscriptions | Đăng ký gói của user |
@@ -161,7 +161,9 @@ backend/
 | `/admin/users` | Quản lý user |
 | `/admin/contents` | Quản lý nội dung |
 | `/admin/templates` | Quản lý template hệ thống |
-| `/admin/categories` | Quản lý danh mục |
+| `/admin/generate-options/industries` | Quản lý ngành nghề Generate |
+| `/admin/generate-options/copy-types` | Quản lý loại nội dung Generate |
+| `/admin/generate-options/tones` | Quản lý tone giọng văn Generate |
 | `/admin/plans` | Quản lý gói dịch vụ |
 | `/admin/payments` | Quản lý thanh toán |
 | `/admin/models` | Quản lý model AI |
@@ -227,13 +229,13 @@ backend/
 + API: `/api/fine-tune/*`
 + DB: FineTuneJobs
 
-### Module 4 – Template & Danh Mục
+### Module 4 – Template
 
 + Template prompt có biến `{{variable}}`, tái sử dụng
 + Template hệ thống (admin) + template cá nhân (user)
-+ Danh mục phân cấp (parent → child)
-+ API: `/api/templates/*`, `/api/admin/categories`
-+ DB: Templates, Categories
++ Phân loại template bằng trường `category` dạng chuỗi
++ API: `/api/templates/*`, `/api/admin/templates/*`
++ DB: Templates
 
 ### Module 5 – Quản Lý Dự Án
 
@@ -308,7 +310,7 @@ Các tính năng dưới đây là những thành phần **kỹ thuật khó**, 
 ### 8.2. Công việc cần thực hiện trong tương lai
 
 + Hoàn thiện backend Express: cấu hình app, middleware, error handler, route structure, validation, auth JWT và phân quyền thật.
-+ Thiết kế MongoDB/Mongoose models cho các collection trong README: Users, Contents, Templates, Categories, Projects, Plans, Subscriptions, Payments, FineTuneJobs, Notifications, UsageLogs, AuditLogs, SystemSettings, PlagiarismReports.
++ Thiết kế MongoDB/Mongoose models cho các collection trong README: Users, Contents, Templates, GenerateOption, Projects, Plans, Subscriptions, Payments, FineTuneJobs, Notifications, UsageLogs, AuditLogs, SystemSettings, PlagiarismReports.
 + Thay mock service frontend bằng API thật theo từng module, ưu tiên Auth, Content, Project, Template, Billing, Notification, Admin.
 + Chuyển auth/permission từ mock `localStorage` sang JWT/refresh token hoặc NextAuth/session thật.
 + Thay compatibility layer `react-router-dom` bằng `next/link`, `next/navigation` trực tiếp khi có thời gian refactor.

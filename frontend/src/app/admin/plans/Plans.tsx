@@ -174,6 +174,9 @@ export function AdminPlans() {
   const [addCopy, setAddCopy] = useState('');
   const [addApi, setAddApi] = useState('');
   const [addFine, setAddFine] = useState('');
+  const [addPlagiarism, setAddPlagiarism] = useState('');
+  const [addSeats, setAddSeats] = useState('');
+  const [addHistoryDays, setAddHistoryDays] = useState('');
   const [addDesc, setAddDesc] = useState('');
   const [addAllowedModels, setAddAllowedModels] = useState<string[]>([]);
 
@@ -184,6 +187,9 @@ export function AdminPlans() {
   const [editCopy, setEditCopy] = useState('');
   const [editApi, setEditApi] = useState('');
   const [editFine, setEditFine] = useState('');
+  const [editPlagiarism, setEditPlagiarism] = useState('');
+  const [editSeats, setEditSeats] = useState('');
+  const [editHistoryDays, setEditHistoryDays] = useState('');
   const [editDesc, setEditDesc] = useState('');
   const [editPopular, setEditPopular] = useState(false);
   const [editAllowedModels, setEditAllowedModels] = useState<string[]>([]);
@@ -268,6 +274,9 @@ export function AdminPlans() {
     setAddCopy('');
     setAddApi('');
     setAddFine('');
+    setAddPlagiarism('');
+    setAddSeats('');
+    setAddHistoryDays('');
     setAddDesc('');
     setAddAllowedModels([]);
   };
@@ -280,6 +289,9 @@ export function AdminPlans() {
     setEditCopy(plan.copyLimit === -1 ? '' : String(plan.copyLimit));
     setEditApi(plan.apiLimit === -1 ? '' : String(plan.apiLimit));
     setEditFine(plan.fineTune === -1 ? '' : String(plan.fineTune));
+    setEditPlagiarism(plan.plagiarismChecks === -1 ? '' : String(plan.plagiarismChecks));
+    setEditSeats(plan.seats === -1 ? '' : String(plan.seats));
+    setEditHistoryDays(plan.historyDays === -1 ? '' : String(plan.historyDays));
     setEditDesc(plan.description);
     setEditPopular(plan.popular);
     setEditAllowedModels(plan.allowedModels || []);
@@ -297,6 +309,9 @@ export function AdminPlans() {
         copyLimit: parseBlankNumber(addCopy, -1),
         apiLimit: parseBlankNumber(addApi, -1),
         fineTune: parseBlankNumber(addFine, -1),
+        plagiarismChecks: parseBlankNumber(addPlagiarism, -1),
+        seats: parseBlankNumber(addSeats, -1),
+        historyDays: parseBlankNumber(addHistoryDays, -1),
         allowedModels: addAllowedModels,
         isActive: true,
       });
@@ -323,6 +338,9 @@ export function AdminPlans() {
           copyLimit: parseBlankNumber(editCopy, -1),
           apiLimit: parseBlankNumber(editApi, -1),
           fineTune: parseBlankNumber(editFine, -1),
+          plagiarismChecks: parseBlankNumber(editPlagiarism, -1),
+          seats: parseBlankNumber(editSeats, -1),
+          historyDays: parseBlankNumber(editHistoryDays, -1),
           allowedModels: editAllowedModels,
           isPopular: editPopular,
         },
@@ -480,6 +498,7 @@ export function AdminPlans() {
                   <TableHead>Copy/tháng</TableHead>
                   <TableHead>API calls</TableHead>
                   <TableHead>Fine-tune</TableHead>
+                  <TableHead>Quota khác</TableHead>
                   <TableHead>Model generate</TableHead>
                   <TableHead>Subscribers</TableHead>
                   <TableHead>Kích hoạt</TableHead>
@@ -503,6 +522,11 @@ export function AdminPlans() {
                     <TableCell className="text-sm text-foreground/70">{formatLimit(plan.copyLimit)}</TableCell>
                     <TableCell className="text-sm text-foreground/70">{formatLimit(plan.apiLimit)}</TableCell>
                     <TableCell className="text-sm text-foreground/70">{formatLimit(plan.fineTune)}</TableCell>
+                    <TableCell className="text-xs text-foreground/70 whitespace-nowrap">
+                      <div>Đạo văn: {formatLimit(plan.plagiarismChecks)}</div>
+                      <div>Seats: {formatLimit(plan.seats)}</div>
+                      <div>Lịch sử: {formatLimit(plan.historyDays, ' ngày')}</div>
+                    </TableCell>
                     <TableCell className="text-xs text-foreground/70 max-w-52" title={formatAllowedModels(plan.allowedModels)}>{formatAllowedModels(plan.allowedModels)}</TableCell>
                     <TableCell><Badge className="bg-primary/10 text-primary border-0">{plan.users}</Badge></TableCell>
                     <TableCell><Switch checked={plan.active} onCheckedChange={() => void toggleActive(plan)} /></TableCell>
@@ -536,7 +560,7 @@ export function AdminPlans() {
       </div>
 
       <Dialog open={showAdd} onOpenChange={setShowAdd}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[calc(100vh-2rem)] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -575,6 +599,18 @@ export function AdminPlans() {
                 <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Fine-tune models</Label>
                 <Input value={addFine} onChange={event => setAddFine(event.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
               </div>
+              <div>
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Kiểm tra đạo văn/tháng</Label>
+                <Input value={addPlagiarism} onChange={event => setAddPlagiarism(event.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Số ghế</Label>
+                <Input value={addSeats} onChange={event => setAddSeats(event.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Lưu lịch sử (ngày)</Label>
+                <Input value={addHistoryDays} onChange={event => setAddHistoryDays(event.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
+              </div>
             </div>
             <ModelAccessSelector allowedModels={addAllowedModels} onChange={setAddAllowedModels} />
             <div className="flex gap-2 pt-1">
@@ -588,7 +624,7 @@ export function AdminPlans() {
       </Dialog>
 
       <Dialog open={!!editItem} onOpenChange={() => setEditItem(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[calc(100vh-2rem)] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -627,6 +663,18 @@ export function AdminPlans() {
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Fine-tune</Label>
                   <Input value={editFine} onChange={event => setEditFine(event.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Kiểm tra đạo văn/tháng</Label>
+                  <Input value={editPlagiarism} onChange={event => setEditPlagiarism(event.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Số ghế</Label>
+                  <Input value={editSeats} onChange={event => setEditSeats(event.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Lưu lịch sử (ngày)</Label>
+                  <Input value={editHistoryDays} onChange={event => setEditHistoryDays(event.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
                 </div>
               </div>
               <ModelAccessSelector allowedModels={editAllowedModels} onChange={setEditAllowedModels} />

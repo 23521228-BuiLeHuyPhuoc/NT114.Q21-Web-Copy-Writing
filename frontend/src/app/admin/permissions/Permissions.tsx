@@ -9,6 +9,7 @@ import { Label } from '@/app/components/ui/label';
 import { Textarea } from '@/app/components/ui/textarea';
 import { Badge } from '@/app/components/ui/badge';
 import { Checkbox } from '@/app/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select';
 import { DataPagination } from '@/app/components/common/DataPagination';
 import { usePagination } from '@/hooks/usePagination';
 import {
@@ -53,17 +54,55 @@ export function AdminPermissions() {
   const [selectedRole, setSelectedRole] = useState('super_admin');
   const [newPermission, setNewPermission] = useState({ key: '', label: '', group: 'Custom', description: '' });
   const [newRole, setNewRole] = useState({ key: '', label: '', description: '', preset: 'Forest' });
+  const [roleSearch, setRoleSearch] = useState('');
+  const [roleSort, setRoleSort] = useState('label-asc');
+  const [permissionSearch, setPermissionSearch] = useState('');
+  const [permissionGroup, setPermissionGroup] = useState('all');
 
   const selectedRoleDef = roles[selectedRole];
-  const roleEntries = useMemo(() => Object.entries(roles), [roles]);
+  const roleEntries = useMemo(() => {
+    const keyword = roleSearch.trim().toLowerCase();
+    const entries = Object.entries(roles).filter(([key, role]) => {
+      const haystack = [key, role.label, role.description].join(' ').toLowerCase();
+      return !keyword || haystack.includes(keyword);
+    });
+
+    return entries.sort(([, a], [, b]) => {
+      switch (roleSort) {
+        case 'permissions-desc':
+          return b.permissions.length - a.permissions.length;
+        case 'permissions-asc':
+          return a.permissions.length - b.permissions.length;
+        case 'label-desc':
+          return b.label.localeCompare(a.label, 'vi');
+        case 'label-asc':
+        default:
+          return a.label.localeCompare(b.label, 'vi');
+      }
+    });
+  }, [roleSearch, roleSort, roles]);
   const customPermissions = useMemo(() => permissions.filter((permission) => !permission.system), [permissions]);
+  const permissionGroups = useMemo(() => (
+    Array.from(new Set(permissions.map(permission => permission.group).filter(Boolean))).sort((a, b) => a.localeCompare(b, 'vi'))
+  ), [permissions]);
+  const filteredPermissions = useMemo(() => {
+    const keyword = permissionSearch.trim().toLowerCase();
+    return permissions.filter((permission) => {
+      const haystack = [permission.key, permission.label, permission.group, permission.description]
+        .join(' ')
+        .toLowerCase();
+      const matchSearch = !keyword || haystack.includes(keyword);
+      const matchGroup = permissionGroup === 'all' || permission.group === permissionGroup;
+      return matchSearch && matchGroup;
+    });
+  }, [permissionGroup, permissionSearch, permissions]);
   const rolesPagination = usePagination(roleEntries, {
     initialPageSize: 6,
-    resetKey: roleEntries.length,
+    resetKey: `${roleSearch}|${roleSort}|${roleEntries.length}`,
   });
-  const permissionPagination = usePagination(permissions, {
+  const permissionPagination = usePagination(filteredPermissions, {
     initialPageSize: 8,
-    resetKey: selectedRole,
+    resetKey: `${selectedRole}|${permissionSearch}|${permissionGroup}`,
   });
   const groupedPermissions = useMemo(() => groupPermissions(permissionPagination.pageItems), [permissionPagination.pageItems]);
   const customPermissionPagination = usePagination(customPermissions, {
@@ -213,6 +252,18 @@ export function AdminPermissions() {
                 <Users className="w-5 h-5 text-primary" />
                 <h2 className="font-bold text-foreground">Loại admin</h2>
               </div>
+              <div className="grid gap-2 sm:grid-cols-[1fr_150px] mb-4">
+                <Input placeholder="Tìm loại admin..." value={roleSearch} onChange={(e) => setRoleSearch(e.target.value)} />
+                <Select value={roleSort} onValueChange={setRoleSort}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="label-asc">Tên A-Z</SelectItem>
+                    <SelectItem value="label-desc">Tên Z-A</SelectItem>
+                    <SelectItem value="permissions-desc">Nhiều quyền</SelectItem>
+                    <SelectItem value="permissions-asc">Ít quyền</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="space-y-2">
                 {rolesPagination.pageItems.map(([key, role]) => (
                   <button
@@ -320,6 +371,17 @@ export function AdminPermissions() {
                       Super Admin luôn có toàn bộ quyền, bao gồm quyền tuỳ chỉnh được tạo sau này.
                     </div>
                   )}
+
+                  <div className="grid gap-2 md:grid-cols-[1fr_180px] mb-5">
+                    <Input placeholder="Tìm quyền..." value={permissionSearch} onChange={(e) => setPermissionSearch(e.target.value)} />
+                    <Select value={permissionGroup} onValueChange={setPermissionGroup}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Tất cả nhóm</SelectItem>
+                        {permissionGroups.map(group => <SelectItem key={group} value={group}>{group}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
                   <div className="space-y-5">
                     {Object.entries(groupedPermissions).map(([group, items]) => (

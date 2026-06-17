@@ -28,9 +28,6 @@ export function AdminSettings() {
     defaultModel: 'gpt-4o',
     defaultLanguage: 'vi',
     maxCopyLength: 2000,
-    rateLimitFree: 30,
-    rateLimitPro: 500,
-    rateLimitBusiness: 10000,
     openaiKey: 'sk-proj-aBcDeFgH1234567890XyZaBcDeFgH',
     openaiOrg: 'org-aBcDeFgH',
     llamaEndpoint: 'http://localhost:11434/api',
@@ -107,23 +104,6 @@ export function AdminSettings() {
               ))}
             </Card>
 
-            <Card className="p-6 space-y-4">
-              <h3 className="font-semibold text-foreground">Quota & Rate Limiting</h3>
-              <div className="grid md:grid-cols-3 gap-4">
-                <div>
-                  <Label className="text-sm">Gói Free (copy/tháng): {settings.rateLimitFree}</Label>
-                  <Slider value={[settings.rateLimitFree]} onValueChange={v => update('rateLimitFree', v[0])} min={10} max={100} step={5} className="mt-2" />
-                </div>
-                <div>
-                  <Label className="text-sm">Gói Pro (copy/tháng): {settings.rateLimitPro}</Label>
-                  <Slider value={[settings.rateLimitPro]} onValueChange={v => update('rateLimitPro', v[0])} min={100} max={2000} step={100} className="mt-2" />
-                </div>
-                <div>
-                  <Label className="text-sm">Gói Business: {settings.rateLimitBusiness.toLocaleString()}</Label>
-                  <Slider value={[settings.rateLimitBusiness]} onValueChange={v => update('rateLimitBusiness', v[0])} min={1000} max={100000} step={1000} className="mt-2" />
-                </div>
-              </div>
-            </Card>
           </TabsContent>
 
           {/* AI Models */}
@@ -246,7 +226,7 @@ export function AdminSettings() {
             </Card>
 
             <Card className="p-6 space-y-4">
-              <h3 className="font-semibold text-foreground">IP & Rate Limiting</h3>
+              <h3 className="font-semibold text-foreground">IP Access Control</h3>
               <div>
                 <Label>IP Whitelist (Admin access)</Label>
                 <Textarea placeholder="Mỗi IP một dòng, VD: 116.96.0.0/24" className="mt-2 font-mono text-sm min-h-24" defaultValue={'116.96.0.0/24\n42.118.0.0/24'} />

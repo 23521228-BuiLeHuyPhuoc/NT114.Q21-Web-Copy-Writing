@@ -1,3 +1,4 @@
+const AccountAdmin = require('../models/AccountAdmin');
 const AccountUser = require('../models/AccountUser');
 const Notification = require('../models/Notification');
 const Plan = require('../models/Plan');
@@ -35,10 +36,32 @@ function serializeNotificationPreferences(user) {
 }
 
 function serializeNotification(notification) {
+  const recipientType = notification.recipientType || (notification.adminId ? 'admin' : 'user');
+  const recipientAccount = recipientType === 'admin' ? notification.adminId : notification.userId;
+  const senderAdmin = notification.senderAdminId;
+
   return {
     id: notification._id.toString(),
     _id: notification._id.toString(),
+    recipientType,
     userId: toId(notification.userId),
+    adminId: toId(notification.adminId),
+    senderAdminId: toId(notification.senderAdminId),
+    recipient: recipientAccount && recipientAccount.email ? {
+      id: toId(recipientAccount),
+      name: recipientAccount.name,
+      email: recipientAccount.email,
+      role: recipientType === 'admin' ? 'admin' : 'customer',
+      adminRole: recipientAccount.adminRole,
+      status: recipientAccount.status,
+      avatar: recipientAccount.avatar || '',
+    } : null,
+    sender: senderAdmin && senderAdmin.email ? {
+      id: toId(senderAdmin),
+      name: senderAdmin.name,
+      email: senderAdmin.email,
+      adminRole: senderAdmin.adminRole,
+    } : null,
     title: notification.title,
     message: notification.message,
     type: notification.type,
@@ -51,13 +74,158 @@ function serializeNotification(notification) {
 }
 
 function buildUserFilter(userId, query = {}) {
-  const filter = { userId };
+  const filter = { userId, recipientType: { $in: ['user', null] } };
 
   if (query.unreadOnly === true || query.unreadOnly === 'true') {
     filter.isRead = false;
   }
 
   return filter;
+}
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function normalizeAdminLimit(query = {}) {
+  return Math.min(100, Math.max(1, Number(query.limit || 20)));
+}
+
+function activeAccountFilter(extra = {}) {
+  return {
+    ...extra,
+    status: 'active',
+    isDeleted: { $ne: true },
+  };
+}
+
+function buildAdminNotificationFilter(adminId, query = {}) {
+  const filter = {};
+
+  if (query.recipientType && query.recipientType !== 'all') {
+    filter.recipientType = query.recipientType;
+  }
+
+  if (query.type && query.type !== 'all') {
+    filter.type = query.type;
+  }
+
+  if (query.source === 'sent_by_me') {
+    filter.senderAdminId = adminId;
+  }
+
+  if (query.source === 'received_by_me') {
+    filter.recipientType = 'admin';
+    filter.adminId = adminId;
+  }
+
+  if (query.search) {
+    const regex = new RegExp(escapeRegExp(query.search), 'i');
+    filter.$or = [
+      { title: regex },
+      { message: regex },
+      { actionUrl: regex },
+    ];
+  }
+
+  return filter;
+}
+
+async function listAdminNotifications(adminId, query = {}) {
+  const page = normalizePage(query);
+  const limit = normalizeAdminLimit(query);
+  const filter = buildAdminNotificationFilter(adminId, query);
+
+  const [totalItems, unreadCount, notifications] = await Promise.all([
+    Notification.countDocuments(filter),
+    Notification.countDocuments({ recipientType: 'admin', adminId, isRead: false }),
+    Notification.find(filter)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .populate('userId', 'name email avatar status')
+      .populate('adminId', 'name email avatar adminRole status')
+      .populate('senderAdminId', 'name email adminRole'),
+  ]);
+
+  return {
+    items: notifications.map(serializeNotification),
+    unreadCount,
+    pagination: {
+      page,
+      limit,
+      totalItems,
+      totalPages: Math.max(1, Math.ceil(totalItems / limit)),
+    },
+  };
+}
+
+async function getRecipientsForAdminNotification(senderAdminId, payload) {
+  if (payload.recipientMode === 'all_users') {
+    const users = await AccountUser.find(activeAccountFilter()).select('_id name email');
+    return users.map((account) => ({ recipientType: 'user', account }));
+  }
+
+  if (payload.recipientMode === 'all_admins') {
+    const admins = await AccountAdmin.find(activeAccountFilter({ _id: { $ne: senderAdminId } })).select('_id name email');
+    return admins.map((account) => ({ recipientType: 'admin', account }));
+  }
+
+  const selectedRecipients = Array.isArray(payload.recipients)
+    ? Array.from(new Map(payload.recipients.map((recipient) => [`${recipient.accountType}:${recipient.id}`, recipient])).values())
+    : [];
+  const userIds = selectedRecipients
+    .filter((recipient) => recipient.accountType === 'user')
+    .map((recipient) => recipient.id);
+  const adminIds = selectedRecipients
+    .filter((recipient) => recipient.accountType === 'admin' && String(recipient.id) !== String(senderAdminId))
+    .map((recipient) => recipient.id);
+
+  const [users, admins] = await Promise.all([
+    userIds.length > 0
+      ? AccountUser.find(activeAccountFilter({ _id: { $in: userIds } })).select('_id name email')
+      : [],
+    adminIds.length > 0
+      ? AccountAdmin.find(activeAccountFilter({ _id: { $in: adminIds } })).select('_id name email')
+      : [],
+  ]);
+
+  return [
+    ...users.map((account) => ({ recipientType: 'user', account })),
+    ...admins.map((account) => ({ recipientType: 'admin', account })),
+  ];
+}
+
+async function sendAdminNotification(senderAdminId, payload) {
+  const recipients = await getRecipientsForAdminNotification(senderAdminId, payload);
+
+  if (recipients.length === 0) {
+    throw createError(400, 'No active recipients found');
+  }
+
+  const docs = recipients.map(({ recipientType, account }) => ({
+    recipientType,
+    userId: recipientType === 'user' ? account._id : null,
+    adminId: recipientType === 'admin' ? account._id : null,
+    senderAdminId,
+    title: payload.title,
+    message: payload.message,
+    type: payload.type || 'system',
+    actionUrl: payload.actionUrl || '',
+  }));
+
+  const created = await Notification.insertMany(docs, { ordered: false });
+
+  return {
+    createdCount: created.length,
+    recipients: recipients.map(({ recipientType, account }) => ({
+      id: account._id.toString(),
+      name: account.name,
+      email: account.email,
+      role: recipientType === 'admin' ? 'admin' : 'customer',
+    })),
+    items: created.map(serializeNotification),
+  };
 }
 
 async function findUserOrThrow(userId) {
@@ -213,6 +381,26 @@ async function markNotificationRead(userId, id) {
   return serializeNotification(notification);
 }
 
+async function markAdminNotificationRead(adminId, id) {
+  const notification = await Notification.findOne({
+    _id: id,
+    recipientType: 'admin',
+    adminId,
+  });
+
+  if (!notification) {
+    throw createError(404, 'Notification not found');
+  }
+
+  if (!notification.isRead) {
+    notification.isRead = true;
+    notification.readAt = new Date();
+    await notification.save();
+  }
+
+  return serializeNotification(notification);
+}
+
 async function markAllNotificationsRead(userId) {
   const now = new Date();
   const result = await Notification.updateMany(
@@ -236,7 +424,10 @@ async function markAllNotificationsRead(userId) {
 
 async function createNotification(userId, payload) {
   const notification = await Notification.create({
+    recipientType: 'user',
     userId,
+    adminId: null,
+    senderAdminId: payload.senderAdminId || null,
     title: payload.title,
     message: payload.message,
     type: payload.type || 'system',
@@ -263,9 +454,12 @@ module.exports = {
   getNotificationPreferences,
   updateNotificationPreferences,
   listNotifications,
+  listAdminNotifications,
   markNotificationRead,
+  markAdminNotificationRead,
   markAllNotificationsRead,
   createNotification,
+  sendAdminNotification,
   createGenerateSuccessNotification,
   maybeCreateQuotaLowNotification,
 };

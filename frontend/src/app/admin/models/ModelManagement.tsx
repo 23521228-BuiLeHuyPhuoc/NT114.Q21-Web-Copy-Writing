@@ -1,387 +1,483 @@
-import { useState } from 'react';
+import { useMemo } from 'react';
 import { Layout } from '@/app/components/Layout';
 import { Card } from '@/app/components/ui/card';
-import { Button } from '@/app/components/ui/button';
 import { Badge } from '@/app/components/ui/badge';
-import { Input } from '@/app/components/ui/input';
-import { Label } from '@/app/components/ui/label';
-import { Textarea } from '@/app/components/ui/textarea';
-import { Slider } from '@/app/components/ui/slider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs';
-import { Switch } from '@/app/components/ui/switch';
-import {
-  Cpu, Settings, Play, Pause, BarChart3, Zap,
-  CheckCircle2, Clock, AlertCircle, RefreshCw,
-  Globe, Lock, TrendingUp, Eye, Edit2, Save, Trash2
-} from 'lucide-react';
-import toast from 'react-hot-toast';
+import { BarChart3, CheckCircle2, Cpu, Database, ExternalLink, Globe, Route, Server } from 'lucide-react';
 import { BarChart } from '@/app/components/charts';
-import { ConfirmDialog } from '@/app/components/admin/ConfirmDialog';
-import { TrashBin } from '@/app/components/admin/TrashBin';
 import { StatTile } from '@/app/components/admin/StatTile';
-import { DataPagination } from '@/app/components/common/DataPagination';
-import { usePagination } from '@/hooks/usePagination';
+import { useFineTuningModels } from '@/hooks/queries/useFineTuning';
+import { formatBaseModelDisplayName } from '@/lib/modelDisplayName';
 
-const MODELS = [
+type BenchmarkInfo = {
+  primaryMetric: string;
+  primaryScore: number | null;
+  math: string;
+  code: string;
+  general: string;
+  note: string;
+  source: string;
+  url: string;
+};
+
+type AiModelInfo = {
+  id: string;
+  apiModel: string;
+  name: string;
+  provider: string;
+  kind: string;
+  status: string;
+  context: string;
+  output: string;
+  price: string;
+  route: string;
+  env: string;
+  source: string;
+  url?: string;
+  features: string[];
+  note: string;
+  benchmark: BenchmarkInfo;
+};
+
+const AI_MODELS: AiModelInfo[] = [
   {
-    id: 'gpt-4o', name: 'GPT-4o', provider: 'OpenAI', type: 'cloud', status: 'active',
-    contextWindow: '128K', latency: 2.1, cost: 0.015, accuracy: 96.4, usage: 68,
-    config: { temperature: 0.7, maxTokens: 2000, topP: 0.9, frequencyPenalty: 0.3 },
-    systemPrompt: 'Bạn là chuyên gia copywriting hàng đầu Việt Nam với 10 năm kinh nghiệm. Tạo copy marketing chuyên nghiệp, sáng tạo và hiệu quả cho từng ngành nghề cụ thể.',
-    features: ['Function calling', 'Vision', 'JSON mode', '128K context'],
-    icon: '🌐',
+    id: 'gemini-flash',
+    apiModel: 'gemini-2.5-flash',
+    name: 'Gemini 2.5 Flash',
+    provider: 'Google Gemini API',
+    kind: 'Cloud API',
+    status: 'GA',
+    context: '1,048,576 tokens',
+    output: '65,536 tokens',
+    price: '$0.30 input / $2.50 output per 1M tokens',
+    route: 'callGemini -> GEMINI_MODEL_MAP',
+    env: 'GEMINI_API_KEY hoặc GOOGLE_API_KEY',
+    source: 'Google AI model docs',
+    url: 'https://ai.google.dev/gemini-api/docs/models/gemini-2.5-flash',
+    features: ['Multimodal input', 'Function calling', 'Structured output', 'Search grounding', 'Thinking'],
+    note: 'Model cân bằng chất lượng và chi phí, đang là lựa chọn tốt cho copy dài và brief phức tạp.',
+    benchmark: {
+      primaryMetric: 'GPQA Diamond',
+      primaryScore: 82.8,
+      math: 'AIME 2025: 72.0%',
+      code: 'LiveCodeBench v5: 63.9%',
+      general: 'Global MMLU Lite: 88.4%',
+      note: 'Số liệu từ model card Gemini 2.5 Flash.',
+      source: 'Google DeepMind model card',
+      url: 'https://storage.googleapis.com/deepmind-media/Model-Cards/Gemini-2-5-Flash-Model-Card.pdf',
+    },
   },
   {
-    id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', provider: 'OpenAI', type: 'cloud', status: 'active',
-    contextWindow: '16K', latency: 0.8, cost: 0.002, accuracy: 88.2, usage: 22,
-    config: { temperature: 0.8, maxTokens: 1500, topP: 0.95, frequencyPenalty: 0.2 },
-    systemPrompt: 'Bạn là chuyên gia copywriting. Tạo nội dung marketing ngắn gọn, súc tích và thu hút cho doanh nghiệp Việt Nam.',
-    features: ['Fast response', '16K context', 'Cost-effective'],
-    icon: '⚡',
+    id: 'gemini-flash-lite',
+    apiModel: 'gemini-2.5-flash-lite',
+    name: 'Gemini 2.5 Flash-Lite',
+    provider: 'Google Gemini API',
+    kind: 'Cloud API',
+    status: 'GA',
+    context: '1,048,576 tokens',
+    output: '65,536 tokens',
+    price: '$0.10 input / $0.40 output per 1M tokens',
+    route: 'callGemini -> GEMINI_MODEL_MAP',
+    env: 'GEMINI_API_KEY hoặc GOOGLE_API_KEY',
+    source: 'Google AI model docs',
+    url: 'https://ai.google.dev/gemini-api/docs/models/gemini-2.5-flash-lite',
+    features: ['Multimodal input', 'Function calling', 'Structured output', 'Low latency', 'Low cost'],
+    note: 'Model nhẹ cho request số lượng lớn, phân loại, trích xuất dữ liệu và nội dung ngắn.',
+    benchmark: {
+      primaryMetric: 'GPQA Diamond',
+      primaryScore: 64.6,
+      math: 'AIME 2025: 49.8%',
+      code: 'LiveCodeBench v5: 33.7%',
+      general: 'Global MMLU Lite: 81.1%',
+      note: 'Số liệu từ model card Gemini 2.5 Flash-Lite.',
+      source: 'Google DeepMind model card',
+      url: 'https://storage.googleapis.com/deepmind-media/Model-Cards/Gemini-2-5-Flash-Lite-Model-Card.pdf',
+    },
   },
   {
-    id: 'llama-3.1-70b', name: 'Llama 3.1 70B', provider: 'Meta (Self-hosted)', type: 'local', status: 'active',
-    contextWindow: '128K', latency: 3.2, cost: 0, accuracy: 92.1, usage: 8,
-    config: { temperature: 0.75, maxTokens: 2000, topP: 0.85, frequencyPenalty: 0.25 },
-    systemPrompt: 'Bạn là AI copywriter chuyên nghiệp. Viết nội dung marketing sáng tạo, phù hợp văn hóa Việt Nam.',
-    features: ['Open-source', 'No data leakage', '128K context', 'Self-hosted'],
-    icon: '🦙',
+    id: 'groq-llama-3-3-70b',
+    apiModel: 'llama-3.3-70b-versatile',
+    name: 'Llama 3.3 70B Versatile',
+    provider: 'Groq / Meta Llama',
+    kind: 'Open-weight API',
+    status: 'Production',
+    context: '131,072 tokens',
+    output: '32,768 tokens',
+    price: '$0.59 input / $0.79 output per 1M tokens',
+    route: 'callGroq -> GROQ_MODEL_MAP',
+    env: 'GROQ_API_KEY',
+    source: 'Groq supported models',
+    url: 'https://console.groq.com/docs/models',
+    features: ['Open weights', 'Large context', 'Tool-use capable', '280 tokens/s theo Groq'],
+    note: 'Open-weight mạnh, hợp khi muốn cân bằng chất lượng, chi phí và tốc độ qua Groq.',
+    benchmark: {
+      primaryMetric: 'GPQA Diamond',
+      primaryScore: 50.5,
+      math: 'MATH CoT: 77.0%',
+      code: 'HumanEval: 88.4%',
+      general: 'MMLU: 86.0% / MMLU Pro: 68.9%',
+      note: 'Benchmark của model nền Meta Llama 3.3 70B Instruct.',
+      source: 'Meta model card',
+      url: 'https://huggingface.co/meta-llama/Llama-3.3-70B-Instruct',
+    },
   },
   {
-    id: 'llama-3.1-8b', name: 'Llama 3.1 8B', provider: 'Meta (Self-hosted)', type: 'local', status: 'inactive',
-    contextWindow: '128K', latency: 1.2, cost: 0, accuracy: 82.5, usage: 2,
-    config: { temperature: 0.8, maxTokens: 1000, topP: 0.9, frequencyPenalty: 0.2 },
-    systemPrompt: 'Bạn là AI copywriter. Tạo nội dung marketing ngắn, hiệu quả.',
-    features: ['Lightweight', 'Fast', 'Open-source'],
-    icon: '🦙',
+    id: 'groq-llama-3-1-8b',
+    apiModel: 'llama-3.1-8b-instant',
+    name: 'Llama 3.1 8B Instant',
+    provider: 'Groq / Meta Llama',
+    kind: 'Open-weight API',
+    status: 'Production',
+    context: '131,072 tokens',
+    output: '131,072 tokens',
+    price: '$0.05 input / $0.08 output per 1M tokens',
+    route: 'callGroq -> GROQ_MODEL_MAP',
+    env: 'GROQ_API_KEY',
+    source: 'Groq supported models',
+    url: 'https://console.groq.com/docs/models',
+    features: ['Open weights', 'Very fast', 'Large context', '560 tokens/s theo Groq'],
+    note: 'Ưu tiên tốc độ và chi phí thấp cho tác vụ đơn giản, demo nhanh hoặc copy ngắn.',
+    benchmark: {
+      primaryMetric: 'GPQA',
+      primaryScore: 30.4,
+      math: 'MATH CoT: 51.9% / GSM-8K: 84.5%',
+      code: 'HumanEval: 72.6%',
+      general: 'MMLU: 73.0% / MMLU Pro: 48.3%',
+      note: 'Benchmark của model nền Meta Llama 3.1 8B Instruct.',
+      source: 'Meta model card',
+      url: 'https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct',
+    },
+  },
+  {
+    id: 'gemini-3-flash-preview',
+    apiModel: 'gemini-3-flash-preview',
+    name: 'Gemini 3 Flash Preview',
+    provider: 'Google Gemini API',
+    kind: 'Preview cloud API',
+    status: 'Preview',
+    context: '1M tokens',
+    output: 'Phụ thuộc API preview',
+    price: '$0.50 input / $3.00 output per 1M tokens',
+    route: 'callGemini -> GEMINI_MODEL_MAP',
+    env: 'GEMINI_API_KEY hoặc GOOGLE_API_KEY',
+    source: 'Google AI model docs',
+    url: 'https://ai.google.dev/gemini-api/docs/models/gemini-3-flash-preview',
+    features: ['Frontier reasoning', 'Multimodal', 'Agentic coding', 'Preview availability'],
+    note: 'Model preview chất lượng cao hơn 2.5 Flash; cần lưu ý SLA/rate limit preview có thể thay đổi.',
+    benchmark: {
+      primaryMetric: 'GPQA Diamond',
+      primaryScore: 90.4,
+      math: 'HLE no tools: 33.7%',
+      code: 'SWE-bench Verified: 78.0%',
+      general: 'MMMU Pro: 81.2%',
+      note: 'Google công bố benchmark trong bài ra mắt Gemini 3 Flash.',
+      source: 'Google Blog',
+      url: 'https://blog.google/products-and-platforms/products/gemini/gemini-3-flash/',
+    },
+  },
+  {
+    id: 'gemini-3-1-flash-lite',
+    apiModel: 'gemini-3.1-flash-lite',
+    name: 'Gemini 3.1 Flash-Lite',
+    provider: 'Google Gemini API',
+    kind: 'Cloud API',
+    status: 'GA/Preview transition',
+    context: '1,048,576 tokens',
+    output: '65,536 tokens',
+    price: '$0.25 input / $1.50 output per 1M tokens',
+    route: 'callGemini -> GEMINI_MODEL_MAP',
+    env: 'GEMINI_API_KEY hoặc GOOGLE_API_KEY',
+    source: 'Google AI model docs',
+    url: 'https://ai.google.dev/gemini-api/docs/models/gemini-3.1-flash-lite-preview',
+    features: ['High-volume workloads', 'Thinking levels', 'Multimodal', 'Low latency'],
+    note: 'Model Flash-Lite mới cho workload lớn, rẻ hơn nhóm model lớn nhưng vẫn có thinking.',
+    benchmark: {
+      primaryMetric: 'GPQA Diamond',
+      primaryScore: 86.9,
+      math: 'Speed: 2.5x faster TTFT vs 2.5 Flash',
+      code: 'Output speed: +45% vs 2.5 Flash',
+      general: 'MMMU Pro: 76.8% / Arena Elo: 1432',
+      note: 'Google công bố GPQA/MMMU và chỉ số tốc độ trong bài ra mắt 3.1 Flash-Lite.',
+      source: 'Google Blog',
+      url: 'https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-3-1-flash-lite/',
+    },
+  },
+  {
+    id: 'gemma-4-26b',
+    apiModel: 'gemma-4-26b-a4b-it',
+    name: 'Gemma 4 26B A4B IT',
+    provider: 'Google Gemma / Gemini API',
+    kind: 'Open-weight model via API',
+    status: 'Model card',
+    context: '256K tokens',
+    output: 'Phụ thuộc serving backend',
+    price: 'Phụ thuộc Gemini/Gemma provider',
+    route: 'callGemini -> GEMINI_MODEL_MAP',
+    env: 'GEMINI_API_KEY hoặc GOOGLE_API_KEY',
+    source: 'Google Gemma docs',
+    url: 'https://ai.google.dev/gemma/docs/core',
+    features: ['Open weights', 'MoE 26B A4B', 'Text + image', 'Function calling', 'Long context'],
+    note: 'Gemma open-weight mới, hữu ích khi cần model có trọng số mở và context dài.',
+    benchmark: {
+      primaryMetric: 'GPQA Diamond',
+      primaryScore: 82.3,
+      math: 'AIME 2026 no tools: 88.3%',
+      code: 'LiveCodeBench v6: 77.1%',
+      general: 'MMLU Pro: 82.6% / MMMLU: 86.3%',
+      note: 'Benchmark của model card Gemma 4 26B A4B IT.',
+      source: 'Google/Hugging Face model card',
+      url: 'https://huggingface.co/google/gemma-4-26B-A4B-it',
+    },
+  },
+  {
+    id: 'openrouter-free',
+    apiModel: 'openrouter/free',
+    name: 'OpenRouter Free Router',
+    provider: 'OpenRouter',
+    kind: 'Router',
+    status: 'Dynamic',
+    context: 'Khoảng 200K theo OpenRouter',
+    output: 'Phụ thuộc model được route',
+    price: 'Free tier',
+    route: 'callOpenRouter -> OPENROUTER_MODEL_MAP',
+    env: 'OPENROUTER_API_KEY',
+    source: 'OpenRouter Free Models Router',
+    url: 'https://openrouter.ai/openrouter/free',
+    features: ['Free router', 'Chọn model free theo request', 'Model thay đổi theo availability'],
+    note: 'Đây là router, không phải một model cố định; app vẫn liệt kê vì người dùng có thể chọn trong Model AI.',
+    benchmark: {
+      primaryMetric: 'N/A',
+      primaryScore: null,
+      math: 'Không cố định',
+      code: 'Không cố định',
+      general: 'Không cố định',
+      note: 'OpenRouter/free chọn model free khả dụng nên không có benchmark cố định. Benchmark thực tế phải đọc model trả về trong response/activity.',
+      source: 'OpenRouter docs',
+      url: 'https://openrouter.ai/openrouter/free',
+    },
+  },
+  {
+    id: 'freegpt4-gpt-4',
+    apiModel: 'gpt-4',
+    name: 'GPT-4 Free Local API',
+    provider: 'Free-GPT4-WEB-API local wrapper',
+    kind: 'Local wrapper',
+    status: 'Local',
+    context: 'Phụ thuộc provider phía sau',
+    output: 'Phụ thuộc provider phía sau',
+    price: 'Miễn phí trong app; phụ thuộc upstream',
+    route: 'callFreeGPT4 -> FREEGPT4_MODEL_MAP',
+    env: 'FREEGPT4_* optional, localhost:5500',
+    source: 'App local wrapper',
+    features: ['Local server wrapper', 'model=gpt-4', 'No direct OpenAI key required in app'],
+    note: 'Đây là model đại diện qua wrapper local. Benchmark hiển thị theo GPT-4 gốc, còn chất lượng thực tế phụ thuộc upstream provider.',
+    benchmark: {
+      primaryMetric: 'MMLU',
+      primaryScore: 86.4,
+      math: 'GSM-8K: 92.0%',
+      code: 'HumanEval: 67.0%',
+      general: 'HellaSwag: 95.3% / ARC: 96.3%',
+      note: 'Benchmark đại diện theo GPT-4 Technical Report, không phải đo trực tiếp FreeGPT4 wrapper.',
+      source: 'OpenAI GPT-4 Technical Report',
+      url: 'https://cdn.openai.com/papers/gpt-4.pdf',
+    },
+  },
+  {
+    id: 'freegpt4-gpt-4o',
+    apiModel: 'gpt-4o',
+    name: 'GPT-4o Free Local API',
+    provider: 'Free-GPT4-WEB-API local wrapper',
+    kind: 'Local wrapper',
+    status: 'Local',
+    context: 'Phụ thuộc provider phía sau',
+    output: 'Phụ thuộc provider phía sau',
+    price: 'Miễn phí trong app; phụ thuộc upstream',
+    route: 'callFreeGPT4 -> FREEGPT4_MODEL_MAP',
+    env: 'FREEGPT4_* optional, localhost:5500',
+    source: 'App local wrapper',
+    features: ['Local server wrapper', 'model=gpt-4o', 'No direct OpenAI key required in app'],
+    note: 'Đây là model đại diện qua wrapper local. Benchmark hiển thị theo GPT-4o gốc, còn chất lượng thực tế phụ thuộc upstream provider.',
+    benchmark: {
+      primaryMetric: 'MedQA USMLE 4 options',
+      primaryScore: 89.4,
+      math: 'Không có GPQA/MATH tổng quát trong system card',
+      code: 'Không có HumanEval tổng quát trong system card',
+      general: 'MMLU Clinical Knowledge: 92%',
+      note: 'OpenAI system card công bố nhiều benchmark y khoa/clinical; đây là benchmark đại diện công khai của GPT-4o, không phải đo trực tiếp wrapper.',
+      source: 'OpenAI GPT-4o System Card',
+      url: 'https://openai.com/index/gpt-4o-system-card/',
+    },
   },
 ];
 
-const PERF_DATA = [
-  { model: 'GPT-4o', accuracy: 96.4, speed: 90, cost: 60, creativity: 95, vietnamese: 98 },
-  { model: 'GPT-3.5', accuracy: 88.2, speed: 98, cost: 98, creativity: 82, vietnamese: 90 },
-  { model: 'Llama 70B', accuracy: 92.1, speed: 75, cost: 100, creativity: 88, vietnamese: 85 },
-  { model: 'Llama 8B', accuracy: 82.5, speed: 92, cost: 100, creativity: 75, vietnamese: 80 },
-];
+const SOURCES = [
+  ['Google Gemini model docs', 'https://ai.google.dev/gemini-api/docs/models'],
+  ['Google Gemini API pricing', 'https://ai.google.dev/gemini-api/docs/pricing'],
+  ['Groq supported models', 'https://console.groq.com/docs/models'],
+  ['Google Gemini 3 Flash launch/benchmarks', 'https://blog.google/products-and-platforms/products/gemini/gemini-3-flash/'],
+  ['Google Gemini 3.1 Flash-Lite launch/benchmarks', 'https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-3-1-flash-lite/'],
+  ['Gemma 4 26B A4B IT model card', 'https://huggingface.co/google/gemma-4-26B-A4B-it'],
+  ['Meta Llama 3.3 70B model card', 'https://huggingface.co/meta-llama/Llama-3.3-70B-Instruct'],
+  ['Meta Llama 3.1 8B model card', 'https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct'],
+  ['OpenRouter Free Models Router', 'https://openrouter.ai/openrouter/free'],
+  ['OpenAI GPT-4 Technical Report', 'https://cdn.openai.com/papers/gpt-4.pdf'],
+  ['OpenAI GPT-4o System Card', 'https://openai.com/index/gpt-4o-system-card/'],
+] as const;
 
-const RADAR_DATA = [
-  { subject: 'Độ chính xác', GPT4o: 96, Llama70B: 92, GPT35: 88 },
-  { subject: 'Tốc độ', GPT4o: 85, Llama70B: 72, GPT35: 97 },
-  { subject: 'Chi phí', GPT4o: 60, Llama70B: 100, GPT35: 95 },
-  { subject: 'Sáng tạo', GPT4o: 95, Llama70B: 88, GPT35: 82 },
-  { subject: 'Tiếng Việt', GPT4o: 98, Llama70B: 85, GPT35: 90 },
-];
+function SourceLink({ label, url }: { label: string; url?: string }) {
+  if (!url) return <span>{label}</span>;
+  return (
+    <a href={url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline">
+      {label}
+      <ExternalLink className="h-3 w-3" />
+    </a>
+  );
+}
+
+function formatScore(score: number | null) {
+  return typeof score === 'number' ? score + '%' : 'N/A';
+}
 
 export function AdminModelManagement() {
-  const [models, setModels] = useState(MODELS);
-  const [editing, setEditing] = useState<string | null>(null);
-  const [editPrompt, setEditPrompt] = useState('');
-  const [editConfig, setEditConfig] = useState<any>({});
-
-  // Soft delete
-  const [deletedModels, setDeletedModels] = useState<{id:string;name:string;provider:string;deletedAt:string}[]>([]);
-  const [confirmDelete, setConfirmDelete] = useState<typeof MODELS[0] | null>(null);
-  const [trashOpen, setTrashOpen] = useState(false);
-  const [trashLoading, setTrashLoading] = useState<string | null>(null);
-
-  const visibleModels = models.filter(m => !deletedModels.find(d => d.id === m.id));
-  const modelsPagination = usePagination(visibleModels, {
-    initialPageSize: 5,
-    resetKey: `${visibleModels.length}`,
-  });
-
-  const startEdit = (m: typeof MODELS[0]) => {
-    setEditing(m.id);
-    setEditPrompt(m.systemPrompt);
-    setEditConfig({ ...m.config });
-  };
-
-  const saveEdit = (id: string) => {
-    setModels(prev => prev.map(m => m.id === id ? { ...m, systemPrompt: editPrompt, config: editConfig } : m));
-    setEditing(null);
-    toast.success('Đã lưu cấu hình model!');
-  };
-
-  const toggleStatus = (id: string) => {
-    setModels(prev => prev.map(m => m.id === id ? { ...m, status: m.status === 'active' ? 'inactive' : 'active' } : m));
-    toast.success('Đã cập nhật trạng thái model!');
-  };
-
-  const handleSoftDelete = async () => {
-    if (!confirmDelete) return;
-    await new Promise(r => setTimeout(r, 400));
-    setDeletedModels(prev => [...prev, { id: confirmDelete.id, name: confirmDelete.name, provider: confirmDelete.provider, deletedAt: new Date().toLocaleString('vi-VN') }]);
-    setConfirmDelete(null);
-    toast.success('Đã chuyển model vào thùng rác');
-  };
-
-  const handleRestore = async (id: string | number) => {
-    setTrashLoading(String(id)); await new Promise(r => setTimeout(r, 500));
-    setDeletedModels(prev => prev.filter(m => m.id !== String(id)));
-    setTrashLoading(null); toast.success('Đã khôi phục model');
-  };
-
-  const handlePermanentDelete = async (id: string | number) => {
-    setTrashLoading(String(id)); await new Promise(r => setTimeout(r, 500));
-    setDeletedModels(prev => prev.filter(m => m.id !== String(id)));
-    setModels(prev => prev.filter(m => m.id !== String(id)));
-    setTrashLoading(null); toast.error('Đã xoá vĩnh viễn model');
-  };
+  const { data: fineTunedModels = [], isLoading } = useFineTuningModels();
+  const readyFineTunedModels = useMemo(
+    () => fineTunedModels.filter(model => model.status === 'ready' || model.isActive),
+    [fineTunedModels],
+  );
+  const providerCount = new Set(AI_MODELS.map(model => model.provider)).size;
+  const benchmarkedModels = AI_MODELS.filter(model => typeof model.benchmark.primaryScore === 'number');
 
   return (
     <Layout>
       <div className="p-6 max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground mb-1">Quản Lý Model AI</h1>
-            <p className="text-muted-foreground text-sm">Cấu hình, monitor và tối ưu GPT-4o, Llama 3.1 và các model fine-tuned</p>
-          </div>
-          <button
-            onClick={() => setTrashOpen(true)}
-            className="relative flex items-center gap-1.5 border border-border hover:border-red-300 hover:bg-destructive/10 text-muted-foreground hover:text-red-600 rounded-xl px-3 py-2 text-sm font-semibold transition-all"
-          >
-            <Trash2 className="w-4 h-4" />
-            Thùng rác
-            {deletedModels.length > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-destructive/100 text-white text-[10px] font-bold rounded-full flex items-center justify-center">{deletedModels.length}</span>
-            )}
-          </button>
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-foreground mb-1">Quản lý model AI</h1>
+          <p className="text-muted-foreground text-sm">Toàn bộ model người dùng chọn được trong Model AI, kèm route backend và benchmark theo nguồn công khai.</p>
         </div>
 
-        {/* Summary */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          {[
-            { label: 'Tổng models', value: visibleModels.length, icon: Cpu, color: 'bg-primary/10 text-primary' },
-            { label: 'Đang hoạt động', value: visibleModels.filter(m => m.status === 'active').length, icon: CheckCircle2, color: 'bg-primary/10 text-primary' },
-            { label: 'Cloud models', value: visibleModels.filter(m => m.type === 'cloud').length, icon: Globe, color: 'bg-primary/10 text-primary' },
-            { label: 'Local models', value: visibleModels.filter(m => m.type === 'local').length, icon: Lock, color: 'bg-warning/10 text-amber-800' },
-          ].map(s => (
-            <StatTile key={s.label} icon={s.icon} label={s.label} value={s.value} color={s.color} iconClassName="w-5 h-5" valueClassName="text-2xl" />
-          ))}
+          <StatTile icon={Cpu} label="Model người dùng thấy" value={AI_MODELS.length} color="bg-primary/10 text-primary" iconClassName="w-5 h-5" valueClassName="text-2xl" />
+          <StatTile icon={CheckCircle2} label="Có benchmark cố định" value={benchmarkedModels.length} color="bg-primary/10 text-primary" iconClassName="w-5 h-5" valueClassName="text-2xl" />
+          <StatTile icon={Globe} label="Providers/wrappers" value={providerCount} color="bg-primary/10 text-primary" iconClassName="w-5 h-5" valueClassName="text-2xl" />
+          <StatTile icon={Database} label="Fine-tuned ready" value={readyFineTunedModels.length} color="bg-warning/10 text-amber-800" iconClassName="w-5 h-5" valueClassName="text-2xl" />
         </div>
 
         <Tabs defaultValue="models">
           <TabsList className="mb-6">
             <TabsTrigger value="models"><Cpu className="w-4 h-4 mr-2" />Models</TabsTrigger>
             <TabsTrigger value="benchmark"><BarChart3 className="w-4 h-4 mr-2" />Benchmark</TabsTrigger>
-            <TabsTrigger value="routing"><Settings className="w-4 h-4 mr-2" />Smart Routing</TabsTrigger>
           </TabsList>
 
-          {/* Models tab */}
           <TabsContent value="models" className="space-y-4">
-            {modelsPagination.pageItems.map(m => (
-              <Card key={m.id} className={`p-5 ${m.status === 'inactive' ? 'opacity-60' : ''}`}>
-                <div className="flex flex-col lg:flex-row gap-4">
-                  <div className="flex-1">
+            {AI_MODELS.map(model => (
+              <Card key={model.id} className="p-5">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2 mb-3">
-                      <span className="text-xl">{m.icon}</span>
-                      <h3 className="font-bold text-foreground">{m.name}</h3>
-                      <Badge className={m.status === 'active' ? 'bg-primary/10 text-primary border-0' : 'bg-muted text-muted-foreground border-0'}>
-                        {m.status === 'active' ? 'Hoạt động' : 'Tắt'}
-                      </Badge>
-                      <Badge className={m.type === 'cloud' ? 'bg-primary/10 text-primary border-0' : 'bg-warning/15 text-amber-800 border-0'}>
-                        {m.type === 'cloud' ? '☁️ Cloud' : '🖥️ Local'}
-                      </Badge>
-                      <span className="text-sm text-muted-foreground">{m.provider}</span>
+                      <Cpu className="h-5 w-5 text-primary" />
+                      <h3 className="font-bold text-foreground">{model.name}</h3>
+                      <Badge className="bg-primary/10 text-primary border-0">{model.status}</Badge>
+                      <Badge className="bg-muted text-foreground/75 border-0">{model.kind}</Badge>
+                      <span className="text-sm text-muted-foreground">{model.provider}</span>
                     </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                      {[
-                        { label: 'Độ chính xác', value: `${m.accuracy}%`, color: 'text-primary' },
-                        { label: 'Latency', value: `${m.latency}s`, color: 'text-primary' },
-                        { label: 'Context', value: m.contextWindow, color: 'text-primary' },
-                        { label: 'Chi phí/1K tokens', value: m.cost === 0 ? 'Miễn phí' : `$${m.cost}`, color: m.cost === 0 ? 'text-primary' : 'text-amber-600' },
-                      ].map(stat => (
-                        <div key={stat.label} className="bg-surface-muted rounded-lg p-2.5 text-center">
-                          <p className={`font-bold ${stat.color}`}>{stat.value}</p>
-                          <p className="text-xs text-muted-foreground">{stat.label}</p>
-                        </div>
-                      ))}
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 mb-4">
+                      <div className="bg-surface-muted rounded-lg p-3"><p className="text-xs text-muted-foreground">App model ID</p><p className="font-semibold text-sm break-all">{model.id}</p></div>
+                      <div className="bg-surface-muted rounded-lg p-3"><p className="text-xs text-muted-foreground">Provider model ID</p><p className="font-semibold text-sm break-all">{model.apiModel}</p></div>
+                      <div className="bg-surface-muted rounded-lg p-3"><p className="text-xs text-muted-foreground">Context / output</p><p className="font-semibold text-sm">{model.context} / {model.output}</p></div>
+                      <div className="bg-surface-muted rounded-lg p-3"><p className="text-xs text-muted-foreground">Giá public</p><p className="font-semibold text-sm">{model.price}</p></div>
+                    </div>
+
+                    <div className="grid gap-3 md:grid-cols-2 mb-4">
+                      <div className="rounded-lg border border-border p-3"><p className="text-xs font-semibold text-foreground/70 mb-1">Backend route</p><p className="text-xs text-foreground/80 font-mono break-all">{model.route}</p></div>
+                      <div className="rounded-lg border border-border p-3"><p className="text-xs font-semibold text-foreground/70 mb-1">Env cần cấu hình</p><p className="text-xs text-foreground/80 font-mono break-all">{model.env}</p></div>
                     </div>
 
                     <div className="flex flex-wrap gap-1.5 mb-3">
-                      {m.features.map(f => <Badge key={f} className="bg-primary/10 text-primary border-0 text-xs">{f}</Badge>)}
+                      {model.features.map(feature => <Badge key={feature} className="bg-primary/10 text-primary border-0 text-xs">{feature}</Badge>)}
                     </div>
-
-                    {editing === m.id ? (
-                      <div className="space-y-4 border-t pt-4 mt-4">
-                        <div>
-                          <Label className="text-xs font-semibold text-foreground/70 mb-1 block">System Prompt</Label>
-                          <Textarea value={editPrompt} onChange={e => setEditPrompt(e.target.value)} className="text-sm min-h-20" />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <Label className="text-xs text-foreground/70">Temperature: {editConfig.temperature}</Label>
-                            <Slider value={[editConfig.temperature]} onValueChange={v => setEditConfig({...editConfig, temperature: v[0]})} min={0} max={1} step={0.1} className="mt-2" />
-                          </div>
-                          <div>
-                            <Label className="text-xs text-foreground/70">Max Tokens: {editConfig.maxTokens}</Label>
-                            <Slider value={[editConfig.maxTokens]} onValueChange={v => setEditConfig({...editConfig, maxTokens: v[0]})} min={256} max={4096} step={128} className="mt-2" />
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button size="sm" className="bg-primary text-white" onClick={() => saveEdit(m.id)}>
-                            <Save className="w-4 h-4 mr-1" /> Lưu
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={() => setEditing(null)}>Hủy</Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="bg-surface-muted rounded-lg p-3 border text-xs text-foreground/70 font-mono">
-                        <span className="text-primary">System:</span> "{m.systemPrompt.slice(0, 100)}..."
-                      </div>
-                    )}
+                    <p className="text-sm text-foreground/75 mb-3">{model.note}</p>
+                    <p className="text-xs text-muted-foreground">Nguồn model: <SourceLink label={model.source} url={model.url} /></p>
                   </div>
-
-                  <div className="flex lg:flex-col gap-2 flex-shrink-0">
-                    <div className="flex items-center gap-2">
-                      <Switch checked={m.status === 'active'} onCheckedChange={() => toggleStatus(m.id)} />
-                      <span className="text-xs text-foreground/70">{m.status === 'active' ? 'Bật' : 'Tắt'}</span>
-                    </div>
-                    <Button variant="outline" size="sm" onClick={() => startEdit(m)}>
-                      <Edit2 className="w-4 h-4 mr-1" /> Cấu hình
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => toast.success('Đang test model...')}>
-                      <Play className="w-4 h-4 mr-1" /> Test
-                    </Button>
-                    <Button size="sm" variant="ghost" className="text-red-500 hover:bg-destructive/10 hover:text-red-600" onClick={() => setConfirmDelete(m)}>
-                      <Trash2 className="w-4 h-4 mr-1" /> Xoá
-                    </Button>
-                  </div>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground lg:w-44"><Server className="h-4 w-4" /><span>{model.kind}</span></div>
                 </div>
               </Card>
             ))}
-            {visibleModels.length === 0 && (
-              <Card className="p-16 text-center">
-                <Cpu className="w-10 h-10 text-muted-foreground/60 mx-auto mb-3" />
-                <p className="text-muted-foreground/80 text-sm">Tất cả model đã bị xoá. Khôi phục từ thùng rác.</p>
-              </Card>
-            )}
-            <DataPagination
-              page={modelsPagination.page}
-              pageSize={modelsPagination.pageSize}
-              totalItems={modelsPagination.totalItems}
-              totalPages={modelsPagination.totalPages}
-              startIndex={modelsPagination.startIndex}
-              endIndex={modelsPagination.endIndex}
-              onPageChange={modelsPagination.setPage}
-              onPageSizeChange={modelsPagination.setPageSize}
-              itemLabel="model"
-            />
-          </TabsContent>
 
-          {/* Benchmark */}
-          <TabsContent value="benchmark" className="space-y-6">
-            <div className="grid lg:grid-cols-2 gap-6">
-              <Card className="p-5">
-                <h3 className="font-semibold text-foreground mb-4">So sánh hiệu suất</h3>
-                <BarChart
-                  data={PERF_DATA}
-                  xKey="model"
-                  height={280}
-                  yMin={0}
-                  yMax={100}
-                  series={[
-                    { key: 'accuracy', label: 'Độ chính xác', color: '#16723a' },
-                    { key: 'speed', label: 'Tốc độ', color: '#16723a' },
-                    { key: 'vietnamese', label: 'Tiếng Việt', color: '#d88a0b' },
-                  ]}
-                />
-              </Card>
-              <Card className="p-5">
-                <h3 className="font-semibold text-foreground mb-4">So sánh Top 3 (theo tiêu chí)</h3>
-                <BarChart
-                  data={RADAR_DATA}
-                  xKey="subject"
-                  height={280}
-                  yMin={0}
-                  yMax={100}
-                  series={[
-                    { key: 'GPT4o', label: 'GPT-4o', color: '#16723a' },
-                    { key: 'Llama70B', label: 'Llama 70B', color: '#16723a' },
-                    { key: 'GPT35', label: 'GPT-3.5', color: '#d88a0b' },
-                  ]}
-                />
-              </Card>
-            </div>
             <Card className="p-5">
-              <h3 className="font-semibold text-foreground mb-4">Tóm tắt đề xuất</h3>
-              <div className="space-y-3">
-                {[
-                  { model: 'GPT-4o', use: 'Dùng cho landing page, email phức tạp, copy cao cấp', recommend: 'Mặc định', color: 'bg-primary/10 text-primary' },
-                  { model: 'GPT-3.5 Turbo', use: 'Dùng cho social media, tiêu đề ngắn, CTA đơn giản', recommend: 'Tiết kiệm', color: 'bg-primary/10 text-primary' },
-                  { model: 'Llama 3.1 70B', use: 'Dùng khi cần bảo mật dữ liệu hoàn toàn', recommend: 'Bảo mật', color: 'bg-warning/15 text-amber-800' },
-                ].map(r => (
-                  <div key={r.model} className="flex items-start gap-4 p-3 bg-surface-muted rounded-lg">
-                    <Badge className={`${r.color} border-0 flex-shrink-0`}>{r.recommend}</Badge>
-                    <div>
-                      <p className="font-semibold text-sm text-foreground">{r.model}</p>
-                      <p className="text-xs text-foreground/70">{r.use}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <div className="flex items-center gap-2 mb-3"><Database className="h-5 w-5 text-primary" /><h3 className="font-semibold text-foreground">Fine-tuned models từ backend</h3></div>
+              {isLoading ? (
+                <p className="text-sm text-muted-foreground">Đang tải model fine-tuned...</p>
+              ) : fineTunedModels.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Chưa có fine-tuned model nào trong registry.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead><tr className="border-b text-left text-muted-foreground"><th className="py-2 pr-4 font-medium">Tên</th><th className="py-2 pr-4 font-medium">Provider</th><th className="py-2 pr-4 font-medium">Base model</th><th className="py-2 pr-4 font-medium">Trạng thái</th><th className="py-2 pr-4 font-medium">Generator</th></tr></thead>
+                    <tbody>
+                      {fineTunedModels.map(item => (
+                        <tr key={item.registryModelId || item.id} className="border-b last:border-0">
+                          <td className="py-3 pr-4 font-semibold text-foreground">{item.name}</td>
+                          <td className="py-3 pr-4 text-foreground/75">{item.provider || '-'}</td>
+                          <td className="py-3 pr-4 text-foreground/75">{formatBaseModelDisplayName(item.baseModel)}</td>
+                          <td className="py-3 pr-4"><Badge className={item.status === 'ready' ? 'bg-primary/10 text-primary border-0' : 'bg-muted text-muted-foreground border-0'}>{item.status}</Badge></td>
+                          <td className="py-3 pr-4 text-foreground/75">{item.generatorReady === false ? item.generatorMessage || 'Chưa sẵn sàng' : 'Sẵn sàng'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </Card>
           </TabsContent>
 
-          {/* Smart Routing */}
-          <TabsContent value="routing">
-            <Card className="p-6">
-              <h3 className="font-bold text-foreground mb-2">Smart Model Routing</h3>
-              <p className="text-sm text-foreground/70 mb-6">Tự động chọn model phù hợp nhất dựa trên loại nội dung và ngành nghề.</p>
-              <div className="space-y-4">
-                {[
-                  { condition: 'Landing Page + Sang trọng', model: 'GPT-4o', reason: 'Cần sáng tạo cao, chất lượng premium' },
-                  { condition: 'Social Media + Khẩn cấp', model: 'GPT-3.5 Turbo', reason: 'Nội dung ngắn, cần tốc độ cao' },
-                  { condition: 'Email Marketing (dài)', model: 'GPT-4o', reason: 'Cần logic phức tạp, lập luận chặt chẽ' },
-                  { condition: 'Bảo mật (local mode)', model: 'Llama 3.1 70B', reason: 'Dữ liệu nhạy cảm, không cloud' },
-                  { condition: 'Default (mọi trường hợp)', model: 'GPT-4o', reason: 'Hiệu suất tốt nhất tổng thể' },
-                ].map((rule, i) => (
-                  <div key={i} className="flex items-center gap-4 p-4 border rounded-xl hover:shadow-sm transition-shadow">
-                    <div className="text-xs font-mono text-primary bg-primary/5 px-3 py-2 rounded-lg flex-shrink-0 min-w-48">{rule.condition}</div>
-                    <div className="flex-1 flex items-center gap-2">
-                      <span className="text-muted-foreground/80">→</span>
-                      <Badge className="bg-primary/10 text-primary border-0">{rule.model}</Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground flex-1 hidden md:block">{rule.reason}</p>
-                    <Button variant="ghost" size="sm" onClick={() => toast.success('Chỉnh sửa routing rule...')}>
-                      <Edit2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))}
+          <TabsContent value="benchmark" className="space-y-6">
+            <Card className="p-5">
+              <h3 className="font-semibold text-foreground mb-1">Điểm benchmark chính theo từng model</h3>
+              <p className="text-xs text-muted-foreground mb-4">Biểu đồ chỉ vẽ các model có điểm cố định. Router động như OpenRouter/free được giữ trong bảng nhưng không đưa vào biểu đồ.</p>
+              <BarChart data={benchmarkedModels.map(model => ({ model: model.name.replace('Gemini ', '').replace(' Free Local API', ''), score: model.benchmark.primaryScore ?? 0 }))} xKey="model" height={300} yMin={0} yMax={100} series={[{ key: 'score', label: 'Primary benchmark score', color: '#16723a' }]} />
+            </Card>
+
+            <Card className="p-5">
+              <h3 className="font-semibold text-foreground mb-4">Bảng benchmark có nguồn</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead><tr className="border-b text-left text-muted-foreground"><th className="py-2 pr-4 font-medium">Model</th><th className="py-2 pr-4 font-medium">Metric chính</th><th className="py-2 pr-4 font-medium">Điểm</th><th className="py-2 pr-4 font-medium">Math/Speed</th><th className="py-2 pr-4 font-medium">Code</th><th className="py-2 pr-4 font-medium">General/khác</th><th className="py-2 pr-4 font-medium">Nguồn</th></tr></thead>
+                  <tbody>
+                    {AI_MODELS.map(model => (
+                      <tr key={model.id} className="border-b last:border-0 align-top">
+                        <td className="py-3 pr-4 font-semibold text-foreground">{model.name}<p className="text-xs font-normal text-muted-foreground mt-1">{model.id}</p></td>
+                        <td className="py-3 pr-4 text-foreground/75">{model.benchmark.primaryMetric}</td>
+                        <td className="py-3 pr-4 font-semibold text-primary">{formatScore(model.benchmark.primaryScore)}</td>
+                        <td className="py-3 pr-4 text-foreground/75">{model.benchmark.math}</td>
+                        <td className="py-3 pr-4 text-foreground/75">{model.benchmark.code}</td>
+                        <td className="py-3 pr-4 text-foreground/75">{model.benchmark.general}<p className="text-xs text-muted-foreground mt-2">{model.benchmark.note}</p></td>
+                        <td className="py-3 pr-4 text-xs"><SourceLink label={model.benchmark.source} url={model.benchmark.url} /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-              <div className="mt-6 flex gap-3">
-                <Button className="bg-primary text-white" onClick={() => toast.success('Đã lưu cấu hình routing!')}>
-                  <Save className="w-4 h-4 mr-2" /> Lưu cấu hình
-                </Button>
-                <Button variant="outline" onClick={() => toast.success('Đặt về mặc định...')}>Reset mặc định</Button>
+            </Card>
+
+            <Card className="p-5">
+              <div className="flex items-center gap-2 mb-3"><Route className="h-5 w-5 text-primary" /><h3 className="font-semibold text-foreground">Ghi chú về model đại diện, router và wrapper</h3></div>
+              <div className="space-y-2 text-sm text-foreground/75">
+                <p><span className="font-semibold text-foreground">FreeGPT4 GPT-4/GPT-4o:</span> app gọi local wrapper với model parameter tương ứng. Benchmark trong bảng là benchmark đại diện của GPT-4/GPT-4o gốc, không phải phép đo trực tiếp wrapper local.</p>
+                <p><span className="font-semibold text-foreground">OpenRouter Free Router:</span> đây là router chọn model free khả dụng, nên không có benchmark cố định. Muốn đo thật phải log model thực tế mà OpenRouter trả về từng request.</p>
+                <p><span className="font-semibold text-foreground">Preview/GA transition:</span> các model Gemini preview có thể thay đổi model ID, rate limit, giá hoặc benchmark theo thời gian.</p>
+              </div>
+            </Card>
+
+            <Card className="p-5">
+              <h3 className="font-semibold text-foreground mb-3">Nguồn đã dùng</h3>
+              <div className="grid gap-2 md:grid-cols-2">
+                {SOURCES.map(([label, url]) => <div key={url} className="rounded-lg border border-border px-3 py-2 text-sm"><SourceLink label={label} url={url} /></div>)}
               </div>
             </Card>
           </TabsContent>
         </Tabs>
       </div>
-
-      {/* ── CONFIRM DELETE ── */}
-      <ConfirmDialog
-        open={!!confirmDelete}
-        onClose={() => setConfirmDelete(null)}
-        onConfirm={handleSoftDelete}
-        title={`Xoá model "${confirmDelete?.name}"?`}
-        description="Model sẽ vào thùng rác. Các request đang dùng model này sẽ fallback về model mặc định."
-        confirmLabel="Chuyển vào thùng rác"
-        confirmVariant="warning"
-      />
-
-      {/* ── TRASH BIN ── */}
-      <TrashBin
-        open={trashOpen}
-        onClose={() => setTrashOpen(false)}
-        items={deletedModels.map(m => ({ id: m.id, label: m.name, subLabel: m.provider, deletedAt: m.deletedAt }))}
-        onRestore={handleRestore}
-        onPermanentDelete={handlePermanentDelete}
-        entityName="model"
-        loading={trashLoading}
-      />
     </Layout>
   );
 }
