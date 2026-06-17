@@ -12,7 +12,12 @@ const listNotificationsSchema = Joi.object({
   unreadOnly: Joi.boolean().truthy('true').falsy('false').optional(),
 });
 
+const notificationPreferencesSchema = Joi.object({
+  quotaLow: Joi.boolean().required(),
+});
+
 module.exports = {
   paramsWithId,
   listNotificationsSchema,
+  notificationPreferencesSchema,
 };

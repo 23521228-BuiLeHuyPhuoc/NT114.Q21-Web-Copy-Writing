@@ -4,6 +4,7 @@ const FineTuneExample = require('../models/FineTuneExample');
 const FineTuneJob = require('../models/FineTuneJob');
 const UsageLog = require('../models/UsageLog');
 const aiService = require('./aiService');
+const billingService = require('./billingService');
 const notificationService = require('./notificationService');
 const projectService = require('./projectService');
 const templateService = require('./templateService');
@@ -624,6 +625,7 @@ async function resolveFineTunedModelForGenerate(userId, payload) {
 
 async function generateContent(userId, payload) {
   await projectService.ensureProjectBelongsToUser(userId, payload.projectId);
+  await billingService.ensureGenerateModelAllowed(userId, payload);
 
   const template = await templateService.getTemplateForGenerate(userId, payload.templateId);
   const resolvedFineTune = await resolveFineTunedModelForGenerate(userId, payload);
@@ -677,6 +679,11 @@ async function generateContent(userId, payload) {
     await notificationService.createGenerateSuccessNotification(userId, content);
   } catch (error) {
     console.warn(`Failed to create generate notification: ${error.message}`);
+  }
+  try {
+    await notificationService.maybeCreateQuotaLowNotification(userId, { usedDelta: 1 });
+  } catch (error) {
+    console.warn(`Failed to create quota notification: ${error.message}`);
   }
 
   return {

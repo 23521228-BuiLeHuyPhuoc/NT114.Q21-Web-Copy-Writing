@@ -38,14 +38,17 @@ function serializeAccount(account, accountType) {
     data.adminRole = account.adminRole;
   } else {
     data.isVerified = account.isVerified;
+    data.notificationPreferences = {
+      quotaLow: account.notificationPreferences?.quotaLow !== false,
+    };
   }
 
   return data;
 }
 
-function createAuthData(account, accountType) {
+function createAuthData(account, accountType, options = {}) {
   return {
-    token: signToken(account, accountType),
+    token: signToken(account, accountType, options),
     user: serializeAccount(account, accountType),
   };
 }
@@ -79,7 +82,7 @@ async function registerUser(payload) {
   return serializeAccount(account, 'user');
 }
 
-async function loginUser(email, password) {
+async function loginUser(email, password, options = {}) {
   const account = await findAccountForLogin('user', email);
   if (!account || !(await account.comparePassword(password))) {
     throw createError(401, 'Email or password is incorrect');
@@ -92,10 +95,10 @@ async function loginUser(email, password) {
   account.lastLoginAt = new Date();
   await account.save();
 
-  return createAuthData(account, 'user');
+  return createAuthData(account, 'user', options);
 }
 
-async function loginAdmin(email, password) {
+async function loginAdmin(email, password, options = {}) {
   const account = await findAccountForLogin('admin', email);
   if (!account || !(await account.comparePassword(password))) {
     throw createError(401, 'Email or password is incorrect');
@@ -108,7 +111,11 @@ async function loginAdmin(email, password) {
   account.lastLoginAt = new Date();
   await account.save();
 
-  return createAuthData(account, 'admin');
+  return createAuthData(account, 'admin', options);
+}
+
+function refreshAuthSession(account, accountType, options = {}) {
+  return createAuthData(account, accountType, options);
 }
 
 async function createPasswordReset(account, accountType) {
@@ -248,8 +255,21 @@ async function updateUserAvatar(userId, avatarUrl) {
   return serializeAccount(account, 'user');
 }
 
+async function removeUserAvatar(userId) {
+  const account = await AccountUser.findById(userId);
+  if (!account) {
+    throw createError(404, 'Account not found');
+  }
+
+  account.avatar = '';
+  await account.save();
+
+  return serializeAccount(account, 'user');
+}
+
 module.exports = {
   serializeAccount,
+  refreshAuthSession,
   registerUser,
   loginUser,
   loginAdmin,
@@ -257,4 +277,5 @@ module.exports = {
   verifyOtp,
   resetPassword,
   updateUserAvatar,
+  removeUserAvatar,
 };

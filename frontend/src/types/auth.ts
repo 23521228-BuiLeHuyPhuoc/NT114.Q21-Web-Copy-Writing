@@ -12,7 +12,12 @@ export interface User {
   status: UserStatus;
   avatar?: string;
   isVerified?: boolean;
+  notificationPreferences?: NotificationPreferences;
   createdAt?: string;
+}
+
+export interface NotificationPreferences {
+  quotaLow: boolean;
 }
 
 export interface RegisterData {
@@ -29,6 +34,7 @@ export interface StoredUser {
   adminRole?: AdminRole;
   status: UserStatus;
   avatar?: string;
+  notificationPreferences?: NotificationPreferences;
   createdAt: string;
   password?: string;
 }

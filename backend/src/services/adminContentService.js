@@ -144,16 +144,30 @@ async function getContent(id) {
 
 async function updateContent(id, payload, req) {
   const content = await findContentOrThrow(id, true);
+  const previousValues = {
+    title: content.title,
+    type: content.type,
+    tags: content.tags || [],
+    isFavorite: Boolean(content.isFavorite),
+  };
 
   if (payload.title !== undefined) content.title = payload.title.trim();
-  if (payload.outputText !== undefined) content.outputText = payload.outputText;
   if (payload.type !== undefined) content.type = payload.type.trim();
-  if (payload.tone !== undefined) content.tone = payload.tone;
-  if (payload.language !== undefined) content.language = payload.language;
   if (payload.tags !== undefined) content.tags = payload.tags;
   if (payload.isFavorite !== undefined) content.isFavorite = payload.isFavorite;
 
   await content.save();
+
+  const currentValues = {
+    title: content.title,
+    type: content.type,
+    tags: content.tags || [],
+    isFavorite: Boolean(content.isFavorite),
+  };
+
+  const changedFields = Object.entries(previousValues)
+    .filter(([field, value]) => JSON.stringify(value) !== JSON.stringify(currentValues[field]))
+    .map(([field]) => field);
 
   await auditLogService.createAdminAuditLog(req, {
     action: 'admin.content.updated',
@@ -163,6 +177,7 @@ async function updateContent(id, payload, req) {
     metadata: {
       details: `Updated content ${content.title}`,
       title: content.title,
+      changedFields,
     },
   });
 

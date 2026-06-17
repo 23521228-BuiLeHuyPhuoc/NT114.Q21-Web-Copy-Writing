@@ -15,6 +15,7 @@ const Project = require('../models/Project');
 const Subscription = require('../models/Subscription');
 const Template = require('../models/Template');
 const UsageLog = require('../models/UsageLog');
+const { ALL_GENERATOR_MODEL_ACCESS } = require('../config/generatorModels');
 
 async function upsertUser() {
   const email = 'customer@copypro.vn';
@@ -827,6 +828,7 @@ async function seedBillingPlans() {
       limits: { copyMonthly: 30, apiCallsMonthly: 0, fineTuneModels: 0, plagiarismChecks: 0, seats: 1, historyDays: 7 },
       features: ['30 copy/tháng', '5 ngành nghề cơ bản', '20 template', 'GPT-3.5 Turbo'],
       excludedFeatures: ['GPT-4o', 'Fine-tuning Studio', 'API Access', 'Xuất file (.docx, .pdf)'],
+      allowedModels: ['gemini-flash', 'gemini-flash-lite'],
       isPopular: false,
       isActive: true,
       sortOrder: 1,
@@ -841,6 +843,7 @@ async function seedBillingPlans() {
       limits: { copyMonthly: 500, apiCallsMonthly: 5000, fineTuneModels: 3, plagiarismChecks: 100, seats: 3, historyDays: 30 },
       features: ['500 copy/tháng', '100+ template', 'GPT-4o + GPT-3.5 + Llama 3.1', 'Fine-tuning Studio (3 models)', 'API Access (5.000 calls/tháng)'],
       excludedFeatures: ['Dedicated CSM'],
+      allowedModels: ALL_GENERATOR_MODEL_ACCESS,
       isPopular: true,
       isActive: true,
       sortOrder: 2,
@@ -855,6 +858,7 @@ async function seedBillingPlans() {
       limits: { copyMonthly: -1, apiCallsMonthly: 50000, fineTuneModels: -1, plagiarismChecks: -1, seats: 10, historyDays: 90 },
       features: ['Không giới hạn copy', 'Tất cả template', 'Tất cả model AI', 'API Access (50.000 calls/tháng)', 'Dedicated support'],
       excludedFeatures: [],
+      allowedModels: [],
       isPopular: false,
       isActive: true,
       sortOrder: 3,
@@ -869,6 +873,7 @@ async function seedBillingPlans() {
       limits: { copyMonthly: -1, apiCallsMonthly: -1, fineTuneModels: -1, plagiarismChecks: -1, seats: -1, historyDays: -1 },
       features: ['SSO', 'Private deployment', 'SLA riêng', 'Dedicated support team'],
       excludedFeatures: [],
+      allowedModels: [],
       isPopular: false,
       isActive: true,
       sortOrder: 4,

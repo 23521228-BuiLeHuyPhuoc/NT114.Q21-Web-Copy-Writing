@@ -12,10 +12,12 @@ import { Switch } from '@/app/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select';
 import {
   Mail, User as UserIcon, Calendar, Award, Edit2, Save,
-  Lock, Bell, Globe, Shield, Crown, BarChart3, Brain, Key, Camera, Loader2
+  Lock, Bell, Globe, Shield, Crown, BarChart3, Brain, Key, Camera, Loader2, Trash2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api } from '@/lib/axios';
+import { notificationService } from '@/services/notificationService';
+import { getRememberLoginPreference } from '@/stores/authStore';
 import type { User } from '@/types/auth';
 
 interface AvatarUploadResponse {
@@ -26,22 +28,65 @@ interface AvatarUploadResponse {
 }
 
 export function CustomerProfile() {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, updateRememberLogin } = useAuth();
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [editing, setEditing] = useState(false);
   const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarRemoving, setAvatarRemoving] = useState(false);
+  const [rememberLogin, setRememberLogin] = useState(() => getRememberLoginPreference());
+  const [rememberLoginSaving, setRememberLoginSaving] = useState(false);
+  const [quotaLowNotification, setQuotaLowNotification] = useState(() => user?.notificationPreferences?.quotaLow !== false);
+  const [quotaLowNotificationSaving, setQuotaLowNotificationSaving] = useState(false);
   const [name, setName] = useState(user?.name ?? '');
   const [phone, setPhone] = useState('0901 234 567');
   const [company, setCompany] = useState('CopyPro Solutions');
   const [industry, setIndustry] = useState('technology');
-  const [defaultModel, setDefaultModel] = useState('gpt4o');
-  const [defaultTone, setDefaultTone] = useState('professional');
-  const [defaultLang, setDefaultLang] = useState('vi');
   const userInitial = user?.name?.charAt(0).toUpperCase() || 'U';
+  const avatarBusy = avatarUploading || avatarRemoving;
 
   const saveProfile = () => {
     setEditing(false);
     toast.success('Đã cập nhật hồ sơ!');
+  };
+
+  const handleRememberLoginChange = async (checked: boolean) => {
+    const previousValue = rememberLogin;
+    setRememberLogin(checked);
+    setRememberLoginSaving(true);
+
+    try {
+      await updateRememberLogin(checked, 'user');
+      toast.success(checked ? 'Đã bật ghi nhớ đăng nhập 30 ngày' : 'Đã tắt ghi nhớ đăng nhập 30 ngày');
+    } catch (error) {
+      setRememberLogin(previousValue);
+      const message = error instanceof Error ? error.message : 'Không thể cập nhật ghi nhớ đăng nhập';
+      toast.error(message);
+    } finally {
+      setRememberLoginSaving(false);
+    }
+  };
+
+  const handleQuotaLowNotificationChange = async (checked: boolean) => {
+    const previousValue = quotaLowNotification;
+    setQuotaLowNotification(checked);
+    setQuotaLowNotificationSaving(true);
+
+    try {
+      const preferences = await notificationService.updatePreferences({ quotaLow: checked });
+      if (user) {
+        updateUser({
+          ...user,
+          notificationPreferences: preferences,
+        });
+      }
+      toast.success(checked ? 'Đã bật thông báo quota còn 20%' : 'Đã tắt thông báo quota còn 20%');
+    } catch (error) {
+      setQuotaLowNotification(previousValue);
+      const message = error instanceof Error ? error.message : 'Không thể cập nhật thông báo quota';
+      toast.error(message);
+    } finally {
+      setQuotaLowNotificationSaving(false);
+    }
   };
 
   const uploadAvatar = async (file: File) => {
@@ -56,6 +101,16 @@ export function CustomerProfile() {
     const updatedUser = response.data.data?.user;
     if (!updatedUser) {
       throw new Error('Invalid avatar upload response');
+    }
+
+    updateUser(updatedUser);
+  };
+
+  const removeAvatar = async () => {
+    const response = await api.delete<AvatarUploadResponse>('/auth/user/me/avatar');
+    const updatedUser = response.data.data?.user;
+    if (!updatedUser) {
+      throw new Error('Invalid avatar remove response');
     }
 
     updateUser(updatedUser);
@@ -85,6 +140,21 @@ export function CustomerProfile() {
       toast.error(message);
     } finally {
       setAvatarUploading(false);
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    if (!user?.avatar || avatarBusy) return;
+
+    setAvatarRemoving(true);
+    try {
+      await removeAvatar();
+      toast.success('Đã gỡ avatar!');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Không thể gỡ avatar';
+      toast.error(message);
+    } finally {
+      setAvatarRemoving(false);
     }
   };
 
@@ -120,12 +190,23 @@ export function CustomerProfile() {
               <button
                 type="button"
                 className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white shadow-md hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-70"
-                disabled={avatarUploading}
+                disabled={avatarBusy}
                 title="Cập nhật avatar"
                 onClick={() => avatarInputRef.current?.click()}
               >
                 {avatarUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5" />}
               </button>
+              {user?.avatar ? (
+                <button
+                  type="button"
+                  className="absolute -bottom-1 -left-1 flex h-8 w-8 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow-md hover:bg-destructive/90 disabled:cursor-not-allowed disabled:opacity-70"
+                  disabled={avatarBusy}
+                  title="Gỡ avatar"
+                  onClick={handleRemoveAvatar}
+                >
+                  {avatarRemoving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                </button>
+              ) : null}
             </div>
             <h2 className="text-xl font-bold mb-1 text-foreground">{user?.name}</h2>
             <Badge className="bg-primary/10 text-primary border-0 mb-3">
@@ -170,7 +251,6 @@ export function CustomerProfile() {
         <Tabs defaultValue="info">
           <TabsList className="mb-6">
             <TabsTrigger value="info"><UserIcon className="w-4 h-4 mr-2" />Thông tin</TabsTrigger>
-            <TabsTrigger value="preferences"><Globe className="w-4 h-4 mr-2" />Tùy chọn AI</TabsTrigger>
             <TabsTrigger value="security"><Lock className="w-4 h-4 mr-2" />Bảo mật</TabsTrigger>
             <TabsTrigger value="notifications"><Bell className="w-4 h-4 mr-2" />Thông báo</TabsTrigger>
           </TabsList>
@@ -226,54 +306,6 @@ export function CustomerProfile() {
             </Card>
           </TabsContent>
 
-          {/* AI Preferences */}
-          <TabsContent value="preferences">
-            <Card className="p-6 space-y-4">
-              <h3 className="font-bold text-foreground mb-2">Tùy chọn AI mặc định</h3>
-              <p className="text-sm text-foreground/70">Cài đặt mặc định được áp dụng mỗi khi bạn mở AI Generator.</p>
-              <div className="grid md:grid-cols-3 gap-4">
-                <div>
-                  <Label>Model mặc định</Label>
-                  <Select value={defaultModel} onValueChange={setDefaultModel}>
-                    <SelectTrigger className="mt-2"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="gpt4o">GPT-4o (Khuyên dùng)</SelectItem>
-                      <SelectItem value="gpt35">GPT-3.5 Turbo</SelectItem>
-                      <SelectItem value="llama3">Llama 3.1 70B</SelectItem>
-                      <SelectItem value="finetuned">Fine-tuned E-commerce</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Tone mặc định</Label>
-                  <Select value={defaultTone} onValueChange={setDefaultTone}>
-                    <SelectTrigger className="mt-2"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="professional">Chuyên nghiệp</SelectItem>
-                      <SelectItem value="friendly">Thân thiện</SelectItem>
-                      <SelectItem value="urgent">Khẩn cấp</SelectItem>
-                      <SelectItem value="luxury">Sang trọng</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Ngôn ngữ output</Label>
-                  <Select value={defaultLang} onValueChange={setDefaultLang}>
-                    <SelectTrigger className="mt-2"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="vi">Tiếng Việt</SelectItem>
-                      <SelectItem value="en">English</SelectItem>
-                      <SelectItem value="both">Cả hai</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <Button className="bg-primary text-white" onClick={() => toast.success('Đã lưu tùy chọn!')}>
-                <Save className="w-4 h-4 mr-2" /> Lưu tùy chọn
-              </Button>
-            </Card>
-          </TabsContent>
-
           {/* Security */}
           <TabsContent value="security">
             <Card className="p-6 space-y-4">
@@ -289,19 +321,17 @@ export function CustomerProfile() {
             </Card>
             <Card className="p-6 mt-4">
               <h3 className="font-bold text-foreground mb-4">Bảo mật tài khoản</h3>
-              {[
-                { label: 'Xác thực 2 bước (2FA)', desc: 'Bảo vệ ti khoản với mã OTP khi đăng nhập', on: false },
-                { label: 'Thông báo đăng nhập lạ', desc: 'Nhận email khi có đăng nhập từ thiết bị mới', on: true },
-                { label: 'Ghi nhớ đăng nhập (30 ngày)', desc: 'Không cần đăng nhập lại mỗi ngày', on: true },
-              ].map(s => (
-                <div key={s.label} className="flex items-center justify-between p-4 border rounded-xl mb-3">
-                  <div>
-                    <p className="font-medium text-sm text-foreground">{s.label}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{s.desc}</p>
-                  </div>
-                  <Switch defaultChecked={s.on} />
+              <div className="flex items-center justify-between p-4 border rounded-xl">
+                <div>
+                  <p className="font-medium text-sm text-foreground">Ghi nhớ đăng nhập (30 ngày)</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Giữ phiên đăng nhập trong 30 ngày trên thiết bị hiện tại</p>
                 </div>
-              ))}
+                <Switch
+                  checked={rememberLogin}
+                  disabled={rememberLoginSaving}
+                  onCheckedChange={handleRememberLoginChange}
+                />
+              </div>
             </Card>
           </TabsContent>
 
@@ -309,22 +339,17 @@ export function CustomerProfile() {
           <TabsContent value="notifications">
             <Card className="p-6 space-y-3">
               <h3 className="font-bold text-foreground mb-2">Cài đặt thông báo</h3>
-              {[
-                { label: 'Email khi copy được tạo thành công', on: false },
-                { label: 'Thông báo quota còn 20%', on: true },
-                { label: 'Thông báo fine-tuning hoàn thành', on: true },
-                { label: 'Tin tức tính năng mới', on: true },
-                { label: 'Ưu đãi và khuyến mãi', on: false },
-                { label: 'Weekly report copy đã tạo', on: false },
-              ].map(n => (
-                <div key={n.label} className="flex items-center justify-between p-4 border rounded-xl">
-                  <span className="text-sm text-foreground/80">{n.label}</span>
-                  <Switch defaultChecked={n.on} />
+              <div className="flex items-center justify-between p-4 border rounded-xl">
+                <div>
+                  <p className="font-medium text-sm text-foreground">Thông báo quota còn 20%</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Tạo cảnh báo khi quota copy tháng này chỉ còn 20%</p>
                 </div>
-              ))}
-              <Button className="bg-primary text-white mt-2" onClick={() => toast.success('Đã lưu cài đặt thông báo!')}>
-                <Save className="w-4 h-4 mr-2" /> Lưu cài đặt
-              </Button>
+                <Switch
+                  checked={quotaLowNotification}
+                  disabled={quotaLowNotificationSaving}
+                  onCheckedChange={handleQuotaLowNotificationChange}
+                />
+              </div>
             </Card>
           </TabsContent>
         </Tabs>

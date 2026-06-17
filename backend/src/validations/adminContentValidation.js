@@ -19,10 +19,7 @@ const tags = Joi.array()
 
 const updateAdminContentSchema = Joi.object({
   title: Joi.string().trim().min(1).max(160),
-  outputText: Joi.string().trim().min(1).max(60000),
   type: Joi.string().trim().min(1).max(60),
-  tone: Joi.string().trim().max(60).allow(''),
-  language: Joi.string().trim().max(40).allow(''),
   tags,
   isFavorite: Joi.boolean(),
 }).min(1);

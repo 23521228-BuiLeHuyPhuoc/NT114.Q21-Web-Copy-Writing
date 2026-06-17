@@ -1,19 +1,28 @@
 import { Card } from '@/app/components/ui/card';
 import { Label } from '@/app/components/ui/label';
-import { COPY_TYPES } from '@/mocks/generator';
+import { resolveGeneratorIcon } from '@/lib/generatorOptionIcons';
+import type { LucideIcon } from 'lucide-react';
+
+export interface CopyTypePickerOption {
+  id: string;
+  name: string;
+  desc: string;
+  icon?: string | LucideIcon;
+}
 
 interface Props {
   value: string;
   onChange: (id: string) => void;
+  options: CopyTypePickerOption[];
 }
 
-export function CopyTypePicker({ value, onChange }: Props) {
+export function CopyTypePicker({ value, onChange, options }: Props) {
   return (
     <Card className="p-4">
       <Label className="text-sm font-semibold text-foreground/80 mb-3 block">Loại nội dung</Label>
       <div className="grid grid-cols-2 gap-2">
-        {COPY_TYPES.map(ct => {
-          const Icon = ct.icon;
+        {options.map(ct => {
+          const Icon = resolveGeneratorIcon(ct.icon);
           return (
             <button
               key={ct.id}

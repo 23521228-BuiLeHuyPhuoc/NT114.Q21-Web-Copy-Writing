@@ -58,6 +58,9 @@ export function AdminUsers() {
   const [trashUsers, setTrashUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [filterRole, setFilterRole] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [sortUsers, setSortUsers] = useState('created-desc');
 
   const [processingTrashId, setProcessingTrashId] = useState<string | null>(null);
 
@@ -111,16 +114,41 @@ export function AdminUsers() {
 
   const filteredUsers = useMemo(() => {
     const keyword = search.trim().toLowerCase();
-    if (!keyword) return users;
-    return users.filter((item) =>
-      item.name.toLowerCase().includes(keyword) ||
-      item.email.toLowerCase().includes(keyword)
-    );
-  }, [search, users]);
+    const filtered = users.filter((item) => {
+      const matchSearch = !keyword || [
+        item.name,
+        item.email,
+        item.role,
+        item.adminRole || '',
+        item.status,
+      ].join(' ').toLowerCase().includes(keyword);
+      const matchRole = filterRole === 'all' || item.role === filterRole;
+      const matchStatus = filterStatus === 'all' || item.status === filterStatus;
+      return matchSearch && matchRole && matchStatus;
+    });
+
+    return [...filtered].sort((a, b) => {
+      switch (sortUsers) {
+        case 'created-asc':
+          return new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime();
+        case 'name-asc':
+          return a.name.localeCompare(b.name, 'vi');
+        case 'name-desc':
+          return b.name.localeCompare(a.name, 'vi');
+        case 'email-asc':
+          return a.email.localeCompare(b.email, 'vi');
+        case 'email-desc':
+          return b.email.localeCompare(a.email, 'vi');
+        case 'created-desc':
+        default:
+          return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+      }
+    });
+  }, [filterRole, filterStatus, search, sortUsers, users]);
 
   const usersPagination = usePagination(filteredUsers, {
     initialPageSize: 10,
-    resetKey: search,
+    resetKey: `${search}|${filterRole}|${filterStatus}|${sortUsers}`,
   });
 
   const openEdit = (item: AdminUser) => {
@@ -289,6 +317,38 @@ export function AdminUsers() {
               search={search}
               onSearchChange={setSearch}
               searchPlaceholder="Tìm theo tên, email..."
+              rightSlot={
+                <div className="flex flex-wrap gap-2">
+                  <Select value={filterRole} onValueChange={setFilterRole}>
+                    <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tất cả vai trò</SelectItem>
+                      <SelectItem value="customer">Khách hàng</SelectItem>
+                      <SelectItem value="admin">Quản trị viên</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={filterStatus} onValueChange={setFilterStatus}>
+                    <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                      {CUSTOMER_STATUS_OPTIONS.map((status) => (
+                        <SelectItem key={status} value={status}>{STATUS_LABELS[status]}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={sortUsers} onValueChange={setSortUsers}>
+                    <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="created-desc">Mới nhất</SelectItem>
+                      <SelectItem value="created-asc">Cũ nhất</SelectItem>
+                      <SelectItem value="name-asc">Tên A-Z</SelectItem>
+                      <SelectItem value="name-desc">Tên Z-A</SelectItem>
+                      <SelectItem value="email-asc">Email A-Z</SelectItem>
+                      <SelectItem value="email-desc">Email Z-A</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              }
               className="mb-4"
             />
 

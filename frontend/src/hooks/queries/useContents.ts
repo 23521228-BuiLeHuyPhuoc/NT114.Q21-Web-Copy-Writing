@@ -7,6 +7,7 @@ import {
 } from '@/services/contentService';
 import { projectKeys } from '@/hooks/queries/useProjects';
 import { templateKeys } from '@/hooks/queries/useTemplates';
+import { notificationKeys } from '@/hooks/queries/useNotifications';
 
 export const contentKeys = {
   all: ['contents'] as const,
@@ -46,6 +47,7 @@ export function useGenerateContent() {
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: contentKeys.all });
       queryClient.invalidateQueries({ queryKey: templateKeys.all });
+      queryClient.invalidateQueries({ queryKey: notificationKeys.all });
       if (result.content.id) {
         queryClient.setQueryData(contentKeys.detail(result.content.id), result.content);
       }

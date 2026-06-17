@@ -10,7 +10,7 @@ import {
   Search, Shield, Download, AlertTriangle,
 } from 'lucide-react';
 import { DataPagination } from '@/app/components/common/DataPagination';
-import { LEVEL_MAP, ACTION_ICONS } from '@/mocks/auditLogs';
+import { AUDIT_ACTION_ICONS, AUDIT_LEVEL_MAP } from '@/lib/adminUiMaps';
 import { useAuditLogs } from '@/hooks/queries/useAuditLogs';
 import { usePagination } from '@/hooks/usePagination';
 
@@ -107,9 +107,9 @@ export function AdminAuditLogs() {
                   <TableCell colSpan={6} className="text-center py-12 text-sm text-muted-foreground">Đang tải audit logs...</TableCell>
                 </TableRow>
               ) : pagination.pageItems.map(log => {
-                const level = LEVEL_MAP[log.level] || LEVEL_MAP.info;
+                const level = AUDIT_LEVEL_MAP[log.level] || AUDIT_LEVEL_MAP.info;
                 const LevelIcon = level.icon;
-                const ActionIcon = ACTION_ICONS[log.action] || Shield;
+                const ActionIcon = AUDIT_ACTION_ICONS[log.action] || Shield;
                 return (
                   <TableRow key={log.id}>
                     <TableCell className="text-xs font-mono text-muted-foreground whitespace-nowrap">{log.timestamp}</TableCell>

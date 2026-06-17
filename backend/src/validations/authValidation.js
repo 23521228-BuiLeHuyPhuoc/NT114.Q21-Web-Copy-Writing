@@ -74,6 +74,11 @@ const userRegisterSchema = Joi.object({
 const loginSchema = Joi.object({
   email,
   password: loginPassword,
+  rememberLogin: Joi.boolean().default(false),
+});
+
+const sessionPreferenceSchema = Joi.object({
+  rememberLogin: Joi.boolean().required(),
 });
 
 const forgotPasswordSchema = Joi.object({
@@ -94,6 +99,7 @@ const resetPasswordSchema = Joi.object({
 module.exports = {
   userRegisterSchema,
   loginSchema,
+  sessionPreferenceSchema,
   forgotPasswordSchema,
   verifyOtpSchema,
   resetPasswordSchema,

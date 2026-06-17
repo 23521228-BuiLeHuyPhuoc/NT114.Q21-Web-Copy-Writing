@@ -1,18 +1,25 @@
 import { Card } from '@/app/components/ui/card';
 import { Label } from '@/app/components/ui/label';
-import { TONES } from '@/mocks/generator';
+export interface TonePickerOption {
+  id: string;
+  name: string;
+  desc: string;
+  icon?: string;
+  emoji?: string;
+}
 
 interface Props {
   value: string;
   onChange: (id: string) => void;
+  options: TonePickerOption[];
 }
 
-export function TonePicker({ value, onChange }: Props) {
+export function TonePicker({ value, onChange, options }: Props) {
   return (
     <Card className="p-4">
       <Label className="text-sm font-semibold text-foreground/80 mb-3 block">Tone giọng văn</Label>
       <div className="grid grid-cols-2 gap-2">
-        {TONES.map(t => (
+        {options.map(t => (
           <button
             key={t.id}
             onClick={() => onChange(t.id)}

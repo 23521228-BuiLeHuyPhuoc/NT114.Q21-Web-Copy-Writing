@@ -1,0 +1,65 @@
+import type { LucideIcon } from 'lucide-react';
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
+  CreditCard,
+  Edit2,
+  FileText,
+  Key,
+  LogIn,
+  LogOut,
+  Plus,
+  Settings,
+  Trash2,
+  Undo2,
+  XCircle,
+} from 'lucide-react';
+
+export const PAYMENT_STATUS_MAP: Record<string, { label: string; color: string; icon: LucideIcon }> = {
+  success: { label: 'Thành công', color: 'bg-green-100 text-green-700', icon: CheckCircle2 },
+  pending: { label: 'Đang xử lý', color: 'bg-yellow-100 text-yellow-700', icon: Clock },
+  failed: { label: 'Thất bại', color: 'bg-red-100 text-red-700', icon: XCircle },
+  refunded: { label: 'Hoàn tiền', color: 'bg-blue-100 text-blue-700', icon: Undo2 },
+};
+
+export const AUDIT_LEVEL_MAP: Record<string, { color: string; icon: LucideIcon }> = {
+  info: { color: 'bg-green-100 text-green-700', icon: CheckCircle2 },
+  warning: { color: 'bg-yellow-100 text-yellow-700', icon: AlertTriangle },
+  error: { color: 'bg-red-100 text-red-700', icon: AlertTriangle },
+};
+
+export const AUDIT_ACTION_ICONS: Record<string, LucideIcon> = {
+  'user.login': LogIn,
+  'user.logout': LogOut,
+  'user.password.reset': Key,
+  'content.generate': FileText,
+  'payment.success': CreditCard,
+  'admin.user.created': Plus,
+  'admin.user.updated': Edit2,
+  'admin.user.deleted': Trash2,
+  'admin.user.restored': CheckCircle2,
+  'admin.account.created': Plus,
+  'admin.account.updated': Edit2,
+  'admin.account.deleted': Trash2,
+  'admin.account.restored': CheckCircle2,
+  'admin.content.updated': Edit2,
+  'admin.content.deleted': Trash2,
+  'admin.content.restored': CheckCircle2,
+  'admin.content.permanent_delete': Trash2,
+  'admin.plan.created': Plus,
+  'admin.plan.updated': Edit2,
+  'admin.plan.deleted': Trash2,
+  'admin.plan.restored': CheckCircle2,
+  'admin.plan.permanent_delete': Trash2,
+  'admin.template.created': Plus,
+  'admin.template.updated': Edit2,
+  'admin.template.deleted': Trash2,
+  'admin.template.restored': CheckCircle2,
+  'admin.template.permanent_delete': Trash2,
+  'admin.settings.update': Settings,
+  'model.finetune.start': Settings,
+  'api.rate_limit': AlertTriangle,
+  'api.key.create': Plus,
+  'system.seed.completed': Settings,
+};

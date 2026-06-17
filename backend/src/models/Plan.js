@@ -64,6 +64,10 @@ const planSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
+    allowedModels: {
+      type: [String],
+      default: [],
+    },
     isPopular: {
       type: Boolean,
       default: false,

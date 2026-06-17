@@ -120,6 +120,8 @@ export interface UiContent {
   tone: string;
   createdAt: string;
   updatedAt: string;
+  createdAtRaw?: string;
+  updatedAtRaw?: string;
   status: 'published' | 'draft' | 'archived';
   project: string | null;
   content: string;
@@ -200,6 +202,8 @@ function normalizeContent(item: BackendContent): UiContent {
     tone: item.tone || '',
     createdAt: formatDate(item.createdAt),
     updatedAt: formatDate(item.updatedAt),
+    createdAtRaw: item.createdAt,
+    updatedAtRaw: item.updatedAt,
     status: 'published',
     project: item.project || item.projectId || null,
     content,

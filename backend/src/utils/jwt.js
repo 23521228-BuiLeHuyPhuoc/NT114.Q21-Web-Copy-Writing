@@ -8,7 +8,15 @@ function toRole(accountType) {
   return accountType === 'admin' ? 'admin' : 'customer';
 }
 
-function signToken(account, accountType) {
+function getTokenExpiresIn(options = {}) {
+  if (options.rememberLogin) {
+    return process.env.JWT_REMEMBER_EXPIRES_IN || '30d';
+  }
+
+  return process.env.JWT_EXPIRES_IN || '7d';
+}
+
+function signToken(account, accountType, options = {}) {
   return jwt.sign(
     {
       sub: account._id.toString(),
@@ -16,7 +24,7 @@ function signToken(account, accountType) {
       role: toRole(accountType),
     },
     getJwtSecret(),
-    { expiresIn: process.env.JWT_EXPIRES_IN || '7d' },
+    { expiresIn: getTokenExpiresIn(options) },
   );
 }
 

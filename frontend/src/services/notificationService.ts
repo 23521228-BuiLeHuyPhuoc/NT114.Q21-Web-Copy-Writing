@@ -7,11 +7,28 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { api } from '@/lib/axios';
+import type { NotificationPreferences } from '@/types/auth';
 
 export interface NotificationListParams {
   page?: number;
   limit?: number;
   unreadOnly?: boolean;
+}
+
+interface NotificationPreferencesResponse {
+  data?: {
+    preferences?: NotificationPreferences;
+  };
+}
+
+const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
+  quotaLow: true,
+};
+
+function normalizePreferences(preferences?: Partial<NotificationPreferences>): NotificationPreferences {
+  return {
+    quotaLow: preferences?.quotaLow !== false,
+  };
 }
 
 type BackendNotificationType = 'system' | 'billing' | 'ai' | 'account';
@@ -125,6 +142,16 @@ function unwrapItem(response: { data: { data?: { item?: BackendNotification } } 
 }
 
 export const notificationService = {
+  async getPreferences() {
+    const response = await api.get<NotificationPreferencesResponse>('/notifications/preferences');
+    return normalizePreferences(response.data.data?.preferences || DEFAULT_NOTIFICATION_PREFERENCES);
+  },
+
+  async updatePreferences(payload: NotificationPreferences) {
+    const response = await api.patch<NotificationPreferencesResponse>('/notifications/preferences', payload);
+    return normalizePreferences(response.data.data?.preferences || payload);
+  },
+
   async list(params?: NotificationListParams) {
     const response = await api.get<{
       data?: {

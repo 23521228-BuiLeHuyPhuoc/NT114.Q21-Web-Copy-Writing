@@ -62,10 +62,7 @@ export interface AdminContentListParams {
 
 export interface UpdateAdminContentPayload {
   title?: string;
-  outputText?: string;
   type?: string;
-  tone?: string;
-  language?: string;
   tags?: string[];
   isFavorite?: boolean;
 }

@@ -8,6 +8,7 @@ const {
   forgotPasswordSchema,
   loginSchema,
   resetPasswordSchema,
+  sessionPreferenceSchema,
   verifyOtpSchema,
 } = require('../../validations/authValidation');
 
@@ -15,6 +16,7 @@ const router = express.Router();
 
 router.post('/login', loginLimiter, validate(loginSchema), authController.login);
 router.get('/me', protect('admin'), authController.me);
+router.patch('/session', protect('admin'), validate(sessionPreferenceSchema), authController.refreshSession);
 router.post('/logout', authController.logout);
 router.post('/forgot-password', otpLimiter, validate(forgotPasswordSchema), authController.forgotPassword);
 router.post('/verify-otp', otpLimiter, validate(verifyOtpSchema), authController.verifyOtp);

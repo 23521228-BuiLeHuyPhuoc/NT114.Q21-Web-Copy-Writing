@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Edit2, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
+import { Edit2, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 import { Layout } from '@/app/components/Layout';
@@ -9,9 +9,11 @@ import { Card } from '@/app/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/app/components/ui/dialog';
 import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select';
 import { Switch } from '@/app/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/components/ui/table';
 import { Textarea } from '@/app/components/ui/textarea';
+import { AdminFilterBar } from '@/app/components/admin/AdminFilterBar';
 import { ConfirmDialog } from '@/app/components/admin/ConfirmDialog';
 import { TrashBin } from '@/app/components/admin/TrashBin';
 import { DataPagination } from '@/app/components/common/DataPagination';
@@ -45,6 +47,8 @@ export function AdminCategories() {
   const [trashCategories, setTrashCategories] = useState<AdminCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [sortCategories, setSortCategories] = useState('order-asc');
 
   const [showAdd, setShowAdd] = useState(false);
   const [addName, setAddName] = useState('');
@@ -90,17 +94,43 @@ export function AdminCategories() {
 
   const filteredCategories = useMemo(() => {
     const keyword = search.trim().toLowerCase();
-    if (!keyword) return categories;
-    return categories.filter((item) =>
-      item.name.toLowerCase().includes(keyword) ||
-      item.slug.toLowerCase().includes(keyword) ||
-      item.description.toLowerCase().includes(keyword)
-    );
-  }, [categories, search]);
+    const filtered = categories.filter((item) => {
+      const matchSearch = !keyword || [item.name, item.slug, item.description]
+        .join(' ')
+        .toLowerCase()
+        .includes(keyword);
+      const matchStatus = filterStatus === 'all'
+        || (filterStatus === 'active' && item.isActive)
+        || (filterStatus === 'inactive' && !item.isActive);
+      return matchSearch && matchStatus;
+    });
+
+    return [...filtered].sort((a, b) => {
+      switch (sortCategories) {
+        case 'order-desc':
+          return b.order - a.order;
+        case 'name-asc':
+          return a.name.localeCompare(b.name, 'vi');
+        case 'name-desc':
+          return b.name.localeCompare(a.name, 'vi');
+        case 'templates-desc':
+          return b.templateCount - a.templateCount;
+        case 'templates-asc':
+          return a.templateCount - b.templateCount;
+        case 'created-desc':
+          return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+        case 'created-asc':
+          return new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime();
+        case 'order-asc':
+        default:
+          return a.order - b.order;
+      }
+    });
+  }, [categories, filterStatus, search, sortCategories]);
 
   const pagination = usePagination(filteredCategories, {
     initialPageSize: 10,
-    resetKey: search,
+    resetKey: `${search}|${filterStatus}|${sortCategories}`,
   });
 
   const activeCount = categories.filter((item) => item.isActive).length;
@@ -292,15 +322,37 @@ export function AdminCategories() {
           </Card>
         </div>
 
-        <div className="relative mb-5">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/80" />
-          <Input
-            placeholder="Tìm danh mục..."
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            className="pl-9 max-w-md"
-          />
-        </div>
+        <AdminFilterBar
+          search={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Tìm danh mục..."
+          className="mb-5"
+          rightSlot={
+            <div className="flex flex-wrap gap-2">
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                  <SelectItem value="active">Hoạt động</SelectItem>
+                  <SelectItem value="inactive">Tạm tắt</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={sortCategories} onValueChange={setSortCategories}>
+                <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="order-asc">Thứ tự tăng dần</SelectItem>
+                  <SelectItem value="order-desc">Thứ tự giảm dần</SelectItem>
+                  <SelectItem value="templates-desc">Nhiều templates</SelectItem>
+                  <SelectItem value="templates-asc">Ít templates</SelectItem>
+                  <SelectItem value="created-desc">Mới nhất</SelectItem>
+                  <SelectItem value="created-asc">Cũ nhất</SelectItem>
+                  <SelectItem value="name-asc">Tên A-Z</SelectItem>
+                  <SelectItem value="name-desc">Tên Z-A</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          }
+        />
 
         {loading ? (
           <Card className="p-12 text-center text-sm text-muted-foreground">Đang tải danh mục từ API...</Card>

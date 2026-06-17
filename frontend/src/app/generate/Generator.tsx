@@ -29,6 +29,7 @@ import { useCreateContent, useGenerateContent } from '@/hooks/queries/useContent
 import { useProjects } from '@/hooks/queries/useProjects';
 import { useTemplates } from '@/hooks/queries/useTemplates';
 import { useFineTuningModels } from '@/hooks/queries/useFineTuning';
+import { useMyBilling } from '@/hooks/queries/useBilling';
 import { scoreGeneratedContent } from '@/lib/contentQuality';
 import { formatGeneratedCopyForTinyMce, htmlToPlainText } from '@/lib/richText';
 
@@ -83,9 +84,15 @@ const LENGTH_TOKEN_LIMITS: Record<ContentLength, number> = {
 type ModelMode = 'base' | 'fine-tuned';
 
 const FINE_TUNED_MODEL_PREFIX = 'fine-tuned:';
+const FINE_TUNED_MODEL_ACCESS = 'fine-tuned';
 
 function getFineTunedRegistryModelId(modelId: string) {
   return modelId.startsWith(FINE_TUNED_MODEL_PREFIX) ? modelId.slice(FINE_TUNED_MODEL_PREFIX.length) : '';
+}
+
+function getErrorMessage(error: unknown, fallback: string) {
+  const err = error as { response?: { data?: { message?: string } }; message?: string };
+  return err.response?.data?.message || err.message || fallback;
 }
 
 function buildQualityKeywords(...values: string[]) {
@@ -209,6 +216,7 @@ export function CustomerGenerator() {
   const { data: templates = [], isLoading: templatesLoading } = useTemplates();
   const { data: projects = [], isLoading: projectsLoading } = useProjects({ limit: 50 });
   const { data: fineTunedModels = [] } = useFineTuningModels();
+  const { data: billing } = useMyBilling();
   const [industry, setIndustry] = useState('ecommerce');
   const [copyType, setCopyType] = useState('headline');
   const [model, setModel] = useState('gemini-flash');
@@ -237,11 +245,22 @@ export function CustomerGenerator() {
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
   const [selectedProjectId, setSelectedProjectId] = useState('');
 
+  const planAllowedModels = billing?.plan?.allowedModels;
+  const hasPlanModelRestrictions = Boolean(planAllowedModels?.length);
+  const isFineTunedAllowed = !hasPlanModelRestrictions || Boolean(planAllowedModels?.includes(FINE_TUNED_MODEL_ACCESS));
+  const baseGeneratorModels = useMemo(() => {
+    if (!planAllowedModels?.length) return MODELS;
+    const allowed = new Set(planAllowedModels);
+    return MODELS.filter(item => allowed.has(item.id));
+  }, [planAllowedModels]);
+
   const registeredFineTunedModels = useMemo(() => {
     return fineTunedModels.filter(item => item.status === 'ready' && item.registryModelId);
   }, [fineTunedModels]);
 
   const fineTunedGeneratorModels = useMemo<GeneratorModelOption[]>(() => {
+    if (!isFineTunedAllowed) return [];
+
     return registeredFineTunedModels
       .filter(item => item.generatorReady !== false)
       .map(item => ({
@@ -253,24 +272,28 @@ export function CustomerGenerator() {
         latency: '~2-30s',
         tokens: item.fineTunedModelId ? 'custom' : 'base',
       }));
-  }, [registeredFineTunedModels]);
+  }, [isFineTunedAllowed, registeredFineTunedModels]);
 
   const fineTunedUnavailableMessage = useMemo(() => {
     if (fineTunedGeneratorModels.length > 0) return '';
+    if (!isFineTunedAllowed && registeredFineTunedModels.length > 0) {
+      return `Gói ${billing?.plan?.name || 'hiện tại'} chưa mở quyền dùng model fine-tuned để generate.`;
+    }
     const unsupported = registeredFineTunedModels.find(item => item.generatorReady === false);
     if (unsupported) return unsupported.generatorMessage || 'Model đã train xong nhưng provider này chưa có endpoint Generate trong app.';
     if (fineTunedModels.some(item => item.status === 'ready')) {
       return 'Model đã xong training, hệ thống đang đồng bộ registry. Thử tải lại sau vài giây.';
     }
     return 'Chưa có model fine-tuned khả dụng. Hãy hoàn tất training trước.';
-  }, [fineTunedGeneratorModels.length, fineTunedModels, registeredFineTunedModels]);
+  }, [billing?.plan?.name, fineTunedGeneratorModels.length, fineTunedModels, isFineTunedAllowed, registeredFineTunedModels]);
 
   const fineTunedModelPickerValue = fineTunedModelId ? `${FINE_TUNED_MODEL_PREFIX}${fineTunedModelId}` : '';
   const selectedFineTunedModel = fineTunedGeneratorModels.find(m => m.id === fineTunedModelPickerValue) ?? fineTunedGeneratorModels[0] ?? null;
-  const effectiveModel = modelMode === 'fine-tuned' ? (selectedFineTunedModel?.id || '') : model;
+  const selectedBaseModel = baseGeneratorModels.find(m => m.id === model) ?? null;
+  const effectiveModel = modelMode === 'fine-tuned' ? (selectedFineTunedModel?.id || '') : (selectedBaseModel?.id || '');
   const selectedModel = modelMode === 'fine-tuned'
     ? selectedFineTunedModel
-    : MODELS.find(m => m.id === model) ?? MODELS[0];
+    : selectedBaseModel;
   const hasFineTunedModels = fineTunedGeneratorModels.length > 0;
   const selectedIndustry = INDUSTRIES.find(i => i.id === industry) ?? INDUSTRIES[0];
   const selectedType = COPY_TYPES.find(t => t.id === copyType) ?? COPY_TYPES[0];
@@ -300,6 +323,20 @@ export function CustomerGenerator() {
       setModel(modelId);
     }
   }, []);
+
+  useEffect(() => {
+    if (modelMode !== 'base') return;
+    if (baseGeneratorModels.length === 0) return;
+    if (!baseGeneratorModels.some(item => item.id === model)) {
+      setModel(baseGeneratorModels[0].id);
+    }
+  }, [baseGeneratorModels, model, modelMode]);
+
+  useEffect(() => {
+    if (modelMode === 'fine-tuned' && !isFineTunedAllowed) {
+      setModelMode('base');
+    }
+  }, [isFineTunedAllowed, modelMode]);
 
   useEffect(() => {
     if (modelMode !== 'fine-tuned') return;
@@ -342,6 +379,11 @@ export function CustomerGenerator() {
   ].filter(Boolean).join('\n');
 
   const handleModelModeChange = (nextMode: ModelMode) => {
+    if (nextMode === 'fine-tuned' && !isFineTunedAllowed) {
+      toast.error('Gói hiện tại chưa mở quyền dùng model fine-tuned để generate.');
+      return;
+    }
+
     setModelMode(nextMode);
     if (nextMode === 'fine-tuned' && !fineTunedModelId && fineTunedGeneratorModels[0]) {
       setFineTunedModelId(getFineTunedRegistryModelId(fineTunedGeneratorModels[0].id));
@@ -353,6 +395,11 @@ export function CustomerGenerator() {
   };
 
   const handleGenerate = async () => {
+    if (modelMode === 'base' && !effectiveModel) {
+      toast.error('Gói hiện tại chưa có model nào được mở để generate.');
+      return;
+    }
+
     if (modelMode === 'fine-tuned' && !effectiveModel) {
       toast.error('Chưa có model fine-tuned khả dụng. Hãy promote hoặc bật active model trước.');
       return;
@@ -402,8 +449,7 @@ export function CustomerGenerator() {
       setSavedContentId(result.content.id || null);
       toast.success(result.fallback ? 'Đã tạo nội dung bằng fallback MVP!' : 'Tạo copy thành công!');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Không thể tạo nội dung';
-      toast.error(message);
+      toast.error(getErrorMessage(error, 'Không thể tạo nội dung'));
     } finally {
       setStreamText('');
       setIsGenerating(false);
@@ -571,13 +617,23 @@ export function CustomerGenerator() {
                 <Button type="button" variant={modelMode === 'base' ? 'default' : 'outline'} onClick={() => handleModelModeChange('base')}>
                   <Cpu className="w-4 h-4 mr-2" /> Model gốc
                 </Button>
-                <Button type="button" variant={modelMode === 'fine-tuned' ? 'default' : 'outline'} onClick={() => handleModelModeChange('fine-tuned')}>
+                <Button type="button" variant={modelMode === 'fine-tuned' ? 'default' : 'outline'} disabled={!isFineTunedAllowed} onClick={() => handleModelModeChange('fine-tuned')}>
                   <Brain className="w-4 h-4 mr-2" /> Fine-tuned
                 </Button>
               </div>
             </Card>
             {modelMode === 'base' ? (
-              <ModelPicker value={model} onChange={setModel} models={MODELS} />
+              baseGeneratorModels.length > 0 ? (
+                <ModelPicker value={model} onChange={setModel} models={baseGeneratorModels} />
+              ) : (
+                <Card className="p-4 border-dashed">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Cpu className="w-4 h-4 text-primary" />
+                    <p className="text-sm font-semibold text-foreground/80">Gói hiện tại chưa có model generate</p>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Admin cần mở ít nhất một model trong cấu hình gói dịch vụ.</p>
+                </Card>
+              )
             ) : hasFineTunedModels ? (
               <ModelPicker value={fineTunedModelPickerValue} onChange={handleFineTunedModelChange} models={fineTunedGeneratorModels} />
             ) : (
@@ -617,7 +673,7 @@ export function CustomerGenerator() {
               <Button
                 className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white h-12"
                 onClick={handleGenerate}
-                disabled={isGenerating}
+                disabled={isGenerating || !effectiveModel}
               >
                 {isGenerating ? <RefreshCw className="w-5 h-5 mr-2 animate-spin" /> : <Wand2 className="w-5 h-5 mr-2" />}
                 {isGenerating ? 'Đang tạo...' : 'Tạo Copy Ngay'}
@@ -637,7 +693,7 @@ export function CustomerGenerator() {
                 <span className="text-sm font-medium text-foreground/80">{selectedIndustry?.name}</span>
                 <span className="text-muted-foreground/60">·</span>
                 <Badge className="bg-muted text-foreground/80 border-0">{selectedType?.name}</Badge>
-                <Badge className="bg-primary/10 text-primary border-0">{selectedModel?.name}</Badge>
+                {selectedModel && <Badge className="bg-primary/10 text-primary border-0">{selectedModel.name}</Badge>}
                 {selectedTemplate && (
                   <Badge className="bg-emerald-50 text-emerald-700 border-0">{selectedTemplate.name}</Badge>
                 )}
@@ -662,7 +718,7 @@ export function CustomerGenerator() {
               )}
 
               <Card className="p-4 bg-surface-muted">
-                <p className="text-xs font-semibold text-foreground/70 mb-2">Prompt user gửi đến API {selectedModel?.name}:</p>
+                <p className="text-xs font-semibold text-foreground/70 mb-2">Prompt user gửi đến API {selectedModel?.name || 'model đã chọn'}:</p>
                 <p className="text-xs text-foreground/80 font-mono bg-card rounded border p-3 whitespace-pre-wrap">
                   {buildPrompt()}
                 </p>

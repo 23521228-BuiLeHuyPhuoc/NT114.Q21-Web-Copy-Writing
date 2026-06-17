@@ -1,5 +1,12 @@
+const AccountUser = require('../models/AccountUser');
 const Notification = require('../models/Notification');
+const Plan = require('../models/Plan');
+const Subscription = require('../models/Subscription');
+const UsageLog = require('../models/UsageLog');
 const createError = require('../utils/createError');
+
+const QUOTA_LOW_THRESHOLD_PERCENT = 20;
+const QUOTA_LOW_USED_RATIO = (100 - QUOTA_LOW_THRESHOLD_PERCENT) / 100;
 
 function toId(value) {
   return value ? value.toString() : null;
@@ -11,6 +18,20 @@ function normalizePage(query = {}) {
 
 function normalizeLimit(query = {}) {
   return Math.min(50, Math.max(1, Number(query.limit || 10)));
+}
+
+function startOfMonth(date = new Date()) {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+function endOfMonth(date = new Date()) {
+  return new Date(date.getFullYear(), date.getMonth() + 1, 1);
+}
+
+function serializeNotificationPreferences(user) {
+  return {
+    quotaLow: user?.notificationPreferences?.quotaLow !== false,
+  };
 }
 
 function serializeNotification(notification) {
@@ -37,6 +58,108 @@ function buildUserFilter(userId, query = {}) {
   }
 
   return filter;
+}
+
+async function findUserOrThrow(userId) {
+  const user = await AccountUser.findById(userId);
+  if (!user) {
+    throw createError(404, 'Account not found');
+  }
+
+  return user;
+}
+
+async function getNotificationPreferences(userId) {
+  const user = await findUserOrThrow(userId);
+  return serializeNotificationPreferences(user);
+}
+
+async function updateNotificationPreferences(userId, payload) {
+  const user = await findUserOrThrow(userId);
+  user.notificationPreferences = {
+    ...(user.notificationPreferences?.toObject?.() || user.notificationPreferences || {}),
+    quotaLow: payload.quotaLow,
+  };
+  await user.save();
+
+  return serializeNotificationPreferences(user);
+}
+
+async function getCurrentPlan(userId) {
+  const subscription = await Subscription.findOne({
+    userId,
+    status: { $in: ['active', 'trialing', 'past_due'] },
+  })
+    .sort({ createdAt: -1 })
+    .populate('planId');
+
+  if (subscription?.planId) return subscription.planId;
+
+  const freePlan = await Plan.findOne({ slug: 'free', isDeleted: { $ne: true } });
+  if (freePlan) return freePlan;
+
+  return Plan.findOne({ isDeleted: { $ne: true } }).sort({ sortOrder: 1, priceMonthly: 1 });
+}
+
+async function getCurrentMonthCopyUsed(userId, now = new Date()) {
+  return UsageLog.countDocuments({
+    userId,
+    action: 'generate',
+    createdAt: {
+      $gte: startOfMonth(now),
+      $lt: endOfMonth(now),
+    },
+  });
+}
+
+async function createQuotaLowNotification(userId, quota) {
+  const now = new Date();
+  const existing = await Notification.findOne({
+    userId,
+    type: 'billing',
+    title: 'Quota copy còn 20%',
+    actionUrl: '/billing',
+    createdAt: {
+      $gte: startOfMonth(now),
+      $lt: endOfMonth(now),
+    },
+  });
+
+  if (existing) return serializeNotification(existing);
+
+  return createNotification(userId, {
+    title: 'Quota copy còn 20%',
+    message: `Bạn đã dùng ${quota.used}/${quota.limit} copy trong tháng này. Quota còn ${quota.remaining} copy (${quota.remainingPercent}%).`,
+    type: 'billing',
+    actionUrl: '/billing',
+  });
+}
+
+async function maybeCreateQuotaLowNotification(userId, options = {}) {
+  const user = await findUserOrThrow(userId);
+  if (user.notificationPreferences?.quotaLow === false) return null;
+
+  const plan = await getCurrentPlan(userId);
+  const copyLimit = Number(plan?.limits?.copyMonthly || 0);
+  if (copyLimit <= 0) return null;
+
+  const used = await getCurrentMonthCopyUsed(userId);
+  const previousUsed = Math.max(0, used - Number(options.usedDelta || 1));
+  const usedThreshold = Math.ceil(copyLimit * QUOTA_LOW_USED_RATIO);
+
+  if (used < usedThreshold || previousUsed >= usedThreshold) {
+    return null;
+  }
+
+  const remaining = Math.max(0, copyLimit - used);
+  const remainingPercent = Math.max(0, Math.round((remaining / copyLimit) * 100));
+
+  return createQuotaLowNotification(userId, {
+    used,
+    limit: copyLimit,
+    remaining,
+    remainingPercent,
+  });
 }
 
 async function listNotifications(userId, query = {}) {
@@ -136,9 +259,13 @@ async function createGenerateSuccessNotification(userId, content) {
 
 module.exports = {
   serializeNotification,
+  serializeNotificationPreferences,
+  getNotificationPreferences,
+  updateNotificationPreferences,
   listNotifications,
   markNotificationRead,
   markAllNotificationsRead,
   createNotification,
   createGenerateSuccessNotification,
+  maybeCreateQuotaLowNotification,
 };

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Layout } from '@/app/components/Layout';
 import { Card } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
@@ -6,140 +6,392 @@ import { Input } from '@/app/components/ui/input';
 import { Badge } from '@/app/components/ui/badge';
 import { Label } from '@/app/components/ui/label';
 import { Switch } from '@/app/components/ui/switch';
+import { Checkbox } from '@/app/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/app/components/ui/dialog';
 import { TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/components/ui/table';
-import { Crown, Edit2, Plus, Users, DollarSign, Zap, Trash2 } from 'lucide-react';
+import { Cpu, Crown, DollarSign, Edit2, Plus, Trash2, Users, Zap } from 'lucide-react';
 import { ConfirmDialog } from '@/app/components/admin/ConfirmDialog';
 import { TrashBin } from '@/app/components/admin/TrashBin';
 import { StatTile } from '@/app/components/admin/StatTile';
+import { AdminFilterBar } from '@/app/components/admin/AdminFilterBar';
 import { AdminTable } from '@/app/components/admin/AdminTable';
 import { DataPagination } from '@/app/components/common/DataPagination';
 import { usePagination } from '@/hooks/usePagination';
+import {
+  useAdminPlans,
+  useAdminPlanTrash,
+  useCreateAdminPlan,
+  usePermanentDeleteAdminPlan,
+  useRemoveAdminPlan,
+  useRestoreAdminPlan,
+  useUpdateAdminPlan,
+} from '@/hooks/queries/useAdminPlans';
+import type { AdminPlan } from '@/services/adminPlanService';
+import { MODELS } from '@/mocks/generator';
 import toast from 'react-hot-toast';
 
-const INITIAL_PLANS = [
-  { id: 1, name: 'Miễn Phí',  price: 0,      copyLimit: 30,  apiLimit: 0,     fineTune: 0,  users: 340, active: true,  popular: false, description: 'Phù hợp cho cá nhân mới bắt đầu' },
-  { id: 2, name: 'Pro',        price: 299000,  copyLimit: 500, apiLimit: 5000,  fineTune: 3,  users: 780, active: true,  popular: true,  description: 'Dành cho freelancer và doanh nghiệp nhỏ' },
-  { id: 3, name: 'Business',   price: 799000,  copyLimit: -1,  apiLimit: 50000, fineTune: -1, users: 114, active: true,  popular: false, description: 'Giải pháp đầy đủ cho đội nhóm marketing' },
-  { id: 4, name: 'Enterprise', price: -1,      copyLimit: -1,  apiLimit: -1,    fineTune: -1, users: 12,  active: true,  popular: false, description: 'Custom solutions cho doanh nghiệp lớn' },
+function getErrorMessage(error: unknown, fallback: string) {
+  const err = error as { response?: { data?: { message?: string } }; message?: string };
+  return err.response?.data?.message || err.message || fallback;
+}
+
+function parseBlankNumber(value: string, blankValue = -1) {
+  if (value.trim() === '') return blankValue;
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : blankValue;
+}
+
+function parseOptionalNumber(value: string) {
+  if (value.trim() === '') return undefined;
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : undefined;
+}
+
+const FINE_TUNED_MODEL_ACCESS = 'fine-tuned';
+const DEFAULT_LIMITED_MODELS = ['gemini-flash', 'gemini-flash-lite'];
+
+const MODEL_ACCESS_OPTIONS = [
+  ...MODELS.map(model => ({ id: model.id, name: model.name, badge: model.badge })),
+  { id: FINE_TUNED_MODEL_ACCESS, name: 'Fine-tuned models', badge: 'Custom' },
 ];
 
-type Plan = typeof INITIAL_PLANS[0];
-interface DeletedPlan { id: number; name: string; price: number; deletedAt: string; }
+const MODEL_ACCESS_LABELS = new Map(MODEL_ACCESS_OPTIONS.map(model => [model.id, model.name]));
+
+function uniqueModels(models: string[]) {
+  return Array.from(new Set(models.map(model => model.trim()).filter(Boolean)));
+}
+
+function formatAllowedModels(models: string[]) {
+  const allowed = uniqueModels(models);
+  if (allowed.length === 0) return 'Tất cả model';
+
+  const labels = allowed.map(model => MODEL_ACCESS_LABELS.get(model) || model);
+  if (labels.length <= 2) return labels.join(', ');
+  return `${labels.slice(0, 2).join(', ')} +${labels.length - 2}`;
+}
+
+function formatLimit(value: number, label = '') {
+  if (value === -1) return 'Unlimited';
+  if (value === 0) return '-';
+  return `${value.toLocaleString('vi-VN')}${label}`;
+}
+
+function formatPrice(value: number, currency = 'VND') {
+  if (value === -1) return 'Liên hệ';
+  if (value === 0) return 'Miễn phí';
+
+  try {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency,
+      maximumFractionDigits: 0,
+    }).format(value);
+  } catch {
+    return `${value.toLocaleString('vi-VN')} ${currency}`;
+  }
+}
+
+function formatDate(value?: string | null) {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString('vi-VN');
+}
+
+function ModelAccessSelector({
+  allowedModels,
+  onChange,
+}: {
+  allowedModels: string[];
+  onChange: (models: string[]) => void;
+}) {
+  const allModels = allowedModels.length === 0;
+  const selected = new Set(allowedModels);
+
+  const toggleModel = (modelId: string) => {
+    if (selected.has(modelId)) {
+      onChange(allowedModels.filter(item => item !== modelId));
+      return;
+    }
+
+    onChange(uniqueModels([...allowedModels, modelId]));
+  };
+
+  return (
+    <div className="rounded-xl border border-border p-3 space-y-3">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <Label className="text-xs text-muted-foreground uppercase tracking-wider block">Model được phép generate</Label>
+          <p className="text-xs text-muted-foreground mt-1">Bật tất cả hoặc chọn model cụ thể cho gói này.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-foreground/70">Tất cả</span>
+          <Switch
+            checked={allModels}
+            onCheckedChange={(checked) => onChange(checked ? [] : DEFAULT_LIMITED_MODELS)}
+          />
+        </div>
+      </div>
+
+      {!allModels && (
+        <div className="grid gap-2 sm:grid-cols-2 max-h-56 overflow-y-auto pr-1">
+          {MODEL_ACCESS_OPTIONS.map((modelOption) => (
+            <label
+              key={modelOption.id}
+              className="flex items-start gap-2 rounded-lg border border-border p-2 text-left hover:bg-surface-muted cursor-pointer"
+            >
+              <Checkbox
+                checked={selected.has(modelOption.id)}
+                onCheckedChange={() => toggleModel(modelOption.id)}
+                className="mt-0.5"
+              />
+              <span className="min-w-0 flex-1">
+                <span className="block text-xs font-semibold text-foreground truncate">{modelOption.name}</span>
+                <span className="block text-[11px] text-muted-foreground">{modelOption.badge}</span>
+              </span>
+            </label>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function AdminPlans() {
-  const [plans, setPlans] = useState<Plan[]>(INITIAL_PLANS);
+  const { data: plans = [], isLoading: plansLoading, isError: plansError } = useAdminPlans();
+  const { data: trashPlans = [], isLoading: trashLoading } = useAdminPlanTrash();
+  const createPlan = useCreateAdminPlan();
+  const updatePlan = useUpdateAdminPlan();
+  const removePlan = useRemoveAdminPlan();
+  const restorePlan = useRestoreAdminPlan();
+  const permanentDeletePlan = usePermanentDeleteAdminPlan();
 
-  // Add
   const [showAdd, setShowAdd] = useState(false);
   const [addName, setAddName] = useState('');
   const [addPrice, setAddPrice] = useState('');
+  const [addYearlyPrice, setAddYearlyPrice] = useState('');
   const [addCopy, setAddCopy] = useState('');
   const [addApi, setAddApi] = useState('');
   const [addFine, setAddFine] = useState('');
   const [addDesc, setAddDesc] = useState('');
+  const [addAllowedModels, setAddAllowedModels] = useState<string[]>([]);
 
-  // Edit
-  const [editItem, setEditItem] = useState<Plan | null>(null);
+  const [editItem, setEditItem] = useState<AdminPlan | null>(null);
   const [editName, setEditName] = useState('');
   const [editPrice, setEditPrice] = useState('');
+  const [editYearlyPrice, setEditYearlyPrice] = useState('');
   const [editCopy, setEditCopy] = useState('');
   const [editApi, setEditApi] = useState('');
   const [editFine, setEditFine] = useState('');
   const [editDesc, setEditDesc] = useState('');
   const [editPopular, setEditPopular] = useState(false);
-  const [editSaving, setEditSaving] = useState(false);
+  const [editAllowedModels, setEditAllowedModels] = useState<string[]>([]);
 
-  // Soft delete
-  const [deletedPlans, setDeletedPlans] = useState<DeletedPlan[]>([]);
-  const [confirmDelete, setConfirmDelete] = useState<Plan | null>(null);
+  const [search, setSearch] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterModel, setFilterModel] = useState('all');
+  const [sortPlans, setSortPlans] = useState('sort-order');
+
+  const [confirmDelete, setConfirmDelete] = useState<AdminPlan | null>(null);
   const [trashOpen, setTrashOpen] = useState(false);
-  const [trashLoading, setTrashLoading] = useState<string | null>(null);
+  const [processingTrashId, setProcessingTrashId] = useState<string | null>(null);
 
-  const visible = plans.filter(p => !deletedPlans.find(d => d.id === p.id));
-  const totalRevenue = visible.reduce((a, p) => a + (p.price > 0 ? p.price * p.users : 0), 0);
-  const pagination = usePagination(visible, {
+  const totalRevenue = useMemo(() => (
+    plans.reduce((total, plan) => total + (plan.monthlyPrice > 0 ? plan.monthlyPrice * plan.users : 0), 0)
+  ), [plans]);
+
+  const paidUsers = useMemo(() => (
+    plans.filter(plan => plan.monthlyPrice > 0).reduce((total, plan) => total + plan.users, 0)
+  ), [plans]);
+
+  const planModelOptions = useMemo(() => {
+    const ids = new Set(MODEL_ACCESS_OPTIONS.map(model => model.id));
+    plans.forEach(plan => plan.allowedModels.forEach(model => ids.add(model)));
+    return Array.from(ids).map(id => ({ id, name: MODEL_ACCESS_LABELS.get(id) || id }));
+  }, [plans]);
+
+  const filteredPlans = useMemo(() => {
+    const keyword = search.trim().toLowerCase();
+    const filtered = plans.filter((plan) => {
+      const allowedModelText = plan.allowedModels.map(model => MODEL_ACCESS_LABELS.get(model) || model).join(' ');
+      const matchSearch = !keyword || [
+        plan.name,
+        plan.slug,
+        plan.description,
+        allowedModelText,
+      ].join(' ').toLowerCase().includes(keyword);
+      const matchStatus = filterStatus === 'all'
+        || (filterStatus === 'active' && plan.active)
+        || (filterStatus === 'inactive' && !plan.active)
+        || (filterStatus === 'popular' && plan.popular);
+      const matchModel = filterModel === 'all'
+        || (filterModel === 'unrestricted' && plan.allowedModels.length === 0)
+        || plan.allowedModels.includes(filterModel);
+      return matchSearch && matchStatus && matchModel;
+    });
+
+    return [...filtered].sort((a, b) => {
+      switch (sortPlans) {
+        case 'price-desc':
+          return b.monthlyPrice - a.monthlyPrice;
+        case 'price-asc':
+          return a.monthlyPrice - b.monthlyPrice;
+        case 'users-desc':
+          return b.users - a.users;
+        case 'users-asc':
+          return a.users - b.users;
+        case 'name-asc':
+          return a.name.localeCompare(b.name, 'vi');
+        case 'name-desc':
+          return b.name.localeCompare(a.name, 'vi');
+        case 'created-desc':
+          return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+        case 'created-asc':
+          return new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime();
+        case 'sort-order':
+        default:
+          return a.sortOrder - b.sortOrder || a.monthlyPrice - b.monthlyPrice;
+      }
+    });
+  }, [filterModel, filterStatus, plans, search, sortPlans]);
+
+  const pagination = usePagination(filteredPlans, {
     initialPageSize: 10,
-    resetKey: `${deletedPlans.length}|${plans.length}`,
+    resetKey: `${search}|${filterStatus}|${filterModel}|${sortPlans}|${plans.length}`,
   });
 
-  const openEdit = (p: Plan) => {
-    setEditItem(p);
-    setEditName(p.name);
-    setEditPrice(p.price === -1 ? '' : String(p.price));
-    setEditCopy(p.copyLimit === -1 ? '' : String(p.copyLimit));
-    setEditApi(p.apiLimit === -1 ? '' : String(p.apiLimit));
-    setEditFine(p.fineTune === -1 ? '' : String(p.fineTune));
-    setEditDesc(p.description);
-    setEditPopular(p.popular);
+  const resetAddForm = () => {
+    setAddName('');
+    setAddPrice('');
+    setAddYearlyPrice('');
+    setAddCopy('');
+    setAddApi('');
+    setAddFine('');
+    setAddDesc('');
+    setAddAllowedModels([]);
   };
 
-  const handleSaveEdit = async () => {
-    setEditSaving(true); await new Promise(r => setTimeout(r, 700));
-    setPlans(prev => prev.map(p => p.id === editItem!.id ? {
-      ...p, name: editName,
-      price: editPrice === '' ? -1 : Number(editPrice),
-      copyLimit: editCopy === '' ? -1 : Number(editCopy),
-      apiLimit: editApi === '' ? -1 : Number(editApi),
-      fineTune: editFine === '' ? -1 : Number(editFine),
-      description: editDesc, popular: editPopular,
-    } : p));
-    setEditSaving(false); setEditItem(null);
-    toast.success('Đã cập nhật gói dịch vụ');
+  const openEdit = (plan: AdminPlan) => {
+    setEditItem(plan);
+    setEditName(plan.name);
+    setEditPrice(plan.monthlyPrice === -1 ? '' : String(plan.monthlyPrice));
+    setEditYearlyPrice(plan.yearlyPrice === -1 ? '' : String(plan.yearlyPrice));
+    setEditCopy(plan.copyLimit === -1 ? '' : String(plan.copyLimit));
+    setEditApi(plan.apiLimit === -1 ? '' : String(plan.apiLimit));
+    setEditFine(plan.fineTune === -1 ? '' : String(plan.fineTune));
+    setEditDesc(plan.description);
+    setEditPopular(plan.popular);
+    setEditAllowedModels(plan.allowedModels || []);
   };
 
   const handleAdd = async () => {
     if (!addName.trim()) return;
-    await new Promise(r => setTimeout(r, 400));
-    const newP: Plan = {
-      id: Date.now(), name: addName,
-      price: addPrice === '' ? -1 : Number(addPrice),
-      copyLimit: addCopy === '' ? -1 : Number(addCopy),
-      apiLimit: addApi === '' ? -1 : Number(addApi),
-      fineTune: addFine === '' ? -1 : Number(addFine),
-      users: 0, active: true, popular: false, description: addDesc,
-    };
-    setPlans(prev => [...prev, newP]);
-    setShowAdd(false); setAddName(''); setAddPrice(''); setAddCopy(''); setAddApi(''); setAddFine(''); setAddDesc('');
-    toast.success(`Đã tạo gói "${addName}"`);
+
+    try {
+      await createPlan.mutateAsync({
+        name: addName.trim(),
+        description: addDesc.trim(),
+        price: parseBlankNumber(addPrice, -1),
+        yearlyPrice: parseOptionalNumber(addYearlyPrice),
+        copyLimit: parseBlankNumber(addCopy, -1),
+        apiLimit: parseBlankNumber(addApi, -1),
+        fineTune: parseBlankNumber(addFine, -1),
+        allowedModels: addAllowedModels,
+        isActive: true,
+      });
+      const createdName = addName.trim();
+      resetAddForm();
+      setShowAdd(false);
+      toast.success(`Đã tạo gói "${createdName}"`);
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Không tạo được gói dịch vụ'));
+    }
   };
 
-  const toggleActive = (id: number) => {
-    setPlans(prev => prev.map(p => p.id === id ? { ...p, active: !p.active } : p));
-    toast.success('Đã cập nhật trạng thái gói');
+  const handleSaveEdit = async () => {
+    if (!editItem) return;
+
+    try {
+      await updatePlan.mutateAsync({
+        id: editItem.id,
+        payload: {
+          name: editName.trim(),
+          description: editDesc.trim(),
+          price: parseBlankNumber(editPrice, -1),
+          yearlyPrice: parseOptionalNumber(editYearlyPrice),
+          copyLimit: parseBlankNumber(editCopy, -1),
+          apiLimit: parseBlankNumber(editApi, -1),
+          fineTune: parseBlankNumber(editFine, -1),
+          allowedModels: editAllowedModels,
+          isPopular: editPopular,
+        },
+      });
+      setEditItem(null);
+      toast.success('Đã cập nhật gói dịch vụ');
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Không cập nhật được gói dịch vụ'));
+    }
+  };
+
+  const toggleActive = async (plan: AdminPlan) => {
+    try {
+      await updatePlan.mutateAsync({
+        id: plan.id,
+        payload: { isActive: !plan.active },
+      });
+      toast.success('Đã cập nhật trạng thái gói');
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Không cập nhật được trạng thái gói'));
+    }
   };
 
   const handleSoftDelete = async () => {
     if (!confirmDelete) return;
-    await new Promise(r => setTimeout(r, 400));
-    setDeletedPlans(prev => [...prev, { id: confirmDelete.id, name: confirmDelete.name, price: confirmDelete.price, deletedAt: new Date().toLocaleString('vi-VN') }]);
-    setConfirmDelete(null); toast.success('Đã chuyển vào thùng rác');
+
+    try {
+      await removePlan.mutateAsync(confirmDelete.id);
+      toast.success('Đã chuyển gói vào thùng rác');
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Không xóa được gói dịch vụ'));
+    } finally {
+      setConfirmDelete(null);
+    }
   };
 
   const handleRestore = async (id: string | number) => {
-    setTrashLoading(String(id)); await new Promise(r => setTimeout(r, 500));
-    setDeletedPlans(prev => prev.filter(p => p.id !== Number(id)));
-    setTrashLoading(null); toast.success('Đã khôi phục gói dịch vụ');
+    setProcessingTrashId(String(id));
+    try {
+      await restorePlan.mutateAsync(String(id));
+      toast.success('Đã khôi phục gói dịch vụ');
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Không khôi phục được gói dịch vụ'));
+    } finally {
+      setProcessingTrashId(null);
+    }
   };
 
   const handlePermanentDelete = async (id: string | number) => {
-    setTrashLoading(String(id)); await new Promise(r => setTimeout(r, 500));
-    setDeletedPlans(prev => prev.filter(p => p.id !== Number(id)));
-    setPlans(prev => prev.filter(p => p.id !== Number(id)));
-    setTrashLoading(null); toast.error('Đã xoá vĩnh viễn gói dịch vụ');
+    setProcessingTrashId(String(id));
+    try {
+      await permanentDeletePlan.mutateAsync(String(id));
+      toast.success('Đã xóa vĩnh viễn gói dịch vụ');
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Không xóa vĩnh viễn được gói dịch vụ'));
+    } finally {
+      setProcessingTrashId(null);
+    }
   };
 
-  const formatVal = (v: number, label = '') => v === -1 ? 'Unlimited' : v === 0 ? '—' : `${v.toLocaleString()}${label}`;
-  const formatPrice = (p: number) => p === 0 ? 'Miễn phí' : p === -1 ? 'Liên hệ' : `${p.toLocaleString('vi-VN')}₫`;
+  const isLoading = plansLoading || trashLoading;
 
   return (
     <Layout>
       <div className="p-6 max-w-7xl mx-auto">
-        {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-foreground mb-1">Quản Lý Gói Dịch Vụ</h1>
-            <p className="text-muted-foreground text-sm">Cấu hình các gói subscription và pricing</p>
+            <h1 className="text-2xl font-bold text-foreground mb-1">Quản lý gói dịch vụ</h1>
+            <p className="text-muted-foreground text-sm">Dữ liệu được đọc trực tiếp từ MongoDB qua API admin.</p>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -148,182 +400,244 @@ export function AdminPlans() {
             >
               <Trash2 className="w-4 h-4" />
               Thùng rác
-              {deletedPlans.length > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-destructive/100 text-white text-[10px] font-bold rounded-full flex items-center justify-center">{deletedPlans.length}</span>
+              {trashPlans.length > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-destructive/100 text-white text-[10px] font-bold rounded-full flex items-center justify-center">{trashPlans.length}</span>
               )}
             </button>
             <Button className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl" onClick={() => setShowAdd(true)}>
-              <Plus className="w-4 h-4 mr-2" /> Tạo Gói Mới
+              <Plus className="w-4 h-4 mr-2" /> Tạo gói mới
             </Button>
           </div>
         </div>
 
-        {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {[
-            { label: 'Tổng gói', value: visible.length, icon: Crown, color: 'text-primary bg-primary/5' },
-            { label: 'Tổng subscribers', value: visible.reduce((a, p) => a + p.users, 0).toLocaleString(), icon: Users, color: 'text-primary bg-primary/5' },
-            { label: 'Doanh thu ước tính', value: (totalRevenue / 1000000).toFixed(1) + 'M₫', icon: DollarSign, color: 'text-emerald-600 bg-emerald-50' },
-            { label: 'Paid users', value: visible.filter(p => p.price > 0).reduce((a, p) => a + p.users, 0).toLocaleString(), icon: Zap, color: 'text-primary bg-primary/5' },
-          ].map((s, i) => (
-            <StatTile key={i} icon={s.icon} label={s.label} value={s.value} color={s.color} />
+            { label: 'Tổng gói', value: plans.length, icon: Crown, color: 'text-primary bg-primary/5' },
+            { label: 'Tổng subscribers', value: plans.reduce((total, plan) => total + plan.users, 0).toLocaleString('vi-VN'), icon: Users, color: 'text-primary bg-primary/5' },
+            { label: 'Doanh thu ước tính', value: `${(totalRevenue / 1000000).toFixed(1)}M VND`, icon: DollarSign, color: 'text-emerald-600 bg-emerald-50' },
+            { label: 'Paid users', value: paidUsers.toLocaleString('vi-VN'), icon: Zap, color: 'text-primary bg-primary/5' },
+          ].map((item) => (
+            <StatTile key={item.label} icon={item.icon} label={item.label} value={item.value} color={item.color} />
           ))}
         </div>
 
-        {/* Table */}
-        <AdminTable>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Gói</TableHead>
-                <TableHead>Giá</TableHead>
-                <TableHead>Copy/tháng</TableHead>
-                <TableHead>API calls</TableHead>
-                <TableHead>Fine-tune</TableHead>
-                <TableHead>Subscribers</TableHead>
-                <TableHead>Kích hoạt</TableHead>
-                <TableHead className="text-right">Thao tác</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {pagination.pageItems.map(plan => (
-                <TableRow key={plan.id} className={!plan.active ? 'opacity-60' : ''}>
-                  <TableCell>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-foreground">{plan.name}</span>
-                        {plan.popular && <Badge className="bg-warning/15 text-amber-800 border-0 text-xs">Phổ biến</Badge>}
-                      </div>
-                      <p className="text-xs text-muted-foreground/80 mt-0.5">{plan.description}</p>
-                    </div>
-                  </TableCell>
-                  <TableCell className="font-semibold text-foreground">{formatPrice(plan.price)}</TableCell>
-                  <TableCell className="text-sm text-foreground/70">{formatVal(plan.copyLimit)}</TableCell>
-                  <TableCell className="text-sm text-foreground/70">{formatVal(plan.apiLimit)}</TableCell>
-                  <TableCell className="text-sm text-foreground/70">{formatVal(plan.fineTune)}</TableCell>
-                  <TableCell><Badge className="bg-primary/10 text-primary border-0">{plan.users}</Badge></TableCell>
-                  <TableCell><Switch checked={plan.active} onCheckedChange={() => toggleActive(plan.id)} /></TableCell>
-                  <TableCell>
-                    <div className="flex gap-1 justify-end">
-                      <button onClick={() => openEdit(plan)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-primary/5 text-muted-foreground/80 hover:text-primary transition-colors">
-                        <Edit2 className="w-3.5 h-3.5" />
-                      </button>
-                      <button onClick={() => setConfirmDelete(plan)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-destructive/10 text-muted-foreground/80 hover:text-red-500 transition-colors">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </TableCell>
+        {isLoading ? (
+          <Card className="p-16 text-center text-sm text-muted-foreground">Đang tải gói dịch vụ...</Card>
+        ) : plansError ? (
+          <Card className="p-16 text-center text-sm text-destructive">Không tải được danh sách gói dịch vụ.</Card>
+        ) : (
+          <>
+            <AdminFilterBar
+              search={search}
+              onSearchChange={setSearch}
+              searchPlaceholder="Tìm gói, mô tả hoặc model..."
+              rightSlot={
+                <div className="flex flex-wrap gap-2">
+                  <Select value={filterStatus} onValueChange={setFilterStatus}>
+                    <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                      <SelectItem value="active">Đang bật</SelectItem>
+                      <SelectItem value="inactive">Tạm tắt</SelectItem>
+                      <SelectItem value="popular">Phổ biến</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={filterModel} onValueChange={setFilterModel}>
+                    <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tất cả model</SelectItem>
+                      <SelectItem value="unrestricted">Tất cả model được phép</SelectItem>
+                      {planModelOptions.map(model => (
+                        <SelectItem key={model.id} value={model.id}>{model.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={sortPlans} onValueChange={setSortPlans}>
+                    <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="sort-order">Thứ tự hiển thị</SelectItem>
+                      <SelectItem value="price-asc">Giá thấp đến cao</SelectItem>
+                      <SelectItem value="price-desc">Giá cao đến thấp</SelectItem>
+                      <SelectItem value="users-desc">Nhiều subscribers</SelectItem>
+                      <SelectItem value="users-asc">Ít subscribers</SelectItem>
+                      <SelectItem value="created-desc">Mới nhất</SelectItem>
+                      <SelectItem value="created-asc">Cũ nhất</SelectItem>
+                      <SelectItem value="name-asc">Tên A-Z</SelectItem>
+                      <SelectItem value="name-desc">Tên Z-A</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              }
+            />
+            <AdminTable
+              empty={filteredPlans.length === 0 ? <div className="text-center py-12 text-muted-foreground/80 text-sm">Không tìm thấy gói dịch vụ phù hợp.</div> : undefined}
+            >
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Gói</TableHead>
+                  <TableHead>Giá/tháng</TableHead>
+                  <TableHead>Giá/năm</TableHead>
+                  <TableHead>Copy/tháng</TableHead>
+                  <TableHead>API calls</TableHead>
+                  <TableHead>Fine-tune</TableHead>
+                  <TableHead>Model generate</TableHead>
+                  <TableHead>Subscribers</TableHead>
+                  <TableHead>Kích hoạt</TableHead>
+                  <TableHead className="text-right">Thao tác</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-        </AdminTable>
-        <DataPagination
-          page={pagination.page}
-          pageSize={pagination.pageSize}
-          totalItems={pagination.totalItems}
-          totalPages={pagination.totalPages}
-          startIndex={pagination.startIndex}
-          endIndex={pagination.endIndex}
-          onPageChange={pagination.setPage}
-          onPageSizeChange={pagination.setPageSize}
-          itemLabel="gói"
-        />
+              </TableHeader>
+              <TableBody>
+                {pagination.pageItems.map((plan) => (
+                  <TableRow key={plan.id} className={!plan.active ? 'opacity-60' : ''}>
+                    <TableCell>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-foreground">{plan.name}</span>
+                          {plan.popular && <Badge className="bg-warning/15 text-amber-800 border-0 text-xs">Phổ biến</Badge>}
+                        </div>
+                        <p className="text-xs text-muted-foreground/80 mt-0.5">{plan.description || plan.slug}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-semibold text-foreground">{formatPrice(plan.monthlyPrice, plan.currency)}</TableCell>
+                    <TableCell className="text-sm text-foreground/70">{formatPrice(plan.yearlyPrice, plan.currency)}</TableCell>
+                    <TableCell className="text-sm text-foreground/70">{formatLimit(plan.copyLimit)}</TableCell>
+                    <TableCell className="text-sm text-foreground/70">{formatLimit(plan.apiLimit)}</TableCell>
+                    <TableCell className="text-sm text-foreground/70">{formatLimit(plan.fineTune)}</TableCell>
+                    <TableCell className="text-xs text-foreground/70 max-w-52" title={formatAllowedModels(plan.allowedModels)}>{formatAllowedModels(plan.allowedModels)}</TableCell>
+                    <TableCell><Badge className="bg-primary/10 text-primary border-0">{plan.users}</Badge></TableCell>
+                    <TableCell><Switch checked={plan.active} onCheckedChange={() => void toggleActive(plan)} /></TableCell>
+                    <TableCell>
+                      <div className="flex gap-1 justify-end">
+                        <button onClick={() => openEdit(plan)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-primary/5 text-muted-foreground/80 hover:text-primary transition-colors">
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button onClick={() => setConfirmDelete(plan)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-destructive/10 text-muted-foreground/80 hover:text-red-500 transition-colors">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </AdminTable>
+            <DataPagination
+              page={pagination.page}
+              pageSize={pagination.pageSize}
+              totalItems={pagination.totalItems}
+              totalPages={pagination.totalPages}
+              startIndex={pagination.startIndex}
+              endIndex={pagination.endIndex}
+              onPageChange={pagination.setPage}
+              onPageSizeChange={pagination.setPageSize}
+              itemLabel="gói"
+            />
+          </>
+        )}
       </div>
 
-      {/* ── ADD DIALOG ── */}
       <Dialog open={showAdd} onOpenChange={setShowAdd}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
                 <Plus className="w-4 h-4 text-primary" />
               </div>
-              Tạo Gói Mới
+              Tạo gói mới
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-1">
             <div>
               <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Tên gói</Label>
-              <Input value={addName} onChange={e => setAddName(e.target.value)} placeholder="VD: Team" className="h-10" />
+              <Input value={addName} onChange={event => setAddName(event.target.value)} placeholder="VD: Team" className="h-10" />
             </div>
             <div>
               <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Mô tả</Label>
-              <Input value={addDesc} onChange={e => setAddDesc(e.target.value)} placeholder="Dành cho..." className="h-10" />
+              <Input value={addDesc} onChange={event => setAddDesc(event.target.value)} placeholder="Dành cho..." className="h-10" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Giá (₫/tháng)</Label>
-                <Input value={addPrice} onChange={e => setAddPrice(e.target.value)} placeholder="Trống = Liên hệ" className="h-10" type="number" />
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Giá/tháng</Label>
+                <Input value={addPrice} onChange={event => setAddPrice(event.target.value)} placeholder="Trống = Liên hệ" className="h-10" type="number" />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Giá/năm</Label>
+                <Input value={addYearlyPrice} onChange={event => setAddYearlyPrice(event.target.value)} placeholder="Trống = tự tính" className="h-10" type="number" />
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Copy/tháng</Label>
-                <Input value={addCopy} onChange={e => setAddCopy(e.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
+                <Input value={addCopy} onChange={event => setAddCopy(event.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">API calls/tháng</Label>
-                <Input value={addApi} onChange={e => setAddApi(e.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
+                <Input value={addApi} onChange={event => setAddApi(event.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Fine-tune models</Label>
-                <Input value={addFine} onChange={e => setAddFine(e.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
+                <Input value={addFine} onChange={event => setAddFine(event.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
               </div>
             </div>
+            <ModelAccessSelector allowedModels={addAllowedModels} onChange={setAddAllowedModels} />
             <div className="flex gap-2 pt-1">
-              <button onClick={() => setShowAdd(false)} className="flex-1 h-10 border border-border rounded-xl text-sm font-semibold text-foreground/70 hover:bg-surface-muted transition-colors">Huỷ</button>
-              <button onClick={handleAdd} disabled={!addName.trim()} className="flex-1 h-10 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:opacity-40 text-white rounded-xl text-sm font-bold transition-all">
-                Tạo gói
+              <button onClick={() => setShowAdd(false)} className="flex-1 h-10 border border-border rounded-xl text-sm font-semibold text-foreground/70 hover:bg-surface-muted transition-colors">Hủy</button>
+              <button onClick={() => void handleAdd()} disabled={!addName.trim() || createPlan.isPending} className="flex-1 h-10 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:opacity-40 text-white rounded-xl text-sm font-bold transition-all flex items-center justify-center">
+                {createPlan.isPending ? <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : 'Tạo gói'}
               </button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* ── EDIT DIALOG ── */}
       <Dialog open={!!editItem} onOpenChange={() => setEditItem(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
                 <Edit2 className="w-4 h-4 text-primary" />
               </div>
-              Chỉnh sửa Gói: {editItem?.name}
+              Chỉnh sửa gói: {editItem?.name}
             </DialogTitle>
           </DialogHeader>
           {editItem && (
             <div className="space-y-4 pt-1">
               <div>
                 <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Tên gói</Label>
-                <Input value={editName} onChange={e => setEditName(e.target.value)} className="h-10" />
+                <Input value={editName} onChange={event => setEditName(event.target.value)} className="h-10" />
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Mô tả</Label>
-                <Input value={editDesc} onChange={e => setEditDesc(e.target.value)} className="h-10" />
+                <Input value={editDesc} onChange={event => setEditDesc(event.target.value)} className="h-10" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Giá (₫/tháng)</Label>
-                  <Input value={editPrice} onChange={e => setEditPrice(e.target.value)} placeholder="Trống = Liên hệ" className="h-10" type="number" />
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Giá/tháng</Label>
+                  <Input value={editPrice} onChange={event => setEditPrice(event.target.value)} placeholder="Trống = Liên hệ" className="h-10" type="number" />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Giá/năm</Label>
+                  <Input value={editYearlyPrice} onChange={event => setEditYearlyPrice(event.target.value)} placeholder="Trống = giữ nguyên" className="h-10" type="number" />
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Copy/tháng</Label>
-                  <Input value={editCopy} onChange={e => setEditCopy(e.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
+                  <Input value={editCopy} onChange={event => setEditCopy(event.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">API calls</Label>
-                  <Input value={editApi} onChange={e => setEditApi(e.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
+                  <Input value={editApi} onChange={event => setEditApi(event.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Fine-tune</Label>
-                  <Input value={editFine} onChange={e => setEditFine(e.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
+                  <Input value={editFine} onChange={event => setEditFine(event.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
                 </div>
               </div>
+              <ModelAccessSelector allowedModels={editAllowedModels} onChange={setEditAllowedModels} />
               <div className="flex items-center justify-between bg-surface-muted rounded-xl p-3">
-                <Label className="text-sm font-medium text-foreground/80">Đánh dấu "Phổ biến"</Label>
+                <Label className="text-sm font-medium text-foreground/80">Đánh dấu phổ biến</Label>
                 <Switch checked={editPopular} onCheckedChange={setEditPopular} />
               </div>
               <div className="flex gap-2 pt-1">
-                <button onClick={() => setEditItem(null)} className="flex-1 h-10 border border-border rounded-xl text-sm font-semibold text-foreground/70 hover:bg-surface-muted transition-colors">Huỷ</button>
-                <button onClick={handleSaveEdit} disabled={editSaving} className="flex-1 h-10 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center">
-                  {editSaving ? <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : 'Lưu thay đổi'}
+                <button onClick={() => setEditItem(null)} className="flex-1 h-10 border border-border rounded-xl text-sm font-semibold text-foreground/70 hover:bg-surface-muted transition-colors">Hủy</button>
+                <button onClick={() => void handleSaveEdit()} disabled={updatePlan.isPending} className="flex-1 h-10 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center">
+                  {updatePlan.isPending ? <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : 'Lưu thay đổi'}
                 </button>
               </div>
             </div>
@@ -331,26 +645,30 @@ export function AdminPlans() {
         </DialogContent>
       </Dialog>
 
-      {/* ── CONFIRM DELETE ── */}
       <ConfirmDialog
         open={!!confirmDelete}
         onClose={() => setConfirmDelete(null)}
-        onConfirm={handleSoftDelete}
-        title={`Xoá gói "${confirmDelete?.name}"?`}
-        description={`Gói có ${confirmDelete?.users} subscribers. Tất cả sẽ được chuyển xuống gói Miễn Phí. Bạn có thể khôi phục trong 30 ngày.`}
+        onConfirm={() => void handleSoftDelete()}
+        title={`Xóa gói "${confirmDelete?.name}"?`}
+        description={`Gói có ${confirmDelete?.users || 0} subscribers. Gói sẽ được chuyển vào thùng rác và có thể khôi phục.`}
         confirmLabel="Chuyển vào thùng rác"
         confirmVariant="warning"
+        loading={removePlan.isPending}
       />
 
-      {/* ── TRASH BIN ── */}
       <TrashBin
         open={trashOpen}
         onClose={() => setTrashOpen(false)}
-        items={deletedPlans.map(p => ({ id: p.id, label: p.name, subLabel: p.price === -1 ? 'Liên hệ' : p.price === 0 ? 'Miễn phí' : `${p.price.toLocaleString('vi-VN')}₫/tháng`, deletedAt: p.deletedAt }))}
+        items={trashPlans.map(plan => ({
+          id: plan.id,
+          label: plan.name,
+          subLabel: formatPrice(plan.monthlyPrice, plan.currency),
+          deletedAt: formatDate(plan.deletedAt),
+        }))}
         onRestore={handleRestore}
         onPermanentDelete={handlePermanentDelete}
         entityName="gói dịch vụ"
-        loading={trashLoading}
+        loading={processingTrashId}
       />
     </Layout>
   );

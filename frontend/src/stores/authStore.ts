@@ -4,6 +4,9 @@ import type { RegisterData, User } from '@/types/auth';
 
 type AccountType = 'user' | 'admin';
 
+const REMEMBER_LOGIN_STORAGE_KEY = 'copypro_remember_login_30_days';
+const DEFAULT_REMEMBER_LOGIN = true;
+
 interface AuthApiResponse {
   success: boolean;
   message?: string;
@@ -17,7 +20,22 @@ function canUseStorage() {
   return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
 }
 
+export function getRememberLoginPreference() {
+  if (!canUseStorage()) return DEFAULT_REMEMBER_LOGIN;
+
+  const savedValue = localStorage.getItem(REMEMBER_LOGIN_STORAGE_KEY);
+  if (savedValue === null) return DEFAULT_REMEMBER_LOGIN;
+
+  return savedValue === 'true';
+}
+
+function saveRememberLoginPreference(rememberLogin: boolean) {
+  if (!canUseStorage()) return;
+  localStorage.setItem(REMEMBER_LOGIN_STORAGE_KEY, String(rememberLogin));
+}
+
 function saveSession(user: User) {
+  if (!canUseStorage()) return;
   localStorage.removeItem('auth_token');
   localStorage.setItem('user', JSON.stringify(user));
 }
@@ -69,9 +87,10 @@ interface AuthState {
   user: User | null;
   isLoading: boolean;
   hydrate: () => Promise<void>;
-  login: (email: string, password: string, accountType?: AccountType) => Promise<User>;
+  login: (email: string, password: string, accountType?: AccountType, rememberLogin?: boolean) => Promise<User>;
   register: (data: RegisterData) => Promise<void>;
   updateUser: (user: User) => void;
+  updateRememberLogin: (rememberLogin: boolean, accountType?: AccountType) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -100,11 +119,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ user: null, isLoading: false });
   },
 
-  login: async (email, password, accountType = 'user') => {
+  login: async (email, password, accountType = 'user', rememberLogin = getRememberLoginPreference()) => {
     try {
       const response = await api.post<AuthApiResponse>(`/auth/${accountType}/login`, {
         email,
         password,
+        rememberLogin,
       });
 
       const user = response.data.data?.user;
@@ -113,6 +133,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         throw new Error('Invalid auth response');
       }
 
+      saveRememberLoginPreference(rememberLogin);
       saveSession(user);
       set({ user, isLoading: false });
       return user;
@@ -136,6 +157,30 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   updateUser: (user) => {
     saveSession(user);
     set({ user, isLoading: false });
+  },
+
+  updateRememberLogin: async (rememberLogin, accountType) => {
+    const currentUser = get().user ?? getStoredUser();
+
+    if (!currentUser) {
+      saveRememberLoginPreference(rememberLogin);
+      return;
+    }
+
+    const resolvedAccountType = accountType ?? accountTypeFromUser(currentUser);
+
+    try {
+      const response = await api.patch<AuthApiResponse>(`/auth/${resolvedAccountType}/session`, {
+        rememberLogin,
+      });
+
+      const updatedUser = response.data.data?.user ?? currentUser;
+      saveRememberLoginPreference(rememberLogin);
+      saveSession(updatedUser);
+      set({ user: updatedUser, isLoading: false });
+    } catch (error) {
+      throw new Error(getErrorMessage(error, 'Khong the cap nhat ghi nho dang nhap'));
+    }
   },
 
   logout: async () => {

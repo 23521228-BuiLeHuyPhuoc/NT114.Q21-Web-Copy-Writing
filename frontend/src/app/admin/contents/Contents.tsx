@@ -4,7 +4,6 @@ import { Card } from '@/app/components/ui/card';
 import { Input } from '@/app/components/ui/input';
 import { Badge } from '@/app/components/ui/badge';
 import { Label } from '@/app/components/ui/label';
-import { Textarea } from '@/app/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/app/components/ui/dialog';
 import { TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/components/ui/table';
@@ -43,17 +42,28 @@ function formatDeletedAt(value?: string | null) {
   return date.toLocaleString('vi-VN');
 }
 
+function splitTags(value: string) {
+  return value
+    .split(',')
+    .map(tag => tag.trim())
+    .filter(Boolean);
+}
+
 export function AdminContents() {
   const [contents, setContents] = useState<ContentItem[]>([]);
   const [trashContents, setTrashContents] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('all');
+  const [filterModel, setFilterModel] = useState('all');
+  const [filterFavorite, setFilterFavorite] = useState('all');
+  const [sortContent, setSortContent] = useState('created-desc');
 
   const [viewItem, setViewItem] = useState<ContentItem | null>(null);
   const [editItem, setEditItem] = useState<ContentItem | null>(null);
   const [editTitle, setEditTitle] = useState('');
-  const [editBody, setEditBody] = useState('');
+  const [editType, setEditType] = useState('');
+  const [editTags, setEditTags] = useState('');
   const [editFavorite, setEditFavorite] = useState(false);
   const [editSaving, setEditSaving] = useState(false);
 
@@ -85,9 +95,13 @@ export function AdminContents() {
     return Array.from(new Set(contents.map(item => item.type).filter(Boolean))).sort();
   }, [contents]);
 
+  const contentModels = useMemo(() => {
+    return Array.from(new Set(contents.map(item => item.model).filter(Boolean))).sort((a, b) => a.localeCompare(b, 'vi'));
+  }, [contents]);
+
   const filtered = useMemo(() => {
     const keyword = search.trim().toLowerCase();
-    return contents.filter(item => {
+    const filteredItems = contents.filter(item => {
       const matchSearch = !keyword || [
         item.title,
         item.user,
@@ -98,13 +112,35 @@ export function AdminContents() {
         item.tags.join(' '),
       ].join(' ').toLowerCase().includes(keyword);
       const matchType = filterType === 'all' || item.type === filterType;
-      return matchSearch && matchType;
+      const matchModel = filterModel === 'all' || item.model === filterModel;
+      const matchFavorite = filterFavorite === 'all'
+        || (filterFavorite === 'favorite' && item.isFavorite)
+        || (filterFavorite === 'normal' && !item.isFavorite);
+      return matchSearch && matchType && matchModel && matchFavorite;
     });
-  }, [contents, filterType, search]);
+
+    return [...filteredItems].sort((a, b) => {
+      switch (sortContent) {
+        case 'created-asc':
+          return new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime();
+        case 'words-desc':
+          return b.words - a.words;
+        case 'words-asc':
+          return a.words - b.words;
+        case 'title-asc':
+          return a.title.localeCompare(b.title, 'vi');
+        case 'title-desc':
+          return b.title.localeCompare(a.title, 'vi');
+        case 'created-desc':
+        default:
+          return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+      }
+    });
+  }, [contents, filterFavorite, filterModel, filterType, search, sortContent]);
 
   const pagination = usePagination(filtered, {
     initialPageSize: 10,
-    resetKey: `${search}|${filterType}`,
+    resetKey: `${search}|${filterType}|${filterModel}|${filterFavorite}|${sortContent}`,
   });
 
   const activeUsers = useMemo(() => new Set(contents.map(item => item.email).filter(email => email !== '-')).size, [contents]);
@@ -112,22 +148,38 @@ export function AdminContents() {
   const openEdit = (item: ContentItem) => {
     setEditItem(item);
     setEditTitle(item.title);
-    setEditBody(item.body);
+    setEditType(item.type);
+    setEditTags(item.tags.join(', '));
     setEditFavorite(item.isFavorite);
   };
 
   const handleSaveEdit = async () => {
     if (!editItem) return;
-    if (!editTitle.trim() || !editBody.trim()) {
-      toast.error('Tiêu đề và nội dung không được để trống');
+    const title = editTitle.trim();
+    const type = editType.trim();
+    const tags = Array.from(new Set(splitTags(editTags)));
+
+    if (!title || !type) {
+      toast.error('Tiêu đề và loại nội dung không được để trống');
+      return;
+    }
+
+    if (tags.length > 10) {
+      toast.error('Tối đa 10 tag cho mỗi nội dung');
+      return;
+    }
+
+    if (tags.some(tag => tag.length > 40)) {
+      toast.error('Mỗi tag tối đa 40 ký tự');
       return;
     }
 
     setEditSaving(true);
     try {
       await adminContentService.update(editItem.id, {
-        title: editTitle.trim(),
-        outputText: editBody.trim(),
+        title,
+        type,
+        tags,
         isFavorite: editFavorite,
       });
       await loadContents();
@@ -224,15 +276,45 @@ export function AdminContents() {
           onSearchChange={setSearch}
           searchPlaceholder="Tìm nội dung, user, model..."
           rightSlot={
-            <Select value={filterType} onValueChange={setFilterType}>
-              <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả loại</SelectItem>
-                {contentTypes.map(type => (
-                  <SelectItem key={type} value={type}>{type}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex flex-wrap gap-2">
+              <Select value={filterType} onValueChange={setFilterType}>
+                <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả loại</SelectItem>
+                  {contentTypes.map(type => (
+                    <SelectItem key={type} value={type}>{type}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={filterModel} onValueChange={setFilterModel}>
+                <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả model</SelectItem>
+                  {contentModels.map(model => (
+                    <SelectItem key={model} value={model}>{model}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={filterFavorite} onValueChange={setFilterFavorite}>
+                <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả đánh dấu</SelectItem>
+                  <SelectItem value="favorite">Đã đánh dấu</SelectItem>
+                  <SelectItem value="normal">Bình thường</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={sortContent} onValueChange={setSortContent}>
+                <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="created-desc">Mới nhất</SelectItem>
+                  <SelectItem value="created-asc">Cũ nhất</SelectItem>
+                  <SelectItem value="words-desc">Nhiều từ nhất</SelectItem>
+                  <SelectItem value="words-asc">Ít từ nhất</SelectItem>
+                  <SelectItem value="title-asc">Tiêu đề A-Z</SelectItem>
+                  <SelectItem value="title-desc">Tiêu đề Z-A</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           }
         />
 
@@ -310,7 +392,7 @@ export function AdminContents() {
       </div>
 
       <Dialog open={!!viewItem} onOpenChange={() => setViewItem(null)}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[calc(100vh-2rem)] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Eye className="w-4 h-4 text-muted-foreground" /> Xem nội dung
@@ -346,7 +428,7 @@ export function AdminContents() {
       </Dialog>
 
       <Dialog open={!!editItem} onOpenChange={() => setEditItem(null)}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[calc(100vh-2rem)] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -362,8 +444,12 @@ export function AdminContents() {
                 <Input value={editTitle} onChange={event => setEditTitle(event.target.value)} className="h-10" />
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Nội dung</Label>
-                <Textarea value={editBody} onChange={event => setEditBody(event.target.value)} rows={6} className="resize-none" />
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Loại nội dung</Label>
+                <Input value={editType} onChange={event => setEditType(event.target.value)} className="h-10" />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Tag</Label>
+                <Input value={editTags} onChange={event => setEditTags(event.target.value)} className="h-10" placeholder="seo, email, social" />
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Đánh dấu</Label>

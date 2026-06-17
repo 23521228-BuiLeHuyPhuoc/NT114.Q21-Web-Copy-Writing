@@ -13,6 +13,7 @@ const SERPAPI_GOOGLE_DOMAIN = process.env.SERPAPI_GOOGLE_DOMAIN || 'google.com';
 const SERPAPI_GL = process.env.SERPAPI_GL || 'vn';
 const SERPAPI_HL = process.env.SERPAPI_HL || 'vi';
 const SERPAPI_NUM_RESULTS = Number(process.env.SERPAPI_NUM_RESULTS || 10);
+const SERPAPI_NO_CACHE = String(process.env.SERPAPI_NO_CACHE || '').toLowerCase() === 'true';
 const REQUEST_TIMEOUT_MS = Number(process.env.COMMON_CRAWL_TIMEOUT_MS || 15000);
 const TOTAL_BUDGET_MS = Number(process.env.COMMON_CRAWL_TOTAL_BUDGET_MS || 150000);
 const MAX_INDEXES = Number(process.env.COMMON_CRAWL_MAX_INDEXES || 4);
@@ -563,6 +564,7 @@ async function searchSerpApiQuery(query, options = {}) {
   endpoint.searchParams.set('q', query);
   endpoint.searchParams.set('api_key', apiKey);
   endpoint.searchParams.set('num', String(clampNumber(SERPAPI_NUM_RESULTS, 1, 20)));
+  if (SERPAPI_NO_CACHE) endpoint.searchParams.set('no_cache', 'true');
   if (SERPAPI_ENGINE === 'google') {
     endpoint.searchParams.set('google_domain', SERPAPI_GOOGLE_DOMAIN);
     endpoint.searchParams.set('gl', SERPAPI_GL);

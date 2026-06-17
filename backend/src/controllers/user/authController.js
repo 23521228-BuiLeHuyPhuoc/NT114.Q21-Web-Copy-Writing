@@ -15,13 +15,29 @@ const register = asyncHandler(async (req, res) => {
 });
 
 const login = asyncHandler(async (req, res) => {
-  const data = await authService.loginUser(req.body.email, req.body.password);
-  setAuthCookie(res, data.token);
+  const rememberLogin = req.body.rememberLogin === true;
+  const data = await authService.loginUser(req.body.email, req.body.password, { rememberLogin });
+  setAuthCookie(res, data.token, { rememberLogin });
 
   return res.status(200).json({
     success: true,
     message: 'Login successful',
     data,
+  });
+});
+
+const refreshSession = asyncHandler(async (req, res) => {
+  const rememberLogin = req.body.rememberLogin === true;
+  const data = authService.refreshAuthSession(req.auth.account, 'user', { rememberLogin });
+  setAuthCookie(res, data.token, { rememberLogin });
+
+  return res.status(200).json({
+    success: true,
+    message: 'Session updated',
+    data: {
+      ...data,
+      rememberLogin,
+    },
   });
 });
 
@@ -62,6 +78,19 @@ const updateAvatar = asyncHandler(async (req, res) => {
   });
 });
 
+const removeAvatar = asyncHandler(async (req, res) => {
+  const user = await authService.removeUserAvatar(req.user._id);
+
+  return res.status(200).json({
+    success: true,
+    message: 'Avatar removed',
+    data: {
+      user,
+      avatar: '',
+    },
+  });
+});
+
 const forgotPassword = asyncHandler(async (req, res) => {
   const data = await authService.forgotPassword('user', req.body.email);
 
@@ -96,7 +125,9 @@ module.exports = {
   register,
   login,
   me,
+  refreshSession,
   updateAvatar,
+  removeAvatar,
   logout,
   forgotPassword,
   verifyOtp,

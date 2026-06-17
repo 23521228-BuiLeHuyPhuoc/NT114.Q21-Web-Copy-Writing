@@ -11,6 +11,26 @@ const listNotifications = asyncHandler(async (req, res) => {
   });
 });
 
+const getPreferences = asyncHandler(async (req, res) => {
+  const preferences = await notificationService.getNotificationPreferences(req.user._id);
+
+  return res.status(200).json({
+    success: true,
+    message: 'OK',
+    data: { preferences },
+  });
+});
+
+const updatePreferences = asyncHandler(async (req, res) => {
+  const preferences = await notificationService.updateNotificationPreferences(req.user._id, req.body);
+
+  return res.status(200).json({
+    success: true,
+    message: 'Notification preferences updated',
+    data: { preferences },
+  });
+});
+
 const markNotificationRead = asyncHandler(async (req, res) => {
   const item = await notificationService.markNotificationRead(req.user._id, req.params.id);
 
@@ -33,6 +53,8 @@ const markAllNotificationsRead = asyncHandler(async (req, res) => {
 
 module.exports = {
   listNotifications,
+  getPreferences,
+  updatePreferences,
   markNotificationRead,
   markAllNotificationsRead,
 };

@@ -1,6 +1,7 @@
 const Joi = require('joi');
 
 const objectId = Joi.string().hex().length(24).required();
+const modelId = Joi.string().trim().min(1).max(600);
 
 const paramsWithId = Joi.object({
   id: objectId,
@@ -34,6 +35,7 @@ const planPayload = {
   }),
   features: Joi.array().items(Joi.string().trim().max(200)),
   excludedFeatures: Joi.array().items(Joi.string().trim().max(200)),
+  allowedModels: Joi.array().items(modelId).max(50),
   isPopular: Joi.boolean(),
   popular: Joi.boolean(),
   isActive: Joi.boolean(),

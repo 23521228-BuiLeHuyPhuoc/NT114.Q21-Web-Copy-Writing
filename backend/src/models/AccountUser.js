@@ -1,6 +1,16 @@
 const bcrypt = require('bcrypt');
 const mongoose = require('mongoose');
 
+const notificationPreferencesSchema = new mongoose.Schema(
+  {
+    quotaLow: {
+      type: Boolean,
+      default: true,
+    },
+  },
+  { _id: false },
+);
+
 const accountUserSchema = new mongoose.Schema(
   {
     name: {
@@ -40,6 +50,10 @@ const accountUserSchema = new mongoose.Schema(
     lastLoginAt: {
       type: Date,
       default: null,
+    },
+    notificationPreferences: {
+      type: notificationPreferencesSchema,
+      default: () => ({}),
     },
     isDeleted: {
       type: Boolean,

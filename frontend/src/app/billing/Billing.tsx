@@ -22,8 +22,24 @@ import toast from 'react-hot-toast';
 import { DataPagination } from '@/app/components/common/DataPagination';
 import { usePagination } from '@/hooks/usePagination';
 
+type PlanIcon = typeof Crown;
+
+interface BillingPlanCard {
+  id: string;
+  slug: string;
+  name: string;
+  price: number;
+  currency: string;
+  icon: PlanIcon;
+  color: string;
+  features: string[];
+  limits: string[];
+  popular?: boolean;
+}
+
 const CURRENT_PLAN = {
   name: 'Pro',
+  slug: 'pro',
   price: 299000,
   renewDate: '23/04/2026',
   copyUsed: 312,
@@ -32,11 +48,13 @@ const CURRENT_PLAN = {
   apiLimit: 5000,
 };
 
-const PLANS = [
+const PLANS: BillingPlanCard[] = [
   {
     id: 'free',
+    slug: 'free',
     name: 'Miễn phí',
     price: 0,
+    currency: 'VND',
     icon: Zap,
     color: 'border-border',
     features: ['30 copy/tháng', '2 model AI cơ bản', '5 templates', 'Không có API'],
@@ -44,8 +62,10 @@ const PLANS = [
   },
   {
     id: 'pro',
+    slug: 'pro',
     name: 'Pro',
     price: 299000,
+    currency: 'VND',
     icon: Crown,
     color: 'border-amber-500 ring-2 ring-amber-100',
     features: ['500 copy/tháng', 'Tất cả model AI', '100+ templates', 'API 5,000 calls/tháng', 'Fine-tuning 3 models', 'Kiểm tra đạo văn 100 lần', 'Hỗ trợ ưu tiên'],
@@ -54,8 +74,10 @@ const PLANS = [
   },
   {
     id: 'business',
+    slug: 'business',
     name: 'Business',
     price: 799000,
+    currency: 'VND',
     icon: Building2,
     color: 'border-border',
     features: ['Unlimited copy', 'Tất cả model AI', 'Unlimited templates', 'API 50,000 calls/tháng', 'Fine-tuning unlimited', 'Kiểm tra đạo văn unlimited', 'Hỗ trợ 24/7 + SLA', 'Custom model training'],
@@ -93,6 +115,7 @@ const INVOICES = [
 interface BillingMeResponse {
   currentPlan?: {
     name?: string;
+    slug?: string;
     price?: number;
     renewDate?: string;
     copyUsed?: number;
@@ -101,6 +124,31 @@ interface BillingMeResponse {
     apiLimit?: number;
   };
   invoices?: typeof INVOICES;
+}
+
+interface BillingPlanResponseItem {
+  id?: string;
+  _id?: string;
+  slug?: string;
+  name?: string;
+  description?: string;
+  price?: number;
+  monthlyPrice?: number;
+  currency?: string;
+  features?: string[];
+  excludedFeatures?: string[];
+  isPopular?: boolean;
+  popular?: boolean;
+  limits?: {
+    copyMonthly?: number;
+    apiCallsMonthly?: number;
+    fineTuneModels?: number;
+    plagiarismChecks?: number;
+  };
+}
+
+interface BillingPlansResponse {
+  items?: BillingPlanResponseItem[];
 }
 
 interface BillingCheckoutResponse {
@@ -112,7 +160,47 @@ interface BillingCheckoutResponse {
 }
 
 function formatCurrency(value: number) {
+  if (value === -1) return 'Liên hệ';
+  if (value === 0) return 'Miễn phí';
   return `${value.toLocaleString('vi-VN')}₫`;
+}
+
+function formatLimitValue(value: number | undefined, label: string) {
+  if (value === -1) return `${label} không giới hạn`;
+  if (!value || value <= 0) return '';
+  return `${value.toLocaleString('vi-VN')} ${label}`;
+}
+
+function getPlanIcon(slug: string): PlanIcon {
+  if (slug === 'free') return Zap;
+  if (slug === 'business' || slug === 'enterprise') return Building2;
+  return Crown;
+}
+
+function normalizeBillingPlan(plan: BillingPlanResponseItem): BillingPlanCard {
+  const slug = plan.slug || plan.id || plan._id || '';
+  const price = Number(plan.monthlyPrice ?? plan.price ?? 0);
+  const limits = plan.limits || {};
+  const generatedFeatures = [
+    formatLimitValue(limits.copyMonthly, 'copy/tháng'),
+    formatLimitValue(limits.apiCallsMonthly, 'API calls/tháng'),
+    formatLimitValue(limits.fineTuneModels, 'fine-tune models'),
+    formatLimitValue(limits.plagiarismChecks, 'kiểm tra đạo văn'),
+  ].filter(Boolean);
+  const popular = Boolean(plan.isPopular ?? plan.popular);
+
+  return {
+    id: plan.id || plan._id || slug,
+    slug,
+    name: plan.name || slug || 'Gói dịch vụ',
+    price: Number.isFinite(price) ? price : 0,
+    currency: plan.currency || 'VND',
+    icon: getPlanIcon(slug),
+    color: popular ? 'border-amber-500 ring-2 ring-amber-100' : 'border-border',
+    features: (plan.features && plan.features.length > 0) ? plan.features : generatedFeatures,
+    limits: plan.excludedFeatures || [],
+    popular,
+  };
 }
 
 function getPaymentNotice(payment: string | null) {
@@ -124,10 +212,23 @@ function getPaymentNotice(payment: string | null) {
 
 export function CustomerBilling() {
   const [currentPlan, setCurrentPlan] = useState(CURRENT_PLAN);
+  const [plans, setPlans] = useState<BillingPlanCard[]>(PLANS);
   const [invoices, setInvoices] = useState(INVOICES);
   const [checkoutMethod, setCheckoutMethod] = useState<(typeof PAYMENT_METHODS)[number]>(PAYMENT_METHODS[0]);
-  const [checkoutPlan, setCheckoutPlan] = useState<(typeof PLANS)[number] | null>(null);
+  const [checkoutPlan, setCheckoutPlan] = useState<BillingPlanCard | null>(null);
   const [checkoutPlanId, setCheckoutPlanId] = useState<string | null>(null);
+
+  const loadPlans = useCallback(async () => {
+    try {
+      const response = await api.get<{ data?: BillingPlansResponse }>('/billing/plans');
+      const items = response.data.data?.items || [];
+      if (items.length > 0) {
+        setPlans(items.map(normalizeBillingPlan));
+      }
+    } catch {
+      // Giữ fallback demo nếu backend billing chưa sẵn sàng.
+    }
+  }, []);
 
   const loadBilling = useCallback(async () => {
     try {
@@ -140,6 +241,7 @@ export function CustomerBilling() {
         setCurrentPlan((prev) => ({
           ...prev,
           ...currentPlanData,
+          slug: currentPlanData.slug || prev.slug,
           price: currentPlanData.price ?? prev.price,
           renewDate: currentPlanData.renewDate || prev.renewDate,
           copyUsed: currentPlanData.copyUsed ?? prev.copyUsed,
@@ -159,7 +261,8 @@ export function CustomerBilling() {
 
   useEffect(() => {
     void loadBilling();
-  }, [loadBilling]);
+    void loadPlans();
+  }, [loadBilling, loadPlans]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -189,9 +292,16 @@ export function CustomerBilling() {
     initialPageSize: 5,
   });
 
-  const openCheckout = (plan: typeof PLANS[number]) => {
-    if (plan.popular) {
+  const isCurrentPlan = (plan: BillingPlanCard) => plan.slug === currentPlan.slug;
+
+  const openCheckout = (plan: BillingPlanCard) => {
+    if (isCurrentPlan(plan)) {
       toast.success('Đây là gói hiện tại!');
+      return;
+    }
+
+    if (plan.price < 0) {
+      toast('Gói này cần liên hệ tư vấn để kích hoạt.');
       return;
     }
 
@@ -207,10 +317,10 @@ export function CustomerBilling() {
   const handleCheckout = async () => {
     if (!checkoutPlan) return;
 
-    setCheckoutPlanId(checkoutPlan.id);
+    setCheckoutPlanId(checkoutPlan.slug);
     try {
       const response = await api.post<{ data?: BillingCheckoutResponse }>('/billing/checkout', {
-        planSlug: checkoutPlan.id,
+        planSlug: checkoutPlan.slug,
         billingCycle: 'monthly',
         method: checkoutMethod.id,
       });
@@ -271,7 +381,7 @@ export function CustomerBilling() {
                 </div>
                 <div className="text-right">
                   <p className="text-2xl font-bold text-amber-700">{formatCurrency(currentPlan.price)}</p>
-                  <p className="text-xs text-muted-foreground">/tháng</p>
+                  {currentPlan.price > 0 && <p className="text-xs text-muted-foreground">/tháng</p>}
                 </div>
               </div>
 
@@ -302,13 +412,14 @@ export function CustomerBilling() {
             </div>
 
             <div className="grid gap-6 md:grid-cols-3">
-              {PLANS.map((plan) => {
+              {plans.map((plan) => {
                 const Icon = plan.icon;
-                const isLoading = checkoutPlanId === plan.id;
+                const current = isCurrentPlan(plan);
+                const isLoading = checkoutPlanId === plan.slug;
 
                 return (
                   <Card key={plan.id} className={`relative p-6 ${plan.color}`}>
-                    {plan.popular && (
+                    {current && (
                       <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 border-0 bg-warning/100 px-3 text-white">Đang dùng</Badge>
                     )}
                     <div className="mb-6 text-center">
@@ -336,17 +447,17 @@ export function CustomerBilling() {
                       ))}
                     </div>
                     <Button
-                      className={`w-full ${plan.popular ? 'bg-warning/100 text-white hover:bg-amber-600' : ''}`}
-                      variant={plan.popular ? 'default' : 'outline'}
+                      className={`w-full ${current ? 'bg-warning/100 text-white hover:bg-amber-600' : ''}`}
+                      variant={current ? 'default' : 'outline'}
                       onClick={() => openCheckout(plan)}
-                      disabled={checkoutPlanId !== null || plan.popular}
+                      disabled={checkoutPlanId !== null || current}
                     >
                       {isLoading ? (
                         <span className="flex items-center gap-2">
                           <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                           Đang tạo thanh toán...
                         </span>
-                      ) : plan.popular ? 'Gói hiện tại' : plan.price === 0 ? 'Chọn miễn phí' : 'Chọn gói'}
+                      ) : current ? 'Gói hiện tại' : plan.price < 0 ? 'Liên hệ tư vấn' : plan.price === 0 ? 'Chọn miễn phí' : 'Chọn gói'}
                     </Button>
                   </Card>
                 );
@@ -410,7 +521,7 @@ export function CustomerBilling() {
                     </div>
                     <div className="text-right">
                       <p className="text-2xl font-bold text-foreground">{formatCurrency(checkoutPlan.price)}</p>
-                      <p className="text-xs text-muted-foreground">/tháng</p>
+                      {checkoutPlan.price > 0 && <p className="text-xs text-muted-foreground">/tháng</p>}
                     </div>
                   </div>
                 </div>

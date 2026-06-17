@@ -5,6 +5,10 @@ const Payment = require('../models/Payment');
 const Plan = require('../models/Plan');
 const Subscription = require('../models/Subscription');
 const UsageLog = require('../models/UsageLog');
+const {
+  getGenerateModelAccessId,
+  normalizeAllowedModels,
+} = require('../config/generatorModels');
 const createError = require('../utils/createError');
 const paymentGatewayService = require('./paymentGatewayService');
 
@@ -120,6 +124,7 @@ function normalizePlanPayload(payload = {}, existing = null) {
     limits,
     features: payload.features ?? existing?.features ?? [],
     excludedFeatures: payload.excludedFeatures ?? existing?.excludedFeatures ?? [],
+    allowedModels: normalizeAllowedModels(payload.allowedModels ?? existing?.allowedModels ?? []),
     isPopular: payload.isPopular ?? payload.popular ?? existing?.isPopular ?? false,
     isActive: payload.isActive ?? payload.active ?? existing?.isActive ?? true,
     sortOrder: normalizeLimitValue(payload.sortOrder, existing?.sortOrder ?? 0),
@@ -157,6 +162,7 @@ function serializePlan(plan, subscriberCount = 0) {
     },
     features: plan.features || [],
     excludedFeatures: plan.excludedFeatures || [],
+    allowedModels: normalizeAllowedModels(plan.allowedModels || []),
     isPopular: Boolean(plan.isPopular),
     popular: Boolean(plan.isPopular),
     isActive: Boolean(plan.isActive),
@@ -315,6 +321,30 @@ async function getCurrentSubscription(userId) {
 async function getFallbackPlan() {
   return Plan.findOne({ slug: 'free', isDeleted: { $ne: true } })
     || Plan.findOne({ isDeleted: { $ne: true } }).sort({ sortOrder: 1, priceMonthly: 1 });
+}
+
+async function getEffectivePlanForUser(userId) {
+  const subscription = await getCurrentSubscription(userId);
+  return subscription?.planId || await getFallbackPlan();
+}
+
+async function ensureGenerateModelAllowed(userId, payload = {}) {
+  const plan = await getEffectivePlanForUser(userId);
+  if (!plan) return null;
+
+  const allowedModels = normalizeAllowedModels(plan.allowedModels || []);
+  if (allowedModels.length === 0) return plan;
+
+  const requestedAccess = getGenerateModelAccessId(payload);
+  if (requestedAccess && allowedModels.includes(requestedAccess)) return plan;
+
+  throw createError(403, 'Model nay khong nam trong goi dich vu hien tai', undefined, {
+    code: 'MODEL_NOT_INCLUDED_IN_PLAN',
+    requestedModel: String(payload.model || ''),
+    requestedAccess,
+    allowedModels,
+    plan: serializePlan(plan),
+  });
 }
 
 async function getUsageForCurrentMonth(userId) {
@@ -989,6 +1019,7 @@ module.exports = {
   softDeletePlan,
   restorePlan,
   permanentDeletePlan,
+  ensureGenerateModelAllowed,
   getMyBilling,
   createMockCheckout,
   handleVnpayReturn,
