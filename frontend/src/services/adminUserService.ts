@@ -76,4 +76,12 @@ export const adminUserService = {
   async permanentDelete(accountType: AdminUserAccountType, id: string) {
     await api.delete(`/admin/users/${accountType}/${id}/permanent`);
   },
+
+  async permanentDeleteMany(items: Array<{ accountType: AdminUserAccountType; id: string }>) {
+    const results = await Promise.allSettled(
+      items.map(item => api.delete(`/admin/users/${item.accountType}/${item.id}/permanent`)),
+    );
+    const rejected = results.find(result => result.status === 'rejected');
+    if (rejected?.status === 'rejected') throw rejected.reason;
+  },
 };

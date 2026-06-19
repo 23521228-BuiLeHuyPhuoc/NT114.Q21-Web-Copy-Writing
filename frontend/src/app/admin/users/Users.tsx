@@ -272,6 +272,25 @@ export function AdminUsers() {
     }
   };
 
+  const handlePermanentDeleteAll = async (ids: Array<number | string>) => {
+    const targets = ids
+      .map(id => findTrashUser(id))
+      .filter((item): item is AdminUser => Boolean(item));
+    if (targets.length === 0) return;
+
+    try {
+      await adminUserService.permanentDeleteMany(targets.map(item => ({
+        accountType: accountTypeOf(item),
+        id: item.id,
+      })));
+      toast.success(`Đã xóa vĩnh viễn ${targets.length} tài khoản`);
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Không xóa tất cả tài khoản được'));
+    } finally {
+      await loadUsers();
+    }
+  };
+
   const statusBadge = (status: UserStatus) => {
     if (status === 'active') return <Badge className="bg-primary/10 text-primary border-0 gap-1"><span className="w-1.5 h-1.5 bg-primary/50 rounded-full" />{STATUS_LABELS[status]}</Badge>;
     return <Badge className="bg-muted text-foreground/80 border-0 gap-1"><Lock className="w-3 h-3" />{STATUS_LABELS[status]}</Badge>;
@@ -629,6 +648,7 @@ export function AdminUsers() {
         }))}
         onRestore={handleRestore}
         onPermanentDelete={handlePermanentDelete}
+        onPermanentDeleteAll={handlePermanentDeleteAll}
         entityName="tài khoản"
         loading={processingTrashId}
       />

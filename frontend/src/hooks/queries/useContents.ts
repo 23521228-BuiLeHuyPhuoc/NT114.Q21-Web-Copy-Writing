@@ -47,6 +47,7 @@ export function useGenerateContent() {
     mutationFn: contentService.generate,
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: contentKeys.all });
+      queryClient.invalidateQueries({ queryKey: projectKeys.all });
       queryClient.invalidateQueries({ queryKey: templateKeys.all });
       queryClient.invalidateQueries({ queryKey: notificationKeys.all });
       queryClient.invalidateQueries({ queryKey: billingKeys.all });
@@ -64,6 +65,7 @@ export function useCreateContent() {
     mutationFn: (payload: CreateContentPayload) => contentService.create(payload),
     onSuccess: (content) => {
       queryClient.invalidateQueries({ queryKey: contentKeys.all });
+      queryClient.invalidateQueries({ queryKey: projectKeys.all });
       if (content.id) {
         queryClient.setQueryData(contentKeys.detail(content.id), content);
       }
@@ -93,6 +95,7 @@ export function useDeleteContent() {
     mutationFn: (id: string) => contentService.remove(id),
     onSuccess: (content) => {
       queryClient.invalidateQueries({ queryKey: contentKeys.all });
+      queryClient.invalidateQueries({ queryKey: projectKeys.all });
       if (content.id) {
         queryClient.removeQueries({ queryKey: contentKeys.detail(content.id) });
       }
@@ -124,6 +127,19 @@ export function usePermanentDeleteContent() {
       queryClient.invalidateQueries({ queryKey: contentKeys.all });
       queryClient.invalidateQueries({ queryKey: projectKeys.all });
       queryClient.removeQueries({ queryKey: contentKeys.detail(id) });
+    },
+  });
+}
+
+export function usePermanentDeleteAllContents() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (ids: string[]) => contentService.permanentDeleteMany(ids),
+    onSettled: (_result, _error, ids) => {
+      queryClient.invalidateQueries({ queryKey: contentKeys.all });
+      queryClient.invalidateQueries({ queryKey: projectKeys.all });
+      ids.forEach(id => queryClient.removeQueries({ queryKey: contentKeys.detail(id) }));
     },
   });
 }

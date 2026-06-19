@@ -309,6 +309,12 @@ export const contentService = {
     await api.delete(`/contents/${id}/permanent`);
   },
 
+  async permanentDeleteMany(ids: string[]) {
+    const results = await Promise.allSettled(ids.map(id => api.delete(`/contents/${id}/permanent`)));
+    const rejected = results.find(result => result.status === 'rejected');
+    if (rejected?.status === 'rejected') throw rejected.reason;
+  },
+
   async generate(payload: GenerateContentPayload): Promise<GenerateContentResult> {
     const response = await api.post<{
       data?: {

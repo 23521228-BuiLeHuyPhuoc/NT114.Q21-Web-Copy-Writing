@@ -4,6 +4,7 @@ import { PublicNavbar } from '@/app/components/public/PublicNavbar';
 import { PublicFooter } from '@/app/components/public/PublicFooter';
 import { AIDemoSection } from '@/app/components/public/AIDemoSection';
 import { HeroGeneratorDemo } from '@/app/components/public/HeroGeneratorDemo';
+import { PublicRichText } from '@/app/components/public/PublicRichText';
 import { Badge } from '@/app/components/ui/badge';
 import { getPublicText } from '@/lib/publicSiteDefaults';
 import { publicSiteService, type PublicPageContent } from '@/services/publicSiteService';
@@ -150,9 +151,12 @@ export function LandingPage() {
               <h1 className="mb-6 text-white leading-[1.08]">
                 {homeHeroTitle}
               </h1>
-              <p className="mx-auto mb-8 max-w-xl text-base leading-relaxed text-muted-foreground/60 lg:mx-0 lg:text-lg">
-                {homeHeroDescription}
-              </p>
+              <PublicRichText
+                content={homeContent}
+                field="heroDescription"
+                fallback={homeHeroDescription}
+                className="mx-auto mb-8 max-w-xl text-base leading-relaxed text-muted-foreground/60 lg:mx-0 lg:text-lg [&_a]:text-green-200 [&_a]:underline [&_p]:mb-2 [&_p:last-child]:mb-0 [&_strong]:text-white"
+              />
 
               <div className="mb-7 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
                 <button

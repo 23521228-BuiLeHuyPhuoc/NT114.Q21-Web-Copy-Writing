@@ -1,4 +1,23 @@
 import type { PublicPageContent } from '@/services/publicSiteService';
+import { looksLikeHtml, sanitizeHtml } from '@/lib/richText';
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function plainTextToHtml(value: string) {
+  return escapeHtml(value)
+    .split(/\n{2,}/)
+    .map(block => block.trim())
+    .filter(Boolean)
+    .map(block => `<p>${block.replace(/\n/g, '<br />')}</p>`)
+    .join('');
+}
 
 export const PUBLIC_PAGE_FIELD_DEFS = [
   {
@@ -63,6 +82,11 @@ export function getPublicPageDef(key: string) {
 export function getPublicText(content: PublicPageContent | undefined, key: string, fallback: string) {
   const value = content?.[key];
   return typeof value === 'string' && value.trim() ? value : fallback;
+}
+
+export function getPublicHtml(content: PublicPageContent | undefined, key: string, fallback: string) {
+  const value = getPublicText(content, key, fallback);
+  return looksLikeHtml(value) ? sanitizeHtml(value) : plainTextToHtml(value);
 }
 
 export function buildDefaultContent(key: string, content?: PublicPageContent) {

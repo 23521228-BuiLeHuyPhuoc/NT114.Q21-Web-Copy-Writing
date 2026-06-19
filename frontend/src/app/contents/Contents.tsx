@@ -24,6 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   useContents,
   useDeleteContent,
+  usePermanentDeleteAllContents,
   usePermanentDeleteContent,
   useRestoreContent,
   useTrashContents,
@@ -54,6 +55,7 @@ export function CustomerContents() {
   const deleteContent = useDeleteContent();
   const restoreContent = useRestoreContent();
   const permanentDeleteContent = usePermanentDeleteContent();
+  const permanentDeleteAllContents = usePermanentDeleteAllContents();
 
   const filtered = contents.filter(c => {
     const title = c.title || '';
@@ -108,6 +110,19 @@ export function CustomerContents() {
       toast.error(message);
     } finally {
       setTrashLoading(null);
+    }
+  };
+
+  const handlePermanentDeleteAll = async (ids: Array<number | string>) => {
+    const contentIds = ids.map(String).filter(Boolean);
+    if (contentIds.length === 0) return;
+
+    try {
+      await permanentDeleteAllContents.mutateAsync(contentIds);
+      toast.success(`Đã xóa vĩnh viễn ${contentIds.length} nội dung!`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Không thể xóa tất cả nội dung';
+      toast.error(message);
     }
   };
 
@@ -273,6 +288,8 @@ export function CustomerContents() {
           }))}
           onRestore={handleRestore}
           onPermanentDelete={handlePermanentDelete}
+          onPermanentDeleteAll={handlePermanentDeleteAll}
+          deleteAllLoading={permanentDeleteAllContents.isPending}
           entityName="nội dung"
           loading={trashLoading}
         />

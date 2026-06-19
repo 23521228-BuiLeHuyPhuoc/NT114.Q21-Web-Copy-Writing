@@ -186,4 +186,10 @@ export const adminPlanService = {
   async permanentDelete(id: string) {
     await api.delete(`/admin/plans/${id}/permanent`);
   },
+
+  async permanentDeleteMany(ids: string[]) {
+    const results = await Promise.allSettled(ids.map(id => api.delete(`/admin/plans/${id}/permanent`)));
+    const rejected = results.find(result => result.status === 'rejected');
+    if (rejected?.status === 'rejected') throw rejected.reason;
+  },
 };

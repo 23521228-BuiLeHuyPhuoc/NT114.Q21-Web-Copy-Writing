@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState, type ChangeEvent, type ReactNode } from 'react';
 import { Layout } from '@/app/components/Layout';
 import { Badge } from '@/app/components/ui/badge';
 import { Button } from '@/app/components/ui/button';
@@ -8,11 +8,11 @@ import { Progress } from '@/app/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select';
 import { Switch } from '@/app/components/ui/switch';
 import { Textarea } from '@/app/components/ui/textarea';
-import { AlertTriangle, CheckCircle2, ChevronDown, ChevronUp, Clock, Database, FileCheck, FileText, Plus, RefreshCw, Search, Shield, Trash2 } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, ChevronDown, ChevronUp, Clock, Database, FileCheck, FileText, Plus, RefreshCw, Search, Shield, Trash2, Upload, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 import { useCheckPlagiarism, usePlagiarismHistory } from '@/hooks/queries/usePlagiarism';
-import type { PlagiarismReport, PlagiarismRiskLevel, PlagiarismSensitivity, PlagiarismSourceConfig, PlagiarismMatch, PlagiarismScoreBasis } from '@/services/plagiarismService';
+import { plagiarismService, type PlagiarismReport, type PlagiarismRiskLevel, type PlagiarismSensitivity, type PlagiarismSourceConfig, type PlagiarismMatch, type PlagiarismScoreBasis } from '@/services/plagiarismService';
 
 const RISK: Record<PlagiarismRiskLevel, { label: string; cls: string }> = {
   safe: { label: 'An toàn', cls: 'bg-primary/10 text-primary border-primary/20' },
@@ -43,6 +43,8 @@ const SOURCE_LABELS: Record<keyof PlagiarismSourceConfig, string> = {
 
 const MAX_IGNORED_PHRASES = 30;
 const MAX_IGNORED_PHRASE_LENGTH = 10000;
+const MAX_REFERENCE_FILES = 5;
+const PLAGIARISM_FILE_ACCEPT = '.txt,.md,.markdown,.csv,.tsv,.json,.html,.htm,.xml,.rtf,.docx,.pdf,text/plain,text/markdown,text/csv,application/json,text/html,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
 const SCORE_BASIS_LABELS: Record<PlagiarismScoreBasis, string> = {
   exact: 'Trùng nguyên văn',
@@ -505,8 +507,35 @@ function durationLabel(ms: number) {
   return `${seconds >= 10 ? Math.round(seconds) : seconds.toFixed(1)}s`;
 }
 
+function fileKey(file: File) {
+  return `${file.name}-${file.size}-${file.lastModified}`;
+}
+
+function formatFileSize(size: number) {
+  if (size >= 1024 * 1024) return `${(size / 1024 / 1024).toFixed(1)} MB`;
+  if (size >= 1024) return `${Math.round(size / 1024)} KB`;
+  return `${size} B`;
+}
+
+function mergeReferenceFiles(current: File[], incoming: File[]) {
+  const seen = new Set<string>();
+  const next: File[] = [];
+
+  [...current, ...incoming].forEach((file) => {
+    const key = fileKey(file);
+    if (seen.has(key) || next.length >= MAX_REFERENCE_FILES) return;
+    seen.add(key);
+    next.push(file);
+  });
+
+  return next;
+}
+
 export function CustomerPlagiarismCheck() {
   const [text, setText] = useState('');
+  const [checkFileName, setCheckFileName] = useState('');
+  const [extractingFile, setExtractingFile] = useState(false);
+  const [referenceFiles, setReferenceFiles] = useState<File[]>([]);
   const [result, setResult] = useState<PlagiarismReport | null>(null);
   const [expandedSources, setExpandedSources] = useState<Record<string, boolean>>({});
   const [sensitivity, setSensitivity] = useState<PlagiarismSensitivity>('balanced');
@@ -540,6 +569,11 @@ export function CustomerPlagiarismCheck() {
   const conclusion = result ? plagiarismConclusion(result, displayMatches.length, displayTopicMatches.length, visiblePlagiarismScore) : null;
 
   const updateSource = (key: keyof PlagiarismSourceConfig, value: boolean) => {
+    if (key === 'uploads' && value && referenceFiles.length === 0) {
+      toast.error('Tải lên ít nhất một file nguồn để bật phạm vi file tải lên');
+      return;
+    }
+
     setSourceConfig(prev => ({ ...prev, [key]: value }));
   };
 
@@ -578,6 +612,50 @@ export function CustomerPlagiarismCheck() {
     setExpandedSources(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
+  const handleCheckFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.currentTarget.files?.[0];
+    event.currentTarget.value = '';
+    if (!file) return;
+
+    setExtractingFile(true);
+    setCheckFileName(file.name);
+    try {
+      const extracted = await plagiarismService.extractText(file);
+      setText(extracted.text);
+      setResult(null);
+      toast.success(`Đã chuyển ${extracted.fileName} sang văn bản (${extracted.wordCount} từ)`);
+    } catch (error) {
+      setCheckFileName('');
+      toast.error(errorMessage(error));
+    } finally {
+      setExtractingFile(false);
+    }
+  };
+
+  const handleReferenceFilesChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const incoming = Array.from(event.currentTarget.files || []);
+    event.currentTarget.value = '';
+    if (incoming.length === 0) return;
+
+    const next = mergeReferenceFiles(referenceFiles, incoming);
+    if (next.length < referenceFiles.length + incoming.length) {
+      toast.error(`Chỉ dùng tối đa ${MAX_REFERENCE_FILES} file nguồn và bỏ qua file trùng`);
+    }
+
+    setReferenceFiles(next);
+    if (next.length > 0) {
+      setSourceConfig(prev => ({ ...prev, uploads: true }));
+    }
+  };
+
+  const removeReferenceFile = (index: number) => {
+    const next = referenceFiles.filter((_, fileIndex) => fileIndex !== index);
+    setReferenceFiles(next);
+    if (next.length === 0) {
+      setSourceConfig(prev => ({ ...prev, uploads: false }));
+    }
+  };
+
   const handleCheck = () => {
     const trimmed = text.trim();
     const pendingIgnoredPhrases = splitIgnoredPhraseInput(ignoredPhraseInput);
@@ -590,6 +668,10 @@ export function CustomerPlagiarismCheck() {
       toast.error('Chọn ít nhất một nguồn để kiểm tra');
       return;
     }
+    if (sourceConfig.uploads && referenceFiles.length === 0) {
+      toast.error('Tải lên ít nhất một file nguồn hoặc tắt phạm vi file tải lên');
+      return;
+    }
     setIgnoredPhrases(normalizedIgnoredPhrases);
     setIgnoredPhraseInput('');
     check.mutate({
@@ -600,6 +682,7 @@ export function CustomerPlagiarismCheck() {
       ignoreCommonPhrases,
       ignoredPhrases: normalizedIgnoredPhrases,
       sources: sourceConfig,
+      referenceFiles: sourceConfig.uploads ? referenceFiles : [],
     }, {
       onSuccess: (report) => { setResult(report); setExpandedSources({}); toast.success('Kiểm tra đạo văn hoàn tất'); },
       onError: (error) => toast.error(errorMessage(error)),
@@ -616,6 +699,71 @@ export function CustomerPlagiarismCheck() {
             <Badge variant='outline'>{words} từ</Badge>
           </div>
           <Textarea className='min-h-[220px] text-sm leading-6' placeholder='Dán nội dung AI hoặc bản nháp quảng cáo vào đây...' value={text} onChange={(event) => setText(event.target.value)} />
+          <div className='mt-3 grid gap-3 lg:grid-cols-2'>
+            <div className='rounded-md border bg-background p-3'>
+              <div className='flex items-start justify-between gap-3'>
+                <div className='min-w-0'>
+                  <p className='text-sm font-medium text-foreground'>File nội dung cần kiểm tra</p>
+                  <p className='mt-1 text-xs text-muted-foreground'>Hỗ trợ TXT, MD, CSV, JSON, HTML, DOCX, PDF.</p>
+                  {checkFileName && <p className='mt-2 break-words text-xs text-primary [overflow-wrap:anywhere]'>Đã đọc: {checkFileName}</p>}
+                </div>
+                <input
+                  id='plagiarism-check-file'
+                  type='file'
+                  accept={PLAGIARISM_FILE_ACCEPT}
+                  className='sr-only'
+                  onChange={handleCheckFileChange}
+                  disabled={extractingFile || check.isPending}
+                />
+                <Button asChild variant='outline' size='sm' className={extractingFile ? 'pointer-events-none opacity-60' : ''}>
+                  <label htmlFor='plagiarism-check-file' className='cursor-pointer'>
+                    {extractingFile ? <RefreshCw className='h-4 w-4 animate-spin' /> : <Upload className='h-4 w-4' />}
+                    {extractingFile ? 'Đang đọc' : 'Chọn file'}
+                  </label>
+                </Button>
+              </div>
+            </div>
+            <div className='rounded-md border bg-background p-3'>
+              <div className='flex items-start justify-between gap-3'>
+                <div className='min-w-0'>
+                  <p className='text-sm font-medium text-foreground'>File nguồn để so khớp</p>
+                  <p className='mt-1 text-xs text-muted-foreground'>Tải tối đa {MAX_REFERENCE_FILES} file làm nguồn kiểm tra riêng.</p>
+                </div>
+                <input
+                  id='plagiarism-reference-files'
+                  type='file'
+                  accept={PLAGIARISM_FILE_ACCEPT}
+                  multiple
+                  className='sr-only'
+                  onChange={handleReferenceFilesChange}
+                  disabled={check.isPending}
+                />
+                <Button asChild variant='outline' size='sm'>
+                  <label htmlFor='plagiarism-reference-files' className='cursor-pointer'>
+                    <Plus className='h-4 w-4' /> Thêm file
+                  </label>
+                </Button>
+              </div>
+              {referenceFiles.length === 0 ? (
+                <p className='mt-3 rounded-md border border-dashed p-2 text-xs text-muted-foreground'>Chưa có file nguồn tải lên.</p>
+              ) : (
+                <div className='mt-3 max-h-[150px] space-y-2 overflow-auto pr-1'>
+                  {referenceFiles.map((file, index) => (
+                    <div key={fileKey(file)} className='flex items-center gap-2 rounded-md border bg-muted/20 px-2 py-2 text-xs'>
+                      <FileText className='h-4 w-4 shrink-0 text-primary' />
+                      <div className='min-w-0 flex-1'>
+                        <p className='break-words font-medium text-foreground [overflow-wrap:anywhere]'>{file.name}</p>
+                        <p className='text-muted-foreground'>{formatFileSize(file.size)}</p>
+                      </div>
+                      <Button type='button' variant='ghost' size='icon' className='h-7 w-7 shrink-0' onClick={() => removeReferenceFile(index)} aria-label={`Xóa file ${file.name}`} title='Xóa file'>
+                        <X className='h-4 w-4' />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
           <div className='mt-4 grid gap-4 border-t pt-4 lg:grid-cols-[220px_1fr]'>
             <div>
               <p className='mb-2 text-xs font-semibold uppercase text-muted-foreground'>Độ nhạy</p>
@@ -637,9 +785,9 @@ export function CustomerPlagiarismCheck() {
                     <Switch checked={sourceConfig[key]} onCheckedChange={(value) => updateSource(key, Boolean(value))} />
                   </label>
                 ))}
-                <label className='flex items-center justify-between gap-3 rounded-md border bg-muted/40 px-3 py-2 text-sm text-muted-foreground'>
-                  <span>{SOURCE_LABELS.uploads} <span className='text-xs'>(sắp có)</span></span>
-                  <Switch checked={false} disabled />
+                <label className={`flex items-center justify-between gap-3 rounded-md border px-3 py-2 text-sm ${referenceFiles.length === 0 ? 'bg-muted/40 text-muted-foreground' : ''}`}>
+                  <span>{SOURCE_LABELS.uploads}{referenceFiles.length > 0 ? <span className='text-xs'> ({referenceFiles.length})</span> : null}</span>
+                  <Switch checked={sourceConfig.uploads} onCheckedChange={(value) => updateSource('uploads', Boolean(value))} disabled={referenceFiles.length === 0} />
                 </label>
               </div>
               <label className='mt-3 flex items-center justify-between gap-3 rounded-md border px-3 py-2 text-sm'>
@@ -701,7 +849,7 @@ export function CustomerPlagiarismCheck() {
           </div>
           <div className='mt-4 flex gap-3'>
             <Button className='h-11 flex-1 text-white' onClick={handleCheck} disabled={check.isPending}>{check.isPending ? <><RefreshCw className='mr-2 h-4 w-4 animate-spin' /> Đang kiểm tra...</> : <><FileCheck className='mr-2 h-4 w-4' /> Kiểm tra đạo văn</>}</Button>
-            <Button variant='outline' onClick={() => { setText(''); setResult(null); setExpandedSources({}); }}>Xóa</Button>
+            <Button variant='outline' onClick={() => { setText(''); setCheckFileName(''); setReferenceFiles([]); setSourceConfig(prev => ({ ...prev, uploads: false })); setResult(null); setExpandedSources({}); }}>Xóa</Button>
           </div>
         </Card>
         {result && (

@@ -21,6 +21,15 @@ const checkPlagiarismSchema = Joi.object({
     web: Joi.boolean().default(false),
     uploads: Joi.boolean().default(false),
   }).default(),
+  uploadedSources: Joi.array().items(Joi.object({
+    source: Joi.string().trim().max(500).required(),
+    sourceTitle: Joi.string().trim().max(200).required(),
+    sourceUrl: Joi.string().trim().max(500).allow('').default(''),
+    sourceType: Joi.string().valid('uploads').default('uploads'),
+    text: Joi.string().trim().min(20).max(60000).required(),
+    mimeType: Joi.string().trim().max(120).allow('').default(''),
+    size: Joi.number().integer().min(0).default(0),
+  })).max(5).default([]),
 }).or('text', 'contentId');
 
 const debugCommonCrawlSchema = Joi.object({

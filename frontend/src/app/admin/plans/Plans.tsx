@@ -23,6 +23,7 @@ import {
   useAdminPlans,
   useAdminPlanTrash,
   useCreateAdminPlan,
+  usePermanentDeleteAllAdminPlans,
   usePermanentDeleteAdminPlan,
   useRemoveAdminPlan,
   useRestoreAdminPlan,
@@ -171,6 +172,7 @@ export function AdminPlans() {
   const removePlan = useRemoveAdminPlan();
   const restorePlan = useRestoreAdminPlan();
   const permanentDeletePlan = usePermanentDeleteAdminPlan();
+  const permanentDeleteAllPlans = usePermanentDeleteAllAdminPlans();
 
   const [showAdd, setShowAdd] = useState(false);
   const [addName, setAddName] = useState('');
@@ -427,6 +429,18 @@ export function AdminPlans() {
       toast.error(getErrorMessage(error, 'Không xóa vĩnh viễn được gói dịch vụ'));
     } finally {
       setProcessingTrashId(null);
+    }
+  };
+
+  const handlePermanentDeleteAll = async (ids: Array<string | number>) => {
+    const planIds = ids.map(String).filter(Boolean);
+    if (planIds.length === 0) return;
+
+    try {
+      await permanentDeleteAllPlans.mutateAsync(planIds);
+      toast.success(`Đã xóa vĩnh viễn ${planIds.length} gói dịch vụ`);
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Không xóa tất cả được. Một số gói có thể đang có subscription.'));
     }
   };
 
@@ -782,6 +796,8 @@ export function AdminPlans() {
         }))}
         onRestore={handleRestore}
         onPermanentDelete={handlePermanentDelete}
+        onPermanentDeleteAll={handlePermanentDeleteAll}
+        deleteAllLoading={permanentDeleteAllPlans.isPending}
         entityName="gói dịch vụ"
         loading={processingTrashId}
       />

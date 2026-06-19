@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Editor } from '@tinymce/tinymce-react';
 import { useRouter } from 'next/navigation';
 import { Link } from '@/lib/next-router-compat';
@@ -22,7 +22,7 @@ import {
   type BlogPostForm,
 } from '@/lib/publicBlog';
 import { publicSiteService, type PublicBlogPost, type PublicPageRecord } from '@/services/publicSiteService';
-import { ArrowLeft, Eye, Save } from 'lucide-react';
+import { ArrowLeft, Eye, Save, Upload } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const tinymceApiKey = process.env.NEXT_PUBLIC_TINYMCE_API_KEY || 'no-api-key';
@@ -55,11 +55,13 @@ function placePostInList(posts: PublicBlogPost[], nextPost: PublicBlogPost, orig
 
 export function BlogPostEditor({ slug, mode }: BlogPostEditorProps) {
   const router = useRouter();
+  const featuredImageInputRef = useRef<HTMLInputElement>(null);
   const [blogPage, setBlogPage] = useState<PublicPageRecord | null>(null);
   const [posts, setPosts] = useState<PublicBlogPost[]>([]);
   const [form, setForm] = useState<BlogPostForm | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [featuredImageUploading, setFeaturedImageUploading] = useState(false);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -103,6 +105,31 @@ export function BlogPostEditor({ slug, mode }: BlogPostEditorProps) {
 
   const updateForm = <K extends keyof BlogPostForm>(key: K, value: BlogPostForm[K]) => {
     setForm(current => (current ? { ...current, [key]: value } : current));
+  };
+
+  const uploadImageFile = useCallback(async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      throw new Error('Chỉ hỗ trợ file ảnh');
+    }
+
+    const uploaded = await publicSiteService.uploadAdminImage(file);
+    return uploaded.url;
+  }, []);
+
+  const handleFeaturedImageChange = async (file?: File) => {
+    if (!file) return;
+
+    setFeaturedImageUploading(true);
+    try {
+      const url = await uploadImageFile(file);
+      updateForm('img', url);
+      toast.success('Đã tải ảnh lên Cloudinary');
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Không upload được ảnh'));
+    } finally {
+      setFeaturedImageUploading(false);
+      if (featuredImageInputRef.current) featuredImageInputRef.current.value = '';
+    }
   };
 
   const savePost = async () => {
@@ -235,8 +262,37 @@ export function BlogPostEditor({ slug, mode }: BlogPostEditorProps) {
                       menubar: 'file edit view insert format tools table',
                       branding: false,
                       statusbar: true,
-                      plugins: 'autolink lists link table code wordcount autoresize preview searchreplace visualblocks fullscreen',
-                      toolbar: 'undo redo | blocks | bold italic underline blockquote | alignleft aligncenter alignright | bullist numlist | link table | removeformat | preview fullscreen code',
+                      plugins: 'autolink lists link image table code wordcount autoresize preview searchreplace visualblocks fullscreen',
+                      toolbar: 'undo redo | blocks | bold italic underline blockquote | alignleft aligncenter alignright | bullist numlist | link image table | removeformat | preview fullscreen code',
+                      automatic_uploads: true,
+                      images_reuse_filename: true,
+                      images_file_types: 'jpeg,jpg,png,gif,webp',
+                      images_upload_handler: async (blobInfo: { blob: () => Blob; filename: () => string }) => {
+                        const blob = blobInfo.blob();
+                        const file = new File([blob], blobInfo.filename(), { type: blob.type });
+                        return uploadImageFile(file);
+                      },
+                      file_picker_types: 'image',
+                      file_picker_callback: (callback: (url: string, meta?: Record<string, string>) => void, _value: string, meta: { filetype?: string }) => {
+                        if (meta.filetype !== 'image') return;
+
+                        const input = document.createElement('input');
+                        input.type = 'file';
+                        input.accept = 'image/jpeg,image/png,image/webp,image/gif';
+                        input.onchange = async () => {
+                          const file = input.files?.[0];
+                          if (!file) return;
+
+                          try {
+                            const url = await uploadImageFile(file);
+                            callback(url, { alt: file.name, title: file.name });
+                            toast.success('Đã tải ảnh lên Cloudinary');
+                          } catch (error) {
+                            toast.error(getErrorMessage(error, 'Không upload được ảnh'));
+                          }
+                        };
+                        input.click();
+                      },
                       content_style: 'body { font-family: Inter, Arial, sans-serif; font-size: 15px; line-height: 1.75; color: #1f2937; } p { margin: 0 0 14px; } ul, ol { margin: 0 0 14px 22px; padding: 0; } li { margin: 4px 0; } h1, h2, h3 { margin: 20px 0 12px; line-height: 1.3; color: #111827; } blockquote { margin: 16px 0; padding-left: 14px; border-left: 3px solid #16a34a; color: #374151; } table { border-collapse: collapse; width: 100%; } td, th { border: 1px solid #d1d5db; padding: 8px; }',
                     }}
                     onEditorChange={(value: string) => updateForm('bodyHtml', value)}
@@ -293,7 +349,26 @@ export function BlogPostEditor({ slug, mode }: BlogPostEditorProps) {
               </Card>
 
               <Card className="p-5">
-                <h2 className="text-lg font-bold text-foreground">Ảnh đại diện</h2>
+                <div className="flex items-center justify-between gap-3">
+                  <h2 className="text-lg font-bold text-foreground">Ảnh đại diện</h2>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => featuredImageInputRef.current?.click()}
+                    disabled={featuredImageUploading}
+                    className="gap-2"
+                  >
+                    <Upload className="h-4 w-4" /> {featuredImageUploading ? 'Đang upload...' : 'Upload ảnh'}
+                  </Button>
+                </div>
+                <input
+                  ref={featuredImageInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  className="hidden"
+                  onChange={event => void handleFeaturedImageChange(event.target.files?.[0])}
+                />
                 <Input className="mt-4" value={form.img} onChange={event => updateForm('img', event.target.value)} />
                 {form.img && (
                   <div className="mt-4 overflow-hidden rounded-lg border border-border bg-surface-muted">

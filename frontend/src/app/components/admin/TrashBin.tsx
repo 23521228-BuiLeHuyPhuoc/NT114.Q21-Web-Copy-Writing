@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { Flame, RotateCcw, Trash2, X } from 'lucide-react';
+import { ConfirmDialog } from '@/app/components/admin/ConfirmDialog';
 import { DataPagination } from '@/app/components/common/DataPagination';
 import { usePagination } from '@/hooks/usePagination';
 
@@ -15,6 +17,9 @@ interface TrashBinProps {
   items: TrashItem[];
   onRestore: (id: number | string) => void;
   onPermanentDelete: (id: number | string) => void;
+  onPermanentDeleteAll?: (ids: Array<number | string>) => void | Promise<void>;
+  deleteAllLoading?: boolean;
+  deleteAllLabel?: string;
   entityName?: string;
   loading?: string | null;
 }
@@ -25,13 +30,31 @@ export function TrashBin({
   items,
   onRestore,
   onPermanentDelete,
+  onPermanentDeleteAll,
+  deleteAllLoading = false,
+  deleteAllLabel = 'Xóa tất cả',
   entityName = 'mục',
   loading,
 }: TrashBinProps) {
+  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
+  const [internalDeleteAllLoading, setInternalDeleteAllLoading] = useState(false);
   const pagination = usePagination(items, {
     initialPageSize: 5,
     resetKey: `${items.length}|${open}`,
   });
+  const isDeleteAllLoading = deleteAllLoading || internalDeleteAllLoading;
+
+  const handleConfirmDeleteAll = async () => {
+    if (!onPermanentDeleteAll) return;
+
+    setInternalDeleteAllLoading(true);
+    try {
+      await onPermanentDeleteAll(items.map(item => item.id));
+      setConfirmDeleteAll(false);
+    } finally {
+      setInternalDeleteAllLoading(false);
+    }
+  };
 
   if (!open) return null;
 
@@ -59,11 +82,29 @@ export function TrashBin({
         </div>
 
         {items.length > 0 && (
-          <div className="mx-4 mt-4 bg-warning/10 border border-amber-200 rounded-xl p-3 flex gap-2.5 items-start">
-            <Flame className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
-            <p className="text-xs text-amber-700 leading-relaxed">
-              Các mục trong thùng rác sẽ bị <span className="font-semibold">xóa vĩnh viễn sau 30 ngày</span>.
-            </p>
+          <div className="mx-4 mt-4 bg-warning/10 border border-amber-200 rounded-xl p-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex gap-2.5 items-start min-w-0">
+              <Flame className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-amber-700 leading-relaxed">
+                Các mục trong thùng rác sẽ bị <span className="font-semibold">xóa vĩnh viễn sau 30 ngày</span>.
+              </p>
+            </div>
+            {onPermanentDeleteAll && (
+              <button
+                onClick={() => setConfirmDeleteAll(true)}
+                disabled={isDeleteAllLoading || Boolean(loading)}
+                className="h-8 shrink-0 flex items-center justify-center gap-1.5 rounded-lg border border-red-200 px-3 text-xs font-bold text-red-600 hover:bg-destructive/10 transition-colors disabled:opacity-40"
+              >
+                {isDeleteAllLoading ? (
+                  <div className="w-3.5 h-3.5 border-2 border-red-300 border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <Flame className="w-3.5 h-3.5" />
+                    {deleteAllLabel}
+                  </>
+                )}
+              </button>
+            )}
           </div>
         )}
 
@@ -78,7 +119,8 @@ export function TrashBin({
             </div>
           ) : (
             pagination.pageItems.map((item) => {
-              const isLoading = loading === String(item.id);
+              const isItemLoading = loading === String(item.id);
+              const actionsDisabled = isItemLoading || isDeleteAllLoading;
               return (
                 <div
                   key={item.id}
@@ -98,10 +140,10 @@ export function TrashBin({
                   <div className="flex gap-2">
                     <button
                       onClick={() => onRestore(item.id)}
-                      disabled={isLoading}
+                      disabled={actionsDisabled}
                       className="flex-1 flex items-center justify-center gap-1.5 h-8 border border-primary/20 text-primary hover:bg-primary/5 rounded-lg text-xs font-semibold transition-colors disabled:opacity-40"
                     >
-                      {isLoading ? (
+                      {isItemLoading ? (
                         <div className="w-3.5 h-3.5 border-2 border-green-400 border-t-transparent rounded-full animate-spin" />
                       ) : (
                         <>
@@ -112,7 +154,7 @@ export function TrashBin({
                     </button>
                     <button
                       onClick={() => onPermanentDelete(item.id)}
-                      disabled={isLoading}
+                      disabled={actionsDisabled}
                       className="flex-1 flex items-center justify-center gap-1.5 h-8 border border-red-200 text-red-600 hover:bg-destructive/10 rounded-lg text-xs font-semibold transition-colors disabled:opacity-40"
                     >
                       <Flame className="w-3.5 h-3.5" />
@@ -141,6 +183,16 @@ export function TrashBin({
             />
           </div>
         )}
+        <ConfirmDialog
+          open={confirmDeleteAll}
+          onClose={() => setConfirmDeleteAll(false)}
+          onConfirm={() => void handleConfirmDeleteAll()}
+          title={`Xóa tất cả ${entityName} trong thùng rác?`}
+          description={`Thao tác này sẽ xóa vĩnh viễn ${items.length} ${entityName} và không thể khôi phục.`}
+          confirmLabel={deleteAllLabel}
+          confirmVariant="danger"
+          loading={isDeleteAllLoading}
+        />
       </div>
     </div>
   );

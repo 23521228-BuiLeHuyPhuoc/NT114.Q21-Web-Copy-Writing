@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from '@/lib/next-router-compat';
 import { BrandLogo } from '@/app/components/BrandLogo';
+import { PublicRichText } from '@/app/components/public/PublicRichText';
 import { Sparkles, Mail, Phone, MapPin, Facebook, Youtube, Linkedin, Twitter, ArrowUpRight } from 'lucide-react';
 import { getPublicText } from '@/lib/publicSiteDefaults';
 import { publicSiteService, type PublicPageContent } from '@/services/publicSiteService';
@@ -89,9 +90,12 @@ export function PublicFooter() {
               >
                 {footerCtaTitle}
               </h3>
-              <p className="text-muted-foreground/80 text-sm">
-                {footerCtaDescription}
-              </p>
+              <PublicRichText
+                content={footerContent}
+                field="ctaDescription"
+                fallback={footerCtaDescription}
+                className="text-sm text-muted-foreground/80 [&_a]:text-primary [&_a]:underline [&_p]:mb-1 [&_p:last-child]:mb-0"
+              />
             </div>
             <div className="flex gap-3 flex-shrink-0">
               <Link to="/register">
@@ -119,9 +123,12 @@ export function PublicFooter() {
             <Link to="/" className="inline-flex items-center mb-5 hover:opacity-90 transition-opacity">
               <BrandLogo size="lg" tone="light" surface="light" />
             </Link>
-            <p className="text-sm leading-relaxed mb-6 text-muted-foreground">
-              {footerBrandDescription}
-            </p>
+            <PublicRichText
+              content={footerContent}
+              field="brandDescription"
+              fallback={footerBrandDescription}
+              className="mb-6 text-sm leading-relaxed text-muted-foreground [&_a]:text-primary [&_a]:underline [&_p]:mb-2 [&_p:last-child]:mb-0"
+            />
 
             {/* Contact */}
             <div className="space-y-2.5 text-sm">
@@ -135,7 +142,12 @@ export function PublicFooter() {
               </a>
               <div className="flex items-start gap-2.5">
                 <MapPin className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
-                <span>{footerAddress}</span>
+                <PublicRichText
+                  content={footerContent}
+                  field="address"
+                  fallback={footerAddress}
+                  className="[&_a]:text-primary [&_a]:underline [&_p]:mb-1 [&_p:last-child]:mb-0"
+                />
               </div>
             </div>
 

@@ -2,6 +2,7 @@ const express = require('express');
 
 const publicSiteController = require('../../controllers/admin/publicSiteController');
 const { protect } = require('../../middlewares/auth/authMiddleware');
+const { uploadImage } = require('../../middlewares/upload/imageUpload');
 const validate = require('../../middlewares/validation/validate');
 const {
   pageKeyParam,
@@ -13,6 +14,7 @@ const router = express.Router();
 router.use(protect('admin'));
 
 router.get('/', publicSiteController.listPages);
+router.post('/uploads/image', uploadImage, publicSiteController.uploadImage);
 router.get('/:key', validate(pageKeyParam, 'params'), publicSiteController.getPage);
 router.patch('/:key', validate({ params: pageKeyParam, body: updatePublicPageSchema }), publicSiteController.updatePage);
 

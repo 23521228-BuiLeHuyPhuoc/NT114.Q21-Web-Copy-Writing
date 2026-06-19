@@ -1,4 +1,5 @@
 const plagiarismService = require('../../services/plagiarismService');
+const { extractTextFromFile } = require('../../services/plagiarismFileService');
 const asyncHandler = require('../../utils/asyncHandler');
 
 const checkPlagiarism = asyncHandler(async (req, res) => {
@@ -18,6 +19,16 @@ const debugCommonCrawl = asyncHandler(async (req, res) => {
     success: true,
     message: 'SerpApi + Common Crawl debug completed',
     data,
+  });
+});
+
+const extractText = asyncHandler(async (req, res) => {
+  const file = await extractTextFromFile(req.file);
+
+  return res.status(200).json({
+    success: true,
+    message: 'File converted to text',
+    data: { file },
   });
 });
 
@@ -44,6 +55,7 @@ const getReport = asyncHandler(async (req, res) => {
 module.exports = {
   checkPlagiarism,
   debugCommonCrawl,
+  extractText,
   listReports,
   getReport,
 };

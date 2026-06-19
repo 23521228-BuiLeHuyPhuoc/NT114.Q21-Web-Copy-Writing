@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { PublicNavbar } from '@/app/components/public/PublicNavbar';
 import { PublicFooter } from '@/app/components/public/PublicFooter';
+import { PublicRichText } from '@/app/components/public/PublicRichText';
 import { Badge } from '@/app/components/ui/badge';
 import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
@@ -77,9 +78,12 @@ export function ContactPage() {
           <h1 className="text-white mb-4">
             {contactHeroTitle}
           </h1>
-          <p className="text-muted-foreground/80 text-base">
-            {contactHeroDescription}
-          </p>
+          <PublicRichText
+            content={contactContent}
+            field="heroDescription"
+            fallback={contactHeroDescription}
+            className="text-base text-muted-foreground/80 [&_a]:text-green-200 [&_a]:underline [&_p]:mb-2 [&_p:last-child]:mb-0 [&_strong]:text-white"
+          />
         </div>
       </section>
 

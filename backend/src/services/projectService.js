@@ -40,7 +40,23 @@ function buildSearchFilter(search) {
   };
 }
 
-function serializeProject(project, contentCount = 0) {
+function normalizeProjectStats(stats = {}) {
+  const contentCount = Number(stats.contentCount ?? stats.count ?? 0);
+  const completedCount = Number(stats.completedCount ?? stats.completed ?? 0);
+  const safeCompletedCount = Math.min(Math.max(completedCount, 0), contentCount);
+  const inProgressCount = Math.max(contentCount - safeCompletedCount, 0);
+
+  return {
+    contentCount,
+    completedCount: safeCompletedCount,
+    inProgressCount,
+    completionPercent: contentCount > 0 ? Math.round((safeCompletedCount / contentCount) * 100) : 0,
+  };
+}
+
+function serializeProject(project, stats = {}) {
+  const projectStats = normalizeProjectStats(typeof stats === 'number' ? { contentCount: stats } : stats);
+
   return {
     id: project._id.toString(),
     _id: project._id.toString(),
@@ -51,15 +67,20 @@ function serializeProject(project, contentCount = 0) {
     isArchived: Boolean(project.isArchived),
     status: project.isArchived ? 'archived' : 'active',
     color: project.color || PROJECT_COLORS[0],
-    contentCount,
-    contents: contentCount,
+    contentCount: projectStats.contentCount,
+    contents: projectStats.contentCount,
+    completedCount: projectStats.completedCount,
+    completedContents: projectStats.completedCount,
+    inProgressCount: projectStats.inProgressCount,
+    completionPercent: projectStats.completionPercent,
+    progress: projectStats.completionPercent,
     industry: project.industry || 'General',
     createdAt: project.createdAt,
     updatedAt: project.updatedAt,
   };
 }
 
-async function countContentsByProject(userId, projectIds) {
+async function getContentStatsByProject(userId, projectIds) {
   if (projectIds.length === 0) return new Map();
 
   const rows = await Content.aggregate([
@@ -73,12 +94,17 @@ async function countContentsByProject(userId, projectIds) {
     {
       $group: {
         _id: '$projectId',
-        count: { $sum: 1 },
+        contentCount: { $sum: 1 },
+        completedCount: {
+          $sum: {
+            $cond: ['$isProjectCompleted', 1, 0],
+          },
+        },
       },
     },
   ]);
 
-  return new Map(rows.map((row) => [row._id.toString(), row.count]));
+  return new Map(rows.map((row) => [row._id.toString(), normalizeProjectStats(row)]));
 }
 
 async function listProjects(userId, query = {}) {
@@ -101,10 +127,10 @@ async function listProjects(userId, query = {}) {
       .limit(limit),
   ]);
 
-  const counts = await countContentsByProject(userId, projects.map((project) => project._id));
+  const statsByProject = await getContentStatsByProject(userId, projects.map((project) => project._id));
 
   return {
-    items: projects.map((project) => serializeProject(project, counts.get(project._id.toString()) || 0)),
+    items: projects.map((project) => serializeProject(project, statsByProject.get(project._id.toString()) || {})),
     pagination: {
       page,
       limit,
@@ -129,13 +155,9 @@ async function findProjectOrThrow(userId, id) {
 
 async function getProject(userId, id) {
   const project = await findProjectOrThrow(userId, id);
-  const contentCount = await Content.countDocuments({
-    userId,
-    projectId: project._id,
-    isDeleted: { $ne: true },
-  });
+  const statsByProject = await getContentStatsByProject(userId, [project._id]);
 
-  return serializeProject(project, contentCount);
+  return serializeProject(project, statsByProject.get(project._id.toString()) || {});
 }
 
 async function createProject(userId, payload) {
@@ -162,13 +184,9 @@ async function updateProject(userId, id, payload) {
 
   await project.save();
 
-  const contentCount = await Content.countDocuments({
-    userId,
-    projectId: project._id,
-    isDeleted: { $ne: true },
-  });
+  const statsByProject = await getContentStatsByProject(userId, [project._id]);
 
-  return serializeProject(project, contentCount);
+  return serializeProject(project, statsByProject.get(project._id.toString()) || {});
 }
 
 async function ensureProjectBelongsToUser(userId, projectId) {

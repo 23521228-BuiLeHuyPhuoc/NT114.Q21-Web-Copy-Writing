@@ -27,6 +27,7 @@ import {
   useAdminTemplates,
   useAdminTemplateTrash,
   useCreateAdminTemplate,
+  usePermanentDeleteAllAdminTemplates,
   usePermanentDeleteAdminTemplate,
   useRemoveAdminTemplate,
   useRestoreAdminTemplate,
@@ -82,6 +83,7 @@ export function AdminTemplates() {
   const removeTemplate = useRemoveAdminTemplate();
   const restoreTemplate = useRestoreAdminTemplate();
   const permanentDeleteTemplate = usePermanentDeleteAdminTemplate();
+  const permanentDeleteAllTemplates = usePermanentDeleteAllAdminTemplates();
 
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
@@ -267,6 +269,18 @@ export function AdminTemplates() {
       toast.error(getErrorMessage(error, 'Không xóa vĩnh viễn được template'));
     } finally {
       setTrashLoading(null);
+    }
+  };
+
+  const handlePermanentDeleteAll = async (ids: Array<string | number>) => {
+    const templateIds = ids.map(String).filter(Boolean);
+    if (templateIds.length === 0) return;
+
+    try {
+      await permanentDeleteAllTemplates.mutateAsync(templateIds);
+      toast.success(`Đã xóa vĩnh viễn ${templateIds.length} template`);
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Không xóa tất cả template được'));
     }
   };
 
@@ -547,6 +561,8 @@ export function AdminTemplates() {
         }))}
         onRestore={handleRestore}
         onPermanentDelete={handlePermanentDelete}
+        onPermanentDeleteAll={handlePermanentDeleteAll}
+        deleteAllLoading={permanentDeleteAllTemplates.isPending}
         entityName="template"
         loading={trashLoading}
       />

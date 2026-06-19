@@ -74,3 +74,12 @@ export function usePermanentDeleteAdminPlan() {
     onSuccess: () => invalidateAdminPlans(queryClient),
   });
 }
+
+export function usePermanentDeleteAllAdminPlans() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (ids: string[]) => adminPlanService.permanentDeleteMany(ids),
+    onSettled: () => invalidateAdminPlans(queryClient),
+  });
+}

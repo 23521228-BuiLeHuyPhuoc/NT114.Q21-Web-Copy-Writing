@@ -231,6 +231,20 @@ export function AdminContents() {
     }
   };
 
+  const handlePermanentDeleteAll = async (ids: Array<string | number>) => {
+    const contentIds = ids.map(String).filter(Boolean);
+    if (contentIds.length === 0) return;
+
+    try {
+      await adminContentService.permanentDeleteMany(contentIds);
+      toast.success(`Đã xóa vĩnh viễn ${contentIds.length} nội dung`);
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Không xóa tất cả nội dung được'));
+    } finally {
+      await loadContents();
+    }
+  };
+
   const typeBadgeColor: Record<string, string> = {
     headline: 'bg-primary/10 text-primary',
     landing: 'bg-primary/10 text-primary',
@@ -492,6 +506,7 @@ export function AdminContents() {
         }))}
         onRestore={handleRestore}
         onPermanentDelete={handlePermanentDelete}
+        onPermanentDeleteAll={handlePermanentDeleteAll}
         entityName="nội dung"
         loading={trashLoading}
       />

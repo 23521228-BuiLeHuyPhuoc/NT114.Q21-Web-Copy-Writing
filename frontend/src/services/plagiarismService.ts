@@ -23,6 +23,8 @@ export interface CheckPlagiarismPayload {
   ignoreCommonPhrases?: boolean;
   ignoredPhrases?: string[];
   sources?: Partial<PlagiarismSourceConfig>;
+  checkFile?: File | null;
+  referenceFiles?: File[];
 }
 
 export interface PlagiarismHistoryParams {
@@ -35,6 +37,15 @@ export interface DebugCommonCrawlPayload {
   text: string;
   allowLiveFallback?: boolean;
   budgetMs?: number;
+}
+
+export interface PlagiarismExtractedFile {
+  fileName: string;
+  mimeType: string;
+  size: number;
+  extension: string;
+  text: string;
+  wordCount: number;
 }
 
 export interface PlagiarismSource {
@@ -448,6 +459,38 @@ function unwrapReport(response: { data: { data?: { report?: BackendPlagiarismRep
   return normalizeReport(report);
 }
 
+function hasUploadFiles(payload: CheckPlagiarismPayload) {
+  return Boolean(payload.checkFile || payload.referenceFiles?.length);
+}
+
+function appendDefined(formData: FormData, key: string, value: unknown) {
+  if (value === undefined || value === null || value === '') return;
+  formData.append(key, String(value));
+}
+
+function buildCheckFormData(payload: CheckPlagiarismPayload) {
+  const formData = new FormData();
+
+  appendDefined(formData, 'text', payload.text);
+  appendDefined(formData, 'contentId', payload.contentId);
+  appendDefined(formData, 'threshold', payload.threshold);
+  appendDefined(formData, 'includeReferences', payload.includeReferences);
+  appendDefined(formData, 'sensitivity', payload.sensitivity);
+  appendDefined(formData, 'ignoreCommonPhrases', payload.ignoreCommonPhrases);
+  formData.append('ignoredPhrases', JSON.stringify(payload.ignoredPhrases || []));
+  formData.append('sources', JSON.stringify(payload.sources || {}));
+
+  if (payload.checkFile) {
+    formData.append('checkFile', payload.checkFile);
+  }
+
+  (payload.referenceFiles || []).forEach((file) => {
+    formData.append('referenceFiles', file);
+  });
+
+  return formData;
+}
+
 export const plagiarismService = {
   async list(params?: PlagiarismHistoryParams): Promise<PlagiarismHistoryResult> {
     const response = await api.get<{
@@ -464,6 +507,18 @@ export const plagiarismService = {
   },
 
   async check(payload: CheckPlagiarismPayload): Promise<PlagiarismReport> {
+    if (hasUploadFiles(payload)) {
+      const response = await api.post<{ data?: { report?: BackendPlagiarismReport } }>(
+        '/plagiarism/check-files',
+        buildCheckFormData(payload),
+        {
+          timeout: PLAGIARISM_REQUEST_TIMEOUT_MS,
+        },
+      );
+
+      return unwrapReport(response);
+    }
+
     const response = await api.post<{ data?: { report?: BackendPlagiarismReport } }>(
       '/plagiarism/check',
       payload,
@@ -471,6 +526,23 @@ export const plagiarismService = {
     );
 
     return unwrapReport(response);
+  },
+
+  async extractText(file: File): Promise<PlagiarismExtractedFile> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await api.post<{ data?: { file?: PlagiarismExtractedFile } }>(
+      '/plagiarism/extract-text',
+      formData,
+      {
+        timeout: PLAGIARISM_REQUEST_TIMEOUT_MS,
+      },
+    );
+
+    const extracted = response.data.data?.file;
+    if (!extracted?.text) throw new Error('Invalid file extraction response');
+    return extracted;
   },
 
   async get(id: string): Promise<PlagiarismReport> {

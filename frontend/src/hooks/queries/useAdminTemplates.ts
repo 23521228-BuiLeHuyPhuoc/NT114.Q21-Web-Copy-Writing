@@ -75,3 +75,12 @@ export function usePermanentDeleteAdminTemplate() {
     onSuccess: () => invalidateAdminTemplates(queryClient),
   });
 }
+
+export function usePermanentDeleteAllAdminTemplates() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (ids: string[]) => adminTemplateService.permanentDeleteMany(ids),
+    onSettled: () => invalidateAdminTemplates(queryClient),
+  });
+}

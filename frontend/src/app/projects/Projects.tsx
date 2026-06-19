@@ -4,6 +4,7 @@ import { Card } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
 import { Input } from '@/app/components/ui/input';
 import { Badge } from '@/app/components/ui/badge';
+import { Progress } from '@/app/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/app/components/ui/dialog';
 import { Label } from '@/app/components/ui/label';
 import { Textarea } from '@/app/components/ui/textarea';
@@ -109,6 +110,18 @@ export function CustomerProjects() {
               </div>
               <h3 className="font-semibold text-foreground mb-1">{project.name}</h3>
               <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{project.desc}</p>
+              <div className="mb-4 rounded-lg border border-border/70 bg-surface-muted/60 p-3">
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <span className="text-xs font-semibold text-foreground/80">Tiến độ hoàn thành</span>
+                  <span className="text-sm font-bold text-primary">{project.completionPercent}%</span>
+                </div>
+                <Progress value={project.completionPercent} className="h-2" />
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {project.contentCount > 0
+                    ? `${project.completedCount}/${project.contentCount} nội dung đã hoàn thành`
+                    : 'Chưa có nội dung để theo dõi tiến độ'}
+                </p>
+              </div>
               <div className="flex items-center justify-between text-xs text-muted-foreground/80">
                 <span className="flex items-center gap-1"><FileText className="w-3 h-3" /> {project.contents} nội dung</span>
                 <span><Calendar className="w-3 h-3 inline mr-1" />{project.createdAt}</span>

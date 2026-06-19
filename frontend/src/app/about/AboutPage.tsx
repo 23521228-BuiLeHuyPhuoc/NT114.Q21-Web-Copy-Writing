@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { PublicNavbar } from '@/app/components/public/PublicNavbar';
 import { PublicFooter } from '@/app/components/public/PublicFooter';
+import { PublicRichText } from '@/app/components/public/PublicRichText';
 import { Badge } from '@/app/components/ui/badge';
 import { ImageWithFallback } from '@/app/components/figma/ImageWithFallback';
 import { Link } from '@/lib/next-router-compat';
@@ -94,9 +95,12 @@ export function AboutPage() {
             >
               {aboutHeroTitle}
             </h1>
-            <p className="text-muted-foreground/80 text-lg leading-relaxed">
-              {aboutHeroDescription}
-            </p>
+            <PublicRichText
+              content={aboutContent}
+              field="heroDescription"
+              fallback={aboutHeroDescription}
+              className="text-lg leading-relaxed text-muted-foreground/80 [&_a]:text-green-200 [&_a]:underline [&_p]:mb-2 [&_p:last-child]:mb-0 [&_strong]:text-white"
+            />
           </div>
         </div>
       </section>
@@ -117,9 +121,12 @@ export function AboutPage() {
                   </div>
                   <div>
                     <h4 className="text-foreground mb-1">Sứ mệnh</h4>
-                    <p className="text-foreground/70 text-sm leading-relaxed">
-                      {missionDescription}
-                    </p>
+                    <PublicRichText
+                      content={aboutContent}
+                      field="missionDescription"
+                      fallback={missionDescription}
+                      className="text-sm leading-relaxed text-foreground/70 [&_a]:text-primary [&_a]:underline [&_p]:mb-2 [&_p:last-child]:mb-0 [&_strong]:text-foreground"
+                    />
                   </div>
                 </div>
                 <div className="flex gap-4">

@@ -71,7 +71,34 @@ async function uploadAdminAvatar(adminId, file) {
   };
 }
 
+async function uploadPublicSiteImage(adminId, file) {
+  const folder = process.env.CLOUDINARY_PUBLIC_SITE_FOLDER || 'copypro/public-site';
+  const timestamp = Date.now();
+  const safeName = String(file.originalname || 'image')
+    .replace(/\.[^.]+$/, '')
+    .replace(/[^a-zA-Z0-9_-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60) || 'image';
+
+  const result = await uploadBuffer(file.buffer, {
+    folder,
+    public_id: `admin_${adminId}_${timestamp}_${safeName}`,
+    overwrite: false,
+    resource_type: 'image',
+  });
+
+  return {
+    publicId: result.public_id,
+    url: result.secure_url,
+    width: result.width,
+    height: result.height,
+    format: result.format,
+    bytes: result.bytes,
+  };
+}
+
 module.exports = {
   uploadAdminAvatar,
+  uploadPublicSiteImage,
   uploadUserAvatar,
 };

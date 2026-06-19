@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Editor } from '@tinymce/tinymce-react';
 import { Link } from '@/lib/next-router-compat';
 import { Layout } from '@/app/components/Layout';
 import { Card } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
 import { Input } from '@/app/components/ui/input';
-import { Textarea } from '@/app/components/ui/textarea';
 import { Label } from '@/app/components/ui/label';
 import { Badge } from '@/app/components/ui/badge';
 import { Switch } from '@/app/components/ui/switch';
@@ -17,6 +17,8 @@ import { adminPlanService, type AdminPlan } from '@/services/adminPlanService';
 import { publicSiteService, type PublicBlogPost, type PublicPageRecord } from '@/services/publicSiteService';
 import { Edit2, Eye, FileText, Globe2, Newspaper, Plus, Save, Trash2, WalletCards } from 'lucide-react';
 import toast from 'react-hot-toast';
+
+const tinymceApiKey = process.env.NEXT_PUBLIC_TINYMCE_API_KEY || 'no-api-key';
 
 type TabKey = 'pages' | 'blog' | 'pricing';
 
@@ -128,6 +130,15 @@ export function PublicSiteManager() {
     setPageDraft(current => ({ ...current, [key]: value }));
   };
 
+  const uploadEditorImage = useCallback(async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      throw new Error('Chỉ hỗ trợ file ảnh');
+    }
+
+    const uploaded = await publicSiteService.uploadAdminImage(file);
+    return uploaded.url;
+  }, []);
+
   const savePage = async () => {
     setSavingPage(true);
     try {
@@ -216,7 +227,51 @@ export function PublicSiteManager() {
             <div key={field.key} className={field.multiline ? 'md:col-span-2' : ''}>
               <Label>{field.label}</Label>
               {field.multiline ? (
-                <Textarea className="mt-2 min-h-28" value={pageDraft[field.key] || ''} onChange={event => updateDraftField(field.key, event.target.value)} />
+                <div className="mt-2 overflow-hidden rounded-lg border border-border bg-card">
+                  <Editor
+                    apiKey={tinymceApiKey}
+                    value={pageDraft[field.key] || ''}
+                    init={{
+                      height: 220,
+                      menubar: false,
+                      branding: false,
+                      statusbar: true,
+                      plugins: 'autolink lists link image table code wordcount autoresize preview fullscreen',
+                      toolbar: 'undo redo | blocks | bold italic underline | bullist numlist | link image table | removeformat | preview fullscreen code',
+                      automatic_uploads: true,
+                      images_reuse_filename: true,
+                      images_file_types: 'jpeg,jpg,png,gif,webp',
+                      images_upload_handler: async (blobInfo: { blob: () => Blob; filename: () => string }) => {
+                        const blob = blobInfo.blob();
+                        const file = new File([blob], blobInfo.filename(), { type: blob.type });
+                        return uploadEditorImage(file);
+                      },
+                      file_picker_types: 'image',
+                      file_picker_callback: (callback: (url: string, meta?: Record<string, string>) => void, _value: string, meta: { filetype?: string }) => {
+                        if (meta.filetype !== 'image') return;
+
+                        const input = document.createElement('input');
+                        input.type = 'file';
+                        input.accept = 'image/jpeg,image/png,image/webp,image/gif';
+                        input.onchange = async () => {
+                          const file = input.files?.[0];
+                          if (!file) return;
+
+                          try {
+                            const url = await uploadEditorImage(file);
+                            callback(url, { alt: file.name, title: file.name });
+                            toast.success('Đã tải ảnh lên Cloudinary');
+                          } catch (error) {
+                            toast.error(getErrorMessage(error, 'Không upload được ảnh'));
+                          }
+                        };
+                        input.click();
+                      },
+                      content_style: 'body { font-family: Inter, Arial, sans-serif; font-size: 14px; line-height: 1.7; color: #1f2937; } p { margin: 0 0 10px; } ul, ol { margin: 0 0 10px 22px; padding: 0; } li { margin: 4px 0; } h1, h2, h3 { margin: 16px 0 10px; line-height: 1.3; color: #111827; } table { border-collapse: collapse; width: 100%; } td, th { border: 1px solid #d1d5db; padding: 8px; }',
+                    }}
+                    onEditorChange={(value: string) => updateDraftField(field.key, value)}
+                  />
+                </div>
               ) : (
                 <Input className="mt-2" value={pageDraft[field.key] || ''} onChange={event => updateDraftField(field.key, event.target.value)} />
               )}
@@ -295,11 +350,13 @@ export function PublicSiteManager() {
       <div className="mb-5 flex items-center justify-between gap-4">
         <div>
           <h2 className="text-lg font-bold text-foreground">Bảng giá public</h2>
-          <p className="text-sm text-muted-foreground">Trang /pricing đọc trực tiếp từ /api/billing/plans. Sửa giá, quota, active và popular tại Quản lý gói dịch vụ.</p>
+          <p className="text-sm text-muted-foreground">Trang /pricing đọc trực tiếp từ /api/billing/plans. Sửa giá, quota, trạng thái và gói nổi bật tại Quản lý gói dịch vụ.</p>
         </div>
-        <Link to="/admin/plans"><Button className="rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 text-white">Mở quản lý plans</Button></Link>
+        <Link to="/admin/plans">
+          <Button className="rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 text-white">Mở quản lý plans</Button>
+        </Link>
       </div>
-      <AdminTable>
+      <AdminTable empty={plans.length === 0 ? <div className="py-12 text-center text-sm text-muted-foreground">Không có gói dịch vụ nào.</div> : undefined}>
         <TableHeader>
           <TableRow>
             <TableHead>Gói</TableHead>
@@ -312,7 +369,10 @@ export function PublicSiteManager() {
         <TableBody>
           {plans.map(plan => (
             <TableRow key={plan.id}>
-              <TableCell><span className="font-semibold text-foreground">{plan.name}</span>{plan.popular && <Badge className="ml-2 border-0 bg-warning/15 text-amber-800">Popular</Badge>}</TableCell>
+              <TableCell>
+                <span className="font-semibold text-foreground">{plan.name}</span>
+                {plan.popular && <Badge className="ml-2 border-0 bg-warning/15 text-amber-800">Popular</Badge>}
+              </TableCell>
               <TableCell>{planPrice(plan)}</TableCell>
               <TableCell>{plan.copyLimit === -1 ? 'Không giới hạn' : plan.copyLimit.toLocaleString('vi-VN')}</TableCell>
               <TableCell>{plan.apiLimit === -1 ? 'Không giới hạn' : plan.apiLimit.toLocaleString('vi-VN')}</TableCell>

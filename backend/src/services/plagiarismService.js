@@ -116,6 +116,18 @@ function toId(value) {
   return value.toString();
 }
 
+function toPlainObject(value) {
+  if (!value) return {};
+  if (typeof value.toObject === 'function') {
+    return value.toObject({
+      depopulate: true,
+      flattenMaps: true,
+      versionKey: false,
+    });
+  }
+  return value;
+}
+
 function normalizeText(text) {
   return String(text || '')
     .toLowerCase()
@@ -702,7 +714,11 @@ function serializeReport(report) {
     ignoreCommonPhrases: report.ignoreCommonPhrases !== false,
     ignoredPhrases,
   };
-  const rawAnalysis = report.analysis || {};
+  const rawAnalysis = toPlainObject(report.analysis);
+  const sourceConfig = {
+    ...DEFAULT_SOURCE_CONFIG,
+    ...toPlainObject(report.sourceConfig),
+  };
   const threshold = rawAnalysis.effectiveThreshold || getEffectiveThreshold(report.threshold || 35, report.sensitivity || 'balanced');
   const effectiveTopicThreshold = topicMatchThreshold(threshold);
   const comparisonCheckText = stripIgnoredSegments(report.checkText, displayOptions);
@@ -765,7 +781,7 @@ function serializeReport(report) {
     sensitivity: report.sensitivity || 'balanced',
     ignoreCommonPhrases: report.ignoreCommonPhrases !== false,
     ignoredPhrases,
-    sourceConfig: report.sourceConfig || DEFAULT_SOURCE_CONFIG,
+    sourceConfig,
     analysis,
     summary: buildSummary(similarityScore, sources, matches, analysis),
     createdAt: report.createdAt,
@@ -818,6 +834,25 @@ async function buildDatabaseCandidates(userId, excludedContentId) {
   }));
 }
 
+function buildUploadedCandidates(uploadedSources = []) {
+  if (!Array.isArray(uploadedSources)) return [];
+
+  return uploadedSources
+    .map((source, index) => {
+      const title = schemaText(source.sourceTitle || source.source || `Uploaded file ${index + 1}`, MAX_SOURCE_TITLE_LENGTH);
+      const text = schemaText(source.text || '', MAX_SOURCE_TEXT_LENGTH);
+
+      return {
+        source: schemaText(source.source || `upload:${title}`, MAX_SOURCE_LENGTH),
+        sourceTitle: title,
+        sourceUrl: '',
+        sourceType: 'uploads',
+        text,
+      };
+    })
+    .filter((source) => countWords(source.text) >= 5);
+}
+
 function normalizeSourceConfig(payload = {}) {
   const incoming = payload.sources || {};
   const references = incoming.references ?? payload.includeReferences ?? DEFAULT_SOURCE_CONFIG.references;
@@ -861,7 +896,8 @@ function buildAnalysis(scoredSources, candidates, matches, topicMatches, sourceC
     sourceConfig.web ? 'web' : null,
   ].filter(Boolean));
   const unavailableSourceTypes = [];
-  if (sourceConfig.uploads) unavailableSourceTypes.push('uploads');
+  const uploadedCandidateCount = candidates.filter((candidate) => candidate.sourceType === 'uploads').length;
+  if (sourceConfig.uploads && uploadedCandidateCount === 0) unavailableSourceTypes.push('uploads');
 
   return {
     effectiveThreshold,
@@ -952,7 +988,8 @@ async function checkPlagiarism(userId, payload) {
   ]);
   const referenceCandidates = sourceConfig.references ? REFERENCE_SOURCES : [];
   const webCandidates = commonCrawlResult.candidates || [];
-  const candidates = [...databaseCandidates, ...referenceCandidates, ...webCandidates];
+  const uploadedCandidates = sourceConfig.uploads ? buildUploadedCandidates(payload.uploadedSources) : [];
+  const candidates = [...databaseCandidates, ...referenceCandidates, ...webCandidates, ...uploadedCandidates];
 
   const scoredSources = candidates
     .map((candidate) => {

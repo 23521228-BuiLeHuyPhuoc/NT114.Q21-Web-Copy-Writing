@@ -68,6 +68,21 @@ interface PublicPageResponse {
   };
 }
 
+export interface PublicSiteImageUpload {
+  publicId: string;
+  url: string;
+  width?: number;
+  height?: number;
+  format?: string;
+  bytes?: number;
+}
+
+interface PublicSiteImageUploadResponse {
+  data?: {
+    image?: PublicSiteImageUpload;
+  };
+}
+
 function normalizeSeo(seo?: Partial<PublicPageSeo>): PublicPageSeo {
   return {
     metaTitle: seo?.metaTitle || '',
@@ -125,5 +140,18 @@ export const publicSiteService = {
     const page = unwrapPage(response);
     if (!page) throw new Error('Invalid public page response');
     return page;
+  },
+
+  async uploadAdminImage(file: File) {
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const response = await api.post<PublicSiteImageUploadResponse>('/admin/public-site/uploads/image', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 30000,
+    });
+    const image = response.data.data?.image;
+    if (!image?.url) throw new Error('Invalid image upload response');
+    return image;
   },
 };
