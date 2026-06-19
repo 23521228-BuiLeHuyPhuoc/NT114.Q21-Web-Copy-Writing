@@ -26,6 +26,7 @@ export interface PublicBlogPost {
   published?: boolean;
   content: {
     lead: string;
+    html?: string;
     sections: PublicBlogSection[];
   };
 }

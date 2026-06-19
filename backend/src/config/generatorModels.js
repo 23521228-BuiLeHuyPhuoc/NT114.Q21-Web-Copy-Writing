@@ -6,9 +6,7 @@ const BASE_GENERATOR_MODELS = [
   'groq-llama-3-3-70b',
   'groq-llama-3-1-8b',
   'gemini-3-flash-preview',
-  'gemini-3-1-flash-lite',
   'gemma-4-26b',
-  'openrouter-free',
   'freegpt4-gpt-4',
   'freegpt4-gpt-4o',
 ];

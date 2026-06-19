@@ -96,6 +96,18 @@ function normalizeKey(value: string) {
     .replace(/[\s-]+/g, '_');
 }
 
+function normalizePermissionRoute(value: string) {
+  const route = value.trim();
+  if (!route) return '';
+
+  const routeWithSlash = route.startsWith('/') ? route : `/${route}`;
+  return routeWithSlash.length > 1 ? routeWithSlash.replace(/\/+$/g, '') : routeWithSlash;
+}
+
+function getRouteScope(route: string): PermissionScope {
+  return route.startsWith('/admin') ? 'admin' : 'customer';
+}
+
 function groupPermissions(permissions: AdminPermissionDef[]) {
   return permissions.reduce<Record<string, AdminPermissionDef[]>>((acc, permission) => {
     acc[permission.group] = acc[permission.group] || [];
@@ -111,7 +123,7 @@ function getScopeBadgeClass(scope: PermissionScope) {
 }
 
 function getDefaultPermissionKey(route: string, scope: PermissionScope) {
-  const routeKey = route
+  const routeKey = normalizePermissionRoute(route)
     .replace(/^\//, '')
     .replace(/^admin\/?/, '')
     .replace(/\[(.+?)\]/g, '$1')
@@ -164,10 +176,10 @@ export function AdminPermissions() {
   }, [activeRoles, roleSearch, roleSort]);
   const customPermissions = useMemo(() => permissions.filter((permission) => !permission.system), [permissions]);
   const routeUsageMap = useMemo(() => (
-    new Map(permissions.filter((permission) => permission.route).map((permission) => [permission.route, permission]))
+    new Map(permissions.filter((permission) => permission.route).map((permission) => [normalizePermissionRoute(permission.route || ''), permission]))
   ), [permissions]);
   const selectedRouteOption = useMemo(() => (
-    PERMISSION_ROUTE_OPTIONS.find((option) => option.route === newPermission.route)
+    PERMISSION_ROUTE_OPTIONS.find((option) => option.route === normalizePermissionRoute(newPermission.route))
   ), [newPermission.route]);
   const routeOptionsByScope = useMemo(() => ({
     admin: PERMISSION_ROUTE_OPTIONS.filter((option) => option.scope === 'admin'),
@@ -261,37 +273,59 @@ export function AdminPermissions() {
   };
 
   const handlePermissionRouteChange = (route: string) => {
-    const option = PERMISSION_ROUTE_OPTIONS.find((item) => item.route === route);
+    const normalizedRoute = normalizePermissionRoute(route);
+    const option = PERMISSION_ROUTE_OPTIONS.find((item) => item.route === normalizedRoute);
     setNewPermission((prev) => ({
       ...prev,
-      route,
-      key: prev.key || getDefaultPermissionKey(route, option?.scope || (route.startsWith('/admin') ? 'admin' : 'customer')),
+      route: normalizedRoute,
+      key: prev.key || getDefaultPermissionKey(normalizedRoute, option?.scope || getRouteScope(normalizedRoute)),
       label: prev.label || option?.label || '',
       group: !prev.group || prev.group === 'Custom' ? option?.group || 'Custom' : prev.group,
     }));
   };
 
+  const handlePermissionRouteBlur = () => {
+    setNewPermission((prev) => {
+      const route = normalizePermissionRoute(prev.route);
+      if (!route) return { ...prev, route: '' };
+
+      const option = PERMISSION_ROUTE_OPTIONS.find((item) => item.route === route);
+      return {
+        ...prev,
+        route,
+        key: prev.key || getDefaultPermissionKey(route, option?.scope || getRouteScope(route)),
+        label: prev.label || option?.label || '',
+        group: !prev.group || prev.group === 'Custom' ? option?.group || 'Custom' : prev.group,
+      };
+    });
+  };
+
   const createPermission = () => {
-    const key = normalizeKey(newPermission.key || newPermission.label);
+    const route = normalizePermissionRoute(newPermission.route);
+    const routeOption = PERMISSION_ROUTE_OPTIONS.find((option) => option.route === route);
+    const routeScope = routeOption?.scope || getRouteScope(route);
+    const key = normalizeKey(newPermission.key || newPermission.label || getDefaultPermissionKey(route, routeScope));
     if (!key || !newPermission.label.trim()) {
       toast.error('Nhập mã quyền và tên quyền');
       return;
     }
-    if (!newPermission.route) {
-      toast.error('Chọn route áp dụng cho quyền');
+    if (!route) {
+      toast.error('Nhập route áp dụng cho quyền');
+      return;
+    }
+    if (/\s/.test(route)) {
+      toast.error('Route không được chứa khoảng trắng');
       return;
     }
     if (permissions.some((permission) => permission.key === key)) {
       toast.error('Mã quyền đã tồn tại');
       return;
     }
-    const assignedRoutePermission = routeUsageMap.get(newPermission.route);
+    const assignedRoutePermission = routeUsageMap.get(route);
     if (assignedRoutePermission) {
       toast.error(`Route này đã thuộc quyền "${assignedRoutePermission.label}"`);
       return;
     }
-
-    const routeOption = PERMISSION_ROUTE_OPTIONS.find((option) => option.route === newPermission.route);
 
     persistPermissions([
       ...permissions,
@@ -300,8 +334,8 @@ export function AdminPermissions() {
         label: newPermission.label.trim(),
         group: newPermission.group.trim() || routeOption?.group || 'Custom',
         description: newPermission.description.trim() || 'Quyền tùy chỉnh',
-        route: newPermission.route,
-        scope: routeOption?.scope || (newPermission.route.startsWith('/admin') ? 'admin' : 'customer'),
+        route,
+        scope: routeScope,
         system: false,
       },
     ]);
@@ -726,7 +760,7 @@ export function AdminPermissions() {
                   </div>
                   <div>
                     <Label>Route áp dụng</Label>
-                    <Select value={newPermission.route} onValueChange={handlePermissionRouteChange}>
+                    <Select value={selectedRouteOption?.route || ''} onValueChange={handlePermissionRouteChange}>
                       <SelectTrigger className="mt-2">
                         <SelectValue placeholder="Chọn route admin hoặc customer" />
                       </SelectTrigger>
@@ -762,6 +796,13 @@ export function AdminPermissions() {
                         </SelectGroup>
                       </SelectContent>
                     </Select>
+                    <Input
+                      className="mt-2 font-mono text-sm"
+                      placeholder="/admin/support-tickets"
+                      value={newPermission.route}
+                      onChange={(event) => setNewPermission((prev) => ({ ...prev, route: event.target.value }))}
+                      onBlur={handlePermissionRouteBlur}
+                    />
                     {selectedRouteOption && (
                       <div className="mt-2 flex flex-wrap gap-2 text-xs">
                         <Badge className={getScopeBadgeClass(selectedRouteOption.scope)}>{getPermissionScopeLabel(selectedRouteOption.scope)}</Badge>

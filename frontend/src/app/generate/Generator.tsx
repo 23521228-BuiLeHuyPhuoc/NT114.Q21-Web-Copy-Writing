@@ -724,7 +724,7 @@ export function CustomerGenerator() {
           </div>
 
           <div className="lg:col-span-3">
-            <div className="generator-sticky-panel space-y-4 lg:sticky lg:top-20 lg:max-h-[calc(100vh-5.5rem)] lg:overflow-y-auto lg:pr-2 lg:pb-3">
+            <div className="generator-sticky-panel space-y-4 lg:sticky lg:top-20 lg:max-h-[calc(100vh-12rem)] lg:overflow-y-auto lg:overscroll-contain lg:pr-2 lg:pb-3">
               <div className="flex flex-wrap items-center gap-2">
                 <div className={`${selectedIndustry?.color} p-1.5 rounded flex-shrink-0`}>
                   <IndustryIcon className="w-4 h-4 text-white" />
@@ -745,6 +745,15 @@ export function CustomerGenerator() {
                     <Badge className="bg-muted text-foreground/70 border-0">{latency}s</Badge>
                   </>
                 )}
+                <Button
+                  size="sm"
+                  className="ml-auto h-8 bg-gradient-to-r from-green-600 to-emerald-600 px-3 text-white hover:from-green-700 hover:to-emerald-700"
+                  onClick={handleGenerate}
+                  disabled={isGenerating || !effectiveModel}
+                >
+                  {isGenerating ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
+                  {isGenerating ? 'Đang tạo...' : 'Tạo Copy'}
+                </Button>
               </div>
 
               {selectedTemplate && (

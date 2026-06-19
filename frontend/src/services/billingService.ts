@@ -13,6 +13,8 @@ export interface BillingPlan {
   limits: {
     copyMonthly: number;
     apiCallsMonthly: number;
+    apiCallsFiveHours: number;
+    apiCallsWeekly: number;
     fineTuneModels: number;
     plagiarismChecks: number;
     seats: number;
@@ -35,6 +37,38 @@ export interface MyBilling {
     copyLimit?: number;
     apiCalls?: number;
     apiLimit?: number;
+    quotaUsed?: number;
+    quotaLimit?: number;
+    quotaUsedFiveHours?: number;
+    quotaLimitFiveHours?: number;
+    quotaUsedWeekly?: number;
+    quotaLimitWeekly?: number;
+  };
+  usage?: {
+    monthly?: {
+      copyUsed?: number;
+      copyLimit?: number;
+      quotaUsed?: number;
+      quotaLimit?: number;
+      quotaRemaining?: number | null;
+      totalTokens?: number;
+    };
+    fiveHours?: {
+      quotaUsed?: number;
+      quotaLimit?: number;
+      quotaRemaining?: number | null;
+      totalTokens?: number;
+      windowStart?: string;
+      windowEnd?: string;
+    };
+    weekly?: {
+      quotaUsed?: number;
+      quotaLimit?: number;
+      quotaRemaining?: number | null;
+      totalTokens?: number;
+      windowStart?: string;
+      windowEnd?: string;
+    };
   };
   plan: BillingPlan | null;
 }
@@ -70,6 +104,8 @@ function normalizePlan(item: Partial<BillingPlan> | null | undefined): BillingPl
     limits: {
       copyMonthly: numberOrDefault(limits.copyMonthly, 0),
       apiCallsMonthly: numberOrDefault(limits.apiCallsMonthly, 0),
+      apiCallsFiveHours: numberOrDefault(limits.apiCallsFiveHours, 0),
+      apiCallsWeekly: numberOrDefault(limits.apiCallsWeekly, 0),
       fineTuneModels: numberOrDefault(limits.fineTuneModels, 0),
       plagiarismChecks: numberOrDefault(limits.plagiarismChecks, 0),
       seats: numberOrDefault(limits.seats, 1),

@@ -13,6 +13,8 @@ export interface AdminPlan {
   limits: {
     copyMonthly: number;
     apiCallsMonthly: number;
+    apiCallsFiveHours: number;
+    apiCallsWeekly: number;
     fineTuneModels: number;
     plagiarismChecks: number;
     seats: number;
@@ -29,6 +31,8 @@ export interface AdminPlan {
   users: number;
   copyLimit: number;
   apiLimit: number;
+  apiLimitFiveHours: number;
+  apiLimitWeekly: number;
   fineTune: number;
   plagiarismChecks: number;
   seats: number;
@@ -48,6 +52,8 @@ export interface UpsertAdminPlanPayload {
   currency?: string;
   copyLimit?: number;
   apiLimit?: number;
+  apiLimitFiveHours?: number;
+  apiLimitWeekly?: number;
   fineTune?: number;
   plagiarismChecks?: number;
   seats?: number;
@@ -85,6 +91,8 @@ function normalizePlan(item: Partial<AdminPlan>): AdminPlan {
   const monthlyPrice = numberOrDefault(item.monthlyPrice ?? item.price, 0);
   const copyLimit = numberOrDefault(item.copyLimit ?? limits.copyMonthly, 0);
   const apiLimit = numberOrDefault(item.apiLimit ?? limits.apiCallsMonthly, 0);
+  const apiLimitFiveHours = numberOrDefault(item.apiLimitFiveHours ?? limits.apiCallsFiveHours, 0);
+  const apiLimitWeekly = numberOrDefault(item.apiLimitWeekly ?? limits.apiCallsWeekly, 0);
   const fineTune = numberOrDefault(item.fineTune ?? limits.fineTuneModels, 0);
   const plagiarismChecks = numberOrDefault(item.plagiarismChecks ?? limits.plagiarismChecks, 0);
   const seats = numberOrDefault(item.seats ?? limits.seats, 1);
@@ -103,6 +111,8 @@ function normalizePlan(item: Partial<AdminPlan>): AdminPlan {
     limits: {
       copyMonthly: copyLimit,
       apiCallsMonthly: apiLimit,
+      apiCallsFiveHours: apiLimitFiveHours,
+      apiCallsWeekly: apiLimitWeekly,
       fineTuneModels: fineTune,
       plagiarismChecks,
       seats,
@@ -119,6 +129,8 @@ function normalizePlan(item: Partial<AdminPlan>): AdminPlan {
     users: numberOrDefault(item.users, 0),
     copyLimit,
     apiLimit,
+    apiLimitFiveHours,
+    apiLimitWeekly,
     fineTune,
     plagiarismChecks,
     seats,

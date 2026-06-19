@@ -21,6 +21,8 @@ const planPayload = {
   currency: Joi.string().trim().uppercase().max(8),
   copyLimit: limitValue,
   apiLimit: limitValue,
+  apiLimitFiveHours: limitValue,
+  apiLimitWeekly: limitValue,
   fineTune: limitValue,
   plagiarismChecks: limitValue,
   seats: limitValue,
@@ -28,6 +30,8 @@ const planPayload = {
   limits: Joi.object({
     copyMonthly: limitValue,
     apiCallsMonthly: limitValue,
+    apiCallsFiveHours: limitValue,
+    apiCallsWeekly: limitValue,
     fineTuneModels: limitValue,
     plagiarismChecks: limitValue,
     seats: limitValue,

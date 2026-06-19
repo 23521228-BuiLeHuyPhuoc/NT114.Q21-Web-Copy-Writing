@@ -241,6 +241,7 @@ function serializeUsage(usage) {
     promptTokens: usage.promptTokens,
     completionTokens: usage.completionTokens,
     totalTokens: usage.totalTokens,
+    quotaUnits: usage.quotaUnits || Math.max(1, Math.ceil(Number(usage.totalTokens || 0) / 1000)),
     action: usage.action,
     status: usage.status,
     createdAt: usage.createdAt,
@@ -637,6 +638,7 @@ async function generateContent(userId, payload) {
     prompt: effectivePrompt,
     type: resolvedFineTune.payload.type || template?.type,
   };
+  await billingService.ensureGenerateQuotaAvailable(userId, aiPayload);
   let aiResult = await aiService.generateCopy(aiPayload);
   if (resolvedFineTune.fineTuneProvider === 'vertex-llama') {
     aiResult = await stabilizeVertexLlamaFineTunedOutput(aiPayload, aiResult);
@@ -670,6 +672,7 @@ async function generateContent(userId, payload) {
     promptTokens: aiResult.usage.promptTokens,
     completionTokens: aiResult.usage.completionTokens,
     totalTokens: aiResult.usage.totalTokens,
+    quotaUnits: billingService.calculateGenerateQuotaUnits(aiResult.usage.totalTokens),
     action: 'generate',
     status: aiResult.status,
   });

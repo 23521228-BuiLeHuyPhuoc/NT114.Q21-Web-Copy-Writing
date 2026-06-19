@@ -61,7 +61,7 @@ export function Layout({ children }: LayoutProps) {
     {
       label: 'Sáng tạo nội dung',
       items: [
-        { label: 'Tạo nội dung AI', icon: Wand2, path: '/generate', badge: 'Mới' },
+        { label: 'Tạo nội dung AI', icon: Wand2, path: '/generate' },
         { label: 'Nội dung của tôi', icon: FileText, path: '/contents' },
         { label: 'Dự án', icon: FolderOpen, path: '/projects' },
         { label: 'Mẫu copy', icon: ScrollText, path: '/templates' },
@@ -173,17 +173,19 @@ export function Layout({ children }: LayoutProps) {
 
     return (
       <Link key={item.path} to={item.path}>
-        <div className={`flex items-center justify-between px-3 py-2.5 rounded-xl transition-colors ${
+        <div className={`flex items-start justify-between gap-2 px-3 py-2.5 rounded-xl transition-colors ${
           isActive
             ? 'bg-primary/10 text-primary'
             : 'text-muted-foreground hover:bg-muted hover:text-foreground'
         }`}>
-          <div className="flex items-center gap-3 min-w-0">
-            <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-primary' : ''}`} />
-            <span className="text-sm font-medium truncate">{item.label}</span>
+          <div className="flex min-w-0 flex-1 items-start gap-3">
+            <Icon className={`mt-0.5 h-4 w-4 flex-shrink-0 ${isActive ? 'text-primary' : ''}`} />
+            <span className="min-w-0 flex-1 whitespace-normal break-words text-sm font-medium leading-snug">
+              {item.label}
+            </span>
           </div>
           {'badge' in item && item.badge && (
-            <Badge variant="warning" className="text-xs px-1.5 py-0 ml-2 flex-shrink-0">{item.badge}</Badge>
+            <Badge variant="warning" className="mt-0.5 flex-shrink-0 px-1.5 py-0 text-xs">{item.badge}</Badge>
           )}
         </div>
       </Link>

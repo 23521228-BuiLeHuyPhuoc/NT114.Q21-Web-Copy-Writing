@@ -5,7 +5,7 @@ const DEFAULT_PUBLIC_PAGES = [
   {
     key: 'home',
     type: 'page',
-    title: 'Trang chu',
+    title: 'Trang chủ',
     description: 'Landing page CopyPro',
     sortOrder: 10,
     content: {},
@@ -13,16 +13,16 @@ const DEFAULT_PUBLIC_PAGES = [
   {
     key: 'about',
     type: 'page',
-    title: 'Gioi thieu',
-    description: 'Trang gioi thieu CopyPro',
+    title: 'Giới thiệu',
+    description: 'Trang giới thiệu CopyPro',
     sortOrder: 20,
     content: {},
   },
   {
     key: 'contact',
     type: 'page',
-    title: 'Lien he',
-    description: 'Trang lien he CopyPro',
+    title: 'Liên hệ',
+    description: 'Trang liên hệ CopyPro',
     sortOrder: 30,
     content: {},
   },
@@ -30,7 +30,7 @@ const DEFAULT_PUBLIC_PAGES = [
     key: 'footer',
     type: 'settings',
     title: 'Footer public site',
-    description: 'Thong tin CTA, lien he va footer',
+    description: 'Thông tin CTA, liên hệ và footer',
     sortOrder: 40,
     content: {},
   },
@@ -38,13 +38,22 @@ const DEFAULT_PUBLIC_PAGES = [
     key: 'blog',
     type: 'blog',
     title: 'Blog',
-    description: 'Danh sach bai viet public',
+    description: 'Danh sách bài viết public',
     sortOrder: 50,
     content: { posts: [] },
   },
 ];
 
 const DEFAULT_PAGE_MAP = new Map(DEFAULT_PUBLIC_PAGES.map(page => [page.key, page]));
+let defaultsEnsured = false;
+
+const LEGACY_DEFAULT_TEXT = {
+  home: { titles: ['Trang chu'], descriptions: ['Landing page CopyPro'] },
+  about: { titles: ['Gioi thieu'], descriptions: ['Trang gioi thieu CopyPro'] },
+  contact: { titles: ['Lien he'], descriptions: ['Trang lien he CopyPro'] },
+  footer: { titles: ['Footer public site'], descriptions: ['Thong tin CTA, lien he va footer'] },
+  blog: { titles: ['Blog'], descriptions: ['Danh sach bai viet public'] },
+};
 
 function normalizeKey(value) {
   return String(value || '').trim().toLowerCase();
@@ -82,6 +91,8 @@ function serializeDefault(key) {
 }
 
 async function ensureDefaultPages() {
+  if (defaultsEnsured) return;
+
   await PublicPage.bulkWrite(DEFAULT_PUBLIC_PAGES.map(page => ({
     updateOne: {
       filter: { key: page.key },
@@ -89,6 +100,27 @@ async function ensureDefaultPages() {
       upsert: true,
     },
   })));
+
+  await Promise.all(DEFAULT_PUBLIC_PAGES.map(async (page) => {
+    const legacy = LEGACY_DEFAULT_TEXT[page.key];
+    if (!legacy) return;
+
+    const doc = await PublicPage.findOne({ key: page.key });
+    if (!doc) return;
+
+    let changed = false;
+    if (legacy.titles.includes(doc.title || '')) {
+      doc.title = page.title;
+      changed = true;
+    }
+    if (legacy.descriptions.includes(doc.description || '')) {
+      doc.description = page.description;
+      changed = true;
+    }
+    if (changed) await doc.save();
+  }));
+
+  defaultsEnsured = true;
 }
 
 async function listAdminPages() {
@@ -106,6 +138,7 @@ async function getAdminPage(key) {
 }
 
 async function getPublicPage(key) {
+  await ensureDefaultPages();
   const normalizedKey = normalizeKey(key);
   const page = await PublicPage.findOne({ key: normalizedKey });
   if (!page) return serializeDefault(normalizedKey);

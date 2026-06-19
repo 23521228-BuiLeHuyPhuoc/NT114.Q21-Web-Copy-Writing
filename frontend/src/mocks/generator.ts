@@ -10,9 +10,7 @@ export const MODELS = [
   { id: 'groq-llama-3-3-70b', name: 'Llama 3.3 70B (Groq)', badge: 'Groq', color: 'text-orange-600', desc: 'Llama chạy qua Groq API, hợp copy dài và cần chất lượng tốt', latency: '~1-3s', tokens: '128K' },
   { id: 'groq-llama-3-1-8b', name: 'Llama 3.1 8B Instant', badge: 'Groq', color: 'text-amber-600', desc: 'Bản Llama nhẹ hơn trên Groq, ưu tiên tốc độ và demo nhanh', latency: '<1s', tokens: '128K' },
   { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', badge: 'Free', color: 'text-emerald-600', desc: 'Preview đang gọi được với key này, chất lượng mới hơn Flash 2.5', latency: '~2s', tokens: '1M' },
-  { id: 'gemini-3-1-flash-lite', name: 'Gemini 3.1 Flash Lite', badge: 'Free', color: 'text-cyan-600', desc: 'Model free/lite mới, hợp nội dung ngắn và phản hồi nhanh', latency: '~5-15s', tokens: '1M' },
   { id: 'gemma-4-26b', name: 'Gemma 4 26B', badge: 'Free', color: 'text-orange-600', desc: 'Gemma qua Gemini API, miễn phí nhưng có thể chậm hơn dòng Flash', latency: '~30-90s', tokens: '262K' },
-  { id: 'openrouter-free', name: 'OpenRouter Free Router', badge: 'Free', color: 'text-blue-600', desc: 'Tự chọn model free khả dụng trên OpenRouter; dùng khi Gemini lỗi/quota', latency: '~3s', tokens: '200K' },
   { id: 'freegpt4-gpt-4', name: 'GPT-4 Free Local API', badge: 'Local', color: 'text-indigo-600', desc: 'Tu bat Free-GPT4-WEB-API o localhost:5500 khi generate, khong can OpenAI key', latency: '~5-30s', tokens: 'provider' },
   { id: 'freegpt4-gpt-4o', name: 'GPT-4o Free Local API', badge: 'Local', color: 'text-violet-600', desc: 'Tu bat Free-GPT4-WEB-API va goi model gpt-4o neu provider phia sau ho tro', latency: '~5-30s', tokens: 'provider' },
 ];

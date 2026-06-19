@@ -35,6 +35,12 @@ const usageLogSchema = new mongoose.Schema(
       min: 0,
       default: 0,
     },
+    quotaUnits: {
+      type: Number,
+      min: 0,
+      default: 0,
+      index: true,
+    },
     action: {
       type: String,
       enum: ['generate'],

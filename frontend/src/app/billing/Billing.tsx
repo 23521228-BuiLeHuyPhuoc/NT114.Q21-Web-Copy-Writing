@@ -48,6 +48,10 @@ const CURRENT_PLAN = {
   copyLimit: 500,
   apiCalls: 1250,
   apiLimit: 5000,
+  quotaUsedFiveHours: 120,
+  quotaLimitFiveHours: 800,
+  quotaUsedWeekly: 720,
+  quotaLimitWeekly: 2000,
 };
 
 const PLANS: BillingPlanCard[] = [
@@ -133,6 +137,10 @@ interface BillingMeResponse {
     copyLimit?: number;
     apiCalls?: number;
     apiLimit?: number;
+    quotaUsedFiveHours?: number;
+    quotaLimitFiveHours?: number;
+    quotaUsedWeekly?: number;
+    quotaLimitWeekly?: number;
   };
   invoices?: typeof INVOICES;
 }
@@ -153,6 +161,8 @@ interface BillingPlanResponseItem {
   limits?: {
     copyMonthly?: number;
     apiCallsMonthly?: number;
+    apiCallsFiveHours?: number;
+    apiCallsWeekly?: number;
     fineTuneModels?: number;
     plagiarismChecks?: number;
   };
@@ -207,7 +217,9 @@ function normalizeBillingPlan(plan: BillingPlanResponseItem): BillingPlanCard {
   const limits = plan.limits || {};
   const generatedFeatures = [
     formatLimitValue(limits.copyMonthly, 'copy/tháng'),
-    formatLimitValue(limits.apiCallsMonthly, 'API calls/tháng'),
+    formatLimitValue(limits.apiCallsMonthly, 'quota generate/tháng'),
+    formatLimitValue(limits.apiCallsFiveHours, 'quota generate/5h'),
+    formatLimitValue(limits.apiCallsWeekly, 'quota generate/tuần'),
     formatLimitValue(limits.fineTuneModels, 'fine-tune models'),
     formatLimitValue(limits.plagiarismChecks, 'kiểm tra đạo văn'),
   ].filter(Boolean);
@@ -287,6 +299,10 @@ export function CustomerBilling() {
           copyLimit: currentPlanData.copyLimit ?? prev.copyLimit,
           apiCalls: currentPlanData.apiCalls ?? prev.apiCalls,
           apiLimit: currentPlanData.apiLimit ?? prev.apiLimit,
+          quotaUsedFiveHours: currentPlanData.quotaUsedFiveHours ?? prev.quotaUsedFiveHours,
+          quotaLimitFiveHours: currentPlanData.quotaLimitFiveHours ?? prev.quotaLimitFiveHours,
+          quotaUsedWeekly: currentPlanData.quotaUsedWeekly ?? prev.quotaUsedWeekly,
+          quotaLimitWeekly: currentPlanData.quotaLimitWeekly ?? prev.quotaLimitWeekly,
         }));
       }
 
@@ -473,10 +489,24 @@ export function CustomerBilling() {
                 </div>
                 <div>
                   <div className="mb-1 flex justify-between text-sm">
-                    <span className="text-foreground/70">API calls</span>
+                    <span className="text-foreground/70">Quota generate/tháng</span>
                     <span className="font-semibold">{currentPlan.apiCalls.toLocaleString()}/{currentPlan.apiLimit.toLocaleString()}</span>
                   </div>
                   <Progress value={currentPlan.apiLimit > 0 ? (currentPlan.apiCalls / currentPlan.apiLimit) * 100 : 0} className="h-2" />
+                </div>
+                <div>
+                  <div className="mb-1 flex justify-between text-sm">
+                    <span className="text-foreground/70">Quota generate/5h</span>
+                    <span className="font-semibold">{currentPlan.quotaUsedFiveHours.toLocaleString()}/{currentPlan.quotaLimitFiveHours.toLocaleString()}</span>
+                  </div>
+                  <Progress value={currentPlan.quotaLimitFiveHours > 0 ? (currentPlan.quotaUsedFiveHours / currentPlan.quotaLimitFiveHours) * 100 : 0} className="h-2" />
+                </div>
+                <div>
+                  <div className="mb-1 flex justify-between text-sm">
+                    <span className="text-foreground/70">Quota generate/tuần</span>
+                    <span className="font-semibold">{currentPlan.quotaUsedWeekly.toLocaleString()}/{currentPlan.quotaLimitWeekly.toLocaleString()}</span>
+                  </div>
+                  <Progress value={currentPlan.quotaLimitWeekly > 0 ? (currentPlan.quotaUsedWeekly / currentPlan.quotaLimitWeekly) * 100 : 0} className="h-2" />
                 </div>
               </div>
             </Card>

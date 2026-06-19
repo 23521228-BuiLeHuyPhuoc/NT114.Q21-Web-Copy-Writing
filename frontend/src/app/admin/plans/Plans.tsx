@@ -178,6 +178,8 @@ export function AdminPlans() {
   const [addYearlyPrice, setAddYearlyPrice] = useState('');
   const [addCopy, setAddCopy] = useState('');
   const [addApi, setAddApi] = useState('');
+  const [addApiFiveHours, setAddApiFiveHours] = useState('');
+  const [addApiWeekly, setAddApiWeekly] = useState('');
   const [addFine, setAddFine] = useState('');
   const [addPlagiarism, setAddPlagiarism] = useState('');
   const [addSeats, setAddSeats] = useState('');
@@ -193,6 +195,8 @@ export function AdminPlans() {
   const [editYearlyPrice, setEditYearlyPrice] = useState('');
   const [editCopy, setEditCopy] = useState('');
   const [editApi, setEditApi] = useState('');
+  const [editApiFiveHours, setEditApiFiveHours] = useState('');
+  const [editApiWeekly, setEditApiWeekly] = useState('');
   const [editFine, setEditFine] = useState('');
   const [editPlagiarism, setEditPlagiarism] = useState('');
   const [editSeats, setEditSeats] = useState('');
@@ -282,6 +286,8 @@ export function AdminPlans() {
     setAddYearlyPrice('');
     setAddCopy('');
     setAddApi('');
+    setAddApiFiveHours('');
+    setAddApiWeekly('');
     setAddFine('');
     setAddPlagiarism('');
     setAddSeats('');
@@ -299,6 +305,8 @@ export function AdminPlans() {
     setEditYearlyPrice(plan.yearlyPrice === -1 ? '' : String(plan.yearlyPrice));
     setEditCopy(plan.copyLimit === -1 ? '' : String(plan.copyLimit));
     setEditApi(plan.apiLimit === -1 ? '' : String(plan.apiLimit));
+    setEditApiFiveHours(plan.apiLimitFiveHours === -1 ? '' : String(plan.apiLimitFiveHours));
+    setEditApiWeekly(plan.apiLimitWeekly === -1 ? '' : String(plan.apiLimitWeekly));
     setEditFine(plan.fineTune === -1 ? '' : String(plan.fineTune));
     setEditPlagiarism(plan.plagiarismChecks === -1 ? '' : String(plan.plagiarismChecks));
     setEditSeats(plan.seats === -1 ? '' : String(plan.seats));
@@ -321,6 +329,8 @@ export function AdminPlans() {
         yearlyPrice: parseOptionalNumber(addYearlyPrice),
         copyLimit: parseBlankNumber(addCopy, -1),
         apiLimit: parseBlankNumber(addApi, -1),
+        apiLimitFiveHours: parseBlankNumber(addApiFiveHours, -1),
+        apiLimitWeekly: parseBlankNumber(addApiWeekly, -1),
         fineTune: parseBlankNumber(addFine, -1),
         plagiarismChecks: parseBlankNumber(addPlagiarism, -1),
         seats: parseBlankNumber(addSeats, -1),
@@ -352,6 +362,8 @@ export function AdminPlans() {
           yearlyPrice: parseOptionalNumber(editYearlyPrice),
           copyLimit: parseBlankNumber(editCopy, -1),
           apiLimit: parseBlankNumber(editApi, -1),
+          apiLimitFiveHours: parseBlankNumber(editApiFiveHours, -1),
+          apiLimitWeekly: parseBlankNumber(editApiWeekly, -1),
           fineTune: parseBlankNumber(editFine, -1),
           plagiarismChecks: parseBlankNumber(editPlagiarism, -1),
           seats: parseBlankNumber(editSeats, -1),
@@ -513,7 +525,7 @@ export function AdminPlans() {
                   <TableHead>Giá/tháng</TableHead>
                   <TableHead>Giá/năm</TableHead>
                   <TableHead>Copy/tháng</TableHead>
-                  <TableHead>API calls</TableHead>
+                  <TableHead>Quota/tháng</TableHead>
                   <TableHead>Fine-tune</TableHead>
                   <TableHead>Quota khác</TableHead>
                   <TableHead>Model generate</TableHead>
@@ -540,6 +552,8 @@ export function AdminPlans() {
                     <TableCell className="text-sm text-foreground/70">{formatLimit(plan.apiLimit)}</TableCell>
                     <TableCell className="text-sm text-foreground/70">{formatLimit(plan.fineTune)}</TableCell>
                     <TableCell className="text-xs text-foreground/70 whitespace-nowrap">
+                      <div>5h: {formatLimit(plan.apiLimitFiveHours)}</div>
+                      <div>Tuần: {formatLimit(plan.apiLimitWeekly)}</div>
                       <div>Đạo văn: {formatLimit(plan.plagiarismChecks)}</div>
                       <div>Seats: {formatLimit(plan.seats)}</div>
                       <div>Lịch sử: {formatLimit(plan.historyDays, ' ngày')}</div>
@@ -609,8 +623,16 @@ export function AdminPlans() {
                 <Input value={addCopy} onChange={event => setAddCopy(event.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">API calls/tháng</Label>
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Quota generate/tháng</Label>
                 <Input value={addApi} onChange={event => setAddApi(event.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Quota generate/5h</Label>
+                <Input value={addApiFiveHours} onChange={event => setAddApiFiveHours(event.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Quota generate/tuần</Label>
+                <Input value={addApiWeekly} onChange={event => setAddApiWeekly(event.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Fine-tune models</Label>
@@ -684,8 +706,16 @@ export function AdminPlans() {
                   <Input value={editCopy} onChange={event => setEditCopy(event.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">API calls</Label>
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Quota generate/tháng</Label>
                   <Input value={editApi} onChange={event => setEditApi(event.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Quota generate/5h</Label>
+                  <Input value={editApiFiveHours} onChange={event => setEditApiFiveHours(event.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Quota generate/tuần</Label>
+                  <Input value={editApiWeekly} onChange={event => setEditApiWeekly(event.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Fine-tune</Label>

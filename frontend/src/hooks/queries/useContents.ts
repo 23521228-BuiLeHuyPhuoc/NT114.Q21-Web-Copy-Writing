@@ -8,6 +8,7 @@ import {
 import { projectKeys } from '@/hooks/queries/useProjects';
 import { templateKeys } from '@/hooks/queries/useTemplates';
 import { notificationKeys } from '@/hooks/queries/useNotifications';
+import { billingKeys } from '@/hooks/queries/useBilling';
 
 export const contentKeys = {
   all: ['contents'] as const,
@@ -48,6 +49,7 @@ export function useGenerateContent() {
       queryClient.invalidateQueries({ queryKey: contentKeys.all });
       queryClient.invalidateQueries({ queryKey: templateKeys.all });
       queryClient.invalidateQueries({ queryKey: notificationKeys.all });
+      queryClient.invalidateQueries({ queryKey: billingKeys.all });
       if (result.content.id) {
         queryClient.setQueryData(contentKeys.detail(result.content.id), result.content);
       }

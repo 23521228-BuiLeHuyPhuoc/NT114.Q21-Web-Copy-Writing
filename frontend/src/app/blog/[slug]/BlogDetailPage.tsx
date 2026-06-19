@@ -5,6 +5,7 @@ import { PublicFooter } from '@/app/components/public/PublicFooter';
 import { Badge } from '@/app/components/ui/badge';
 import { ImageWithFallback } from '@/app/components/figma/ImageWithFallback';
 import { BLOG_POSTS } from '@/mocks/blog';
+import { sanitizeHtml } from '@/lib/richText';
 import { publicSiteService, type PublicBlogPost } from '@/services/publicSiteService';
 import { ArrowLeft, ArrowRight, Calendar, Clock, User } from 'lucide-react';
 
@@ -49,6 +50,7 @@ export function BlogDetailPage() {
     .filter(item => item.slug !== post.slug && item.cat === post.cat)
     .concat(posts.filter(item => item.slug !== post.slug && item.cat !== post.cat))
     .slice(0, 3);
+  const postHtml = post.content.html ? sanitizeHtml(post.content.html) : '';
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-card">
@@ -105,22 +107,29 @@ export function BlogDetailPage() {
               </p>
             </div>
 
-            <div className="space-y-10">
-              {post.content.sections.map(section => (
-                <section key={section.heading}>
-                  <h2 className="mb-4 max-w-full break-words text-[1.35rem] leading-snug text-foreground md:text-[1.75rem]">
-                    {section.heading}
-                  </h2>
-                  <div className="space-y-4">
-                    {section.body.map(paragraph => (
-                      <p key={paragraph} className="max-w-full break-words text-base leading-8 text-foreground/70 md:leading-9">
-                        {paragraph}
-                      </p>
-                    ))}
-                  </div>
-                </section>
-              ))}
-            </div>
+            {postHtml ? (
+              <div
+                className="max-w-none break-words [&_a]:text-primary [&_a]:underline [&_blockquote]:border-l-4 [&_blockquote]:border-primary [&_blockquote]:bg-primary/5 [&_blockquote]:px-5 [&_blockquote]:py-4 [&_h1]:mb-4 [&_h1]:text-3xl [&_h1]:text-foreground [&_h2]:mb-4 [&_h2]:mt-10 [&_h2]:text-[1.75rem] [&_h2]:leading-snug [&_h2]:text-foreground [&_h3]:mb-3 [&_h3]:mt-8 [&_h3]:text-xl [&_h3]:text-foreground [&_li]:mb-2 [&_li]:text-foreground/70 [&_ol]:mb-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_p]:mb-4 [&_p]:text-base [&_p]:leading-8 [&_p]:text-foreground/70 [&_strong]:text-foreground [&_table]:my-6 [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-border [&_td]:p-3 [&_th]:border [&_th]:border-border [&_th]:bg-surface-muted [&_th]:p-3 [&_ul]:mb-6 [&_ul]:list-disc [&_ul]:pl-6"
+                dangerouslySetInnerHTML={{ __html: postHtml }}
+              />
+            ) : (
+              <div className="space-y-10">
+                {post.content.sections.map(section => (
+                  <section key={section.heading}>
+                    <h2 className="mb-4 max-w-full break-words text-[1.35rem] leading-snug text-foreground md:text-[1.75rem]">
+                      {section.heading}
+                    </h2>
+                    <div className="space-y-4">
+                      {section.body.map(paragraph => (
+                        <p key={paragraph} className="max-w-full break-words text-base leading-8 text-foreground/70 md:leading-9">
+                          {paragraph}
+                        </p>
+                      ))}
+                    </div>
+                  </section>
+                ))}
+              </div>
+            )}
           </article>
 
           <aside className="space-y-5 lg:sticky lg:top-24">

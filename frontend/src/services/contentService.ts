@@ -83,6 +83,7 @@ interface UsageLog {
   promptTokens?: number;
   completionTokens?: number;
   totalTokens?: number;
+  quotaUnits?: number;
   status?: string;
 }
 

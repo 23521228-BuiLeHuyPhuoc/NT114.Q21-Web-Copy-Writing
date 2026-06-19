@@ -4,6 +4,8 @@ const planLimitsSchema = new mongoose.Schema(
   {
     copyMonthly: { type: Number, default: 0 },
     apiCallsMonthly: { type: Number, default: 0 },
+    apiCallsFiveHours: { type: Number, default: 0 },
+    apiCallsWeekly: { type: Number, default: 0 },
     fineTuneModels: { type: Number, default: 0 },
     plagiarismChecks: { type: Number, default: 0 },
     seats: { type: Number, default: 1 },

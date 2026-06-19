@@ -75,6 +75,47 @@ function addMonths(date, count) {
   return next;
 }
 
+function subtractHours(date, count) {
+  return new Date(date.getTime() - count * 60 * 60 * 1000);
+}
+
+function subtractDays(date, count) {
+  return new Date(date.getTime() - count * 24 * 60 * 60 * 1000);
+}
+
+function estimateTokens(text) {
+  return Math.max(1, Math.ceil(String(text || '').length / 4));
+}
+
+function getRequestedMaxOutputTokens(payload = {}) {
+  const requested = Number(payload.maxOutputTokens);
+  if (Number.isFinite(requested)) return Math.min(6000, Math.max(500, Math.round(requested)));
+
+  const length = String(payload.length || 'medium');
+  if (length === 'short') return 900;
+  if (length === 'long') return 3200;
+  return 1800;
+}
+
+function calculateGenerateQuotaUnits(totalTokens) {
+  const tokens = Number(totalTokens || 0);
+  if (!Number.isFinite(tokens) || tokens <= 0) return 1;
+  return Math.max(1, Math.ceil(tokens / 1000));
+}
+
+function estimateGenerateQuotaUnits(payload = {}) {
+  return calculateGenerateQuotaUnits(estimateTokens(payload.prompt) + getRequestedMaxOutputTokens(payload));
+}
+
+function isPositiveLimit(limit) {
+  return Number(limit || 0) > 0;
+}
+
+function remainingForLimit(limit, used) {
+  if (!isPositiveLimit(limit)) return null;
+  return Math.max(0, Number(limit) - Number(used || 0));
+}
+
 function normalizeLimitValue(value, fallback = 0) {
   if (value === '' || value === null || value === undefined) return fallback;
   const numeric = Number(value);
@@ -100,6 +141,14 @@ function normalizePlanPayload(payload = {}, existing = null) {
   limits.apiCallsMonthly = normalizeLimitValue(
     incomingLimits.apiCallsMonthly ?? payload.apiLimit,
     limits.apiCallsMonthly ?? 0,
+  );
+  limits.apiCallsFiveHours = normalizeLimitValue(
+    incomingLimits.apiCallsFiveHours ?? payload.apiLimitFiveHours,
+    limits.apiCallsFiveHours ?? 0,
+  );
+  limits.apiCallsWeekly = normalizeLimitValue(
+    incomingLimits.apiCallsWeekly ?? payload.apiLimitWeekly,
+    limits.apiCallsWeekly ?? 0,
   );
   limits.fineTuneModels = normalizeLimitValue(
     incomingLimits.fineTuneModels ?? payload.fineTune,
@@ -156,6 +205,8 @@ function serializePlan(plan, subscriberCount = 0) {
     limits: {
       copyMonthly: limits.copyMonthly ?? 0,
       apiCallsMonthly: limits.apiCallsMonthly ?? 0,
+      apiCallsFiveHours: limits.apiCallsFiveHours ?? 0,
+      apiCallsWeekly: limits.apiCallsWeekly ?? 0,
       fineTuneModels: limits.fineTuneModels ?? 0,
       plagiarismChecks: limits.plagiarismChecks ?? 0,
       seats: limits.seats ?? 1,
@@ -172,6 +223,8 @@ function serializePlan(plan, subscriberCount = 0) {
     users: subscriberCount,
     copyLimit: limits.copyMonthly ?? 0,
     apiLimit: limits.apiCallsMonthly ?? 0,
+    apiLimitFiveHours: limits.apiCallsFiveHours ?? 0,
+    apiLimitWeekly: limits.apiCallsWeekly ?? 0,
     fineTune: limits.fineTuneModels ?? 0,
     isDeleted: Boolean(plan.isDeleted),
     deletedAt: plan.deletedAt,
@@ -348,20 +401,123 @@ async function ensureGenerateModelAllowed(userId, payload = {}) {
   });
 }
 
-async function getUsageForCurrentMonth(userId) {
-  const start = startOfMonth();
-  const end = endOfMonth();
-  const [copyUsed, tokenRows] = await Promise.all([
-    UsageLog.countDocuments({ userId, createdAt: { $gte: start, $lt: end } }),
-    UsageLog.aggregate([
-      { $match: { userId: new mongoose.Types.ObjectId(userId), createdAt: { $gte: start, $lt: end } } },
-      { $group: { _id: null, totalTokens: { $sum: '$totalTokens' } } },
-    ]),
+async function getUsageForWindow(userId, start, end) {
+  const userObjectId = new mongoose.Types.ObjectId(userId);
+  const match = {
+    userId: userObjectId,
+    action: 'generate',
+    createdAt: { $gte: start, $lt: end },
+  };
+
+  const rows = await UsageLog.aggregate([
+    { $match: match },
+    {
+      $group: {
+        _id: null,
+        copyUsed: { $sum: 1 },
+        totalTokens: { $sum: '$totalTokens' },
+        quotaUnits: {
+          $sum: {
+            $cond: [
+              { $gt: ['$quotaUnits', 0] },
+              '$quotaUnits',
+              { $max: [1, { $ceil: { $divide: ['$totalTokens', 1000] } }] },
+            ],
+          },
+        },
+      },
+    },
+  ]);
+
+  return rows[0] || { copyUsed: 0, totalTokens: 0, quotaUnits: 0 };
+}
+
+async function getGenerateUsageSummary(userId, now = new Date()) {
+  const monthStart = startOfMonth(now);
+  const monthEnd = endOfMonth(now);
+  const fiveHoursStart = subtractHours(now, 5);
+  const weekStart = subtractDays(now, 7);
+
+  const [monthly, fiveHours, weekly] = await Promise.all([
+    getUsageForWindow(userId, monthStart, monthEnd),
+    getUsageForWindow(userId, fiveHoursStart, now),
+    getUsageForWindow(userId, weekStart, now),
   ]);
 
   return {
-    copyUsed,
-    apiCalls: Math.max(copyUsed, Math.ceil((tokenRows[0]?.totalTokens || 0) / 1000)),
+    monthly,
+    fiveHours,
+    weekly,
+    windows: {
+      monthly: { start: monthStart, end: monthEnd },
+      fiveHours: { start: fiveHoursStart, end: now },
+      weekly: { start: weekStart, end: now },
+    },
+  };
+}
+
+function checkQuotaLimit({ limit, used, requested, code, label, window }) {
+  if (!isPositiveLimit(limit)) return;
+  const nextUsed = Number(used || 0) + Number(requested || 0);
+  if (nextUsed <= Number(limit)) return;
+
+  throw createError(429, `${label} da vuot gioi han goi dich vu`, undefined, {
+    code,
+    window,
+    used: Number(used || 0),
+    requested: Number(requested || 0),
+    limit: Number(limit),
+    remaining: Math.max(0, Number(limit) - Number(used || 0)),
+  });
+}
+
+async function ensureGenerateQuotaAvailable(userId, payload = {}) {
+  const plan = await getEffectivePlanForUser(userId);
+  if (!plan) return null;
+
+  const usage = await getGenerateUsageSummary(userId);
+  const limits = plan.limits || {};
+  const requestedQuotaUnits = estimateGenerateQuotaUnits(payload);
+  const requestedCopyUnits = 1;
+
+  checkQuotaLimit({
+    limit: limits.copyMonthly,
+    used: usage.monthly.copyUsed,
+    requested: requestedCopyUnits,
+    code: 'COPY_MONTHLY_QUOTA_EXCEEDED',
+    label: 'Quota copy thang',
+    window: 'monthly',
+  });
+  checkQuotaLimit({
+    limit: limits.apiCallsMonthly,
+    used: usage.monthly.quotaUnits,
+    requested: requestedQuotaUnits,
+    code: 'GENERATE_MONTHLY_QUOTA_EXCEEDED',
+    label: 'Quota generate thang',
+    window: 'monthly',
+  });
+  checkQuotaLimit({
+    limit: limits.apiCallsFiveHours,
+    used: usage.fiveHours.quotaUnits,
+    requested: requestedQuotaUnits,
+    code: 'GENERATE_5H_QUOTA_EXCEEDED',
+    label: 'Quota generate 5 gio',
+    window: 'fiveHours',
+  });
+  checkQuotaLimit({
+    limit: limits.apiCallsWeekly,
+    used: usage.weekly.quotaUnits,
+    requested: requestedQuotaUnits,
+    code: 'GENERATE_WEEKLY_QUOTA_EXCEEDED',
+    label: 'Quota generate tuan',
+    window: 'weekly',
+  });
+
+  return {
+    plan,
+    usage,
+    requestedCopyUnits,
+    requestedQuotaUnits,
   };
 }
 
@@ -377,7 +533,7 @@ async function listUserPayments(userId, limit = 10) {
 async function getMyBilling(userId) {
   const [subscription, usage, invoices] = await Promise.all([
     getCurrentSubscription(userId),
-    getUsageForCurrentMonth(userId),
+    getGenerateUsageSummary(userId),
     listUserPayments(userId, 10),
   ]);
 
@@ -392,10 +548,42 @@ async function getMyBilling(userId) {
       slug: serializedPlan?.slug || 'free',
       price: serializedPlan?.monthlyPrice ?? 0,
       renewDate: formatDate(renewDate),
-      copyUsed: usage.copyUsed,
+      copyUsed: usage.monthly.copyUsed,
       copyLimit: limits.copyMonthly ?? 0,
-      apiCalls: usage.apiCalls,
+      apiCalls: usage.monthly.quotaUnits,
       apiLimit: limits.apiCallsMonthly ?? 0,
+      quotaUsed: usage.monthly.quotaUnits,
+      quotaLimit: limits.apiCallsMonthly ?? 0,
+      quotaUsedFiveHours: usage.fiveHours.quotaUnits,
+      quotaLimitFiveHours: limits.apiCallsFiveHours ?? 0,
+      quotaUsedWeekly: usage.weekly.quotaUnits,
+      quotaLimitWeekly: limits.apiCallsWeekly ?? 0,
+    },
+    usage: {
+      monthly: {
+        copyUsed: usage.monthly.copyUsed,
+        copyLimit: limits.copyMonthly ?? 0,
+        quotaUsed: usage.monthly.quotaUnits,
+        quotaLimit: limits.apiCallsMonthly ?? 0,
+        quotaRemaining: remainingForLimit(limits.apiCallsMonthly, usage.monthly.quotaUnits),
+        totalTokens: usage.monthly.totalTokens,
+      },
+      fiveHours: {
+        quotaUsed: usage.fiveHours.quotaUnits,
+        quotaLimit: limits.apiCallsFiveHours ?? 0,
+        quotaRemaining: remainingForLimit(limits.apiCallsFiveHours, usage.fiveHours.quotaUnits),
+        totalTokens: usage.fiveHours.totalTokens,
+        windowStart: usage.windows.fiveHours.start,
+        windowEnd: usage.windows.fiveHours.end,
+      },
+      weekly: {
+        quotaUsed: usage.weekly.quotaUnits,
+        quotaLimit: limits.apiCallsWeekly ?? 0,
+        quotaRemaining: remainingForLimit(limits.apiCallsWeekly, usage.weekly.quotaUnits),
+        totalTokens: usage.weekly.totalTokens,
+        windowStart: usage.windows.weekly.start,
+        windowEnd: usage.windows.weekly.end,
+      },
     },
     plan: serializedPlan,
     subscription: serializeSubscription(subscription, plan),
@@ -1077,6 +1265,10 @@ module.exports = {
   restorePlan,
   permanentDeletePlan,
   ensureGenerateModelAllowed,
+  ensureGenerateQuotaAvailable,
+  calculateGenerateQuotaUnits,
+  estimateGenerateQuotaUnits,
+  getGenerateUsageSummary,
   getMyBilling,
   createMockCheckout,
   handleVnpayReturn,

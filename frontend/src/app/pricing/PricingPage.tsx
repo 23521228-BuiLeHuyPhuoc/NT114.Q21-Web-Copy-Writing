@@ -76,14 +76,14 @@ type PricingPlan = (typeof PLANS)[number];
 function buildLimitFeatures(plan: BillingPlan) {
   const limits = plan.limits;
   const formatLimit = (value: number, suffix: string) => {
-    if (value === -1) return `Khong gioi han ${suffix}`;
+    if (value === -1) return `Không giới hạn ${suffix}`;
     if (value === 0) return '';
     return `${value.toLocaleString('vi-VN')} ${suffix}`;
   };
 
   return [
-    formatLimit(limits.copyMonthly, 'copy/thang'),
-    formatLimit(limits.apiCallsMonthly, 'API calls/thang'),
+    formatLimit(limits.copyMonthly, 'copy/tháng'),
+    formatLimit(limits.apiCallsMonthly, 'API calls/tháng'),
     formatLimit(limits.fineTuneModels, 'fine-tune models'),
     formatLimit(limits.seats, 'seats'),
     formatLimit(limits.historyDays, 'ngay lich su'),
@@ -105,12 +105,12 @@ function toPricingPlan(plan: BillingPlan, index: number): PricingPlan {
     yearlyPrice: plan.yearlyPrice,
     desc: plan.description || fallback.desc,
     highlight: plan.isPopular,
-    badge: plan.isPopular ? (fallback.badge || 'Pho bien') : '',
+    badge: plan.isPopular ? (fallback.badge || 'Phổ biến') : '',
     features: [
       ...positiveFeatures.map(text => ({ text, ok: true })),
       ...negativeFeatures.map(text => ({ text, ok: false })),
     ],
-    cta: plan.monthlyPrice === -1 ? 'Lien he tu van' : plan.monthlyPrice === 0 ? 'Bat dau mien phi' : `Bat dau dung ${plan.name}`,
+    cta: plan.monthlyPrice === -1 ? 'Liên hệ tư vấn' : plan.monthlyPrice === 0 ? 'Bắt đầu miễn phí' : `Bắt đầu dùng ${plan.name}`,
   };
 }
 
@@ -258,7 +258,7 @@ export function PricingPage() {
                   <div className="mb-6 pb-6 border-b border-border">
                     {price === -1 ? (
                       <div className="flex items-baseline gap-1">
-                        <span className="text-4xl font-bold text-foreground tracking-tight">Lien he</span>
+                        <span className="text-4xl font-bold text-foreground tracking-tight">Liên hệ</span>
                       </div>
                     ) : price === 0 ? (
                       <div className="flex items-baseline gap-1">

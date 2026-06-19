@@ -86,15 +86,19 @@ export function CustomerHeader() {
 
   return (
     <header className="h-[60px] bg-card border-b border-border/80 flex items-center px-4 lg:px-6 gap-3 sticky top-0 z-30 flex-shrink-0">
-      <div className="flex-1 min-w-0 hidden md:flex items-center gap-2">
+      <div className="hidden min-w-0 flex-1 flex-wrap items-center gap-2 md:flex">
         <Link to="/" className="text-xs text-muted-foreground hover:text-primary transition-colors shrink-0">
           CopyPro
         </Link>
         <span className="text-border text-xs">/</span>
-        <span className="text-sm font-semibold text-foreground truncate">{pageTitle}</span>
+        <span className="min-w-0 whitespace-normal break-words text-sm font-semibold leading-tight text-foreground">
+          {pageTitle}
+        </span>
       </div>
 
-      <div className="flex-1 md:hidden text-sm font-semibold text-foreground truncate">{pageTitle}</div>
+      <div className="min-w-0 flex-1 break-words text-sm font-semibold leading-tight text-foreground md:hidden">
+        {pageTitle}
+      </div>
 
       <div className="flex items-center gap-1.5 flex-shrink-0">
         {searchOpen ? (
