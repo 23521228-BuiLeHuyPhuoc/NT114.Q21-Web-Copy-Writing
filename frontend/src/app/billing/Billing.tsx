@@ -17,6 +17,8 @@ import {
   FileText,
   Smartphone,
   CreditCard,
+  QrCode,
+  Copy,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { DataPagination } from '@/app/components/common/DataPagination';
@@ -104,6 +106,15 @@ const PAYMENT_METHODS = [
     color: 'bg-primary/10 text-primary',
     guide: 'Sau khi bấm thanh toán, hệ thống sẽ tạo link ZaloPay và chuyển sang cổng thanh toán.',
   },
+  {
+    id: 'vietqr',
+    name: 'VietQR',
+    shortName: 'VietQR',
+    desc: 'Quét mã QR ngân hàng và chuyển khoản theo nội dung hóa đơn.',
+    icon: QrCode,
+    color: 'bg-sky-100 text-sky-700',
+    guide: 'Sau khi bấm thanh toán, hệ thống sẽ tạo mã VietQR với đúng số tiền và nội dung chuyển khoản.',
+  },
 ];
 
 const INVOICES = [
@@ -151,12 +162,25 @@ interface BillingPlansResponse {
   items?: BillingPlanResponseItem[];
 }
 
+interface VietQrCheckoutData {
+  bankId?: string;
+  bankName?: string;
+  accountNo?: string;
+  accountName?: string;
+  amount?: number;
+  currency?: string;
+  transferContent?: string;
+  qrImageUrl?: string;
+  expiresAt?: string;
+}
+
 interface BillingCheckoutResponse {
   paymentUrl?: string | null;
   gateway?: string | null;
   status?: string;
   message?: string;
   payment?: { status?: string };
+  vietqr?: VietQrCheckoutData | null;
 }
 
 function formatCurrency(value: number) {
@@ -210,6 +234,20 @@ function getPaymentNotice(payment: string | null) {
   return { type: 'info' as const, message: 'Đang xử lý phiên thanh toán.' };
 }
 
+function getInvoiceStatusMeta(status: string) {
+  const normalized = String(status || '').toLowerCase();
+  if (normalized === 'paid' || normalized === 'success') {
+    return { label: 'Đã thanh toán', className: 'bg-primary/10 text-primary' };
+  }
+  if (normalized === 'pending') {
+    return { label: 'Chờ xác nhận', className: 'bg-amber-100 text-amber-700' };
+  }
+  if (normalized === 'failed') {
+    return { label: 'Thất bại', className: 'bg-destructive/10 text-destructive' };
+  }
+  return { label: 'Đang xử lý', className: 'bg-muted text-muted-foreground' };
+}
+
 export function CustomerBilling() {
   const [currentPlan, setCurrentPlan] = useState(CURRENT_PLAN);
   const [plans, setPlans] = useState<BillingPlanCard[]>(PLANS);
@@ -217,6 +255,7 @@ export function CustomerBilling() {
   const [checkoutMethod, setCheckoutMethod] = useState<(typeof PAYMENT_METHODS)[number]>(PAYMENT_METHODS[0]);
   const [checkoutPlan, setCheckoutPlan] = useState<BillingPlanCard | null>(null);
   const [checkoutPlanId, setCheckoutPlanId] = useState<string | null>(null);
+  const [vietqrPayment, setVietqrPayment] = useState<VietQrCheckoutData | null>(null);
 
   const loadPlans = useCallback(async () => {
     try {
@@ -294,6 +333,27 @@ export function CustomerBilling() {
 
   const isCurrentPlan = (plan: BillingPlanCard) => plan.slug === currentPlan.slug;
 
+  const closeCheckout = () => {
+    setCheckoutPlan(null);
+    setVietqrPayment(null);
+  };
+
+  const selectCheckoutMethod = (method: typeof PAYMENT_METHODS[number]) => {
+    setCheckoutMethod(method);
+    setVietqrPayment(null);
+  };
+
+  const copyToClipboard = async (value: string | number | undefined, label: string) => {
+    if (value === undefined || value === null || value === '') return;
+
+    try {
+      await navigator.clipboard.writeText(String(value));
+      toast.success(`Đã sao chép ${label}`);
+    } catch {
+      toast.error('Không sao chép được nội dung');
+    }
+  };
+
   const openCheckout = (plan: BillingPlanCard) => {
     if (isCurrentPlan(plan)) {
       toast.success('Đây là gói hiện tại!');
@@ -311,6 +371,7 @@ export function CustomerBilling() {
     }
 
     setCheckoutMethod(PAYMENT_METHODS[0]);
+    setVietqrPayment(null);
     setCheckoutPlan(plan);
   };
 
@@ -336,6 +397,13 @@ export function CustomerBilling() {
         return;
       }
 
+      if (data.gateway === 'vietqr' && data.vietqr?.qrImageUrl) {
+        setVietqrPayment(data.vietqr);
+        toast.success(data.message || 'Đã tạo mã VietQR');
+        await loadBilling();
+        return;
+      }
+
       if (data.payment?.status === 'success') {
         toast.success(data.message || `Thanh toán thành công qua ${checkoutMethod.shortName}`);
       } else {
@@ -345,12 +413,22 @@ export function CustomerBilling() {
       await loadBilling();
       setCheckoutPlan(null);
     } catch (error) {
+      const validationDetail = (error as {
+        response?: { data?: { errors?: Array<{ field?: string; message?: string }> } };
+      }).response?.data?.errors?.[0];
+      if (validationDetail) {
+        toast.error(`${validationDetail.field ? `${validationDetail.field}: ` : ''}${validationDetail.message || 'Validation error'}`);
+        return;
+      }
       const err = error as { response?: { data?: { message?: string } }; message?: string };
       toast.error(err.response?.data?.message || err.message || 'Không tạo được thanh toán');
     } finally {
       setCheckoutPlanId(null);
     }
   };
+
+  const hasCreatedVietQr = checkoutMethod.id === 'vietqr' && Boolean(vietqrPayment);
+  const checkoutButtonDisabled = !checkoutPlan || checkoutPlanId !== null || hasCreatedVietQr;
 
   return (
     <Layout>
@@ -407,7 +485,7 @@ export function CustomerBilling() {
           <TabsContent value="plans">
             <div className="mb-5 rounded-lg border border-border bg-surface-muted p-4">
               <p className="text-sm text-foreground/70">
-                Chọn gói trả phí để mở bước thanh toán VNPAY hoặc ZaloPay.
+                Chọn gói trả phí để mở bước thanh toán VNPAY, ZaloPay hoặc VietQR.
               </p>
             </div>
 
@@ -469,18 +547,22 @@ export function CustomerBilling() {
             <Card className="p-5">
               <h3 className="mb-4 font-semibold text-foreground">Lịch sử hóa đơn</h3>
               <div className="space-y-3">
-                {invoicePagination.pageItems.map((invoice) => (
-                  <div key={invoice.id} className="flex items-center gap-4 rounded-lg border bg-surface-muted p-3">
-                    <div className="rounded-lg bg-primary/10 p-2"><FileText className="h-4 w-4 text-primary" /></div>
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold text-foreground">{invoice.id}</p>
-                      <p className="text-xs text-muted-foreground">{invoice.date} · {invoice.plan} · {invoice.method}</p>
+                {invoicePagination.pageItems.map((invoice) => {
+                  const statusMeta = getInvoiceStatusMeta(invoice.status);
+
+                  return (
+                    <div key={invoice.id} className="flex items-center gap-4 rounded-lg border bg-surface-muted p-3">
+                      <div className="rounded-lg bg-primary/10 p-2"><FileText className="h-4 w-4 text-primary" /></div>
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-foreground">{invoice.id}</p>
+                        <p className="text-xs text-muted-foreground">{invoice.date} · {invoice.plan} · {invoice.method}</p>
+                      </div>
+                      <span className="text-sm font-semibold text-foreground">{formatCurrency(invoice.amount)}</span>
+                      <Badge className={`border-0 text-xs ${statusMeta.className}`}>{statusMeta.label}</Badge>
+                      <Button variant="ghost" size="sm"><Download className="h-4 w-4" /></Button>
                     </div>
-                    <span className="text-sm font-semibold text-foreground">{formatCurrency(invoice.amount)}</span>
-                    <Badge className="border-0 bg-primary/10 text-xs text-primary">Đã thanh toán</Badge>
-                    <Button variant="ghost" size="sm"><Download className="h-4 w-4" /></Button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               <DataPagination
                 page={invoicePagination.page}
@@ -501,7 +583,7 @@ export function CustomerBilling() {
           open={Boolean(checkoutPlan)}
           onOpenChange={(open) => {
             if (!open && checkoutPlanId === null) {
-              setCheckoutPlan(null);
+              closeCheckout();
             }
           }}
         >
@@ -528,7 +610,7 @@ export function CustomerBilling() {
 
                 <div>
                   <p className="mb-3 text-sm font-semibold text-foreground">Chọn phương thức thanh toán</p>
-                  <PaymentMethodGrid selectedId={checkoutMethod.id} onSelect={setCheckoutMethod} />
+                  <PaymentMethodGrid selectedId={checkoutMethod.id} onSelect={selectCheckoutMethod} />
                 </div>
 
                 <div className="rounded-lg border border-border bg-surface-muted p-4">
@@ -543,19 +625,25 @@ export function CustomerBilling() {
                   </div>
                   <p className="text-sm leading-relaxed text-foreground/80">{checkoutMethod.guide}</p>
                 </div>
+
+                {checkoutMethod.id === 'vietqr' && vietqrPayment && (
+                  <VietQrPaymentPanel payment={vietqrPayment} onCopy={copyToClipboard} />
+                )}
               </div>
             )}
 
             <DialogFooter>
-              <Button variant="outline" onClick={() => setCheckoutPlan(null)} disabled={checkoutPlanId !== null}>
+              <Button variant="outline" onClick={closeCheckout} disabled={checkoutPlanId !== null}>
                 Đóng
               </Button>
-              <Button onClick={() => void handleCheckout()} disabled={!checkoutPlan || checkoutPlanId !== null}>
+              <Button onClick={() => void handleCheckout()} disabled={checkoutButtonDisabled}>
                 {checkoutPlanId ? (
                   <span className="flex items-center gap-2">
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                     Đang tạo thanh toán...
                   </span>
+                ) : hasCreatedVietQr ? (
+                  'Đã tạo VietQR'
                 ) : (
                   `Tiếp tục với ${checkoutMethod.shortName}`
                 )}
@@ -568,6 +656,82 @@ export function CustomerBilling() {
   );
 }
 
+function VietQrPaymentPanel({
+  payment,
+  onCopy,
+}: {
+  payment: VietQrCheckoutData;
+  onCopy: (value: string | number | undefined, label: string) => void | Promise<void>;
+}) {
+  if (!payment.qrImageUrl) return null;
+
+  const rows: Array<{
+    label: string;
+    value?: string;
+    copyValue?: string | number;
+    copyLabel: string;
+    emphasis?: boolean;
+  }> = [
+    { label: 'Ngân hàng', value: payment.bankName || payment.bankId, copyLabel: 'ngân hàng' },
+    { label: 'Số tài khoản', value: payment.accountNo, copyLabel: 'số tài khoản' },
+    { label: 'Chủ tài khoản', value: payment.accountName, copyLabel: 'chủ tài khoản' },
+    {
+      label: 'Số tiền',
+      value: formatCurrency(payment.amount || 0),
+      copyValue: payment.amount,
+      copyLabel: 'số tiền',
+      emphasis: true,
+    },
+    {
+      label: 'Nội dung chuyển khoản',
+      value: payment.transferContent,
+      copyLabel: 'nội dung chuyển khoản',
+      emphasis: true,
+    },
+  ];
+
+  return (
+    <div className="rounded-lg border border-sky-200 bg-sky-50/60 p-4">
+      <div className="grid gap-4 md:grid-cols-[220px_minmax(0,1fr)]">
+        <div className="rounded-lg border border-border bg-white p-3">
+          <img
+            src={payment.qrImageUrl}
+            alt="Mã VietQR thanh toán"
+            className="h-52 w-full object-contain"
+          />
+        </div>
+
+        <div className="space-y-2">
+          {rows.map((row) => row.value ? (
+            <div key={row.label} className="flex items-center justify-between gap-3 rounded-lg border border-white/70 bg-white/80 px-3 py-2">
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-muted-foreground">{row.label}</p>
+                <p className={`break-words text-sm ${row.emphasis ? 'font-semibold text-foreground' : 'text-foreground/80'}`}>
+                  {row.value}
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-8 shrink-0 px-2"
+                aria-label={`Sao chép ${row.copyLabel}`}
+                onClick={() => void onCopy(row.copyValue ?? row.value, row.copyLabel)}
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : null)}
+        </div>
+      </div>
+
+      <p className="mt-3 text-xs leading-relaxed text-sky-800">
+        Sau khi chuyển khoản, hóa đơn sẽ ở trạng thái chờ xác nhận. Vui lòng giữ đúng số tiền và nội dung chuyển khoản để đối soát nhanh hơn.
+      </p>
+    </div>
+  );
+}
+
 function PaymentMethodGrid({
   selectedId,
   onSelect,
@@ -576,7 +740,7 @@ function PaymentMethodGrid({
   onSelect: (method: typeof PAYMENT_METHODS[number]) => void;
 }) {
   return (
-    <div className="grid gap-3 sm:grid-cols-2">
+    <div className="grid gap-3 sm:grid-cols-3">
       {PAYMENT_METHODS.map((method) => {
         const Icon = method.icon;
         const active = selectedId === method.id;

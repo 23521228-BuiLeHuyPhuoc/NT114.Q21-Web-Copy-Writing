@@ -40,7 +40,7 @@ const subscriptionSchema = new mongoose.Schema(
     },
     provider: {
       type: String,
-      enum: ['mock', 'manual', 'stripe', 'vnpay', 'zalopay'],
+      enum: ['mock', 'manual', 'stripe', 'vnpay', 'zalopay', 'vietqr'],
       default: 'mock',
     },
     providerSubscriptionId: {

@@ -402,6 +402,20 @@ function normalizeReport(report: BackendPlagiarismReport): PlagiarismReport {
   analysis.plagiarismScore = asNumber(analysis.plagiarismScore, asNumber(report.similarityScore));
   analysis.topicSimilarityScore = asNumber(analysis.topicSimilarityScore, asNumber(analysis.wordOverlapScore));
 
+  const matches = (report.matches || []).map(normalizeMatch);
+  const topicMatches = (report.topicMatches || []).map(normalizeMatch);
+  const sources = (report.sources || []).map(normalizeSource);
+  analysis.candidateCount = Math.max(
+    0,
+    ...[
+      analysis.candidateCount,
+      analysis.sourceCount,
+      analysis.commonCrawl.candidateCount,
+      sources.length,
+      matches.length > 0 || topicMatches.length > 0 ? 1 : 0,
+    ].map(Number).filter(Number.isFinite),
+  );
+
   return {
     id: report.id || report._id || '',
     userId: report.userId || null,
@@ -412,9 +426,9 @@ function normalizeReport(report: BackendPlagiarismReport): PlagiarismReport {
     originalityScore: asNumber(report.originalityScore, 100),
     status: report.status || 'completed',
     riskLevel: report.riskLevel || 'safe',
-    matches: (report.matches || []).map(normalizeMatch),
-    topicMatches: (report.topicMatches || []).map(normalizeMatch),
-    sources: (report.sources || []).map(normalizeSource),
+    matches,
+    topicMatches,
+    sources,
     modelUsed: report.modelUsed || 'local-ngram-v1',
     threshold: asNumber(report.threshold, 35),
     sensitivity: report.sensitivity || 'balanced',

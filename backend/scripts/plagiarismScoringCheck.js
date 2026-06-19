@@ -517,6 +517,51 @@ runSpecialCase('serialized old partial report is rescored and keeps only filtere
   assertNotContainsNormalized(report.sources[0].sourceText, partialIgnoredPhrase, 'serialized source should not include ignored phrase');
 });
 
+const serializedLegacyEvidenceReport = serializeReport(fakeReport({
+  id: 'legacy-evidence-report',
+  checkText: copied,
+  matches: copiedMatches,
+  sources: [{
+    source: 'legacy-source',
+    sourceTitle: 'Legacy source with omitted candidateCount',
+    sourceUrl: '',
+    sourceType: 'web',
+    similarity: copiedScore.score,
+    plagiarismScore: copiedScore.plagiarismScore,
+    topicSimilarityScore: copiedScore.topicSimilarityScore,
+    snippet: copiedSource,
+    sourceText: copiedSource,
+    matchedWords: copiedScore.matchedWords,
+    totalWords: copiedScore.totalWords,
+    exactMatchScore: copiedScore.exactMatchScore,
+    phraseOverlapScore: copiedScore.phraseOverlapScore,
+    wordOverlapScore: copiedScore.wordOverlapScore,
+    scoreBasis: copiedScore.scoreBasis,
+    matchedPhrases: copiedScore.matchedPhrases,
+    totalPhrases: copiedScore.totalPhrases,
+  }],
+  analysis: {
+    effectiveThreshold: threshold,
+    sourceCount: 0,
+    matchCount: copiedMatches.length,
+    topicMatchCount: 0,
+    checkedSourceTypes: ['web'],
+    unavailableSourceTypes: [],
+    plagiarismScore: copiedScore.plagiarismScore,
+    topicSimilarityScore: copiedScore.topicSimilarityScore,
+    exactMatchScore: copiedScore.exactMatchScore,
+    phraseOverlapScore: copiedScore.phraseOverlapScore,
+    wordOverlapScore: copiedScore.wordOverlapScore,
+    commonCrawl: { enabled: false, status: 'skipped' },
+  },
+}));
+
+assert(serializedLegacyEvidenceReport.analysis.candidateCount > 0, 'legacy report with source evidence should infer compared source count');
+assertNotContainsNormalized(
+  serializedLegacyEvidenceReport.summary,
+  'chua nap duoc nguon',
+  'legacy report with source evidence should not be summarized as missing comparison data',
+);
 console.log(JSON.stringify({
   sameTopic: {
     plagiarismScore: topicScore.plagiarismScore,
@@ -555,6 +600,10 @@ console.log(JSON.stringify({
     riskLevel: serializedFullIgnoredReport.riskLevel,
     matches: serializedFullIgnoredReport.matches.length,
     sources: serializedFullIgnoredReport.sources.length,
+  },
+  serializedLegacyEvidenceReport: {
+    candidateCount: serializedLegacyEvidenceReport.analysis.candidateCount,
+    summary: serializedLegacyEvidenceReport.summary,
   },
   vietnameseIgnoredDisplay: {
     matches: vietnameseMixedMatches.length,

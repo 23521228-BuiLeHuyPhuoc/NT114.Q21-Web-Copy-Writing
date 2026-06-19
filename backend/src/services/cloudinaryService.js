@@ -55,6 +55,23 @@ async function uploadUserAvatar(userId, file) {
   };
 }
 
+async function uploadAdminAvatar(adminId, file) {
+  const folder = process.env.CLOUDINARY_ADMIN_AVATAR_FOLDER || 'copypro/avatars/admins';
+  const result = await uploadBuffer(file.buffer, {
+    folder,
+    public_id: `admin_${adminId}`,
+    overwrite: true,
+    invalidate: true,
+    resource_type: 'image',
+  });
+
+  return {
+    publicId: result.public_id,
+    url: result.secure_url,
+  };
+}
+
 module.exports = {
+  uploadAdminAvatar,
   uploadUserAvatar,
 };

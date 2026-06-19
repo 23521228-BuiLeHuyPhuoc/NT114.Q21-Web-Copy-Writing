@@ -401,6 +401,28 @@ async function markAdminNotificationRead(adminId, id) {
   return serializeNotification(notification);
 }
 
+async function markAllAdminNotificationsRead(adminId) {
+  const now = new Date();
+  const result = await Notification.updateMany(
+    {
+      recipientType: 'admin',
+      adminId,
+      isRead: false,
+    },
+    {
+      $set: {
+        isRead: true,
+        readAt: now,
+      },
+    },
+  );
+
+  return {
+    modifiedCount: result.modifiedCount || 0,
+    readAt: now,
+  };
+}
+
 async function markAllNotificationsRead(userId) {
   const now = new Date();
   const result = await Notification.updateMany(
@@ -457,6 +479,7 @@ module.exports = {
   listAdminNotifications,
   markNotificationRead,
   markAdminNotificationRead,
+  markAllAdminNotificationsRead,
   markAllNotificationsRead,
   createNotification,
   sendAdminNotification,

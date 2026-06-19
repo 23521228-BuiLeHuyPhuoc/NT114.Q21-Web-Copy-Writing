@@ -15,6 +15,7 @@ router.use(protect('admin'));
 
 router.get('/', validate(adminListNotificationsSchema, 'query'), notificationController.listNotifications);
 router.post('/send', validate(sendAdminNotificationSchema), notificationController.sendNotification);
+router.patch('/read-all', notificationController.markAllNotificationsRead);
 router.patch('/:id/read', validate(paramsWithId, 'params'), notificationController.markNotificationRead);
 
 module.exports = router;

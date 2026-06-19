@@ -8,7 +8,7 @@ import {
   DollarSign,
   Shirt,
   Briefcase,
-  Plane
+  Luggage
 } from 'lucide-react';
 import { Card } from '@/app/components/ui/card';
 
@@ -27,7 +27,7 @@ const industries = [
   { id: 'finance', name: 'Tài Chính', icon: DollarSign, color: 'bg-emerald-500' },
   { id: 'fashion', name: 'Thời Trang', icon: Shirt, color: 'bg-warning/100' },
   { id: 'business', name: 'Dịch Vụ Doanh Nghiệp', icon: Briefcase, color: 'bg-primary/50' },
-  { id: 'travel', name: 'Du Lịch', icon: Plane, color: 'bg-primary/50' },
+  { id: 'travel', name: 'Du Lịch', icon: Luggage, color: 'bg-cyan-500' },
 ];
 
 export function IndustrySelector({ selectedIndustry, onSelectIndustry }: IndustrySelectorProps) {

@@ -89,6 +89,65 @@ function buildZalopayDescription(invoiceNo, planName) {
   return `CopyPro ${planName} ${invoiceNo}`;
 }
 
+function getZalopayPreferredPaymentMethods() {
+  return getEnv('ZALOPAY_PREFERRED_PAYMENT_METHODS')
+    .split(',')
+    .map((method) => method.trim())
+    .filter(Boolean);
+}
+
+function buildVietQrTransferContent(invoiceNo) {
+  const prefix = getEnv('VIETQR_ADD_INFO_PREFIX', 'COPYPRO')
+    .replace(/[^0-9A-Za-z ]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 8) || 'COPYPRO';
+  const invoiceRef = String(invoiceNo || '')
+    .replace(/[^0-9A-Za-z]/g, '')
+    .replace(/^INV/i, '')
+    .slice(-16);
+  return `${prefix} ${invoiceRef}`.trim().slice(0, 25);
+}
+
+function buildVietQrPaymentData({ invoiceNo, amount }) {
+  const bankId = getEnv('VIETQR_BANK_ID');
+  const accountNo = getEnv('VIETQR_ACCOUNT_NO');
+  const accountName = getEnv('VIETQR_ACCOUNT_NAME');
+
+  if (!bankId || !accountNo || !accountName) {
+    const missingKeys = [
+      ['VIETQR_BANK_ID', bankId],
+      ['VIETQR_ACCOUNT_NO', accountNo],
+      ['VIETQR_ACCOUNT_NAME', accountName],
+    ].filter(([, value]) => !value).map(([key]) => key);
+
+    throw createError(500, `VietQR configuration is missing: ${missingKeys.join(', ')}`, null, { missingKeys });
+  }
+
+  const template = getEnv('VIETQR_TEMPLATE', 'compact2');
+  const baseUrl = trimSlash(getEnv('VIETQR_IMAGE_BASE_URL', 'https://img.vietqr.io/image'));
+  const roundedAmount = Math.round(Number(amount) || 0);
+  const transferContent = buildVietQrTransferContent(invoiceNo);
+  const query = new URLSearchParams({
+    amount: String(roundedAmount),
+    addInfo: transferContent,
+    accountName,
+  });
+  const qrImageUrl = `${baseUrl}/${encodeURIComponent(bankId)}-${encodeURIComponent(accountNo)}-${encodeURIComponent(template)}.png?${query.toString()}`;
+
+  return {
+    bankId,
+    bankName: getEnv('VIETQR_BANK_NAME', bankId.toUpperCase()),
+    accountNo,
+    accountName,
+    amount: roundedAmount,
+    currency: 'VND',
+    transferContent,
+    qrImageUrl,
+    expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+  };
+}
+
 function buildVnpayPaymentUrl({ invoiceNo, amount, ipAddress, planName }) {
   const paymentUrl = getEnv('VNPAY_PAYMENT_URL', 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html');
   const tmnCode = getEnv('VNPAY_TMN_CODE');
@@ -177,7 +236,7 @@ async function createZalopayPaymentUrl({ invoiceNo, amount, planName, billingCyc
   const endpoint = getEnv('ZALOPAY_ENDPOINT', 'https://sb-openapi.zalopay.vn/v2/create');
   const appId = getEnv('ZALOPAY_APP_ID');
   const key1 = getEnv('ZALOPAY_KEY1');
-  const bankCode = getEnv('ZALOPAY_BANK_CODE', 'zalopayapp');
+  const bankCode = getEnv('ZALOPAY_BANK_CODE');
 
   if (!appId || !key1) {
     throw createError(500, 'ZaloPay configuration is missing');
@@ -188,6 +247,7 @@ async function createZalopayPaymentUrl({ invoiceNo, amount, planName, billingCyc
   const callbackUrl = buildZalopayCallbackUrl();
   const returnUrl = buildZalopayReturnUrl();
   const embedData = JSON.stringify({
+    preferred_payment_method: getZalopayPreferredPaymentMethods(),
     redirecturl: returnUrl,
     callback_url: callbackUrl,
     invoiceNo,
@@ -287,6 +347,7 @@ function buildFrontendPaymentResultUrl({ gateway, outcome, invoiceNo }) {
 
 module.exports = {
   buildVnpayPaymentUrl,
+  buildVietQrPaymentData,
   verifyVnpayReturn,
   createZalopayPaymentUrl,
   verifyZalopayCallback,

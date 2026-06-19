@@ -54,7 +54,7 @@ const checkoutSchema = Joi.object({
   planId: Joi.string().hex().length(24),
   planSlug: Joi.string().trim().lowercase().max(80),
   billingCycle: Joi.string().valid('monthly', 'yearly').default('monthly'),
-  method: Joi.string().valid('cash', 'bank', 'momo', 'zalo', 'zalopay', 'vnpay', 'visa', 'manual').default('manual'),
+  method: Joi.string().valid('cash', 'bank', 'momo', 'zalo', 'zalopay', 'vnpay', 'vietqr', 'visa', 'manual').default('manual'),
 }).xor('planId', 'planSlug');
 
 module.exports = {

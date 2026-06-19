@@ -16,6 +16,14 @@ import {
 
 export type AdminRole = string;
 export type AdminPermission = string;
+export type PermissionScope = 'admin' | 'customer';
+
+export interface PermissionRouteOption {
+  scope: PermissionScope;
+  route: string;
+  label: string;
+  group: string;
+}
 
 export interface AdminPermissionDef {
   key: AdminPermission;
@@ -23,6 +31,7 @@ export interface AdminPermissionDef {
   description: string;
   group: string;
   route?: string;
+  scope?: PermissionScope;
   system?: boolean;
 }
 
@@ -40,21 +49,63 @@ export interface AdminRoleDef {
 const ROLE_STORAGE_KEY = 'admin_role_defs';
 const PERMISSION_STORAGE_KEY = 'admin_permission_defs';
 
+export const PERMISSION_ROUTE_OPTIONS: PermissionRouteOption[] = [
+  { scope: 'admin', route: '/admin', label: 'Bảng điều khiển admin', group: 'Tổng quan' },
+  { scope: 'admin', route: '/admin/users', label: 'Tài khoản người dùng', group: 'Người dùng' },
+  { scope: 'admin', route: '/admin/notifications', label: 'Thông báo admin', group: 'Người dùng' },
+  { scope: 'admin', route: '/admin/contents', label: 'Nội dung đã tạo', group: 'Nội dung' },
+  { scope: 'admin', route: '/admin/templates', label: 'Mẫu copy', group: 'Nội dung' },
+  { scope: 'admin', route: '/admin/generate-options/industries', label: 'Cấu hình ngành nghề', group: 'Cấu hình tạo nội dung' },
+  { scope: 'admin', route: '/admin/generate-options/copy-types', label: 'Cấu hình loại nội dung', group: 'Cấu hình tạo nội dung' },
+  { scope: 'admin', route: '/admin/generate-options/tones', label: 'Cấu hình tone giọng', group: 'Cấu hình tạo nội dung' },
+  { scope: 'admin', route: '/admin/models', label: 'Mô hình AI', group: 'AI & mô hình' },
+  { scope: 'admin', route: '/admin/plans', label: 'Gói dịch vụ', group: 'Tài chính' },
+  { scope: 'admin', route: '/admin/payments', label: 'Giao dịch thanh toán', group: 'Tài chính' },
+  { scope: 'admin', route: '/admin/permissions', label: 'Phân quyền admin', group: 'Hệ thống' },
+  { scope: 'admin', route: '/admin/audit-logs', label: 'Nhật ký audit', group: 'Hệ thống' },
+  { scope: 'admin', route: '/admin/settings', label: 'Cài đặt hệ thống', group: 'Hệ thống' },
+  { scope: 'admin', route: '/admin/profile', label: 'Hồ sơ admin', group: 'Hệ thống' },
+  { scope: 'customer', route: '/dashboard', label: 'Bảng điều khiển khách hàng', group: 'Customer - Tổng quan' },
+  { scope: 'customer', route: '/generate', label: 'Tạo nội dung AI', group: 'Customer - Sáng tạo nội dung' },
+  { scope: 'customer', route: '/contents', label: 'Nội dung của tôi', group: 'Customer - Sáng tạo nội dung' },
+  { scope: 'customer', route: '/contents/[id]', label: 'Chi tiết nội dung', group: 'Customer - Sáng tạo nội dung' },
+  { scope: 'customer', route: '/projects', label: 'Dự án', group: 'Customer - Sáng tạo nội dung' },
+  { scope: 'customer', route: '/projects/[id]', label: 'Chi tiết dự án', group: 'Customer - Sáng tạo nội dung' },
+  { scope: 'customer', route: '/templates', label: 'Mẫu copy', group: 'Customer - Sáng tạo nội dung' },
+  { scope: 'customer', route: '/fine-tune', label: 'Fine-tuning', group: 'Customer - AI nâng cao' },
+  { scope: 'customer', route: '/plagiarism-check', label: 'Kiểm tra đạo văn', group: 'Customer - AI nâng cao' },
+  { scope: 'customer', route: '/profile', label: 'Hồ sơ khách hàng', group: 'Customer - Tài khoản' },
+  { scope: 'customer', route: '/billing', label: 'Gói & thanh toán', group: 'Customer - Tài khoản' },
+  { scope: 'customer', route: '/notifications', label: 'Thông báo khách hàng', group: 'Customer - Tài khoản' },
+];
+
 export const ADMIN_PERMISSIONS: AdminPermissionDef[] = [
-  { key: 'dashboard', label: 'Dashboard', description: 'Xem trang tổng quan hệ thống', group: 'Tổng quan', route: '/admin', system: true },
-  { key: 'users', label: 'Quản lý người dùng', description: 'Xem, duyệt và chỉnh sửa tài khoản', group: 'Người dùng', route: '/admin/users', system: true },
-  { key: 'notifications', label: 'Thông báo', description: 'Gửi thông báo tới khách hàng và admin', group: 'Người dùng', route: '/admin/notifications', system: true },
-  { key: 'contents', label: 'Nội dung', description: 'Quản lý nội dung copy đã tạo', group: 'Nội dung', route: '/admin/contents', system: true },
-  { key: 'templates', label: 'Templates', description: 'Quản lý mẫu copywriting', group: 'Nội dung', route: '/admin/templates', system: true },
-  { key: 'generate_industries', label: 'Ngành nghề Generate', description: 'Quản lý ngành nghề trong trang Generate', group: 'Generate', route: '/admin/generate-options/industries', system: true },
-  { key: 'generate_copy_types', label: 'Loại nội dung Generate', description: 'Quản lý loại nội dung trong trang Generate', group: 'Generate', route: '/admin/generate-options/copy-types', system: true },
-  { key: 'generate_tones', label: 'Tone giọng văn Generate', description: 'Quản lý tone/cảm xúc trong trang Generate', group: 'Generate', route: '/admin/generate-options/tones', system: true },
-  { key: 'plans', label: 'Gói dịch vụ', description: 'Quản lý subscription plan', group: 'Tài chính', route: '/admin/plans', system: true },
-  { key: 'payments', label: 'Thanh toán', description: 'Xem giao dịch và doanh thu', group: 'Tài chính', route: '/admin/payments', system: true },
-  { key: 'models', label: 'Model AI', description: 'Quản lý model và fine-tuning', group: 'AI', route: '/admin/models', system: true },
-  { key: 'settings', label: 'Cài đặt', description: 'Quản lý cấu hình hệ thống', group: 'Hệ thống', route: '/admin/settings', system: true },
-  { key: 'audit_logs', label: 'Nhật ký', description: 'Xem audit log quản trị', group: 'Hệ thống', route: '/admin/audit-logs', system: true },
-  { key: 'permissions', label: 'Phân quyền', description: 'Tạo quyền và loại admin', group: 'Bảo mật', route: '/admin/permissions', system: true },
+  { key: 'dashboard', label: 'Bảng điều khiển', description: 'Xem tổng quan hệ thống', group: 'Tổng quan', route: '/admin', scope: 'admin', system: true },
+  { key: 'users', label: 'Tài khoản người dùng', description: 'Xem, duyệt và chỉnh sửa tài khoản', group: 'Người dùng', route: '/admin/users', scope: 'admin', system: true },
+  { key: 'notifications', label: 'Thông báo', description: 'Gửi thông báo tới khách hàng và admin', group: 'Người dùng', route: '/admin/notifications', scope: 'admin', system: true },
+  { key: 'contents', label: 'Nội dung đã tạo', description: 'Quản lý nội dung copy đã tạo', group: 'Nội dung', route: '/admin/contents', scope: 'admin', system: true },
+  { key: 'templates', label: 'Mẫu copy', description: 'Quản lý mẫu copywriting', group: 'Nội dung', route: '/admin/templates', scope: 'admin', system: true },
+  { key: 'generate_industries', label: 'Ngành nghề', description: 'Quản lý ngành nghề trong trang tạo nội dung', group: 'Cấu hình tạo nội dung', route: '/admin/generate-options/industries', scope: 'admin', system: true },
+  { key: 'generate_copy_types', label: 'Loại nội dung', description: 'Quản lý loại nội dung trong trang tạo nội dung', group: 'Cấu hình tạo nội dung', route: '/admin/generate-options/copy-types', scope: 'admin', system: true },
+  { key: 'generate_tones', label: 'Tone giọng', description: 'Quản lý tone/cảm xúc trong trang tạo nội dung', group: 'Cấu hình tạo nội dung', route: '/admin/generate-options/tones', scope: 'admin', system: true },
+  { key: 'plans', label: 'Gói dịch vụ', description: 'Quản lý subscription plan', group: 'Tài chính', route: '/admin/plans', scope: 'admin', system: true },
+  { key: 'payments', label: 'Giao dịch thanh toán', description: 'Xem giao dịch và doanh thu', group: 'Tài chính', route: '/admin/payments', scope: 'admin', system: true },
+  { key: 'models', label: 'Mô hình AI', description: 'Quản lý model và fine-tuning', group: 'AI & mô hình', route: '/admin/models', scope: 'admin', system: true },
+  { key: 'settings', label: 'Cài đặt hệ thống', description: 'Quản lý cấu hình hệ thống', group: 'Hệ thống', route: '/admin/settings', scope: 'admin', system: true },
+  { key: 'audit_logs', label: 'Nhật ký audit', description: 'Xem audit log quản trị', group: 'Hệ thống', route: '/admin/audit-logs', scope: 'admin', system: true },
+  { key: 'permissions', label: 'Phân quyền admin', description: 'Tạo quyền và loại admin', group: 'Hệ thống', route: '/admin/permissions', scope: 'admin', system: true },
+  { key: 'customer_dashboard', label: 'Bảng điều khiển khách hàng', description: 'Truy cập tổng quan tài khoản khách hàng', group: 'Customer - Tổng quan', route: '/dashboard', scope: 'customer', system: true },
+  { key: 'customer_generate', label: 'Tạo nội dung AI', description: 'Truy cập công cụ tạo nội dung AI', group: 'Customer - Sáng tạo nội dung', route: '/generate', scope: 'customer', system: true },
+  { key: 'customer_contents', label: 'Nội dung của tôi', description: 'Xem danh sách nội dung đã tạo của khách hàng', group: 'Customer - Sáng tạo nội dung', route: '/contents', scope: 'customer', system: true },
+  { key: 'customer_content_detail', label: 'Chi tiết nội dung', description: 'Xem chi tiết một nội dung đã tạo', group: 'Customer - Sáng tạo nội dung', route: '/contents/[id]', scope: 'customer', system: true },
+  { key: 'customer_projects', label: 'Dự án', description: 'Truy cập danh sách dự án của khách hàng', group: 'Customer - Sáng tạo nội dung', route: '/projects', scope: 'customer', system: true },
+  { key: 'customer_project_detail', label: 'Chi tiết dự án', description: 'Xem nội dung và thông tin trong một dự án', group: 'Customer - Sáng tạo nội dung', route: '/projects/[id]', scope: 'customer', system: true },
+  { key: 'customer_templates', label: 'Mẫu copy khách hàng', description: 'Truy cập thư viện mẫu copy phía khách hàng', group: 'Customer - Sáng tạo nội dung', route: '/templates', scope: 'customer', system: true },
+  { key: 'customer_fine_tune', label: 'Fine-tuning', description: 'Truy cập studio fine-tuning của khách hàng', group: 'Customer - AI nâng cao', route: '/fine-tune', scope: 'customer', system: true },
+  { key: 'customer_plagiarism', label: 'Kiểm tra đạo văn', description: 'Truy cập công cụ kiểm tra đạo văn', group: 'Customer - AI nâng cao', route: '/plagiarism-check', scope: 'customer', system: true },
+  { key: 'customer_profile', label: 'Hồ sơ khách hàng', description: 'Truy cập và cập nhật hồ sơ khách hàng', group: 'Customer - Tài khoản', route: '/profile', scope: 'customer', system: true },
+  { key: 'customer_billing', label: 'Gói & thanh toán', description: 'Truy cập gói dịch vụ và hóa đơn khách hàng', group: 'Customer - Tài khoản', route: '/billing', scope: 'customer', system: true },
+  { key: 'customer_notifications', label: 'Thông báo khách hàng', description: 'Xem thông báo phía khách hàng', group: 'Customer - Tài khoản', route: '/notifications', scope: 'customer', system: true },
 ];
 
 export const ADMIN_ROLES: Record<AdminRole, AdminRoleDef> = {
@@ -70,7 +121,7 @@ export const ADMIN_ROLES: Record<AdminRole, AdminRoleDef> = {
   },
   content_manager: {
     label: 'Content Manager',
-    description: 'Quản lý nội dung, template và cấu hình Generate',
+    description: 'Quản lý nội dung, mẫu copy và cấu hình tạo nội dung',
     color: 'bg-green-100',
     textColor: 'text-green-700',
     borderColor: 'border-green-200',
@@ -100,7 +151,7 @@ export const ADMIN_ROLES: Record<AdminRole, AdminRoleDef> = {
   },
   ai_engineer: {
     label: 'AI Engineer',
-    description: 'Cấu hình và vận hành mô hình AI và fine-tuning',
+    description: 'Cấu hình và vận hành mô hình AI, fine-tuning',
     color: 'bg-teal-100',
     textColor: 'text-teal-700',
     borderColor: 'border-teal-200',
@@ -140,16 +191,60 @@ function writeJson<T>(key: string, value: T) {
   }
 }
 
+function normalizeRoute(route: string) {
+  if (!route || route === '/') return route;
+  return route.endsWith('/') ? route.slice(0, -1) : route;
+}
+
+function routeMatches(pattern: string, path: string) {
+  const normalizedPattern = normalizeRoute(pattern);
+  const normalizedPath = normalizeRoute(path);
+  if (normalizedPattern === normalizedPath) return true;
+
+  const patternParts = normalizedPattern.split('/').filter(Boolean);
+  const pathParts = normalizedPath.split('/').filter(Boolean);
+  if (patternParts.length !== pathParts.length) return false;
+
+  return patternParts.every((part, index) => (
+    (part.startsWith('[') && part.endsWith(']')) || part === pathParts[index]
+  ));
+}
+
+function inferPermissionScope(route?: string): PermissionScope {
+  return route?.startsWith('/admin') ? 'admin' : 'customer';
+}
+
+function hydratePermission(permission: AdminPermissionDef): AdminPermissionDef {
+  const routeOption = permission.route
+    ? PERMISSION_ROUTE_OPTIONS.find((option) => option.route === normalizeRoute(permission.route || ''))
+    : undefined;
+
+  return {
+    ...permission,
+    route: permission.route ? normalizeRoute(permission.route) : permission.route,
+    scope: permission.scope ?? routeOption?.scope ?? inferPermissionScope(permission.route),
+  };
+}
+
+export function getPermissionScope(permission: AdminPermissionDef): PermissionScope {
+  return permission.scope ?? inferPermissionScope(permission.route);
+}
+
+export function getPermissionScopeLabel(scope: PermissionScope) {
+  return scope === 'admin' ? 'Admin' : 'Customer';
+}
+
 export function getAdminPermissions(): AdminPermissionDef[] {
   const stored = readJson<AdminPermissionDef[]>(PERMISSION_STORAGE_KEY, []);
-  const merged = [...ADMIN_PERMISSIONS];
+  const merged = ADMIN_PERMISSIONS.map(hydratePermission);
 
   stored.forEach((permission) => {
+    const normalizedPermission = hydratePermission(permission);
     const index = merged.findIndex((item) => item.key === permission.key);
     if (index >= 0) {
-      if (!merged[index].system) merged[index] = { ...merged[index], ...permission };
+      if (!merged[index].system) merged[index] = { ...merged[index], ...normalizedPermission };
     } else {
-      merged.push(permission);
+      merged.push(normalizedPermission);
     }
   });
 
@@ -162,10 +257,22 @@ export function saveAdminPermissions(permissions: AdminPermissionDef[]) {
 
 export function getAdminRoles(): Record<AdminRole, AdminRoleDef> {
   const stored = readJson<Record<AdminRole, AdminRoleDef>>(ROLE_STORAGE_KEY, {});
-  return {
-    ...stored,
-    ...ADMIN_ROLES,
-  };
+  const merged: Record<AdminRole, AdminRoleDef> = { ...ADMIN_ROLES };
+
+  Object.entries(stored).forEach(([key, role]) => {
+    const systemRole = ADMIN_ROLES[key];
+    if (systemRole?.system) {
+      merged[key] = {
+        ...systemRole,
+        permissions: Array.isArray(role.permissions) ? role.permissions : systemRole.permissions,
+      };
+      return;
+    }
+
+    merged[key] = role;
+  });
+
+  return merged;
 }
 
 export function saveAdminRoles(roles: Record<AdminRole, AdminRoleDef>) {
@@ -179,20 +286,20 @@ export function resetAdminPermissionConfig() {
 }
 
 export const ADMIN_MENU_ITEMS = [
-  { label: 'Dashboard', icon: LayoutDashboard, path: '/admin', permission: 'dashboard' as AdminPermission },
-  { label: 'Quản lý người dùng', icon: Users, path: '/admin/users', permission: 'users' as AdminPermission },
-  { label: 'Thông báo', icon: Bell, path: '/admin/notifications', permission: 'notifications' as AdminPermission },
-  { label: 'Nội dung', icon: FileText, path: '/admin/contents', permission: 'contents' as AdminPermission },
-  { label: 'Templates', icon: ScrollText, path: '/admin/templates', permission: 'templates' as AdminPermission },
-  { label: 'Ngành nghề Generate', icon: Tag, path: '/admin/generate-options/industries', permission: 'generate_industries' as AdminPermission },
-  { label: 'Loại nội dung Generate', icon: FileText, path: '/admin/generate-options/copy-types', permission: 'generate_copy_types' as AdminPermission },
-  { label: 'Tone giọng văn Generate', icon: MessageSquare, path: '/admin/generate-options/tones', permission: 'generate_tones' as AdminPermission },
-  { label: 'Gói dịch vụ', icon: Crown, path: '/admin/plans', permission: 'plans' as AdminPermission },
-  { label: 'Thanh toán', icon: DollarSign, path: '/admin/payments', permission: 'payments' as AdminPermission },
-  { label: 'Model AI', icon: Cpu, path: '/admin/models', permission: 'models' as AdminPermission },
-  { label: 'Cài đặt', icon: Settings, path: '/admin/settings', permission: 'settings' as AdminPermission },
-  { label: 'Nhật ký', icon: Shield, path: '/admin/audit-logs', permission: 'audit_logs' as AdminPermission },
-  { label: 'Phân quyền', icon: KeyRound, path: '/admin/permissions', permission: 'permissions' as AdminPermission },
+  { section: 'Tổng quan', label: 'Bảng điều khiển', icon: LayoutDashboard, path: '/admin', permission: 'dashboard' as AdminPermission },
+  { section: 'Nội dung', label: 'Nội dung đã tạo', icon: FileText, path: '/admin/contents', permission: 'contents' as AdminPermission },
+  { section: 'Nội dung', label: 'Mẫu copy', icon: ScrollText, path: '/admin/templates', permission: 'templates' as AdminPermission },
+  { section: 'Cấu hình tạo nội dung', label: 'Ngành nghề', icon: Tag, path: '/admin/generate-options/industries', permission: 'generate_industries' as AdminPermission },
+  { section: 'Cấu hình tạo nội dung', label: 'Loại nội dung', icon: FileText, path: '/admin/generate-options/copy-types', permission: 'generate_copy_types' as AdminPermission },
+  { section: 'Cấu hình tạo nội dung', label: 'Tone giọng', icon: MessageSquare, path: '/admin/generate-options/tones', permission: 'generate_tones' as AdminPermission },
+  { section: 'AI & mô hình', label: 'Mô hình AI', icon: Cpu, path: '/admin/models', permission: 'models' as AdminPermission },
+  { section: 'Người dùng', label: 'Tài khoản', icon: Users, path: '/admin/users', permission: 'users' as AdminPermission },
+  { section: 'Người dùng', label: 'Thông báo', icon: Bell, path: '/admin/notifications', permission: 'notifications' as AdminPermission },
+  { section: 'Tài chính', label: 'Gói dịch vụ', icon: Crown, path: '/admin/plans', permission: 'plans' as AdminPermission },
+  { section: 'Tài chính', label: 'Giao dịch', icon: DollarSign, path: '/admin/payments', permission: 'payments' as AdminPermission },
+  { section: 'Hệ thống', label: 'Phân quyền', icon: KeyRound, path: '/admin/permissions', permission: 'permissions' as AdminPermission },
+  { section: 'Hệ thống', label: 'Nhật ký audit', icon: Shield, path: '/admin/audit-logs', permission: 'audit_logs' as AdminPermission },
+  { section: 'Hệ thống', label: 'Cài đặt', icon: Settings, path: '/admin/settings', permission: 'settings' as AdminPermission },
 ];
 
 export const PERMISSION_ROUTE_MAP: Record<string, AdminPermission> = {
@@ -211,6 +318,17 @@ export const PERMISSION_ROUTE_MAP: Record<string, AdminPermission> = {
   '/admin/audit-logs': 'audit_logs',
   '/admin/permissions': 'permissions',
 };
+
+export function getPermissionForRoute(path: string, scope?: PermissionScope): AdminPermission | undefined {
+  const route = normalizeRoute(path);
+  const matchedPermission = getAdminPermissions().find((permission) => {
+    if (!permission.route) return false;
+    if (!routeMatches(permission.route, route)) return false;
+    return !scope || getPermissionScope(permission) === scope;
+  });
+
+  return matchedPermission?.key ?? PERMISSION_ROUTE_MAP[route];
+}
 
 export function hasPermission(adminRole: AdminRole | undefined, permission: AdminPermission): boolean {
   if (!adminRole) return false;

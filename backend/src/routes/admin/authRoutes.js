@@ -3,8 +3,11 @@ const express = require('express');
 const authController = require('../../controllers/admin/authController');
 const { protect } = require('../../middlewares/auth/authMiddleware');
 const { loginLimiter, otpLimiter } = require('../../middlewares/rateLimit/authRateLimiter');
+const { uploadAvatar } = require('../../middlewares/upload/avatarUpload');
 const validate = require('../../middlewares/validation/validate');
 const {
+  adminPasswordUpdateSchema,
+  adminProfileUpdateSchema,
   forgotPasswordSchema,
   loginSchema,
   resetPasswordSchema,
@@ -16,6 +19,10 @@ const router = express.Router();
 
 router.post('/login', loginLimiter, validate(loginSchema), authController.login);
 router.get('/me', protect('admin'), authController.me);
+router.patch('/me', protect('admin'), validate(adminProfileUpdateSchema), authController.updateProfile);
+router.patch('/me/password', protect('admin'), validate(adminPasswordUpdateSchema), authController.updatePassword);
+router.patch('/me/avatar', protect('admin'), uploadAvatar, authController.updateAvatar);
+router.delete('/me/avatar', protect('admin'), authController.removeAvatar);
 router.patch('/session', protect('admin'), validate(sessionPreferenceSchema), authController.refreshSession);
 router.post('/logout', authController.logout);
 router.post('/forgot-password', otpLimiter, validate(forgotPasswordSchema), authController.forgotPassword);

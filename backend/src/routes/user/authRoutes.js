@@ -18,6 +18,8 @@ const router = express.Router();
 
 router.post('/register', validate(userRegisterSchema), authController.register);
 router.post('/login', loginLimiter, validate(loginSchema), authController.login);
+router.post('/verify-email', otpLimiter, validate(verifyOtpSchema), authController.verifyEmail);
+router.post('/resend-verification', otpLimiter, validate(forgotPasswordSchema), authController.resendVerification);
 router.get('/me', protect('user'), authController.me);
 router.patch('/session', protect('user'), validate(sessionPreferenceSchema), authController.refreshSession);
 router.patch('/me/avatar', protect('user'), uploadAvatar, authController.updateAvatar);

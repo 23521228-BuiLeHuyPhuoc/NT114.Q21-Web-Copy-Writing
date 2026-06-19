@@ -13,8 +13,9 @@ import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
 import { Badge } from '@/app/components/ui/badge';
 import { BrandLogo } from '@/app/components/BrandLogo';
-import { Eye, EyeOff, User, Mail, Lock, ArrowLeft, CheckCircle2, ArrowRight, Crown, Zap, Building2 } from 'lucide-react';
+import { Eye, EyeOff, User, Mail, Lock, ArrowLeft, CheckCircle2, ArrowRight, Crown, Zap, Building2, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { usePublicSystemStatus } from '@/hooks/queries/useSystemSettings';
 
 const PLANS = [
   { id: 'free',  name: 'Miễn Phí', price: '0₫',     icon: Zap,      desc: '30 copy/tháng',         color: 'border-border bg-card',      check: 'bg-muted text-muted-foreground',   badge: '' },
@@ -26,11 +27,16 @@ interface RegisterFormData { name: string; email: string; password: string; conf
 
 export function RegisterPage() {
   const navigate = useNavigate();
-  const { register: registerAccount } = useAuth();
+  const { register: registerAccount, verifyEmail, resendEmailVerification } = useAuth();
+  const { data: systemStatus, isLoading: loadingSystemStatus } = usePublicSystemStatus();
   const [step, setStep] = useState(1);
   const [showPass, setShowPass] = useState(false);
   const [plan, setPlan] = useState('pro');
   const [isLoading, setIsLoading] = useState(false);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState('');
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isResending, setIsResending] = useState(false);
 
   const {
     register: registerField,
@@ -40,8 +46,13 @@ export function RegisterPage() {
   } = useForm<RegisterFormData>({ defaultValues: { name: '', email: '', password: '', confirm: '' } });
 
   const passwordValue = watch('password', '');
+  const registrationClosed = systemStatus?.registrationEnabled === false;
 
   const handleStep1 = (_data: RegisterFormData) => {
+    if (registrationClosed) {
+      toast.error('Hệ thống đang tạm ngừng nhận đăng ký mới');
+      return;
+    }
     setStep(2);
   };
 
@@ -49,17 +60,62 @@ export function RegisterPage() {
     const values = watch();
     setIsLoading(true);
     try {
-      await registerAccount({
+      const result = await registerAccount({
         name: values.name.trim(),
         email: values.email.trim().toLowerCase(),
         password: values.password,
       });
+      if (result.requiresEmailVerification) {
+        setPendingVerificationEmail(values.email.trim().toLowerCase());
+        setVerificationCode('');
+        setStep(3);
+        toast.success('Đã gửi mã xác thực đến email của bạn');
+        return;
+      }
+
       toast.success('Đăng ký thành công! Vui lòng đăng nhập.');
       navigate('/login');
     } catch (err: any) {
       toast.error(err.message || 'Đăng ký thất bại');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleVerifyEmail = async () => {
+    if (!pendingVerificationEmail || verificationCode.trim().length !== 6) {
+      toast.error('Vui lòng nhập mã OTP 6 chữ số');
+      return;
+    }
+
+    setIsVerifying(true);
+    try {
+      await verifyEmail(pendingVerificationEmail, verificationCode.trim());
+      toast.success('Email đã được xác thực. Vui lòng đăng nhập.');
+      navigate('/login');
+    } catch (err: any) {
+      toast.error(err.message || 'Không xác thực được email');
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (!pendingVerificationEmail) return;
+
+    setIsResending(true);
+    try {
+      const result = await resendEmailVerification(pendingVerificationEmail);
+      if (result.alreadyVerified) {
+        toast.success('Email đã được xác thực. Vui lòng đăng nhập.');
+        navigate('/login');
+        return;
+      }
+      toast.success('Đã gửi lại mã xác thực');
+    } catch (err: any) {
+      toast.error(err.message || 'Không gửi lại được mã xác thực');
+    } finally {
+      setIsResending(false);
     }
   };
 
@@ -132,8 +188,23 @@ export function RegisterPage() {
             ))}
           </div>
 
+          {registrationClosed && (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-amber-900">
+              <div className="mb-3 flex items-center gap-2 font-bold">
+                <AlertCircle className="h-5 w-5" />
+                Đăng ký mới đang tạm đóng
+              </div>
+              <p className="text-sm leading-6">
+                Hệ thống hiện không nhận tài khoản mới. Vui lòng quay lại sau hoặc liên hệ hỗ trợ nếu bạn cần được cấp tài khoản.
+              </p>
+              <Link to="/login" className="mt-4 inline-flex h-11 items-center justify-center rounded-xl bg-amber-700 px-4 text-sm font-bold text-white hover:bg-amber-800">
+                Quay lại đăng nhập
+              </Link>
+            </div>
+          )}
+
           {/* ─── STEP 1 ─── */}
-          {step === 1 && (
+          {!registrationClosed && step === 1 && (
             <>
               <div className="mb-7">
                 <h2 className="text-foreground mb-1">Tạo tài khoản</h2>
@@ -185,15 +256,19 @@ export function RegisterPage() {
                   </div>
                   {errors.confirm && <p className="text-xs text-red-600 mt-1">{errors.confirm.message}</p>}
                 </div>
-                <button type="submit" className="w-full h-12 bg-gradient-to-r from-emerald-600 via-green-600 to-green-600 hover:from-emerald-500 hover:via-green-500 hover:to-green-500 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2 mt-2">
-                  Tiếp theo <ArrowRight className="w-4 h-4" />
+                <button
+                  type="submit"
+                  disabled={loadingSystemStatus}
+                  className="w-full h-12 bg-gradient-to-r from-emerald-600 via-green-600 to-green-600 hover:from-emerald-500 hover:via-green-500 hover:to-green-500 disabled:opacity-60 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2 mt-2"
+                >
+                  {loadingSystemStatus ? 'Đang kiểm tra hệ thống...' : 'Tiếp theo'} {!loadingSystemStatus && <ArrowRight className="w-4 h-4" />}
                 </button>
               </form>
             </>
           )}
 
           {/* ─── STEP 2 ─── */}
-          {step === 2 && (
+          {!registrationClosed && step === 2 && (
             <>
               <div className="mb-7">
                 <h2 className="text-foreground mb-1">Chọn gói của bạn</h2>
@@ -249,6 +324,47 @@ export function RegisterPage() {
                 <a href="#" className="text-primary hover:underline">Điều khoản sử dụng</a>{' '}và{' '}
                 <a href="#" className="text-primary hover:underline">Chính sách bảo mật</a>.
               </p>
+            </>
+          )}
+
+          {/* ─── STEP 3 ─── */}
+          {!registrationClosed && step === 3 && (
+            <>
+              <div className="mb-7">
+                <h2 className="text-foreground mb-1">Xác thực email</h2>
+                <p className="text-muted-foreground text-sm">Nhập mã OTP đã gửi đến {pendingVerificationEmail}</p>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-foreground/80 mb-2 block">Mã xác thực</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/80" />
+                    <Input
+                      inputMode="numeric"
+                      maxLength={6}
+                      placeholder="Nhập 6 chữ số"
+                      value={verificationCode}
+                      onChange={event => setVerificationCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
+                      className="pl-10 h-12 rounded-xl border-border focus:border-primary tracking-[0.3em]"
+                    />
+                  </div>
+                </div>
+                <button
+                  onClick={handleVerifyEmail}
+                  disabled={isVerifying || verificationCode.length !== 6}
+                  className="w-full h-12 bg-gradient-to-r from-emerald-600 via-green-600 to-green-600 hover:from-emerald-500 hover:via-green-500 hover:to-green-500 disabled:opacity-60 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-primary/20"
+                >
+                  {isVerifying ? 'Đang xác thực...' : 'Xác thực email'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResendVerification}
+                  disabled={isResending}
+                  className="w-full h-11 rounded-xl border border-border text-sm font-semibold text-foreground/80 hover:bg-surface-muted disabled:opacity-60"
+                >
+                  {isResending ? 'Đang gửi lại...' : 'Gửi lại mã xác thực'}
+                </button>
+              </div>
             </>
           )}
         </div>

@@ -81,6 +81,15 @@ const sessionPreferenceSchema = Joi.object({
   rememberLogin: Joi.boolean().required(),
 });
 
+const adminProfileUpdateSchema = Joi.object({
+  name,
+});
+
+const adminPasswordUpdateSchema = Joi.object({
+  currentPassword: loginPassword,
+  newPassword: strongPassword,
+});
+
 const forgotPasswordSchema = Joi.object({
   email,
 });
@@ -100,6 +109,8 @@ module.exports = {
   userRegisterSchema,
   loginSchema,
   sessionPreferenceSchema,
+  adminProfileUpdateSchema,
+  adminPasswordUpdateSchema,
   forgotPasswordSchema,
   verifyOtpSchema,
   resetPasswordSchema,

@@ -1,6 +1,8 @@
 const asyncHandler = require('../../utils/asyncHandler');
 const authService = require('../../services/authService');
+const cloudinaryService = require('../../services/cloudinaryService');
 const { clearAuthCookie, setAuthCookie } = require('../../utils/authCookie');
+const createError = require('../../utils/createError');
 
 const login = asyncHandler(async (req, res) => {
   const rememberLogin = req.body.rememberLogin === true;
@@ -35,6 +37,61 @@ const me = asyncHandler(async (req, res) => {
     message: 'OK',
     data: {
       user: authService.serializeAccount(req.auth.account, 'admin'),
+    },
+  });
+});
+
+const updateProfile = asyncHandler(async (req, res) => {
+  const user = await authService.updateAdminProfile(req.user._id, req.body);
+
+  return res.status(200).json({
+    success: true,
+    message: 'Profile updated',
+    data: { user },
+  });
+});
+
+const updatePassword = asyncHandler(async (req, res) => {
+  const user = await authService.updateAdminPassword(
+    req.user._id,
+    req.body.currentPassword,
+    req.body.newPassword,
+  );
+
+  return res.status(200).json({
+    success: true,
+    message: 'Password updated',
+    data: { user },
+  });
+});
+
+const updateAvatar = asyncHandler(async (req, res) => {
+  if (!req.file) {
+    throw createError(400, 'Avatar file is required');
+  }
+
+  const uploaded = await cloudinaryService.uploadAdminAvatar(req.user._id, req.file);
+  const user = await authService.updateAdminAvatar(req.user._id, uploaded.url);
+
+  return res.status(200).json({
+    success: true,
+    message: 'Avatar updated',
+    data: {
+      user,
+      avatar: uploaded.url,
+    },
+  });
+});
+
+const removeAvatar = asyncHandler(async (req, res) => {
+  const user = await authService.removeAdminAvatar(req.user._id);
+
+  return res.status(200).json({
+    success: true,
+    message: 'Avatar removed',
+    data: {
+      user,
+      avatar: '',
     },
   });
 });
@@ -82,6 +139,10 @@ module.exports = {
   login,
   me,
   refreshSession,
+  updateProfile,
+  updatePassword,
+  updateAvatar,
+  removeAvatar,
   logout,
   forgotPassword,
   verifyOtp,

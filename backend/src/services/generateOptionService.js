@@ -18,7 +18,7 @@ const DEFAULT_OPTIONS = {
     { name: 'Tài chính', slug: 'finance', description: 'Ngân hàng, bảo hiểm, đầu tư và fintech.', icon: 'DollarSign', color: 'bg-emerald-500', order: 7 },
     { name: 'Thời trang', slug: 'fashion', description: 'Quần áo, phụ kiện, làm đẹp và phong cách.', icon: 'Shirt', color: 'bg-pink-500', order: 8 },
     { name: 'Doanh nghiệp', slug: 'business', description: 'Dịch vụ B2B, tư vấn và vận hành doanh nghiệp.', icon: 'Briefcase', color: 'bg-slate-500', order: 9 },
-    { name: 'Du lịch', slug: 'travel', description: 'Tour, khách sạn, điểm đến và dịch vụ du lịch.', icon: 'Plane', color: 'bg-cyan-500', order: 10 },
+    { name: 'Du lịch', slug: 'travel', description: 'Tour, khách sạn, điểm đến và dịch vụ du lịch.', icon: 'Luggage', color: 'bg-cyan-500', order: 10 },
   ],
   copy_type: [
     { name: 'Tiêu đề quảng cáo', slug: 'headline', description: 'Headline ngắn gọn, thu hút click.', icon: 'Megaphone', order: 1 },
@@ -133,7 +133,7 @@ async function migrateLegacyDefaultLabels(group) {
   const legacyNames = LEGACY_DEFAULT_NAMES[group] || {};
   const defaults = DEFAULT_OPTIONS[group] || [];
 
-  await Promise.all(defaults.map((item) => {
+  const labelUpdates = defaults.map((item) => {
     const legacyName = legacyNames[item.slug];
     if (!legacyName) return null;
 
@@ -141,7 +141,20 @@ async function migrateLegacyDefaultLabels(group) {
       { group, slug: item.slug, name: legacyName },
       { $set: { name: item.name, description: item.description } },
     );
-  }).filter(Boolean));
+  }).filter(Boolean);
+
+  const metadataUpdates = [];
+  if (group === 'industry') {
+    const travelDefault = defaults.find((item) => item.slug === 'travel');
+    if (travelDefault) {
+      metadataUpdates.push(GenerateOption.updateOne(
+        { group, slug: 'travel', icon: { $in: ['Plane', 'plane', 'Transplant', 'transplant', ''] } },
+        { $set: { icon: travelDefault.icon, color: travelDefault.color } },
+      ));
+    }
+  }
+
+  await Promise.all([...labelUpdates, ...metadataUpdates]);
 }
 
 async function ensureSlugAvailable(group, slug, exceptId) {

@@ -573,8 +573,23 @@ function getRiskLevel(similarityScore) {
   return 'safe';
 }
 
+function maxCount(values) {
+  return Math.max(0, ...values.map((value) => Number(value || 0)).filter(Number.isFinite));
+}
+
+function getComparedSourceCount(analysis = {}, sources = [], matches = []) {
+  return maxCount([
+    analysis.candidateCount,
+    analysis.sourceCount,
+    Array.isArray(sources) ? sources.length : 0,
+    Number(analysis.matchCount || 0) > 0 ? 1 : 0,
+    Number(analysis.topicMatchCount || 0) > 0 ? 1 : 0,
+    Array.isArray(matches) && matches.length > 0 ? 1 : 0,
+  ]);
+}
+
 function buildSummary(similarityScore, sources, matches, analysis = {}) {
-  const loadedSourceCount = Number(analysis.candidateCount ?? sources.length ?? 0);
+  const loadedSourceCount = getComparedSourceCount(analysis, sources, matches);
   const commonCrawl = analysis.commonCrawl || {};
   const topicSimilarityScore = Number(analysis.topicSimilarityScore || analysis.wordOverlapScore || 0);
 
@@ -712,8 +727,10 @@ function serializeReport(report) {
     ...topicMatches.map((match) => match.score),
     ...sources.map((source) => source.topicSimilarityScore),
   ]);
+  const candidateCount = getComparedSourceCount(rawAnalysis, report.sources || [], matches);
   const analysis = {
     ...rawAnalysis,
+    candidateCount,
     matchCount: matches.length,
     topicMatchCount: topicMatches.length,
     sourceCount: sources.length,

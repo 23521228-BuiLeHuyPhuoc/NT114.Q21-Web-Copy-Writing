@@ -42,13 +42,13 @@ const paymentSchema = new mongoose.Schema(
     },
     method: {
       type: String,
-      enum: ['cash', 'bank', 'momo', 'zalo', 'vnpay', 'visa', 'manual'],
+      enum: ['cash', 'bank', 'momo', 'zalo', 'vnpay', 'vietqr', 'visa', 'manual'],
       default: 'manual',
       index: true,
     },
     provider: {
       type: String,
-      enum: ['mock', 'manual', 'stripe', 'vnpay', 'zalopay'],
+      enum: ['mock', 'manual', 'stripe', 'vnpay', 'zalopay', 'vietqr'],
       default: 'mock',
     },
     status: {

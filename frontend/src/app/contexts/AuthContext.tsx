@@ -28,6 +28,8 @@ export function useAuth() {
       isLoading: s.isLoading,
       login: s.login,
       register: s.register,
+      verifyEmail: s.verifyEmail,
+      resendEmailVerification: s.resendEmailVerification,
       updateUser: s.updateUser,
       updateRememberLogin: s.updateRememberLogin,
       logout: s.logout,

@@ -13,7 +13,20 @@ interface AuthApiResponse {
   data?: {
     token?: string;
     user?: User;
+    requiresEmailVerification?: boolean;
+    expiresInSeconds?: number;
+    alreadyVerified?: boolean;
   };
+}
+
+interface RegisterResult {
+  requiresEmailVerification?: boolean;
+  expiresInSeconds?: number;
+}
+
+interface ResendVerificationResult {
+  expiresInSeconds?: number;
+  alreadyVerified?: boolean;
 }
 
 function canUseStorage() {
@@ -88,7 +101,9 @@ interface AuthState {
   isLoading: boolean;
   hydrate: () => Promise<void>;
   login: (email: string, password: string, accountType?: AccountType, rememberLogin?: boolean) => Promise<User>;
-  register: (data: RegisterData) => Promise<void>;
+  register: (data: RegisterData) => Promise<RegisterResult>;
+  verifyEmail: (email: string, otp: string) => Promise<void>;
+  resendEmailVerification: (email: string) => Promise<ResendVerificationResult>;
   updateUser: (user: User) => void;
   updateRememberLogin: (rememberLogin: boolean, accountType?: AccountType) => Promise<void>;
   logout: () => Promise<void>;
@@ -144,13 +159,38 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   register: async (data) => {
     try {
-      await api.post<AuthApiResponse>('/auth/user/register', {
+      const response = await api.post<AuthApiResponse>('/auth/user/register', {
         name: data.name,
         email: data.email,
         password: data.password,
       });
+
+      return {
+        requiresEmailVerification: response.data.data?.requiresEmailVerification,
+        expiresInSeconds: response.data.data?.expiresInSeconds,
+      };
     } catch (error) {
       throw new Error(getErrorMessage(error, 'Dang ky that bai'));
+    }
+  },
+
+  verifyEmail: async (email, otp) => {
+    try {
+      await api.post<AuthApiResponse>('/auth/user/verify-email', { email, otp });
+    } catch (error) {
+      throw new Error(getErrorMessage(error, 'Xac thuc email that bai'));
+    }
+  },
+
+  resendEmailVerification: async (email) => {
+    try {
+      const response = await api.post<AuthApiResponse>('/auth/user/resend-verification', { email });
+      return {
+        expiresInSeconds: response.data.data?.expiresInSeconds,
+        alreadyVerified: response.data.data?.alreadyVerified,
+      };
+    } catch (error) {
+      throw new Error(getErrorMessage(error, 'Khong gui lai duoc ma xac thuc'));
     }
   },
 

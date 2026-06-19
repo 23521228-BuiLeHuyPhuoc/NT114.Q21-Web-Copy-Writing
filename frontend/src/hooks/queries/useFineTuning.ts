@@ -50,7 +50,7 @@ export function useFineTuneJobs() {
 export function useFineTuningModels() {
   return useQuery({
     queryKey: fineTuningKeys.models(),
-    queryFn: () => fineTuningService.listModels(),
+    queryFn: () => fineTuningService.listModels({ limit: 100 }),
     refetchInterval: 5000,
     refetchIntervalInBackground: true,
   });

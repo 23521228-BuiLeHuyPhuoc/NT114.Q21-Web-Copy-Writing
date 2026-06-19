@@ -3,19 +3,19 @@ import {
 } from 'lucide-react';
 
 export const BREADCRUMB_MAP: Record<string, string> = {
-  '/dashboard':        'Dashboard',
-  '/generate':         'AI Generator',
-  '/contents':         'Nội Dung',
-  '/history':          'Lịch Sử',
-  '/projects':         'Dự Án',
-  '/templates':        'Mẫu Copy',
-  '/fine-tune':        'Fine-tuning Studio',
-  '/plagiarism-check': 'Kiểm Tra Đạo Văn',
-  '/profile':          'Hồ Sơ',
-  '/billing':          'Thanh Toán',
-  '/notifications':    'Thông Báo',
-  '/subscription':     'Gói Dịch Vụ',
-  '/api-keys':         'API Keys',
+  '/dashboard':        'Bảng điều khiển',
+  '/generate':         'Tạo nội dung AI',
+  '/contents':         'Nội dung của tôi',
+  '/history':          'Lịch sử',
+  '/projects':         'Dự án',
+  '/templates':        'Mẫu copy',
+  '/fine-tune':        'Fine-tuning',
+  '/plagiarism-check': 'Kiểm tra đạo văn',
+  '/profile':          'Hồ sơ',
+  '/billing':          'Gói & thanh toán',
+  '/notifications':    'Thông báo',
+  '/subscription':     'Gói dịch vụ',
+  '/api-keys':         'Khóa API',
 };
 
 export const MOCK_NOTIFICATIONS = [
@@ -26,9 +26,9 @@ export const MOCK_NOTIFICATIONS = [
 ];
 
 export const QUICK_ACTIONS = [
-  { label: 'AI Generator', icon: Wand2,     path: '/generate',         color: 'bg-green-500' },
+  { label: 'Tạo nội dung', icon: Wand2,     path: '/generate',         color: 'bg-green-500' },
   { label: 'Nội dung',     icon: FileText,   path: '/contents',         color: 'bg-green-500' },
   { label: 'Dự án',        icon: FolderOpen, path: '/projects',         color: 'bg-emerald-500' },
-  { label: 'Fine-tune',    icon: Brain,      path: '/fine-tune',        color: 'bg-teal-500' },
-  { label: 'API Keys',     icon: Key,        path: '/api-keys',         color: 'bg-orange-500' },
+  { label: 'Fine-tuning',  icon: Brain,      path: '/fine-tune',        color: 'bg-teal-500' },
+  { label: 'Khóa API',     icon: Key,        path: '/api-keys',         color: 'bg-orange-500' },
 ];

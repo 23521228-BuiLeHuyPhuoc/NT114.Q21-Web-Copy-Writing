@@ -572,9 +572,9 @@ export const fineTuningService = {
     }
   },
 
-  async listModels() {
+  async listModels(params?: { page?: number; limit?: number; search?: string; industry?: string; activeOnly?: boolean }) {
     try {
-      const response = await api.get<ApiResponse<ApiList<BackendFineTunedModel>>>('/fine-tune/models');
+      const response = await api.get<ApiResponse<ApiList<BackendFineTunedModel>>>('/fine-tune/models', { params });
       return (response.data.data?.items || []).map(normalizeRegistryModel);
     } catch (error) {
       throw new Error(getErrorMessage(error, 'Khong the tai danh sach fine-tuned models'));

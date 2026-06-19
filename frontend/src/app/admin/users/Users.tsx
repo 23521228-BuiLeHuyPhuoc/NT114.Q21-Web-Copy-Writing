@@ -68,6 +68,7 @@ export function AdminUsers() {
   const [addName, setAddName] = useState('');
   const [addEmail, setAddEmail] = useState('');
   const [addPassword, setAddPassword] = useState('');
+  const [addConfirmPassword, setAddConfirmPassword] = useState('');
   const [addRole, setAddRole] = useState<UserRole>('customer');
   const [addAdminRole, setAddAdminRole] = useState<AdminRole>('analyst');
   const [addStatus, setAddStatus] = useState<UserStatus>('active');
@@ -107,6 +108,7 @@ export function AdminUsers() {
     setAddName('');
     setAddEmail('');
     setAddPassword('');
+    setAddConfirmPassword('');
     setAddRole('customer');
     setAddAdminRole('analyst');
     setAddStatus('active');
@@ -180,12 +182,16 @@ export function AdminUsers() {
   };
 
   const handleCreateUser = async () => {
-    if (!addName.trim() || !addEmail.trim() || !addPassword.trim()) {
-      toast.error('Vui lòng nhập đầy đủ tên, email và mật khẩu');
+    if (!addName.trim() || !addEmail.trim() || !addPassword.trim() || !addConfirmPassword.trim()) {
+      toast.error('Vui lòng nhập đầy đủ tên, email, mật khẩu và xác nhận mật khẩu');
       return;
     }
     if (addPassword.length < 8) {
       toast.error('Mật khẩu phải có ít nhất 8 ký tự');
+      return;
+    }
+    if (addPassword !== addConfirmPassword) {
+      toast.error('Mật khẩu xác nhận không khớp');
       return;
     }
 
@@ -434,6 +440,10 @@ export function AdminUsers() {
             <div>
               <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Mật khẩu</Label>
               <Input type="password" value={addPassword} onChange={event => setAddPassword(event.target.value)} placeholder="Tối thiểu 8 ký tự" className="h-10" />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Xác nhận mật khẩu</Label>
+              <Input type="password" value={addConfirmPassword} onChange={event => setAddConfirmPassword(event.target.value)} placeholder="Nhập lại mật khẩu" className="h-10" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>

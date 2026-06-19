@@ -215,15 +215,12 @@ function hasTrainingSignals(metric: TrainingMetric) {
 }
 
 function getMetricSourceLabel(metric?: TrainingMetric & { source?: string }) {
-  if (!metric) return 'Provider chưa trả metric thật';
-  if (metric.source === 'provider') return 'Token thực tế từ provider';
-  if (metric.source === 'progress_estimate') return 'Ước tính theo tiến trình training';
-  if (metric.source === 'seed' || isSeedMetric(metric)) return 'Token dataset ước tính';
-  return 'Token usage đã ghi nhận';
+  if (!metric || metric.source !== 'provider') return 'Provider chưa trả token thật';
+  return 'Token thực tế từ provider';
 }
 
-function buildTokenUsageCard(metrics: Array<TrainingMetric & { source?: string }>, seedMetric?: TrainingMetric & { source?: string }): MetricCard {
-  const tokenMetrics = metrics.filter(metric => !isSeedMetric(metric) && Number(metric.tokenUsage || 0) > 0);
+function buildTokenUsageCard(metrics: Array<TrainingMetric & { source?: string }>): MetricCard {
+  const tokenMetrics = metrics.filter(metric => metric.source === 'provider' && Number(metric.tokenUsage || 0) > 0);
   const latestTokenMetric = tokenMetrics[tokenMetrics.length - 1];
 
   if (latestTokenMetric) {
@@ -231,20 +228,11 @@ function buildTokenUsageCard(metrics: Array<TrainingMetric & { source?: string }
       label: 'Token Usage',
       value: formatTokenCount(latestTokenMetric.tokenUsage),
       prev: getMetricSourceLabel(latestTokenMetric),
-      trend: latestTokenMetric.source === 'provider' ? 'actual' : 'estimated',
+      trend: 'actual',
     };
   }
 
-  if (seedMetric?.tokenUsage) {
-    return {
-      label: 'Token Usage',
-      value: formatTokenCount(seedMetric.tokenUsage),
-      prev: getMetricSourceLabel(seedMetric),
-      trend: 'estimated',
-    };
-  }
-
-  return { label: 'Token Usage', value: 'Đang chờ', prev: 'Provider chưa trả metric thật', trend: 'pending' };
+  return { label: 'Token Usage', value: 'Đang chờ', prev: 'Provider chưa trả token thật', trend: 'pending' };
 }
 
 function formatMetricValue(value: number, decimals = 3, suffix = '') {
@@ -581,7 +569,6 @@ export function CustomerFineTuningStudio() {
   const statusColor = (s: string) => ({ ready: 'bg-primary/10 text-primary', training: 'bg-primary/10 text-primary', failed: 'bg-destructive/10 text-destructive', pending: 'bg-muted text-foreground/70' }[s] ?? 'bg-muted text-foreground/70');
   const statusLabel = (s: string) => ({ ready: 'Sẵn sàng', training: 'Đang training', failed: 'Thất bại', pending: 'Chờ xử lý' }[s] ?? s);
 
-  const seedMetric = metrics.find(isSeedMetric);
   const trainingSignalMetrics = metrics.filter(hasTrainingSignals);
   const latestMetric = trainingSignalMetrics[trainingSignalMetrics.length - 1];
   const firstMetric = trainingSignalMetrics[0];
@@ -597,11 +584,11 @@ export function CustomerFineTuningStudio() {
     latestMetric
       ? buildMetricCard('Accuracy', latestMetric.accuracy, firstMetric?.accuracy, false, 1, '%')
       : { label: 'Accuracy', value: waitingValue, prev: noProviderMetricText, trend: 'pending' },
-    buildTokenUsageCard(metrics, seedMetric),
+    buildTokenUsageCard(metrics),
   ];
   const metricHelpText = latestMetric
-    ? 'Loss th\u1ea5p h\u01a1n v\u00e0 Accuracy cao h\u01a1n th\u01b0\u1eddng l\u00e0 d\u1ea5u hi\u1ec7u model \u0111ang h\u1ecdc t\u1ed1t. Ch\u1ec9 so s\u00e1nh khi provider \u0111\u00e3 tr\u1ea3 metric th\u1eadt.'
-    : 'Ch\u01b0a c\u00f3 loss/accuracy th\u1eadt t\u1eeb provider cho job n\u00e0y. UI kh\u00f4ng hi\u1ec3n th\u1ecb metric seed nh\u01b0 k\u1ebft qu\u1ea3 training.';
+    ? 'Loss th\u1ea5p h\u01a1n v\u00e0 Accuracy cao h\u01a1n th\u01b0\u1eddng l\u00e0 d\u1ea5u hi\u1ec7u model \u0111ang h\u1ecdc t\u1ed1t. Token Usage ch\u1ec9 hi\u1ec3n th\u1ecb khi provider tr\u1ea3 s\u1ed1 token th\u1eadt.'
+    : 'Ch\u01b0a c\u00f3 metric th\u1eadt t\u1eeb provider cho job n\u00e0y. UI kh\u00f4ng hi\u1ec3n th\u1ecb metric seed ho\u1eb7c token \u01b0\u1edbc t\u00ednh nh\u01b0 k\u1ebft qu\u1ea3 training.';
 
   return (
     <Layout>

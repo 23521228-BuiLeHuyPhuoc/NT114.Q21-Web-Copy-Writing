@@ -5,12 +5,14 @@ const { clearAuthCookie, setAuthCookie } = require('../../utils/authCookie');
 const createError = require('../../utils/createError');
 
 const register = asyncHandler(async (req, res) => {
-  const user = await authService.registerUser(req.body);
+  const result = await authService.registerUser(req.body);
 
   return res.status(201).json({
     success: true,
-    message: 'User registered successfully',
-    data: { user },
+    message: result.requiresEmailVerification
+      ? 'User registered successfully. Email verification is required.'
+      : 'User registered successfully',
+    data: result,
   });
 });
 
@@ -112,6 +114,26 @@ const verifyOtp = asyncHandler(async (req, res) => {
   });
 });
 
+const verifyEmail = asyncHandler(async (req, res) => {
+  const user = await authService.verifyUserEmail(req.body.email, req.body.otp);
+
+  return res.status(200).json({
+    success: true,
+    message: 'Email verified',
+    data: { user },
+  });
+});
+
+const resendVerification = asyncHandler(async (req, res) => {
+  const data = await authService.resendUserEmailVerification(req.body.email);
+
+  return res.status(200).json({
+    success: true,
+    message: data.alreadyVerified ? 'Email is already verified' : 'Verification OTP has been sent',
+    data,
+  });
+});
+
 const resetPassword = asyncHandler(async (req, res) => {
   await authService.resetPassword('user', req.body.email, req.body.otp, req.body.newPassword);
 
@@ -131,5 +153,7 @@ module.exports = {
   logout,
   forgotPassword,
   verifyOtp,
+  verifyEmail,
+  resendVerification,
   resetPassword,
 };

@@ -45,8 +45,19 @@ const markNotificationRead = asyncHandler(async (req, res) => {
   });
 });
 
+const markAllNotificationsRead = asyncHandler(async (req, res) => {
+  const result = await notificationService.markAllAdminNotificationsRead(req.user._id);
+
+  return res.status(200).json({
+    success: true,
+    message: 'Notifications marked as read',
+    data: result,
+  });
+});
+
 module.exports = {
   listNotifications,
   sendNotification,
   markNotificationRead,
+  markAllNotificationsRead,
 };

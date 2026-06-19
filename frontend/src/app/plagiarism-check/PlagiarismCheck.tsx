@@ -394,9 +394,9 @@ function coverageWarning(level: string, candidateCount: number) {
     return `Độ phủ trung bình: đã dùng ${candidateCount} nguồn web, đủ để rà soát sơ bộ nhưng chưa đại diện toàn bộ web.`;
   }
   if (level === 'low') {
-    return `Độ phủ thấp: chỉ dùng ${candidateCount} nguồn web, chưa đủ để kết luận nội dung không đạo văn.`;
+    return `Độ phủ web thấp: đã dùng ${candidateCount} nguồn web; kết luận chỉ áp dụng trên các nguồn đã nạp và chưa đại diện toàn bộ web.`;
   }
-  return 'Chưa nạp được nguồn web, chưa đủ để kết luận nội dung không đạo văn.';
+  return 'Chưa nạp được nguồn web; kết luận chỉ dựa trên các nguồn khác đã bật, nếu có.';
 }
 
 function shouldShowCdxError(commonCrawl: PlagiarismReport['analysis']['commonCrawl']) {
@@ -431,6 +431,18 @@ function checkedUrlStatusLabel(item: PlagiarismReport['analysis']['commonCrawl']
   return 'Không dùng';
 }
 
+function comparisonSourceCount(report: PlagiarismReport, matchCount = report.matches.length, topicMatchCount = report.topicMatches.length) {
+  const counts = [
+    report.analysis.candidateCount,
+    report.analysis.sourceCount,
+    report.analysis.commonCrawl?.candidateCount,
+    report.sources.length,
+    matchCount > 0 || topicMatchCount > 0 ? 1 : 0,
+  ].map(Number).filter(Number.isFinite);
+
+  return Math.max(0, ...counts);
+}
+
 function plagiarismConclusion(report: PlagiarismReport, visibleMatchCount?: number, visibleTopicMatchCount?: number, visiblePlagiarismScore?: number) {
   const plagiarism = Math.round(visiblePlagiarismScore ?? report.analysis.plagiarismScore ?? report.similarityScore ?? 0);
   const topicSimilarity = Math.round(report.analysis.topicSimilarityScore || report.analysis.wordOverlapScore || 0);
@@ -438,32 +450,25 @@ function plagiarismConclusion(report: PlagiarismReport, visibleMatchCount?: numb
   const threshold = report.analysis.effectiveThreshold || report.threshold || 35;
   const matchCount = visibleMatchCount ?? (report.analysis.matchCount || report.matches.length);
   const topicMatchCount = visibleTopicMatchCount ?? (report.analysis.topicMatchCount || report.topicMatches.length);
-  const loadedSources = report.analysis.candidateCount || 0;
-  const sourceText = `${loadedSources} nguồn đã nạp, ${matchCount} đoạn vượt ngưỡng ${threshold}%, ${topicMatchCount} đoạn tương đồng chủ đề, tương đồng chủ đề ${topicSimilarity}%`;
-
-  if (loadedSources <= 0) {
-    return {
-      icon: 'warn' as const,
-      className: 'border-amber-200 bg-amber-50 text-amber-950',
-      iconClassName: 'text-amber-600',
-      label: 'Chưa đủ dữ liệu để kết luận',
-      description: `Nguy cơ đạo văn tạm tính ${plagiarism}%, nhưng hệ thống chưa nạp được nguồn để so khớp đáng tin cậy.`,
-      detail: sourceText,
-    };
-  }
+  const loadedSources = comparisonSourceCount(report, matchCount, topicMatchCount);
+  const sourceText = `${loadedSources} nguồn đã so khớp, ${matchCount} đoạn vượt ngưỡng ${threshold}%, ${topicMatchCount} đoạn tương đồng chủ đề, tương đồng chủ đề ${topicSimilarity}%`;
 
   if (matchCount > 0 || plagiarism >= threshold) {
+    const evidenceDescription = matchCount > 0
+      ? `Hệ thống tìm thấy ${matchCount} đoạn vượt ngưỡng ${threshold}%.`
+      : `Điểm exact/n-gram đã vượt ngưỡng ${threshold}% trên nguồn đã so khớp.`;
+
     return {
       icon: 'warn' as const,
       className: 'border-red-200 bg-red-50 text-red-950',
       iconClassName: 'text-red-600',
       label: 'Có dấu hiệu đạo văn, cần rà soát',
-      description: `Nguy cơ đạo văn cao nhất là ${plagiarism}%. Hệ thống tìm thấy ${matchCount} đoạn vượt ngưỡng ${threshold}%.`,
+      description: `Nguy cơ đạo văn cao nhất là ${plagiarism}%. ${evidenceDescription}`,
       detail: `${sourceText}; độ độc đáo còn ${originality}%. Nên viết lại các đoạn được bôi đỏ trước khi sử dụng.`,
     };
   }
 
-  if (topicSimilarity >= 20) {
+  if (topicSimilarity >= 20 || topicMatchCount > 0) {
     return {
       icon: 'warn' as const,
       className: 'border-amber-200 bg-amber-50 text-amber-950',
@@ -471,6 +476,17 @@ function plagiarismConclusion(report: PlagiarismReport, visibleMatchCount?: numb
       label: 'Tương đồng chủ đề, chưa đủ bằng chứng đạo văn',
       description: `Nguy cơ đạo văn chỉ ${plagiarism}%, chưa có đoạn vượt ngưỡng ${threshold}%. Tương đồng chủ đề/từ khóa là ${topicSimilarity}%.`,
       detail: `${sourceText}; không xem overlap từ là đạo văn nếu exact/n-gram thấp.`,
+    };
+  }
+
+  if (loadedSources <= 0) {
+    return {
+      icon: 'warn' as const,
+      className: 'border-amber-200 bg-amber-50 text-amber-950',
+      iconClassName: 'text-amber-600',
+      label: 'Chưa đủ dữ liệu để kết luận',
+      description: 'Hệ thống chưa có nguồn nào để so khớp, nên chưa thể đánh giá đạo văn theo nguồn.',
+      detail: sourceText,
     };
   }
 
@@ -483,7 +499,6 @@ function plagiarismConclusion(report: PlagiarismReport, visibleMatchCount?: numb
     detail: `${sourceText}; độ độc đáo ${originality}%. Kết luận chỉ áp dụng trên các nguồn đã nạp.`,
   };
 }
-
 function durationLabel(ms: number) {
   if (!ms) return '0s';
   const seconds = ms / 1000;
@@ -517,6 +532,8 @@ export function CustomerPlagiarismCheck() {
   const displaySources = result && (displayMatches.length > 0 || displayTopicMatches.length > 0)
     ? result.sources.filter((source) => countWords(removeIgnoredPhrasesFromText(source.sourceText || source.snippet, result.ignoredPhrases)) >= 3)
     : [];
+  const visibleComparedSourceCount = result ? comparisonSourceCount(result, displayMatches.length, displayTopicMatches.length) : 0;
+  const visibleSignalSourceCount = result ? Math.max(result.analysis.sourceCount || 0, displaySources.length) : 0;
   const visibleSummary = result && visiblePlagiarismScore === 0 && displayTopicMatches.length === 0
     ? 'Không còn đoạn nào vượt ngưỡng sau khi áp dụng danh sách bỏ qua.'
     : result?.summary || '';
@@ -736,7 +753,7 @@ export function CustomerPlagiarismCheck() {
               <div className='min-w-0 rounded-lg border bg-muted/30 p-4 text-sm'>
                 <h3 className='font-semibold text-foreground'>Thông số lần kiểm tra</h3>
                 <div className='mt-3 min-w-0 space-y-2 overflow-hidden text-xs text-muted-foreground'>
-                  <p>Đã nạp {result.analysis.candidateCount} nguồn để so khớp; {result.analysis.sourceCount} nguồn có tín hiệu tương đồng: {result.analysis.checkedSourceTypes.map(sourceTypeLabel).join(', ') || 'không có nguồn'}.</p>
+                  <p>Đã so khớp {visibleComparedSourceCount} nguồn; {visibleSignalSourceCount} nguồn có tín hiệu tương đồng: {result.analysis.checkedSourceTypes.map(sourceTypeLabel).join(', ') || 'không có nguồn'}.</p>
                   <p>Tìm thấy {displayMatches.length} đoạn vượt ngưỡng và {displayTopicMatches.length} đoạn tương đồng chủ đề trong {result.wordCount} từ kiểm tra.</p>
                   <p>Chế độ: {SENSITIVITY[result.sensitivity].label}; {result.ignoreCommonPhrases ? 'đã bỏ qua cụm CTA/câu mẫu phổ biến' : 'không bỏ qua cụm phổ biến'}.</p>
                   {result.ignoredPhrases.length > 0 && <p>Đoạn/cụm tự bỏ qua: {breakableShortList(result.ignoredPhrases, 3)}</p>}

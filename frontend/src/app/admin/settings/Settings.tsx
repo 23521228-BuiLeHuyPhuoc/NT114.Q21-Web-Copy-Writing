@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Layout } from '@/app/components/Layout';
 import { Card } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
@@ -15,16 +15,23 @@ import {
   Database, Clock, Lock, Eye, EyeOff
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import {
+  useAdminSystemSettings,
+  useUpdateAdminSystemSettings,
+} from '@/hooks/queries/useSystemSettings';
 
 export function AdminSettings() {
+  const { data: systemSettings, isLoading: loadingSystemSettings, error: systemSettingsError } = useAdminSystemSettings();
+  const updateSystemSettings = useUpdateAdminSystemSettings();
   const [showKeys, setShowKeys] = useState<Record<string, boolean>>({});
   const [settings, setSettings] = useState({
     siteName: 'CopyPro',
     siteUrl: 'https://copypro.vn',
     supportEmail: 'support@copypro.vn',
     maintenanceMode: false,
+    maintenanceMessage: 'Hệ thống đang bảo trì. Vui lòng quay lại sau.',
     registrationEnabled: true,
-    emailVerification: true,
+    emailVerificationRequired: false,
     defaultModel: 'gpt-4o',
     defaultLanguage: 'vi',
     maxCopyLength: 2000,
@@ -44,9 +51,43 @@ export function AdminSettings() {
     maxTokensPerRequest: [2000],
   });
 
+  useEffect(() => {
+    if (!systemSettings) return;
+    setSettings((prev) => ({
+      ...prev,
+      siteName: systemSettings.siteName,
+      supportEmail: systemSettings.supportEmail,
+      maintenanceMode: systemSettings.maintenanceMode,
+      maintenanceMessage: systemSettings.maintenanceMessage,
+      registrationEnabled: systemSettings.registrationEnabled,
+      emailVerificationRequired: systemSettings.emailVerificationRequired,
+    }));
+  }, [systemSettings]);
+
+  useEffect(() => {
+    if (systemSettingsError) {
+      toast.error('Không tải được cài đặt hệ thống');
+    }
+  }, [systemSettingsError]);
+
   const toggle = (key: string) => setShowKeys(p => ({...p, [key]: !p[key]}));
   const update = (key: string, val: any) => setSettings(p => ({...p, [key]: val}));
-  const save = () => toast.success('Đã lưu cài đặt thành công!');
+  const save = async () => {
+    try {
+      await updateSystemSettings.mutateAsync({
+        siteName: settings.siteName,
+        supportEmail: settings.supportEmail,
+        maintenanceMode: settings.maintenanceMode,
+        maintenanceMessage: settings.maintenanceMessage,
+        registrationEnabled: settings.registrationEnabled,
+        emailVerificationRequired: settings.emailVerificationRequired,
+      });
+      toast.success('Đã lưu cài đặt hệ thống');
+    } catch (error) {
+      const err = error as { response?: { data?: { message?: string } }; message?: string };
+      toast.error(err.response?.data?.message || err.message || 'Không lưu được cài đặt hệ thống');
+    }
+  };
 
   return (
     <Layout>
@@ -88,11 +129,16 @@ export function AdminSettings() {
             </Card>
 
             <Card className="p-6 space-y-4">
-              <h3 className="font-semibold text-foreground">Chế độ hoạt động</h3>
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="font-semibold text-foreground">Chế độ hoạt động</h3>
+                {loadingSystemSettings && (
+                  <span className="text-xs text-muted-foreground">Đang tải cài đặt...</span>
+                )}
+              </div>
               {[
                 { key: 'maintenanceMode', label: 'Chế độ bảo trì', desc: 'Hiển thị trang bảo trì cho người dùng. Admin vẫn truy cập được.', danger: true },
                 { key: 'registrationEnabled', label: 'Cho phép đăng ký mới', desc: 'Tắt để ngừng nhận người dùng mới.' },
-                { key: 'emailVerification', label: 'Xác thực email bắt buộc', desc: 'Yêu cầu xác thực email khi đăng ký.' },
+                { key: 'emailVerificationRequired', label: 'Xác thực email bắt buộc', desc: 'Yêu cầu xác thực email khi đăng ký.' },
               ].map(s => (
                 <div key={s.key} className="flex items-center justify-between p-4 border rounded-xl">
                   <div>
@@ -102,6 +148,17 @@ export function AdminSettings() {
                   <Switch checked={(settings as any)[s.key]} onCheckedChange={v => update(s.key, v)} />
                 </div>
               ))}
+              {settings.maintenanceMode && (
+                <div>
+                  <Label>Nội dung trang bảo trì</Label>
+                  <Textarea
+                    value={settings.maintenanceMessage}
+                    onChange={event => update('maintenanceMessage', event.target.value)}
+                    className="mt-2 min-h-24"
+                    placeholder="Thông báo hiển thị cho người dùng khi hệ thống bảo trì"
+                  />
+                </div>
+              )}
             </Card>
 
           </TabsContent>
@@ -332,8 +389,18 @@ export function AdminSettings() {
 
         {/* Save button */}
         <div className="flex justify-end mt-6">
-          <Button size="lg" className="bg-gradient-to-r from-green-600 to-green-600 text-white px-10" onClick={save}>
-            <Save className="w-5 h-5 mr-2" /> Lưu tất cả cài đặt
+          <Button
+            size="lg"
+            className="bg-gradient-to-r from-green-600 to-green-600 text-white px-10"
+            onClick={() => void save()}
+            disabled={updateSystemSettings.isPending}
+          >
+            {updateSystemSettings.isPending ? (
+              <span className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+            ) : (
+              <Save className="w-5 h-5 mr-2" />
+            )}
+            {updateSystemSettings.isPending ? 'Đang lưu...' : 'Lưu tất cả cài đặt'}
           </Button>
         </div>
       </div>

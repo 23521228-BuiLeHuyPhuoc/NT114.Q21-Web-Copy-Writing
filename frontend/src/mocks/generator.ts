@@ -1,6 +1,6 @@
 import {
   Star, BarChart3, ShoppingBag, Building2, Laptop, Utensils, Heart,
-  GraduationCap, DollarSign, Shirt, Briefcase, Plane,
+  GraduationCap, DollarSign, Shirt, Briefcase, Luggage,
   Target, MessageSquare, FileText, Globe, Mail, Megaphone,
 } from 'lucide-react';
 
@@ -47,7 +47,7 @@ export const INDUSTRIES = [
   { id: 'finance', name: 'Tài Chính', icon: DollarSign, color: 'bg-emerald-500' },
   { id: 'fashion', name: 'Thời Trang', icon: Shirt, color: 'bg-pink-500' },
   { id: 'business', name: 'Doanh Nghiệp', icon: Briefcase, color: 'bg-slate-500' },
-  { id: 'travel', name: 'Du Lịch', icon: Plane, color: 'bg-emerald-500' },
+  { id: 'travel', name: 'Du Lịch', icon: Luggage, color: 'bg-cyan-500' },
 ];
 
 export const MOCK_OUTPUTS: Record<string, Record<string, string[]>> = {

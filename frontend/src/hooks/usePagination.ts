@@ -14,6 +14,7 @@ export function usePagination<T>(
 
   const totalItems = items.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const safePage = Math.min(Math.max(page, 1), totalPages);
 
   useEffect(() => {
     setPage(1);
@@ -24,19 +25,19 @@ export function usePagination<T>(
   }, [totalPages]);
 
   const pageItems = useMemo(() => {
-    const start = (page - 1) * pageSize;
+    const start = (safePage - 1) * pageSize;
     return items.slice(start, start + pageSize);
-  }, [items, page, pageSize]);
+  }, [items, safePage, pageSize]);
 
   return {
-    page,
+    page: safePage,
     pageItems,
     pageSize,
     setPage,
     setPageSize,
     totalItems,
     totalPages,
-    startIndex: totalItems === 0 ? 0 : (page - 1) * pageSize + 1,
-    endIndex: Math.min(page * pageSize, totalItems),
+    startIndex: totalItems === 0 ? 0 : (safePage - 1) * pageSize + 1,
+    endIndex: Math.min(safePage * pageSize, totalItems),
   };
 }

@@ -18,6 +18,7 @@ const METHOD_LABELS = {
   momo: 'MoMo',
   zalo: 'ZaloPay',
   vnpay: 'VNPAY',
+  vietqr: 'VietQR',
   visa: 'Visa',
   manual: 'Ghi nhận thủ công',
 };
@@ -420,6 +421,7 @@ function getBillingCycleMonths(billingCycle) {
 function getPaymentProvider(method) {
   if (method === 'vnpay') return 'vnpay';
   if (method === 'zalo') return 'zalopay';
+  if (method === 'vietqr') return 'vietqr';
   return 'mock';
 }
 
@@ -540,6 +542,7 @@ function buildCheckoutResponse(payment, extras = {}) {
     status: payment.status,
     paymentUrl: extras.paymentUrl || null,
     gateway: extras.gateway || null,
+    vietqr: extras.vietqr || null,
     message: extras.message || (payment.status === 'success'
       ? 'Thanh toán thành công và gói đã được kích hoạt'
       : 'Đã tạo hóa đơn thanh toán'),
@@ -592,6 +595,60 @@ async function createMockCheckout(userId, payload, req = {}) {
       gateway: 'manual',
       message: 'Gói miễn phí đã được kích hoạt',
     });
+  }
+
+  if (method === 'vietqr') {
+    const payment = await createPaymentRecord({
+      userId,
+      plan,
+      amount,
+      method,
+      provider,
+      billingCycle,
+      status: 'pending',
+      metadata: {
+        gateway: provider,
+        gatewayMethod: method,
+        userEmail: user.email,
+      },
+    });
+
+    try {
+      const vietqr = paymentGatewayService.buildVietQrPaymentData({
+        invoiceNo: payment.invoiceNo,
+        amount,
+      });
+
+      payment.metadata = {
+        ...(payment.metadata || {}),
+        gateway: provider,
+        gatewayMethod: method,
+        vietqr: {
+          bankId: vietqr.bankId,
+          bankName: vietqr.bankName,
+          accountNo: vietqr.accountNo,
+          accountName: vietqr.accountName,
+          amount: vietqr.amount,
+          currency: vietqr.currency,
+          transferContent: vietqr.transferContent,
+          expiresAt: vietqr.expiresAt,
+        },
+      };
+      payment.markModified('metadata');
+      await payment.save();
+      await payment.populate(['userId', 'planId']);
+
+      return buildCheckoutResponse(payment, {
+        gateway: provider,
+        vietqr,
+        message: 'Đã tạo mã VietQR, vui lòng quét mã và chuyển đúng nội dung',
+      });
+    } catch (error) {
+      await markPaymentFailed(payment, error.message, {
+        gateway: provider,
+      });
+      throw error;
+    }
   }
 
   if (isGateway) {

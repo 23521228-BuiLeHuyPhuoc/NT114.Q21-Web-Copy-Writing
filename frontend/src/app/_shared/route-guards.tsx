@@ -4,8 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { AdminAccessDenied } from '@/app/components/admin/AdminAccessDenied';
-import { hasPermission, PERMISSION_ROUTE_MAP } from '@/lib/permissions';
-import type { AdminPermission } from '@/lib/permissions';
+import { getPermissionForRoute, hasPermission } from '@/lib/permissions';
 
 function LoadingState() {
   return (
@@ -71,7 +70,7 @@ export function AdminRoute({
     return <LoadingState />;
   }
 
-  const permission = PERMISSION_ROUTE_MAP[path] as AdminPermission | undefined;
+  const permission = getPermissionForRoute(path, 'admin');
   if (permission && !hasPermission(user.adminRole, permission)) {
     return <AdminAccessDenied />;
   }
