@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Editor } from '@tinymce/tinymce-react';
 import { Link } from '@/lib/next-router-compat';
 import { Layout } from '@/app/components/Layout';
 import { Card } from '@/app/components/ui/card';
@@ -9,153 +8,25 @@ import { Textarea } from '@/app/components/ui/textarea';
 import { Label } from '@/app/components/ui/label';
 import { Badge } from '@/app/components/ui/badge';
 import { Switch } from '@/app/components/ui/switch';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/app/components/ui/dialog';
 import { TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/components/ui/table';
 import { AdminTable } from '@/app/components/admin/AdminTable';
 import { StatTile } from '@/app/components/admin/StatTile';
 import { PUBLIC_PAGE_FIELD_DEFS, buildDefaultContent, getPublicPageDef } from '@/lib/publicSiteDefaults';
-import { htmlToPlainText, sanitizeHtml } from '@/lib/richText';
-import { BLOG_POSTS } from '@/mocks/blog';
+import { normalizePosts } from '@/lib/publicBlog';
 import { adminPlanService, type AdminPlan } from '@/services/adminPlanService';
-import { publicSiteService, type PublicBlogPost, type PublicBlogSection, type PublicPageRecord } from '@/services/publicSiteService';
+import { publicSiteService, type PublicBlogPost, type PublicPageRecord } from '@/services/publicSiteService';
 import { Edit2, Eye, FileText, Globe2, Newspaper, Plus, Save, Trash2, WalletCards } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 type TabKey = 'pages' | 'blog' | 'pricing';
-type BlogPostForm = Omit<PublicBlogPost, 'id' | 'content'> & {
-  id?: string | number;
-  lead: string;
-  bodyHtml: string;
-};
 
-const tinymceApiKey = process.env.NEXT_PUBLIC_TINYMCE_API_KEY || 'no-api-key';
-
-const EMPTY_POST_FORM: BlogPostForm = {
-  slug: '',
-  cat: 'news',
-  catLabel: 'Tin tức',
-  title: '',
-  excerpt: '',
-  author: 'CopyPro Team',
-  authorRole: 'CopyPro',
-  date: new Date().toLocaleDateString('vi-VN'),
-  readTime: '5 phút đọc',
-  img: 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1200',
-  featured: false,
-  published: true,
-  lead: '',
-  bodyHtml: '',
-};
+function isTabKey(value: string | null): value is TabKey {
+  return value === 'pages' || value === 'blog' || value === 'pricing';
+}
 
 function getErrorMessage(error: unknown, fallback: string) {
   const err = error as { response?: { data?: { message?: string } }; message?: string };
   return err.response?.data?.message || err.message || fallback;
-}
-
-function slugify(value: string) {
-  return value
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/đ/g, 'd')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 80);
-}
-
-function escapeHtml(value: string) {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replaceAll(String.fromCharCode(34), '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
-function sectionsToHtml(sections: PublicBlogPost['content']['sections'] = []) {
-  return sections
-    .map(section => [
-      section.heading ? `<h2>${escapeHtml(section.heading)}</h2>` : '',
-      ...section.body.map(paragraph => `<p>${escapeHtml(paragraph)}</p>`),
-    ].filter(Boolean).join('\n'))
-    .join('\n\n');
-}
-
-function plainTextToSections(value: string): PublicBlogSection[] {
-  return value
-    .split(/\n\s*\n/g)
-    .map(block => block.split('\n').map(line => line.trim()).filter(Boolean))
-    .filter(lines => lines.length > 0)
-    .map(lines => ({ heading: lines[0], body: lines.slice(1) }));
-}
-
-function htmlToSections(value: string): PublicBlogSection[] {
-  const cleanHtml = sanitizeHtml(value);
-
-  if (typeof window !== 'undefined' && window.DOMParser) {
-    const doc = new DOMParser().parseFromString(cleanHtml, 'text/html');
-    const sections: PublicBlogSection[] = [];
-    let current: PublicBlogSection | null = null;
-
-    const ensureSection = () => {
-      if (!current) {
-        current = { heading: 'Nội dung', body: [] };
-        sections.push(current);
-      }
-      return current;
-    };
-
-    const appendText = (text: string) => {
-      const normalized = text.replace(/\s+/g, ' ').trim();
-      if (normalized) ensureSection().body.push(normalized);
-    };
-
-    doc.body.childNodes.forEach(node => {
-      if (node.nodeType === Node.TEXT_NODE) {
-        appendText(node.textContent || '');
-        return;
-      }
-
-      if (!(node instanceof HTMLElement)) return;
-      const tagName = node.tagName.toLowerCase();
-
-      if (/^h[1-6]$/.test(tagName)) {
-        const heading = node.textContent?.replace(/\s+/g, ' ').trim();
-        if (heading) {
-          current = { heading, body: [] };
-          sections.push(current);
-        }
-        return;
-      }
-
-      if (tagName === 'ul' || tagName === 'ol') {
-        Array.from(node.querySelectorAll('li')).forEach(item => appendText(`- ${item.textContent || ''}`));
-        return;
-      }
-
-      appendText(node.textContent || '');
-    });
-
-    return sections.filter(section => section.heading || section.body.length > 0);
-  }
-
-  return plainTextToSections(htmlToPlainText(cleanHtml));
-}
-
-function normalizePosts(value: unknown): PublicBlogPost[] {
-  if (!Array.isArray(value) || value.length === 0) {
-    return BLOG_POSTS.map(post => ({ ...post, published: true }));
-  }
-  return value.map((post, index) => ({
-    ...BLOG_POSTS[0],
-    ...(post as Partial<PublicBlogPost>),
-    id: (post as Partial<PublicBlogPost>).id || index + 1,
-    content: {
-      lead: (post as Partial<PublicBlogPost>).content?.lead || '',
-      html: (post as Partial<PublicBlogPost>).content?.html || '',
-      sections: (post as Partial<PublicBlogPost>).content?.sections || [],
-    },
-  }));
 }
 
 function planPrice(plan: AdminPlan) {
@@ -174,7 +45,12 @@ function upsertPageRecord(pages: PublicPageRecord[], saved: PublicPageRecord) {
 }
 
 export function PublicSiteManager() {
-  const [tab, setTab] = useState<TabKey>('pages');
+  const [tab, setTab] = useState<TabKey>(() => {
+    const queryTab = typeof window === 'undefined'
+      ? null
+      : new URLSearchParams(window.location.search).get('tab');
+    return isTabKey(queryTab) ? queryTab : 'pages';
+  });
   const [pages, setPages] = useState<PublicPageRecord[]>([]);
   const [plans, setPlans] = useState<AdminPlan[]>([]);
   const [loading, setLoading] = useState(true);
@@ -187,7 +63,6 @@ export function PublicSiteManager() {
   const [blogPosts, setBlogPosts] = useState<PublicBlogPost[]>([]);
   const [blogPage, setBlogPage] = useState<PublicPageRecord | null>(null);
   const [blogSearch, setBlogSearch] = useState('');
-  const [postForm, setPostForm] = useState<BlogPostForm | null>(null);
   const [savingBlog, setSavingBlog] = useState(false);
 
   const loadData = useCallback(async () => {
@@ -224,6 +99,11 @@ export function PublicSiteManager() {
     void loadData();
   }, [loadData]);
 
+  useEffect(() => {
+    const queryTab = new URLSearchParams(window.location.search).get('tab');
+    if (isTabKey(queryTab)) setTab(queryTab);
+  }, []);
+
   const selectedPage = useMemo(() => pages.find(page => page.key === selectedKey) || null, [pages, selectedKey]);
   const selectedDef = getPublicPageDef(selectedKey);
 
@@ -241,8 +121,8 @@ export function PublicSiteManager() {
     return blogPosts.filter(post => [post.title, post.slug, post.excerpt, post.author, post.catLabel].join(' ').toLowerCase().includes(keyword));
   }, [blogPosts, blogSearch]);
 
-  const activePlans = plans.filter(plan => plan.active);
   const visibleBlogCount = blogPosts.filter(post => post.published !== false).length;
+  const activePlans = plans.filter(plan => plan.active);
 
   const updateDraftField = (key: string, value: string) => {
     setPageDraft(current => ({ ...current, [key]: value }));
@@ -266,57 +146,6 @@ export function PublicSiteManager() {
     } finally {
       setSavingPage(false);
     }
-  };
-
-  const openPostForm = (post?: PublicBlogPost) => {
-    if (!post) {
-      setPostForm(EMPTY_POST_FORM);
-      return;
-    }
-    setPostForm({
-      ...post,
-      lead: post.content.lead,
-      bodyHtml: post.content.html || sectionsToHtml(post.content.sections),
-    });
-  };
-
-  const savePostForm = () => {
-    if (!postForm) return;
-    const slug = postForm.slug.trim() || slugify(postForm.title);
-    if (!postForm.title.trim() || !slug) {
-      toast.error('Cần nhập tiêu đề và slug bài viết');
-      return;
-    }
-
-    const bodyHtml = sanitizeHtml(postForm.bodyHtml);
-
-    const nextPost: PublicBlogPost = {
-      id: postForm.id || Date.now(),
-      slug,
-      cat: postForm.cat.trim() || 'news',
-      catLabel: postForm.catLabel.trim() || postForm.cat,
-      title: postForm.title.trim(),
-      excerpt: postForm.excerpt.trim(),
-      author: postForm.author.trim() || 'CopyPro Team',
-      authorRole: postForm.authorRole.trim(),
-      date: postForm.date.trim(),
-      readTime: postForm.readTime.trim(),
-      img: postForm.img.trim(),
-      featured: Boolean(postForm.featured),
-      published: postForm.published !== false,
-      content: {
-        lead: postForm.lead.trim(),
-        html: bodyHtml,
-        sections: htmlToSections(bodyHtml),
-      },
-    };
-
-    setBlogPosts(current => {
-      const withoutSame = current.filter(post => post.id !== nextPost.id && post.slug !== nextPost.slug);
-      const normalized = nextPost.featured ? withoutSame.map(post => ({ ...post, featured: false })) : withoutSame;
-      return [nextPost, ...normalized];
-    });
-    setPostForm(null);
   };
 
   const removePost = (post: PublicBlogPost) => {
@@ -413,7 +242,9 @@ export function PublicSiteManager() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Input value={blogSearch} onChange={event => setBlogSearch(event.target.value)} placeholder="Tìm bài viết..." className="w-56" />
-          <Button variant="outline" onClick={() => openPostForm()} className="rounded-xl"><Plus className="mr-2 h-4 w-4" /> Thêm bài</Button>
+          <Link to="/admin/public-site/blog/new">
+            <Button variant="outline" className="rounded-xl"><Plus className="mr-2 h-4 w-4" /> Thêm bài</Button>
+          </Link>
           <Button onClick={() => void saveBlog()} disabled={savingBlog} className="rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 text-white"><Save className="mr-2 h-4 w-4" /> {savingBlog ? 'Đang lưu...' : 'Lưu blog'}</Button>
         </div>
       </div>
@@ -448,7 +279,7 @@ export function PublicSiteManager() {
               <TableCell>
                 <div className="flex justify-end gap-1">
                   <Link to={`/blog/${post.slug}`} className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"><Eye className="h-3.5 w-3.5" /></Link>
-                  <button onClick={() => openPostForm(post)} className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-primary/5 hover:text-primary"><Edit2 className="h-3.5 w-3.5" /></button>
+                  <Link to={`/admin/public-site/blog/${post.slug}`} className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-primary/5 hover:text-primary"><Edit2 className="h-3.5 w-3.5" /></Link>
                   <button onClick={() => removePost(post)} className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-red-500"><Trash2 className="h-3.5 w-3.5" /></button>
                 </div>
               </TableCell>
@@ -536,55 +367,6 @@ export function PublicSiteManager() {
           <Card className="p-16 text-center text-sm text-muted-foreground">Đang tải cấu hình public site...</Card>
         ) : tab === 'pages' ? renderPages() : tab === 'blog' ? renderBlog() : renderPricing()}
       </div>
-      <Dialog open={!!postForm} onOpenChange={() => setPostForm(null)}>
-        <DialogContent className="max-h-[calc(100vh-2rem)] max-w-3xl overflow-y-auto">
-          <DialogHeader><DialogTitle>{postForm?.id ? 'Sửa bài blog' : 'Thêm bài blog'}</DialogTitle></DialogHeader>
-          {postForm && (
-            <div className="space-y-4">
-              <div className="grid gap-3 md:grid-cols-2">
-                <div><Label>Tiêu đề</Label><Input className="mt-2" value={postForm.title} onChange={event => setPostForm({ ...postForm, title: event.target.value, slug: postForm.slug || slugify(event.target.value) })} /></div>
-                <div><Label>Slug</Label><Input className="mt-2" value={postForm.slug} onChange={event => setPostForm({ ...postForm, slug: slugify(event.target.value) })} /></div>
-                <div><Label>Key danh mục</Label><Input className="mt-2" value={postForm.cat} onChange={event => setPostForm({ ...postForm, cat: event.target.value })} /></div>
-                <div><Label>Tên danh mục</Label><Input className="mt-2" value={postForm.catLabel} onChange={event => setPostForm({ ...postForm, catLabel: event.target.value })} /></div>
-                <div><Label>Tác giả</Label><Input className="mt-2" value={postForm.author} onChange={event => setPostForm({ ...postForm, author: event.target.value })} /></div>
-                <div><Label>Vai trò tác giả</Label><Input className="mt-2" value={postForm.authorRole} onChange={event => setPostForm({ ...postForm, authorRole: event.target.value })} /></div>
-                <div><Label>Ngày</Label><Input className="mt-2" value={postForm.date} onChange={event => setPostForm({ ...postForm, date: event.target.value })} /></div>
-                <div><Label>Thời gian đọc</Label><Input className="mt-2" value={postForm.readTime} onChange={event => setPostForm({ ...postForm, readTime: event.target.value })} /></div>
-              </div>
-              <div><Label>Ảnh đại diện</Label><Input className="mt-2" value={postForm.img} onChange={event => setPostForm({ ...postForm, img: event.target.value })} /></div>
-              <div><Label>Tóm tắt</Label><Textarea className="mt-2 min-h-20" value={postForm.excerpt} onChange={event => setPostForm({ ...postForm, excerpt: event.target.value })} /></div>
-              <div><Label>Mở bài</Label><Textarea className="mt-2 min-h-24" value={postForm.lead} onChange={event => setPostForm({ ...postForm, lead: event.target.value })} /></div>
-              <div>
-                <Label>Nội dung bài viết</Label>
-                <div className="mt-2 overflow-hidden rounded-lg border border-border bg-card">
-                  <Editor
-                    apiKey={tinymceApiKey}
-                    value={postForm.bodyHtml}
-                    init={{
-                      height: 420,
-                      menubar: false,
-                      branding: false,
-                      statusbar: false,
-                      plugins: 'lists link table code wordcount autoresize',
-                      toolbar: 'undo redo | blocks | bold italic underline | bullist numlist | link table | removeformat | code',
-                      content_style: 'body { font-family: Inter, Arial, sans-serif; font-size: 14px; line-height: 1.75; color: #1f2937; } p { margin: 0 0 14px; } ul, ol { margin: 0 0 14px 22px; padding: 0; } li { margin: 4px 0; } h1, h2, h3 { margin: 18px 0 12px; line-height: 1.3; color: #111827; } blockquote { margin: 16px 0; padding-left: 14px; border-left: 3px solid #16a34a; color: #374151; } table { border-collapse: collapse; width: 100%; } td, th { border: 1px solid #d1d5db; padding: 8px; }',
-                    }}
-                    onEditorChange={(value: string) => setPostForm(current => current ? { ...current, bodyHtml: value } : current)}
-                  />
-                </div>
-              </div>
-              <div className="flex flex-wrap items-center gap-5 rounded-xl bg-surface-muted p-3">
-                <label className="flex items-center gap-2 text-sm font-medium"><Switch checked={postForm.published !== false} onCheckedChange={checked => setPostForm({ ...postForm, published: checked })} /> Hiển thị</label>
-                <label className="flex items-center gap-2 text-sm font-medium"><Switch checked={Boolean(postForm.featured)} onCheckedChange={checked => setPostForm({ ...postForm, featured: checked })} /> Featured</label>
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setPostForm(null)} className="rounded-xl">Hủy</Button>
-                <Button onClick={savePostForm} className="rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 text-white">Lưu bài viết</Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </Layout>
   );
 }

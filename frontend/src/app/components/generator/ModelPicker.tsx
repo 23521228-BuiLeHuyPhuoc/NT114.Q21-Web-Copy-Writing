@@ -13,12 +13,14 @@ export type GeneratorModelOption = {
   latency: string;
   tokens: string;
   group?: string;
+  quotaCost?: string;
 };
 
 interface Props {
   value: string;
   onChange: (id: string) => void;
   models?: GeneratorModelOption[];
+  estimatedQuotaUnits?: number;
 }
 
 const MODEL_GROUP_ORDER = ['Google', 'Groq', 'Local API', 'Fine-tuned', 'Other'];
@@ -47,7 +49,13 @@ function groupModels(models: GeneratorModelOption[]) {
   });
 }
 
-export function ModelPicker({ value, onChange, models = MODELS }: Props) {
+function getQuotaCostText(model: GeneratorModelOption, estimatedQuotaUnits?: number) {
+  const baseCost = model.quotaCost || '1 quota / 1.000 tokens';
+  if (!estimatedQuotaUnits) return baseCost;
+  return `~${estimatedQuotaUnits} quota/request hiện tại (${baseCost})`;
+}
+
+export function ModelPicker({ value, onChange, models = MODELS, estimatedQuotaUnits }: Props) {
   const groupedModels = groupModels(models);
 
   return (
@@ -77,6 +85,7 @@ export function ModelPicker({ value, onChange, models = MODELS }: Props) {
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5 leading-tight">{model.desc}</p>
                     <p className="text-xs text-muted-foreground/80 mt-0.5">{model.latency} - {model.tokens} context</p>
+                    <p className="text-xs font-medium text-primary mt-1">Quota: {getQuotaCostText(model, estimatedQuotaUnits)}</p>
                   </div>
                 </button>
               ))}

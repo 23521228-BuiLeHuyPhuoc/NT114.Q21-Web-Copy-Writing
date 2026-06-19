@@ -522,47 +522,47 @@ export function AdminPlans() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Gói</TableHead>
-                  <TableHead>Giá/tháng</TableHead>
-                  <TableHead>Giá/năm</TableHead>
-                  <TableHead>Copy/tháng</TableHead>
-                  <TableHead>Quota/tháng</TableHead>
-                  <TableHead>Fine-tune</TableHead>
-                  <TableHead>Quota khác</TableHead>
+                  <TableHead>Giá</TableHead>
+                  <TableHead>Giới hạn</TableHead>
                   <TableHead>Model generate</TableHead>
                   <TableHead>Subscribers</TableHead>
-                  <TableHead>Kích hoạt</TableHead>
-                  <TableHead className="text-right">Thao tác</TableHead>
+                  <TableHead className="text-right">Quản lý</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {pagination.pageItems.map((plan) => (
                   <TableRow key={plan.id} className={!plan.active ? 'opacity-60' : ''}>
-                    <TableCell>
+                    <TableCell className="min-w-64">
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-foreground">{plan.name}</span>
                           {plan.popular && <Badge className="bg-warning/15 text-amber-800 border-0 text-xs">Phổ biến</Badge>}
+                          {!plan.active && <Badge className="bg-muted text-muted-foreground border-0 text-xs">Tạm tắt</Badge>}
                         </div>
                         <p className="text-xs text-muted-foreground/80 mt-0.5">{plan.description || plan.slug}</p>
                       </div>
                     </TableCell>
-                    <TableCell className="font-semibold text-foreground">{formatPrice(plan.monthlyPrice, plan.currency)}</TableCell>
-                    <TableCell className="text-sm text-foreground/70">{formatPrice(plan.yearlyPrice, plan.currency)}</TableCell>
-                    <TableCell className="text-sm text-foreground/70">{formatLimit(plan.copyLimit)}</TableCell>
-                    <TableCell className="text-sm text-foreground/70">{formatLimit(plan.apiLimit)}</TableCell>
-                    <TableCell className="text-sm text-foreground/70">{formatLimit(plan.fineTune)}</TableCell>
-                    <TableCell className="text-xs text-foreground/70 whitespace-nowrap">
-                      <div>5h: {formatLimit(plan.apiLimitFiveHours)}</div>
-                      <div>Tuần: {formatLimit(plan.apiLimitWeekly)}</div>
-                      <div>Đạo văn: {formatLimit(plan.plagiarismChecks)}</div>
-                      <div>Seats: {formatLimit(plan.seats)}</div>
-                      <div>Lịch sử: {formatLimit(plan.historyDays, ' ngày')}</div>
+                    <TableCell className="min-w-36 whitespace-nowrap">
+                      <div className="font-semibold text-foreground">{formatPrice(plan.monthlyPrice, plan.currency)}</div>
+                      <div className="text-xs text-muted-foreground">Năm: {formatPrice(plan.yearlyPrice, plan.currency)}</div>
                     </TableCell>
-                    <TableCell className="text-xs text-foreground/70 max-w-52" title={formatAllowedModels(plan.allowedModels)}>{formatAllowedModels(plan.allowedModels)}</TableCell>
+                    <TableCell className="min-w-80 text-xs text-foreground/75">
+                      <div className="grid gap-x-4 gap-y-1 sm:grid-cols-2">
+                        <span>Copy/tháng: <strong className="font-semibold text-foreground">{formatLimit(plan.copyLimit)}</strong></span>
+                        <span>Generate/tháng: <strong className="font-semibold text-foreground">{formatLimit(plan.apiLimit)}</strong></span>
+                        <span>Generate/5h: <strong className="font-semibold text-foreground">{formatLimit(plan.apiLimitFiveHours)}</strong></span>
+                        <span>Generate/tuần: <strong className="font-semibold text-foreground">{formatLimit(plan.apiLimitWeekly)}</strong></span>
+                        <span>Fine-tune: <strong className="font-semibold text-foreground">{formatLimit(plan.fineTune)}</strong></span>
+                        <span>Đạo văn: <strong className="font-semibold text-foreground">{formatLimit(plan.plagiarismChecks)}</strong></span>
+                        <span>Seats: <strong className="font-semibold text-foreground">{formatLimit(plan.seats)}</strong></span>
+                        <span>Lịch sử: <strong className="font-semibold text-foreground">{formatLimit(plan.historyDays, ' ngày')}</strong></span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="max-w-56 text-xs text-foreground/70" title={formatAllowedModels(plan.allowedModels)}>{formatAllowedModels(plan.allowedModels)}</TableCell>
                     <TableCell><Badge className="bg-primary/10 text-primary border-0">{plan.users}</Badge></TableCell>
-                    <TableCell><Switch checked={plan.active} onCheckedChange={() => void toggleActive(plan)} /></TableCell>
                     <TableCell>
-                      <div className="flex gap-1 justify-end">
+                      <div className="flex items-center justify-end gap-2">
+                        <Switch checked={plan.active} onCheckedChange={() => void toggleActive(plan)} />
                         <button onClick={() => openEdit(plan)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-primary/5 text-muted-foreground/80 hover:text-primary transition-colors">
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>

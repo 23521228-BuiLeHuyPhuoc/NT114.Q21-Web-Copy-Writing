@@ -417,6 +417,8 @@ export function CustomerGenerator() {
     `Temperature tham khảo: ${temperature[0]}.`,
   ].filter(Boolean).join('\n');
 
+  const estimatedQuotaUnits = Math.max(1, Math.ceil(((buildPrompt().length / 4) + maxOutputTokens) / 1000));
+
   const handleModelModeChange = (nextMode: ModelMode) => {
     if (nextMode === 'fine-tuned' && !isFineTunedAllowed) {
       toast.error('Gói hiện tại chưa mở quyền dùng model fine-tuned để generate.');
@@ -663,7 +665,7 @@ export function CustomerGenerator() {
             </Card>
             {modelMode === 'base' ? (
               baseGeneratorModels.length > 0 ? (
-                <ModelPicker value={model} onChange={setModel} models={baseGeneratorModels} />
+                <ModelPicker value={model} onChange={setModel} models={baseGeneratorModels} estimatedQuotaUnits={estimatedQuotaUnits} />
               ) : (
                 <Card className="p-4 border-dashed">
                   <div className="flex items-center gap-2 mb-2">
@@ -674,7 +676,7 @@ export function CustomerGenerator() {
                 </Card>
               )
             ) : hasFineTunedModels ? (
-              <ModelPicker value={fineTunedModelPickerValue} onChange={handleFineTunedModelChange} models={fineTunedGeneratorModels} />
+              <ModelPicker value={fineTunedModelPickerValue} onChange={handleFineTunedModelChange} models={fineTunedGeneratorModels} estimatedQuotaUnits={estimatedQuotaUnits} />
             ) : (
               <Card className="p-4 border-dashed">
                 <div className="flex items-center gap-2 mb-2">
