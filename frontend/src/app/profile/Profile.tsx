@@ -17,6 +17,7 @@ import {
 import toast from 'react-hot-toast';
 import { api } from '@/lib/axios';
 import { notificationService } from '@/services/notificationService';
+import { useMyBilling } from '@/hooks/queries/useBilling';
 import { getRememberLoginPreference } from '@/stores/authStore';
 import type { User } from '@/types/auth';
 
@@ -27,8 +28,33 @@ interface AvatarUploadResponse {
   };
 }
 
+function formatDateOnly(value?: string | null) {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '-';
+  return new Intl.DateTimeFormat('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(date);
+}
+
+function formatMonthlyPrice(value?: number) {
+  const amount = Number(value || 0);
+  if (amount <= 0) return 'Miễn phí';
+  return amount.toLocaleString('vi-VN') + 'đ/tháng';
+}
+
+function getDaysRemaining(value?: string | null) {
+  if (!value) return null;
+  const expiresAt = new Date(value);
+  if (Number.isNaN(expiresAt.getTime())) return null;
+  return Math.ceil((expiresAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000));
+}
+
 export function CustomerProfile() {
   const { user, updateUser, updateRememberLogin } = useAuth();
+  const { data: billingData, isLoading: billingLoading } = useMyBilling();
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [editing, setEditing] = useState(false);
   const [avatarUploading, setAvatarUploading] = useState(false);
@@ -43,6 +69,18 @@ export function CustomerProfile() {
   const [industry, setIndustry] = useState('technology');
   const userInitial = user?.name?.charAt(0).toUpperCase() || 'U';
   const avatarBusy = avatarUploading || avatarRemoving;
+  const billing = billingData?.currentPlan;
+  const planName = billing?.name || 'Free';
+  const planPrice = formatMonthlyPrice(billing?.price);
+  const expiresAt = billing?.expiresAt || null;
+  const expiresLabel = billing?.expiresAtLabel || billing?.renewDate || 'Chưa có ngày hết hạn';
+  const daysRemaining = getDaysRemaining(expiresAt);
+  const planBadge = daysRemaining === null
+    ? 'Chưa có hạn'
+    : daysRemaining < 0
+      ? 'Đã hết hạn'
+      : 'Còn ' + daysRemaining + ' ngày';
+  const memberSince = formatDateOnly(user?.createdAt);
 
   const saveProfile = () => {
     setEditing(false);
@@ -210,12 +248,12 @@ export function CustomerProfile() {
             </div>
             <h2 className="text-xl font-bold mb-1 text-foreground">{user?.name}</h2>
             <Badge className="bg-primary/10 text-primary border-0 mb-3">
-              <Crown className="w-3 h-3 mr-1" /> Pro Member
+              <Crown className="w-3 h-3 mr-1" /> {planName} Member
             </Badge>
             <p className="text-sm text-muted-foreground">{user?.email}</p>
             <div className="mt-4 w-full border-t pt-4 space-y-2 text-sm text-foreground/70">
               <p><Globe className="w-3.5 h-3.5 inline mr-1.5" />{company}</p>
-              <p><Calendar className="w-3.5 h-3.5 inline mr-1.5" />Thành viên từ 15/01/2026</p>
+              <p><Calendar className="w-3.5 h-3.5 inline mr-1.5" />Thành viên từ {memberSince}</p>
             </div>
           </Card>
 
@@ -239,10 +277,10 @@ export function CustomerProfile() {
             <Card className="p-4 bg-gradient-to-r from-green-50 to-green-50 border-primary/20">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-semibold text-green-900">Gói Pro đang hoạt động</p>
-                  <p className="text-sm text-primary">Gia hạn: 23/04/2026 · 299,000₫/tháng</p>
+                  <p className="font-semibold text-green-900">Gói {planName} {billing?.isExpired ? 'đã hết hạn' : 'đang hoạt động'}</p>
+                  <p className="text-sm text-primary">{billingLoading ? 'Đang tải billing...' : 'Hết hạn: ' + expiresLabel + ' · ' + planPrice}</p>
                 </div>
-                <Badge className="bg-primary text-white border-0">Còn 31 ngày</Badge>
+                <Badge className="bg-primary text-white border-0">{billingLoading ? 'Đang tải' : planBadge}</Badge>
               </div>
             </Card>
           </div>

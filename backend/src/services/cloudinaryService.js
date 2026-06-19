@@ -1,4 +1,5 @@
 const { v2: cloudinary } = require('cloudinary');
+const path = require('path');
 
 const createError = require('../utils/createError');
 
@@ -25,7 +26,7 @@ function uploadBuffer(buffer, options) {
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(options, (error, result) => {
       if (error) {
-        return reject(createError(502, error.message || 'Could not upload image to Cloudinary'));
+        return reject(createError(502, error.message || 'Could not upload file to Cloudinary'));
       }
 
       if (!result?.secure_url) {
@@ -97,8 +98,39 @@ async function uploadPublicSiteImage(adminId, file) {
   };
 }
 
+function safeFileBaseName(value, fallback = 'file') {
+  return String(value || fallback)
+    .replace(/\.[^.]+$/, '')
+    .replace(/[^a-zA-Z0-9_-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80) || fallback;
+}
+
+async function uploadPlagiarismFile(userId, file, index = 0) {
+  const folder = process.env.CLOUDINARY_PLAGIARISM_FOLDER || 'copypro/plagiarism/uploads';
+  const extension = path.extname(file.originalname || '').toLowerCase();
+  const timestamp = Date.now();
+  const safeName = safeFileBaseName(file.originalname, 'plagiarism-file');
+  const result = await uploadBuffer(file.buffer, {
+    folder,
+    public_id: `user_${userId}_${timestamp}_${index}_${safeName}${extension}`,
+    overwrite: false,
+    resource_type: 'raw',
+    filename_override: file.originalname || `${safeName}${extension}`,
+  });
+
+  return {
+    publicId: result.public_id,
+    url: result.secure_url,
+    bytes: result.bytes,
+    format: result.format,
+    resourceType: result.resource_type,
+  };
+}
+
 module.exports = {
   uploadAdminAvatar,
+  uploadPlagiarismFile,
   uploadPublicSiteImage,
   uploadUserAvatar,
 };

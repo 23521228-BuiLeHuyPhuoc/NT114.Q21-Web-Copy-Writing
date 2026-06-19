@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { LineChart } from '@/app/components/charts';
+import { matchesSearchRegex } from '@/lib/searchRegex';
 
 const JOBS = [
   { id: 'ft-001', name: 'E-commerce Brand Voice v2', user: 'Nguyễn Văn A', baseModel: 'gpt-4o', status: 'completed', progress: 100, accuracy: 94.2, loss: 0.142, samples: 120, epochs: 5, started: '20/03/2026 09:00', finished: '20/03/2026 11:23', industry: 'ecommerce' },
@@ -53,7 +54,7 @@ export function AdminFineTuning() {
 
   const filtered = jobs.filter(j => {
     const matchStatus = filterStatus === 'all' || j.status === filterStatus;
-    const matchSearch = j.name.toLowerCase().includes(search.toLowerCase()) || j.user.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = matchesSearchRegex(search, [j.name, j.user]);
     return matchStatus && matchSearch;
   });
 

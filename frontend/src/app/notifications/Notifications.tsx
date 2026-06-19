@@ -13,7 +13,7 @@ import {
 } from '@/app/components/ui/dialog';
 import { Bell, Check, ExternalLink } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { TYPE_COLORS } from '@/mocks/notifications';
+import { TYPE_COLORS } from '@/lib/notificationUi';
 import {
   useMarkAllNotificationsRead,
   useMarkNotificationRead,

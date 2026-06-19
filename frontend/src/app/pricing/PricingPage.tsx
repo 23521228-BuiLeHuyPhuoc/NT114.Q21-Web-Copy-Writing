@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, Link } from '@/lib/next-router-compat';
+import { Link, useNavigate } from '@/lib/next-router-compat';
 import { PublicNavbar } from '@/app/components/public/PublicNavbar';
 import { PublicFooter } from '@/app/components/public/PublicFooter';
 import { Badge } from '@/app/components/ui/badge';
 import {
-  Sparkles, CheckCircle2, X, Crown, Zap, Building2,
-  Star, ChevronDown, ChevronUp, ArrowRight, HelpCircle,
+  CheckCircle2, X, Crown, Zap, Building2,
+  Star, ChevronDown, ChevronUp,
 } from 'lucide-react';
 import { billingService, type BillingPlan } from '@/services/billingService';
 
@@ -41,7 +41,7 @@ const PLANS = [
       { text: '15+ ngành nghề', ok: true },
       { text: '100+ template', ok: true },
       { text: 'GPT-4o + GPT-3.5 + Llama 3.1', ok: true },
-      { text: 'Lịch sử không giới hạn', ok: true },
+      { text: 'Lịch sử 30 ngày', ok: true },
       { text: 'Fine-tuning Studio (3 models)', ok: true },
       { text: 'API Access (5.000 calls/tháng)', ok: true },
       { text: 'Xuất file (.docx, .txt)', ok: true },
@@ -52,16 +52,16 @@ const PLANS = [
   },
   {
     id: 'business', name: 'Business', icon: Building2, monthlyPrice: 799000, yearlyPrice: 665000,
-    desc: 'Dành cho team và doanh nghiệp muốn scale không giới hạn',
+    desc: 'Dành cho team và doanh nghiệp cần quota lớn, kiểm soát rõ ràng',
     color: 'border-border', accent: 'text-foreground/80', highlight: false,
     badge: '',
     features: [
-      { text: 'Không giới hạn copy', ok: true },
+      { text: '3.000 copy/tháng', ok: true },
       { text: '15+ ngành nghề', ok: true },
       { text: 'Tất cả template', ok: true },
       { text: 'Tất cả model AI (incl. custom)', ok: true },
-      { text: 'Lịch sử không giới hạn', ok: true },
-      { text: 'Fine-tuning nâng cao (unlimited)', ok: true },
+      { text: 'Lịch sử 90 ngày', ok: true },
+      { text: 'Fine-tuning nâng cao (10 models)', ok: true },
       { text: 'API Access (50.000 calls/tháng)', ok: true },
       { text: 'Xuất file (.docx, .pdf, .csv)', ok: true },
       { text: 'Hỗ trợ ưu tiên < 4 giờ + chat', ok: true },
@@ -71,12 +71,34 @@ const PLANS = [
   },
 ];
 
-type PricingPlan = (typeof PLANS)[number];
+const PLAN_ORDER = ['free', 'pro', 'business'];
+
+type PricingPlan = (typeof PLANS)[number] & { limits?: BillingPlan['limits'] };
+
+function formatCompareLimit(value: number | undefined, unit = '') {
+  const numeric = Number(value ?? 0);
+  if (numeric < 0) return 'Liên hệ';
+  if (numeric === 0) return null;
+  return `${numeric.toLocaleString('vi-VN')}${unit ? ` ${unit}` : ''}`;
+}
+
+function buildCompareRows(plans: PricingPlan[]) {
+  return [
+    { label: 'Copy/tháng', values: plans.map(plan => formatCompareLimit(plan.limits?.copyMonthly)) },
+    { label: 'Generate/tháng', values: plans.map(plan => formatCompareLimit(plan.limits?.apiCallsMonthly)) },
+    { label: 'Generate/5h', values: plans.map(plan => formatCompareLimit(plan.limits?.apiCallsFiveHours)) },
+    { label: 'Generate/tuần', values: plans.map(plan => formatCompareLimit(plan.limits?.apiCallsWeekly)) },
+    { label: 'Fine-tune models', values: plans.map(plan => formatCompareLimit(plan.limits?.fineTuneModels)) },
+    { label: 'Kiểm tra đạo văn', values: plans.map(plan => formatCompareLimit(plan.limits?.plagiarismChecks, 'lần')) },
+    { label: 'Seats', values: plans.map(plan => formatCompareLimit(plan.limits?.seats)) },
+    { label: 'Lịch sử', values: plans.map(plan => formatCompareLimit(plan.limits?.historyDays, 'ngày')) },
+  ];
+}
 
 function buildLimitFeatures(plan: BillingPlan) {
   const limits = plan.limits;
   const formatLimit = (value: number, suffix: string) => {
-    if (value === -1) return `Không giới hạn ${suffix}`;
+    if (value === -1) return `${suffix} liên hệ`;
     if (value === 0) return '';
     return `${value.toLocaleString('vi-VN')} ${suffix}`;
   };
@@ -110,18 +132,28 @@ function toPricingPlan(plan: BillingPlan, index: number): PricingPlan {
       ...positiveFeatures.map(text => ({ text, ok: true })),
       ...negativeFeatures.map(text => ({ text, ok: false })),
     ],
+    limits: plan.limits,
     cta: plan.monthlyPrice === -1 ? 'Liên hệ tư vấn' : plan.monthlyPrice === 0 ? 'Bắt đầu miễn phí' : `Bắt đầu dùng ${plan.name}`,
   };
 }
 
+function getPlanOrder(slug: string) {
+  const index = PLAN_ORDER.indexOf(slug);
+  return index === -1 ? Number.MAX_SAFE_INTEGER : index;
+}
+
+function isSupportedPlanSlug(slug: string) {
+  return PLAN_ORDER.includes(slug);
+}
+
 const COMPARE_ROWS = [
-  { label: 'Copy/tháng',             free: '30',              pro: '500',                business: 'Không giới hạn' },
+  { label: 'Copy/tháng',             free: '30',              pro: '500',                business: '3.000' },
   { label: 'Ngành nghề',             free: '5',               pro: '15+',                business: '15+ & custom' },
   { label: 'Template library',       free: '20',              pro: '100+',               business: 'Tất cả' },
   { label: 'Model AI',               free: 'GPT-3.5',         pro: 'GPT-4o, 3.5, Llama', business: 'Tất cả + custom' },
-  { label: 'Fine-tuning Studio',     free: null,              pro: '3 models',           business: 'Không giới hạn' },
+  { label: 'Fine-tuning Studio',     free: null,              pro: '3 models',           business: '10 models' },
   { label: 'API Access (calls/tháng)',free: null,             pro: '5.000',              business: '50.000' },
-  { label: 'Lịch sử copy',           free: '7 ngày',          pro: 'Không giới hạn',     business: 'Không giới hạn' },
+  { label: 'Lịch sử copy',           free: '7 ngày',          pro: '30 ngày',            business: '90 ngày' },
   { label: 'Xuất file',              free: null,              pro: '.docx, .txt',        business: '.docx, .pdf, .csv' },
   { label: 'Hỗ trợ',                 free: 'Email (72h)',      pro: 'Email (24h)',        business: 'Email + Chat (4h)' },
   { label: 'Dedicated CSM',          free: null,              pro: null,                 business: true },
@@ -134,7 +166,7 @@ const FAQ = [
   { q: 'API có ổn định không? SLA như thế nào?', a: 'Chúng tôi cam kết 99.8% uptime với SLA rõ ràng. API có rate limiting thông minh và retry logic tự động. Xem status page tại status.copypro.vn.' },
   { q: 'Có dùng thử gói Pro trước khi mua không?', a: 'Có. Tất cả tài khoản mới đều có 14 ngày dùng thử đầy đủ tính năng Pro, không cần thẻ tín dụng.' },
   { q: 'Dữ liệu của tôi có an toàn không?', a: 'Tuyệt đối. Chúng tôi không dùng nội dung của bạn để train model. Dữ liệu mã hóa AES-256, lưu trong datacenter Việt Nam, tuân thủ PDPA.' },
-  { q: 'Gói Business có thể thêm thành viên không?', a: 'Gói Business hỗ trợ tối đa 10 user trong cùng workspace. Nếu cần nhiều hơn, liên hệ chúng tôi để nhận báo giá Enterprise.' },
+  { q: 'Gói Business có thể thêm thành viên không?', a: 'Gói Business hỗ trợ tối đa 10 user trong cùng workspace. Nếu cần nhiều hơn, liên hệ chúng tôi để được tư vấn giới hạn phù hợp trong 3 gói hiện có.' },
 ];
 
 const TESTIMONIALS = [
@@ -156,7 +188,10 @@ export function PricingPage() {
     billingService.listPlans()
       .then((items) => {
         if (active && items.length > 0) {
-          setPlans(items.map(toPricingPlan));
+          setPlans(items
+            .filter(plan => isSupportedPlanSlug(plan.slug))
+            .sort((a, b) => getPlanOrder(a.slug) - getPlanOrder(b.slug))
+            .map(toPricingPlan));
         }
       })
       .catch(() => undefined);
@@ -165,12 +200,8 @@ export function PricingPage() {
   }, []);
 
   const compareRows = useMemo(() => {
-    const labels = Array.from(new Set(plans.flatMap(plan => plan.features.filter(feature => feature.ok).map(feature => feature.text))));
-    if (labels.length === 0) return COMPARE_ROWS.map(row => ({ label: row.label, values: [row.free, row.pro, row.business] }));
-    return labels.slice(0, 12).map(label => ({
-      label,
-      values: plans.map(plan => plan.features.some(feature => feature.ok && feature.text === label) || null),
-    }));
+    if (plans.every(plan => plan.limits)) return buildCompareRows(plans);
+    return COMPARE_ROWS.map(row => ({ label: row.label, values: [row.free, row.pro, row.business] }));
   }, [plans]);
 
   return (
@@ -384,24 +415,6 @@ export function PricingPage() {
               </tbody>
             </table>
           </div>
-        </div>
-      </section>
-
-      {/* ─── ENTERPRISE CTA ─── */}
-      <section className="py-16 bg-gradient-to-r from-green-600 to-emerald-700 mx-5 lg:mx-8 xl:mx-16 rounded-3xl mb-24">
-        <div className="max-w-4xl mx-auto px-8 flex flex-col md:flex-row items-center justify-between gap-8">
-          <div>
-            <Badge className="mb-3 bg-card/20 text-white border-white/20">Enterprise</Badge>
-            <h2 className="text-white mb-2">Cần hơn 10 user hoặc quota đặc biệt?</h2>
-            <p className="text-green-100 text-sm leading-relaxed">
-              Chúng tôi xây dựng gói Enterprise tùy chỉnh theo nhu cầu: SSO, private deployment, SLA riêng, và dedicated support team.
-            </p>
-          </div>
-          <Link to="/contact" className="flex-shrink-0">
-            <button className="inline-flex items-center gap-2 bg-card text-primary rounded-2xl px-8 py-4 font-bold text-sm hover:bg-primary/5 transition-colors shadow-xl whitespace-nowrap">
-              Liên hệ tư vấn <ArrowRight className="w-4 h-4" />
-            </button>
-          </Link>
         </div>
       </section>
 

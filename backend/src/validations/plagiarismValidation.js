@@ -1,5 +1,10 @@
 const Joi = require('joi');
 
+const MAX_UPLOADED_SOURCE_TEXT_LENGTH = Math.max(
+  60000,
+  Number(process.env.PLAGIARISM_MAX_EXTRACTED_TEXT_CHARS || 100000000),
+);
+
 const objectId = Joi.string().hex().length(24);
 const optionalObjectId = objectId.allow(null).empty('').optional();
 
@@ -26,7 +31,7 @@ const checkPlagiarismSchema = Joi.object({
     sourceTitle: Joi.string().trim().max(200).required(),
     sourceUrl: Joi.string().trim().max(500).allow('').default(''),
     sourceType: Joi.string().valid('uploads').default('uploads'),
-    text: Joi.string().trim().min(20).max(60000).required(),
+    text: Joi.string().trim().min(20).max(MAX_UPLOADED_SOURCE_TEXT_LENGTH).required(),
     mimeType: Joi.string().trim().max(120).allow('').default(''),
     size: Joi.number().integer().min(0).default(0),
   })).max(5).default([]),
@@ -49,4 +54,5 @@ module.exports = {
   checkPlagiarismSchema,
   debugCommonCrawlSchema,
   listReportsSchema,
+  MAX_UPLOADED_SOURCE_TEXT_LENGTH,
 };

@@ -17,7 +17,7 @@ import { Layout } from '@/app/components/Layout';
 import { Card } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
 import { Badge } from '@/app/components/ui/badge';
-import { MODELS, COPY_TYPES as FALLBACK_COPY_TYPES, TONES as FALLBACK_TONES, INDUSTRIES as FALLBACK_INDUSTRIES } from '@/mocks/generator';
+import { MODELS, COPY_TYPES as FALLBACK_COPY_TYPES, TONES as FALLBACK_TONES, INDUSTRIES as FALLBACK_INDUSTRIES } from '@/lib/generatorConfig';
 import { IndustryPicker, type IndustryPickerOption } from '@/app/components/generator/IndustryPicker';
 import { CopyTypePicker, type CopyTypePickerOption } from '@/app/components/generator/CopyTypePicker';
 import { TonePicker, type TonePickerOption } from '@/app/components/generator/TonePicker';

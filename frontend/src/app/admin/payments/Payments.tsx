@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 import { Layout } from '@/app/components/Layout';
 import { Card } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
@@ -19,8 +20,10 @@ import { AdminTable } from '@/app/components/admin/AdminTable';
 import { DataPagination } from '@/app/components/common/DataPagination';
 import { BarChart } from '@/app/components/charts';
 import { PAYMENT_STATUS_MAP } from '@/lib/adminUiMaps';
-import { usePayments, useRevenue } from '@/hooks/queries/usePayments';
+import { useConfirmPayment, usePayments, useRevenue } from '@/hooks/queries/usePayments';
 import { usePagination } from '@/hooks/usePagination';
+import { matchesSearchRegex } from '@/lib/searchRegex';
+import type { PaymentItem } from '@/services/paymentService';
 
 function formatCurrency(value: number, currency = 'VND') {
   try {
@@ -41,14 +44,21 @@ function getPaymentTime(payment: { paidAt?: string | null; createdAt?: string; i
   return Number.isNaN(time) ? 0 : time;
 }
 
+function getErrorMessage(error: unknown, fallback: string) {
+  const err = error as { response?: { data?: { message?: string } }; message?: string };
+  return err.response?.data?.message || err.message || fallback;
+}
+
 export function AdminPayments() {
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterPlan, setFilterPlan] = useState('all');
   const [filterMethod, setFilterMethod] = useState('all');
   const [sortPayments, setSortPayments] = useState('time-desc');
+  const [confirmingPaymentId, setConfirmingPaymentId] = useState<string | null>(null);
   const { data: payments = [], isLoading: paymentsLoading, isError: paymentsError } = usePayments();
   const { data: revenue, isLoading: revenueLoading } = useRevenue();
+  const confirmPayment = useConfirmPayment();
 
   const revenueData = revenue?.items || [];
   const revenueStats = revenue?.stats;
@@ -62,14 +72,8 @@ export function AdminPayments() {
   ), [payments]);
 
   const filtered = useMemo(() => {
-    const keyword = search.trim().toLowerCase();
-
     const filteredPayments = payments.filter((payment) => {
-      const haystack = [payment.user, payment.email, payment.id, payment.invoiceNo, payment.plan]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
-      const matchSearch = !keyword || haystack.includes(keyword);
+      const matchSearch = matchesSearchRegex(search, [payment.user, payment.email, payment.id, payment.invoiceNo, payment.plan]);
       const matchStatus = filterStatus === 'all' || payment.status === filterStatus;
       const matchPlan = filterPlan === 'all' || payment.plan === filterPlan;
       const matchMethod = filterMethod === 'all' || payment.method === filterMethod;
@@ -130,6 +134,24 @@ export function AdminPayments() {
       change: 'success/total',
     },
   ];
+
+  const handleConfirmPayment = async (payment: PaymentItem) => {
+    const id = payment.paymentId || payment._id || payment.invoiceNo || payment.id;
+    if (!id) {
+      toast.error('Không tìm thấy mã giao dịch để xác nhận');
+      return;
+    }
+
+    setConfirmingPaymentId(id);
+    try {
+      await confirmPayment.mutateAsync(id);
+      toast.success('Đã xác nhận thanh toán và kích hoạt gói');
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Không xác nhận được thanh toán'));
+    } finally {
+      setConfirmingPaymentId(null);
+    }
+  };
 
   return (
     <Layout>
@@ -237,6 +259,8 @@ export function AdminPayments() {
             ) : pagination.pageItems.map((payment) => {
               const status = PAYMENT_STATUS_MAP[payment.status] || PAYMENT_STATUS_MAP.pending;
               const StatusIcon = status.icon;
+              const paymentRecordId = payment.paymentId || payment._id || payment.invoiceNo || payment.id;
+              const canConfirm = payment.status === 'pending' && (payment.methodCode === 'vietqr' || payment.provider === 'vietqr');
 
               return (
                 <TableRow key={payment.id}>
@@ -257,7 +281,20 @@ export function AdminPayments() {
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">{payment.date || '-'}</TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="sm"><Eye className="w-4 h-4" /></Button>
+                    <div className="flex justify-end gap-1">
+                      {canConfirm && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => void handleConfirmPayment(payment)}
+                          disabled={confirmingPaymentId === paymentRecordId}
+                        >
+                          <CheckCircle2 className="mr-1 h-4 w-4" />
+                          {confirmingPaymentId === paymentRecordId ? 'Đang xác nhận' : 'Xác nhận'}
+                        </Button>
+                      )}
+                      <Button variant="ghost" size="sm"><Eye className="w-4 h-4" /></Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               );

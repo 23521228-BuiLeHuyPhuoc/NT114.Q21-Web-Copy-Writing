@@ -22,7 +22,7 @@ const me = asyncHandler(async (req, res) => {
 });
 
 const checkout = asyncHandler(async (req, res) => {
-  const result = await billingService.createMockCheckout(req.auth.account._id, req.body, req);
+  const result = await billingService.createCheckout(req.auth.account._id, req.body, req);
 
   return res.status(201).json({
     success: true,

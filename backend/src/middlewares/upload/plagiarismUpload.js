@@ -3,7 +3,11 @@ const multer = require('multer');
 const createError = require('../../utils/createError');
 const { isSupportedFile } = require('../../services/plagiarismFileService');
 
-const MAX_PLAGIARISM_FILE_SIZE_BYTES = 10 * 1024 * 1024;
+const DEFAULT_MAX_PLAGIARISM_FILE_SIZE_MB = 128;
+const MAX_PLAGIARISM_FILE_SIZE_BYTES = Math.max(
+  10,
+  Number(process.env.PLAGIARISM_MAX_FILE_MB || DEFAULT_MAX_PLAGIARISM_FILE_SIZE_MB),
+) * 1024 * 1024;
 const MAX_REFERENCE_FILES = 5;
 
 const upload = multer({
@@ -26,7 +30,7 @@ function handleUploadError(error, next) {
 
   if (error instanceof multer.MulterError) {
     if (error.code === 'LIMIT_FILE_SIZE') {
-      return next(createError(413, 'Each plagiarism file must be 10MB or smaller'));
+      return next(createError(413, `Each plagiarism file must be ${Math.round(MAX_PLAGIARISM_FILE_SIZE_BYTES / 1024 / 1024)}MB or smaller`));
     }
 
     if (error.code === 'LIMIT_FILE_COUNT') {
@@ -55,7 +59,9 @@ function uploadPlagiarismCheckFiles(req, res, next) {
 }
 
 module.exports = {
+  DEFAULT_MAX_PLAGIARISM_FILE_SIZE_MB,
   MAX_REFERENCE_FILES,
+  MAX_PLAGIARISM_FILE_SIZE_BYTES,
   uploadPlagiarismTextFile,
   uploadPlagiarismCheckFiles,
 };

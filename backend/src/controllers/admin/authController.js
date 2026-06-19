@@ -1,5 +1,6 @@
 const asyncHandler = require('../../utils/asyncHandler');
 const authService = require('../../services/authService');
+const auditLogService = require('../../services/auditLogService');
 const cloudinaryService = require('../../services/cloudinaryService');
 const { clearAuthCookie, setAuthCookie } = require('../../utils/authCookie');
 const createError = require('../../utils/createError');
@@ -20,6 +21,17 @@ const refreshSession = asyncHandler(async (req, res) => {
   const rememberLogin = req.body.rememberLogin === true;
   const data = authService.refreshAuthSession(req.auth.account, 'admin', { rememberLogin });
   setAuthCookie(res, data.token, { rememberLogin });
+
+  await auditLogService.createAdminAuditLog(req, {
+    action: 'admin.session.updated',
+    targetType: 'account_admin',
+    targetId: req.user._id,
+    level: 'info',
+    metadata: {
+      details: 'Updated admin session preference',
+      rememberLogin,
+    },
+  });
 
   return res.status(200).json({
     success: true,
@@ -43,6 +55,17 @@ const me = asyncHandler(async (req, res) => {
 
 const updateProfile = asyncHandler(async (req, res) => {
   const user = await authService.updateAdminProfile(req.user._id, req.body);
+  await auditLogService.createAdminAuditLog(req, {
+    action: 'admin.profile.updated',
+    targetType: 'account_admin',
+    targetId: user.id || req.user._id,
+    level: 'info',
+    metadata: {
+      details: `Updated admin profile ${user.email}`,
+      email: user.email,
+      name: user.name,
+    },
+  });
 
   return res.status(200).json({
     success: true,
@@ -57,6 +80,16 @@ const updatePassword = asyncHandler(async (req, res) => {
     req.body.currentPassword,
     req.body.newPassword,
   );
+  await auditLogService.createAdminAuditLog(req, {
+    action: 'admin.password.updated',
+    targetType: 'account_admin',
+    targetId: user.id || req.user._id,
+    level: 'warning',
+    metadata: {
+      details: `Updated admin password ${user.email}`,
+      email: user.email,
+    },
+  });
 
   return res.status(200).json({
     success: true,
@@ -72,6 +105,17 @@ const updateAvatar = asyncHandler(async (req, res) => {
 
   const uploaded = await cloudinaryService.uploadAdminAvatar(req.user._id, req.file);
   const user = await authService.updateAdminAvatar(req.user._id, uploaded.url);
+  await auditLogService.createAdminAuditLog(req, {
+    action: 'admin.avatar.updated',
+    targetType: 'account_admin',
+    targetId: user.id || req.user._id,
+    level: 'info',
+    metadata: {
+      details: `Updated admin avatar ${user.email}`,
+      email: user.email,
+      avatar: uploaded.url,
+    },
+  });
 
   return res.status(200).json({
     success: true,
@@ -85,6 +129,16 @@ const updateAvatar = asyncHandler(async (req, res) => {
 
 const removeAvatar = asyncHandler(async (req, res) => {
   const user = await authService.removeAdminAvatar(req.user._id);
+  await auditLogService.createAdminAuditLog(req, {
+    action: 'admin.avatar.removed',
+    targetType: 'account_admin',
+    targetId: user.id || req.user._id,
+    level: 'info',
+    metadata: {
+      details: `Removed admin avatar ${user.email}`,
+      email: user.email,
+    },
+  });
 
   return res.status(200).json({
     success: true,

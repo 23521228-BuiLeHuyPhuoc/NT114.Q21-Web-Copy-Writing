@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { AlertCircle, FileText, Sparkles, Wand2 } from 'lucide-react';
+import { AlertCircle, FileText, Search, Sparkles, Wand2 } from 'lucide-react';
 
 import { Layout } from '@/app/components/Layout';
 import { CopyExamples } from '@/app/components/CopyExamples';
@@ -8,8 +8,14 @@ import { IndustrySelector } from '@/app/components/IndustrySelector';
 import { Badge } from '@/app/components/ui/badge';
 import { Button } from '@/app/components/ui/button';
 import { Card } from '@/app/components/ui/card';
+import { Input } from '@/app/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select';
 import { useTemplates } from '@/hooks/queries/useTemplates';
+import { matchesSearchRegex } from '@/lib/searchRegex';
 import type { CopyTemplate } from '@/services/templateService';
+
+type TemplateSourceFilter = 'all' | 'system' | 'personal';
+type TemplateSort = 'popular' | 'newest' | 'name';
 
 const CATEGORY_LABELS: Record<string, string> = {
   seo: 'Blog SEO',
@@ -40,6 +46,21 @@ function formatCategory(value: string) {
 
 function formatType(value: string) {
   return TYPE_LABELS[value] || value;
+}
+
+function templateSearchText(template: CopyTemplate) {
+  return [
+    template.name,
+    template.description,
+    template.category,
+    template.type,
+    template.systemPrompt,
+  ].join(' ');
+}
+
+function getTime(value?: string) {
+  const time = new Date(value || '').getTime();
+  return Number.isFinite(time) ? time : 0;
 }
 
 function TemplateCard({ template }: { template: CopyTemplate }) {
@@ -86,6 +107,10 @@ function TemplateCard({ template }: { template: CopyTemplate }) {
 export function CustomerTemplates() {
   const [selectedIndustry, setSelectedIndustry] = useState('ecommerce');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [search, setSearch] = useState('');
+  const [selectedType, setSelectedType] = useState('all');
+  const [sourceFilter, setSourceFilter] = useState<TemplateSourceFilter>('all');
+  const [sortBy, setSortBy] = useState<TemplateSort>('popular');
   const { data: templates = [], isLoading, error } = useTemplates();
 
   const categories = useMemo(() => {
@@ -93,9 +118,39 @@ export function CustomerTemplates() {
     return ['all', ...unique];
   }, [templates]);
 
-  const visibleTemplates = selectedCategory === 'all'
-    ? templates
-    : templates.filter((template) => template.category === selectedCategory);
+  const types = useMemo(() => {
+    const unique = Array.from(new Set(templates.map((template) => template.type))).filter(Boolean);
+    return ['all', ...unique];
+  }, [templates]);
+
+  const visibleTemplates = useMemo(() => {
+    return templates
+      .filter((template) => {
+        const matchSearch = matchesSearchRegex(search, [templateSearchText(template)]);
+        const matchCategory = selectedCategory === 'all' || template.category === selectedCategory;
+        const matchType = selectedType === 'all' || template.type === selectedType;
+        const matchSource = sourceFilter === 'all'
+          || (sourceFilter === 'system' && template.isSystem)
+          || (sourceFilter === 'personal' && !template.isSystem);
+
+        return matchSearch && matchCategory && matchType && matchSource;
+      })
+      .sort((a, b) => {
+        if (sortBy === 'newest') return getTime(b.createdAt) - getTime(a.createdAt);
+        if (sortBy === 'name') return a.name.localeCompare(b.name, 'vi');
+        return b.usageCount - a.usageCount;
+      });
+  }, [search, selectedCategory, selectedType, sortBy, sourceFilter, templates]);
+
+  const hasActiveFilters = Boolean(search.trim()) || selectedCategory !== 'all' || selectedType !== 'all' || sourceFilter !== 'all' || sortBy !== 'popular';
+
+  const resetFilters = () => {
+    setSearch('');
+    setSelectedCategory('all');
+    setSelectedType('all');
+    setSourceFilter('all');
+    setSortBy('popular');
+  };
 
   return (
     <Layout>
@@ -109,7 +164,49 @@ export function CustomerTemplates() {
           <div className="flex items-center gap-2 mb-4">
             <Sparkles className="w-5 h-5 text-primary" />
             <h2 className="text-xl font-semibold">Templates từ API</h2>
+            <Badge className="bg-primary/10 text-primary border-0">{visibleTemplates.length}/{templates.length}</Badge>
           </div>
+
+          <Card className="p-4 mb-4">
+            <div className="flex flex-wrap gap-3">
+              <div className="relative flex-1 min-w-56">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/80" />
+                <Input
+                  placeholder="Tìm template..."
+                  value={search}
+                  onChange={event => setSearch(event.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <Select value={selectedType} onValueChange={setSelectedType}>
+                <SelectTrigger className="w-44"><SelectValue placeholder="Loại copy" /></SelectTrigger>
+                <SelectContent>
+                  {types.map(type => (
+                    <SelectItem key={type} value={type}>{type === 'all' ? 'Tất cả loại' : formatType(type)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={sourceFilter} onValueChange={(value) => setSourceFilter(value as TemplateSourceFilter)}>
+                <SelectTrigger className="w-40"><SelectValue placeholder="Nguồn mẫu" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả nguồn</SelectItem>
+                  <SelectItem value="system">System</SelectItem>
+                  <SelectItem value="personal">Cá nhân</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={sortBy} onValueChange={(value) => setSortBy(value as TemplateSort)}>
+                <SelectTrigger className="w-40"><SelectValue placeholder="Sắp xếp" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="popular">Dùng nhiều nhất</SelectItem>
+                  <SelectItem value="newest">Mới nhất</SelectItem>
+                  <SelectItem value="name">Tên A-Z</SelectItem>
+                </SelectContent>
+              </Select>
+              {hasActiveFilters && (
+                <Button variant="outline" onClick={resetFilters}>Bỏ lọc</Button>
+              )}
+            </div>
+          </Card>
 
           <div className="flex flex-wrap gap-2 mb-4">
             {categories.map((category) => (

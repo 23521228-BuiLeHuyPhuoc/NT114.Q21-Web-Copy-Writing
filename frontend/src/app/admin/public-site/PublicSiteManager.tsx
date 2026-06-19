@@ -13,28 +13,22 @@ import { AdminTable } from '@/app/components/admin/AdminTable';
 import { StatTile } from '@/app/components/admin/StatTile';
 import { PUBLIC_PAGE_FIELD_DEFS, buildDefaultContent, getPublicPageDef } from '@/lib/publicSiteDefaults';
 import { normalizePosts } from '@/lib/publicBlog';
-import { adminPlanService, type AdminPlan } from '@/services/adminPlanService';
+import { matchesSearchRegex } from '@/lib/searchRegex';
 import { publicSiteService, type PublicBlogPost, type PublicPageRecord } from '@/services/publicSiteService';
-import { Edit2, Eye, FileText, Globe2, Newspaper, Plus, Save, Trash2, WalletCards } from 'lucide-react';
+import { Edit2, Eye, FileText, Globe2, Newspaper, Plus, Save, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const tinymceApiKey = process.env.NEXT_PUBLIC_TINYMCE_API_KEY || 'no-api-key';
 
-type TabKey = 'pages' | 'blog' | 'pricing';
+type TabKey = 'pages' | 'blog';
 
 function isTabKey(value: string | null): value is TabKey {
-  return value === 'pages' || value === 'blog' || value === 'pricing';
+  return value === 'pages' || value === 'blog';
 }
 
 function getErrorMessage(error: unknown, fallback: string) {
   const err = error as { response?: { data?: { message?: string } }; message?: string };
   return err.response?.data?.message || err.message || fallback;
-}
-
-function planPrice(plan: AdminPlan) {
-  if (plan.monthlyPrice === -1) return 'Liên hệ';
-  if (plan.monthlyPrice === 0) return 'Miễn phí';
-  return `${plan.monthlyPrice.toLocaleString('vi-VN')} ${plan.currency}/tháng`;
 }
 
 function upsertPageRecord(pages: PublicPageRecord[], saved: PublicPageRecord) {
@@ -54,7 +48,6 @@ export function PublicSiteManager() {
     return isTabKey(queryTab) ? queryTab : 'pages';
   });
   const [pages, setPages] = useState<PublicPageRecord[]>([]);
-  const [plans, setPlans] = useState<AdminPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedKey, setSelectedKey] = useState('home');
   const [pageTitle, setPageTitle] = useState('');
@@ -69,32 +62,20 @@ export function PublicSiteManager() {
 
   const loadData = useCallback(async () => {
     setLoading(true);
-    const [pageResult, planResult] = await Promise.allSettled([
-      publicSiteService.listAdminPages(),
-      adminPlanService.list(),
-    ]);
-
-    if (pageResult.status === 'fulfilled') {
-      const pageItems = pageResult.value;
+    try {
+      const pageItems = await publicSiteService.listAdminPages();
       setPages(pageItems);
       const nextBlogPage = pageItems.find(page => page.key === 'blog') || null;
       setBlogPage(nextBlogPage);
       setBlogPosts(normalizePosts(nextBlogPage?.content?.posts));
-    } else {
+    } catch (error) {
       setPages([]);
       setBlogPage(null);
       setBlogPosts(normalizePosts(undefined));
-      toast.error(getErrorMessage(pageResult.reason, 'Không tải được dữ liệu public site'));
+      toast.error(getErrorMessage(error, 'Không tải được dữ liệu public site'));
+    } finally {
+      setLoading(false);
     }
-
-    if (planResult.status === 'fulfilled') {
-      setPlans(planResult.value);
-    } else {
-      setPlans([]);
-      toast.error(getErrorMessage(planResult.reason, 'Không tải được bảng giá'));
-    }
-
-    setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -118,14 +99,10 @@ export function PublicSiteManager() {
   }, [pages, selectedDef.label, selectedKey]);
 
   const filteredBlogPosts = useMemo(() => {
-    const keyword = blogSearch.trim().toLowerCase();
-    if (!keyword) return blogPosts;
-    return blogPosts.filter(post => [post.title, post.slug, post.excerpt, post.author, post.catLabel].join(' ').toLowerCase().includes(keyword));
+    return blogPosts.filter(post => matchesSearchRegex(blogSearch, [post.title, post.slug, post.excerpt, post.author, post.catLabel]));
   }, [blogPosts, blogSearch]);
 
   const visibleBlogCount = blogPosts.filter(post => post.published !== false).length;
-  const activePlans = plans.filter(plan => plan.active);
-
   const updateDraftField = (key: string, value: string) => {
     setPageDraft(current => ({ ...current, [key]: value }));
   };
@@ -345,70 +322,29 @@ export function PublicSiteManager() {
     </Card>
   );
 
-  const renderPricing = () => (
-    <Card className="p-6">
-      <div className="mb-5 flex items-center justify-between gap-4">
-        <div>
-          <h2 className="text-lg font-bold text-foreground">Bảng giá public</h2>
-          <p className="text-sm text-muted-foreground">Trang /pricing đọc trực tiếp từ /api/billing/plans. Sửa giá, quota, trạng thái và gói nổi bật tại Quản lý gói dịch vụ.</p>
-        </div>
-        <Link to="/admin/plans">
-          <Button className="rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 text-white">Mở quản lý plans</Button>
-        </Link>
-      </div>
-      <AdminTable empty={plans.length === 0 ? <div className="py-12 text-center text-sm text-muted-foreground">Không có gói dịch vụ nào.</div> : undefined}>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Gói</TableHead>
-            <TableHead>Giá</TableHead>
-            <TableHead>Quota copy</TableHead>
-            <TableHead>API calls</TableHead>
-            <TableHead>Trạng thái</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {plans.map(plan => (
-            <TableRow key={plan.id}>
-              <TableCell>
-                <span className="font-semibold text-foreground">{plan.name}</span>
-                {plan.popular && <Badge className="ml-2 border-0 bg-warning/15 text-amber-800">Popular</Badge>}
-              </TableCell>
-              <TableCell>{planPrice(plan)}</TableCell>
-              <TableCell>{plan.copyLimit === -1 ? 'Không giới hạn' : plan.copyLimit.toLocaleString('vi-VN')}</TableCell>
-              <TableCell>{plan.apiLimit === -1 ? 'Không giới hạn' : plan.apiLimit.toLocaleString('vi-VN')}</TableCell>
-              <TableCell>{plan.active ? <Badge className="border-0 bg-emerald-100 text-emerald-700">Đang hiện</Badge> : <Badge variant="outline">Tạm tắt</Badge>}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </AdminTable>
-    </Card>
-  );
-
   return (
     <Layout>
       <div className="mx-auto max-w-7xl p-6">
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
             <h1 className="mb-1 text-2xl font-bold text-foreground">Quản lý public site</h1>
-            <p className="text-sm text-muted-foreground">Trang chủ, giới thiệu, liên hệ, footer và blog được lưu vào MongoDB; bảng giá đọc từ quản lý gói.</p>
+            <p className="text-sm text-muted-foreground">Trang chủ, giới thiệu, liên hệ, footer và blog được lưu vào MongoDB.</p>
           </div>
           <Link to="/" className="inline-flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-sm font-semibold text-foreground/70 transition-colors hover:bg-surface-muted">
             <Eye className="h-4 w-4" /> Xem website
           </Link>
         </div>
 
-        <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
+        <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-3">
           <StatTile icon={Globe2} label="Trang quản lý" value={PUBLIC_PAGE_FIELD_DEFS.length} color="text-primary bg-primary/5" />
           <StatTile icon={Newspaper} label="Bài blog" value={blogPosts.length} color="text-primary bg-primary/5" />
           <StatTile icon={FileText} label="Đang hiển thị" value={visibleBlogCount} color="text-emerald-700 bg-emerald-100" />
-          <StatTile icon={WalletCards} label="Gói active" value={activePlans.length} color="text-amber-700 bg-amber-100" />
         </div>
 
         <div className="mb-6 flex flex-wrap gap-2 rounded-xl border border-border bg-card p-1">
           {[
             { key: 'pages' as const, label: 'Trang tĩnh', icon: Globe2 },
             { key: 'blog' as const, label: 'Blog', icon: Newspaper },
-            { key: 'pricing' as const, label: 'Bảng giá', icon: WalletCards },
           ].map(item => {
             const Icon = item.icon;
             return (
@@ -425,7 +361,7 @@ export function PublicSiteManager() {
 
         {loading ? (
           <Card className="p-16 text-center text-sm text-muted-foreground">Đang tải cấu hình public site...</Card>
-        ) : tab === 'pages' ? renderPages() : tab === 'blog' ? renderBlog() : renderPricing()}
+        ) : tab === 'pages' ? renderPages() : renderBlog()}
       </div>
     </Layout>
   );

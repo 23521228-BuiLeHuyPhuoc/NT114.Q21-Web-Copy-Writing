@@ -32,7 +32,11 @@ export interface MyBilling {
     name?: string;
     slug?: string;
     price?: number;
+    expiresAt?: string | null;
+    expiresAtLabel?: string;
     renewDate?: string;
+    hasExpirationDate?: boolean;
+    isExpired?: boolean;
     copyUsed?: number;
     copyLimit?: number;
     apiCalls?: number;
@@ -70,6 +74,19 @@ export interface MyBilling {
       windowEnd?: string;
     };
   };
+  subscription?: {
+    id?: string;
+    status?: string;
+    billingCycle?: string;
+    currentPeriodStart?: string;
+    currentPeriodEnd?: string | null;
+    expiresAt?: string | null;
+    expiresAtLabel?: string;
+    renewDate?: string;
+    hasExpirationDate?: boolean;
+    isExpired?: boolean;
+  } | null;
+  invoices?: Array<Record<string, unknown>>;
   plan: BillingPlan | null;
 }
 
@@ -133,6 +150,9 @@ export const billingService = {
 
     return {
       currentPlan: data?.currentPlan,
+      usage: data?.usage,
+      subscription: data?.subscription,
+      invoices: data?.invoices,
       plan: normalizePlan(data?.plan),
     };
   },

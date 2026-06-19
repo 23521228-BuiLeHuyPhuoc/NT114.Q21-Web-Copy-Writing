@@ -10,6 +10,12 @@ function toId(value) {
   return value.toString();
 }
 
+function toTargetId(value) {
+  if (value === null || value === undefined) return '';
+  if (value._id) return value._id.toString();
+  return String(value);
+}
+
 function getIp(req) {
   const forwarded = req.headers['x-forwarded-for'];
   if (forwarded) return String(forwarded).split(',')[0].trim();
@@ -70,6 +76,7 @@ function buildFilter(query = {}) {
       { actorEmail: regex },
       { actorRole: regex },
       { targetType: regex },
+      { targetId: regex },
       { ip: regex },
       { 'metadata.details': regex },
       { 'metadata.message': regex },
@@ -104,7 +111,10 @@ async function listAuditLogs(query = {}) {
 }
 
 async function createAuditLog(payload) {
-  const log = await AuditLog.create(payload);
+  const log = await AuditLog.create({
+    ...payload,
+    targetId: toTargetId(payload.targetId),
+  });
   return serializeAuditLog(log);
 }
 

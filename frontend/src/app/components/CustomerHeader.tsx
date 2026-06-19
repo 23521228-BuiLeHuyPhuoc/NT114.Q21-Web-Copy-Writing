@@ -16,7 +16,7 @@ import {
   HelpCircle,
   X,
 } from 'lucide-react';
-import { BREADCRUMB_MAP, QUICK_ACTIONS } from '@/mocks/customerHeader';
+import { BREADCRUMB_MAP, QUICK_ACTIONS } from '@/lib/customerHeaderConfig';
 import {
   useHeaderNotifications,
   useMarkAllNotificationsRead,

@@ -11,6 +11,23 @@ const listAuditLogs = asyncHandler(async (req, res) => {
   });
 });
 
+const createAuditLog = asyncHandler(async (req, res) => {
+  const item = await auditLogService.createAdminAuditLog(req, {
+    action: req.body.action,
+    targetType: req.body.targetType || '',
+    targetId: req.body.targetId || '',
+    level: req.body.level || 'info',
+    metadata: req.body.metadata || {},
+  });
+
+  return res.status(201).json({
+    success: true,
+    message: 'Audit log created',
+    data: { item },
+  });
+});
+
 module.exports = {
   listAuditLogs,
+  createAuditLog,
 };

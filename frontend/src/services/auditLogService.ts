@@ -21,6 +21,14 @@ export interface AuditLogListParams {
   level?: 'all' | AuditLogLevel;
 }
 
+export interface AuditLogCreatePayload {
+  action: string;
+  targetType?: string;
+  targetId?: string;
+  level?: AuditLogLevel;
+  metadata?: Record<string, unknown>;
+}
+
 interface BackendAuditLog {
   id?: string;
   action?: string;
@@ -73,5 +81,10 @@ export const auditLogService = {
   async list(params?: AuditLogListParams) {
     const response = await api.get<ListResponse>('/admin/audit-logs', { params: { limit: 100, ...params } });
     return (response.data.data?.items || []).map(normalizeLog);
+  },
+
+  async create(payload: AuditLogCreatePayload) {
+    const response = await api.post('/admin/audit-logs', payload);
+    return response.data.data?.item ? normalizeLog(response.data.data.item) : null;
   },
 };

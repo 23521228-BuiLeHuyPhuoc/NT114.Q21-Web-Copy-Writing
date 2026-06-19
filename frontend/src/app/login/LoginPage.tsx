@@ -96,7 +96,6 @@ export function LoginPage() {
             ))}
           </ul>
 
-          {/* Mock copy card */}
           <div className="bg-card/10 border border-white/10 rounded-2xl p-5 backdrop-blur">
             <div className="flex items-center gap-2 mb-3">
               <div className="w-2 h-2 bg-green-300 rounded-full animate-pulse" />

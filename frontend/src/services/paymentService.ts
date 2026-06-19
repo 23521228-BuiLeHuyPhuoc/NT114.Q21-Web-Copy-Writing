@@ -49,6 +49,12 @@ interface PaymentListResponse {
   };
 }
 
+interface PaymentResponse {
+  data?: {
+    payment?: Partial<PaymentItem>;
+  };
+}
+
 interface RevenueResponse {
   data?: {
     items?: RevenuePoint[];
@@ -100,6 +106,11 @@ export const paymentService = {
   async list() {
     const response = await api.get<PaymentListResponse>('/admin/payments');
     return (response.data.data?.items || []).map(normalizePayment);
+  },
+
+  async confirm(id: string) {
+    const response = await api.patch<PaymentResponse>(`/admin/payments/${id}/confirm`);
+    return normalizePayment(response.data.data?.payment || {});
   },
 
   async getRevenue() {

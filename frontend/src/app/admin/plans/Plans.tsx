@@ -30,7 +30,8 @@ import {
   useUpdateAdminPlan,
 } from '@/hooks/queries/useAdminPlans';
 import type { AdminPlan } from '@/services/adminPlanService';
-import { MODELS } from '@/mocks/generator';
+import { MODELS } from '@/lib/generatorConfig';
+import { matchesSearchRegex } from '@/lib/searchRegex';
 import toast from 'react-hot-toast';
 
 function getErrorMessage(error: unknown, fallback: string) {
@@ -42,6 +43,10 @@ function parseBlankNumber(value: string, blankValue = -1) {
   if (value.trim() === '') return blankValue;
   const numeric = Number(value);
   return Number.isFinite(numeric) ? numeric : blankValue;
+}
+
+function parseLimitNumber(value: string) {
+  return parseBlankNumber(value, 0);
 }
 
 function parseOptionalNumber(value: string) {
@@ -78,7 +83,7 @@ function formatAllowedModels(models: string[]) {
 }
 
 function formatLimit(value: number, label = '') {
-  if (value === -1) return 'Unlimited';
+  if (value === -1) return 'Chưa đặt';
   if (value === 0) return '-';
   return `${value.toLocaleString('vi-VN')}${label}`;
 }
@@ -233,15 +238,14 @@ export function AdminPlans() {
   }, [plans]);
 
   const filteredPlans = useMemo(() => {
-    const keyword = search.trim().toLowerCase();
     const filtered = plans.filter((plan) => {
       const allowedModelText = plan.allowedModels.map(model => MODEL_ACCESS_LABELS.get(model) || model).join(' ');
-      const matchSearch = !keyword || [
+      const matchSearch = matchesSearchRegex(search, [
         plan.name,
         plan.slug,
         plan.description,
         allowedModelText,
-      ].join(' ').toLowerCase().includes(keyword);
+      ]);
       const matchStatus = filterStatus === 'all'
         || (filterStatus === 'active' && plan.active)
         || (filterStatus === 'inactive' && !plan.active)
@@ -329,14 +333,14 @@ export function AdminPlans() {
         description: addDesc.trim(),
         price: parseBlankNumber(addPrice, -1),
         yearlyPrice: parseOptionalNumber(addYearlyPrice),
-        copyLimit: parseBlankNumber(addCopy, -1),
-        apiLimit: parseBlankNumber(addApi, -1),
-        apiLimitFiveHours: parseBlankNumber(addApiFiveHours, -1),
-        apiLimitWeekly: parseBlankNumber(addApiWeekly, -1),
-        fineTune: parseBlankNumber(addFine, -1),
-        plagiarismChecks: parseBlankNumber(addPlagiarism, -1),
-        seats: parseBlankNumber(addSeats, -1),
-        historyDays: parseBlankNumber(addHistoryDays, -1),
+        copyLimit: parseLimitNumber(addCopy),
+        apiLimit: parseLimitNumber(addApi),
+        apiLimitFiveHours: parseLimitNumber(addApiFiveHours),
+        apiLimitWeekly: parseLimitNumber(addApiWeekly),
+        fineTune: parseLimitNumber(addFine),
+        plagiarismChecks: parseLimitNumber(addPlagiarism),
+        seats: parseLimitNumber(addSeats),
+        historyDays: parseLimitNumber(addHistoryDays),
         features: splitLines(addFeatures),
         excludedFeatures: splitLines(addExcludedFeatures),
         allowedModels: addAllowedModels,
@@ -362,14 +366,14 @@ export function AdminPlans() {
           description: editDesc.trim(),
           price: parseBlankNumber(editPrice, -1),
           yearlyPrice: parseOptionalNumber(editYearlyPrice),
-          copyLimit: parseBlankNumber(editCopy, -1),
-          apiLimit: parseBlankNumber(editApi, -1),
-          apiLimitFiveHours: parseBlankNumber(editApiFiveHours, -1),
-          apiLimitWeekly: parseBlankNumber(editApiWeekly, -1),
-          fineTune: parseBlankNumber(editFine, -1),
-          plagiarismChecks: parseBlankNumber(editPlagiarism, -1),
-          seats: parseBlankNumber(editSeats, -1),
-          historyDays: parseBlankNumber(editHistoryDays, -1),
+          copyLimit: parseLimitNumber(editCopy),
+          apiLimit: parseLimitNumber(editApi),
+          apiLimitFiveHours: parseLimitNumber(editApiFiveHours),
+          apiLimitWeekly: parseLimitNumber(editApiWeekly),
+          fineTune: parseLimitNumber(editFine),
+          plagiarismChecks: parseLimitNumber(editPlagiarism),
+          seats: parseLimitNumber(editSeats),
+          historyDays: parseLimitNumber(editHistoryDays),
           features: splitLines(editFeatures),
           excludedFeatures: splitLines(editExcludedFeatures),
           allowedModels: editAllowedModels,
@@ -634,35 +638,35 @@ export function AdminPlans() {
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Copy/tháng</Label>
-                <Input value={addCopy} onChange={event => setAddCopy(event.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
+                <Input value={addCopy} onChange={event => setAddCopy(event.target.value)} placeholder="Nhập số giới hạn" className="h-10" type="number" />
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Quota generate/tháng</Label>
-                <Input value={addApi} onChange={event => setAddApi(event.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
+                <Input value={addApi} onChange={event => setAddApi(event.target.value)} placeholder="Nhập số giới hạn" className="h-10" type="number" />
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Quota generate/5h</Label>
-                <Input value={addApiFiveHours} onChange={event => setAddApiFiveHours(event.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
+                <Input value={addApiFiveHours} onChange={event => setAddApiFiveHours(event.target.value)} placeholder="Nhập số giới hạn" className="h-10" type="number" />
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Quota generate/tuần</Label>
-                <Input value={addApiWeekly} onChange={event => setAddApiWeekly(event.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
+                <Input value={addApiWeekly} onChange={event => setAddApiWeekly(event.target.value)} placeholder="Nhập số giới hạn" className="h-10" type="number" />
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Fine-tune models</Label>
-                <Input value={addFine} onChange={event => setAddFine(event.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
+                <Input value={addFine} onChange={event => setAddFine(event.target.value)} placeholder="Nhập số giới hạn" className="h-10" type="number" />
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Kiểm tra đạo văn/tháng</Label>
-                <Input value={addPlagiarism} onChange={event => setAddPlagiarism(event.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
+                <Input value={addPlagiarism} onChange={event => setAddPlagiarism(event.target.value)} placeholder="Nhập số giới hạn" className="h-10" type="number" />
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Số ghế</Label>
-                <Input value={addSeats} onChange={event => setAddSeats(event.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
+                <Input value={addSeats} onChange={event => setAddSeats(event.target.value)} placeholder="Nhập số giới hạn" className="h-10" type="number" />
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Lưu lịch sử (ngày)</Label>
-                <Input value={addHistoryDays} onChange={event => setAddHistoryDays(event.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
+                <Input value={addHistoryDays} onChange={event => setAddHistoryDays(event.target.value)} placeholder="Nhập số giới hạn" className="h-10" type="number" />
               </div>
             </div>
             <div className="grid gap-3 md:grid-cols-2">
@@ -717,35 +721,35 @@ export function AdminPlans() {
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Copy/tháng</Label>
-                  <Input value={editCopy} onChange={event => setEditCopy(event.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
+                  <Input value={editCopy} onChange={event => setEditCopy(event.target.value)} placeholder="Nhập số giới hạn" className="h-10" type="number" />
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Quota generate/tháng</Label>
-                  <Input value={editApi} onChange={event => setEditApi(event.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
+                  <Input value={editApi} onChange={event => setEditApi(event.target.value)} placeholder="Nhập số giới hạn" className="h-10" type="number" />
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Quota generate/5h</Label>
-                  <Input value={editApiFiveHours} onChange={event => setEditApiFiveHours(event.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
+                  <Input value={editApiFiveHours} onChange={event => setEditApiFiveHours(event.target.value)} placeholder="Nhập số giới hạn" className="h-10" type="number" />
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Quota generate/tuần</Label>
-                  <Input value={editApiWeekly} onChange={event => setEditApiWeekly(event.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
+                  <Input value={editApiWeekly} onChange={event => setEditApiWeekly(event.target.value)} placeholder="Nhập số giới hạn" className="h-10" type="number" />
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Fine-tune</Label>
-                  <Input value={editFine} onChange={event => setEditFine(event.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
+                  <Input value={editFine} onChange={event => setEditFine(event.target.value)} placeholder="Nhập số giới hạn" className="h-10" type="number" />
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Kiểm tra đạo văn/tháng</Label>
-                  <Input value={editPlagiarism} onChange={event => setEditPlagiarism(event.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
+                  <Input value={editPlagiarism} onChange={event => setEditPlagiarism(event.target.value)} placeholder="Nhập số giới hạn" className="h-10" type="number" />
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Số ghế</Label>
-                  <Input value={editSeats} onChange={event => setEditSeats(event.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
+                  <Input value={editSeats} onChange={event => setEditSeats(event.target.value)} placeholder="Nhập số giới hạn" className="h-10" type="number" />
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Lưu lịch sử (ngày)</Label>
-                  <Input value={editHistoryDays} onChange={event => setEditHistoryDays(event.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
+                  <Input value={editHistoryDays} onChange={event => setEditHistoryDays(event.target.value)} placeholder="Nhập số giới hạn" className="h-10" type="number" />
                 </div>
               </div>
               <div className="grid gap-3 md:grid-cols-2">

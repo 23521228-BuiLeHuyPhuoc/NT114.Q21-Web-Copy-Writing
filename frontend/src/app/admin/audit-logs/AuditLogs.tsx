@@ -13,6 +13,7 @@ import { DataPagination } from '@/app/components/common/DataPagination';
 import { AUDIT_ACTION_ICONS, AUDIT_LEVEL_MAP } from '@/lib/adminUiMaps';
 import { useAuditLogs } from '@/hooks/queries/useAuditLogs';
 import { usePagination } from '@/hooks/usePagination';
+import { matchesSearchRegex } from '@/lib/searchRegex';
 
 function getLogTime(value?: string) {
   if (!value) return 0;
@@ -37,10 +38,8 @@ export function AdminAuditLogs() {
   ), [logs]);
 
   const filtered = useMemo(() => {
-    const keyword = search.trim().toLowerCase();
     const filteredLogs = logs.filter(log => {
-      const haystack = [log.action, log.user, log.role, log.details, log.ip, log.level].join(' ').toLowerCase();
-      const matchSearch = !keyword || haystack.includes(keyword);
+      const matchSearch = matchesSearchRegex(search, [log.action, log.user, log.role, log.details, log.ip, log.level]);
       const matchLevel = filterLevel === 'all' || log.level === filterLevel;
       const matchAction = filterAction === 'all' || log.action === filterAction;
       const matchRole = filterRole === 'all' || log.role === filterRole;

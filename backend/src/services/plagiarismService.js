@@ -12,10 +12,19 @@ const MAX_SOURCE_LENGTH = 500;
 const MAX_SOURCE_URL_LENGTH = 500;
 const MAX_SNIPPET_LENGTH = 600;
 const MAX_SOURCE_TEXT_LENGTH = 30000;
+const DEFAULT_MAX_COMPARISON_SOURCE_TEXT_LENGTH = 100000000;
+const MAX_COMPARISON_SOURCE_TEXT_LENGTH = Math.max(
+  60000,
+  Number(process.env.PLAGIARISM_MAX_EXTRACTED_TEXT_CHARS || DEFAULT_MAX_COMPARISON_SOURCE_TEXT_LENGTH),
+);
 const MAX_MATCH_TEXT_LENGTH = 2000;
 const MAX_TOPIC_MATCHES = 12;
 const MAX_IGNORED_PHRASES = 30;
 const MAX_IGNORED_PHRASE_LENGTH = 10000;
+const MAX_SEGMENT_SCAN_SOURCE_LENGTH = Math.max(
+  60000,
+  Number(process.env.PLAGIARISM_MAX_SEGMENT_SCAN_CHARS || 300000),
+);
 
 const DEFAULT_SOURCE_CONFIG = {
   database: true,
@@ -108,6 +117,18 @@ function countWords(text) {
     .trim()
     .split(/\s+/)
     .filter(Boolean).length;
+}
+
+function hasAtLeastWords(text, minimum) {
+  let count = 0;
+  const regex = /\S+/g;
+
+  while (regex.exec(String(text || '')) !== null) {
+    count += 1;
+    if (count >= minimum) return true;
+  }
+
+  return false;
 }
 
 function toId(value) {
@@ -244,6 +265,13 @@ function getTopicSimilarityScore(scores = {}) {
 }
 
 function scoreTexts(inputText, sourceText, options = {}) {
+  const directExactScore = scoreDirectExactContainment(inputText, sourceText, options);
+  if (directExactScore) return directExactScore;
+
+  if (String(sourceText || '').length > MAX_SEGMENT_SCAN_SOURCE_LENGTH) {
+    return emptyScoreFromInput(inputText, options);
+  }
+
   const inputTokens = tokenize(inputText, options);
   const sourceTokens = tokenize(sourceText, options);
   if (inputTokens.length < 3 || sourceTokens.length < 3) {
@@ -315,6 +343,67 @@ function scoreTexts(inputText, sourceText, options = {}) {
   };
 }
 
+function emptyScoreFromInput(inputText, options = {}) {
+  const inputTokens = tokenize(inputText, options);
+
+  return {
+    score: 0,
+    matchedWords: 0,
+    totalWords: inputTokens.length,
+    exactMatchScore: 0,
+    phraseOverlapScore: 0,
+    wordOverlapScore: 0,
+    plagiarismScore: 0,
+    topicSimilarityScore: 0,
+    scoreBasis: 'none',
+    matchedPhrases: 0,
+    totalPhrases: 0,
+    phraseSize: 0,
+    sharedUniqueWords: 0,
+    inputUniqueWords: inputTokens.length,
+    sourceUniqueWords: 0,
+  };
+}
+
+function exactScoreFromInput(inputText, options = {}) {
+  const inputTokens = tokenize(inputText, options);
+  const inputWords = new Set(inputTokens);
+  const gramSize = inputTokens.length < 12 ? 3 : 5;
+  const inputNgrams = buildNgrams(inputTokens, gramSize);
+
+  return {
+    score: 100,
+    plagiarismScore: 100,
+    topicSimilarityScore: 100,
+    matchedWords: inputWords.size,
+    totalWords: inputTokens.length,
+    exactMatchScore: 100,
+    phraseOverlapScore: 100,
+    wordOverlapScore: 100,
+    scoreBasis: 'exact',
+    matchedPhrases: inputNgrams.size,
+    totalPhrases: inputNgrams.size,
+    phraseSize: gramSize,
+    sharedUniqueWords: inputWords.size,
+    inputUniqueWords: inputWords.size,
+    sourceUniqueWords: inputWords.size,
+  };
+}
+
+function scoreDirectExactContainment(inputText, sourceText, options = {}) {
+  const input = stripIgnoredSegments(inputText, options).replace(/\s+/g, ' ').trim();
+  if (input.length < 40) return null;
+
+  const source = String(sourceText || '');
+  if (!source.includes(input)) return null;
+
+  return exactScoreFromInput(inputText, options);
+}
+
+function sourceHasDirectExactMatch(inputText, sourceText, options = {}) {
+  return Boolean(scoreDirectExactContainment(inputText, sourceText, options));
+}
+
 function splitSegments(text) {
   const source = String(text || '');
   const regex = /[^.!?;:\n]+[.!?;:\n]*/g;
@@ -344,6 +433,20 @@ function snippet(text, maxLength = 220) {
   const compact = String(text || '').replace(/\s+/g, ' ').trim();
   if (compact.length <= maxLength) return compact;
   return `${compact.slice(0, maxLength - 1).trim()}…`;
+}
+
+function excerptAround(text, start, end, maxLength = MAX_MATCH_TEXT_LENGTH) {
+  const source = String(text || '');
+  if (start < 0 || end <= start) return snippet(source, maxLength);
+
+  const matchLength = end - start;
+  if (matchLength >= maxLength) return source.slice(start, start + maxLength).replace(/\s+/g, ' ').trim();
+
+  const remaining = maxLength - matchLength;
+  const contextBefore = Math.floor(remaining / 2);
+  const from = Math.max(0, start - contextBefore);
+  const to = Math.min(source.length, from + maxLength);
+  return source.slice(from, to).replace(/\s+/g, ' ').trim();
 }
 
 function truncateText(value, maxLength) {
@@ -516,6 +619,42 @@ function findSegmentMatches(inputText, candidate, threshold, options = {}) {
   });
 
   return matches.sort((left, right) => right.score - left.score).slice(0, 4);
+}
+
+function buildDirectExactMatch(inputText, candidate, scored, options = {}) {
+  const matchedText = stripIgnoredSegments(inputText, options).replace(/\s+/g, ' ').trim();
+  const sourceText = String(candidate.text || '');
+  const sourceIndex = sourceText.indexOf(matchedText);
+  const sourceEvidence = sourceIndex >= 0
+    ? excerptAround(sourceText, sourceIndex, sourceIndex + matchedText.length, MAX_MATCH_TEXT_LENGTH)
+    : matchedText;
+
+  return {
+    start: 0,
+    end: String(inputText || '').length,
+    matchedText: schemaText(matchedText, MAX_MATCH_TEXT_LENGTH),
+    sourceText: schemaText(sourceEvidence, MAX_MATCH_TEXT_LENGTH),
+    sourceUrl: schemaText(candidate.sourceUrl || '', MAX_SOURCE_URL_LENGTH),
+    sourceTitle: schemaText(candidate.sourceTitle || candidate.source || '', MAX_SOURCE_TITLE_LENGTH),
+    sourceType: candidate.sourceType,
+    score: scored.plagiarismScore,
+    exactMatchScore: scored.exactMatchScore,
+    phraseOverlapScore: scored.phraseOverlapScore,
+    wordOverlapScore: scored.wordOverlapScore,
+    scoreBasis: 'exact',
+    matchedWords: scored.matchedWords,
+    totalWords: scored.totalWords,
+    matchedPhrases: scored.matchedPhrases,
+    totalPhrases: scored.totalPhrases,
+    phraseSize: scored.phraseSize,
+  };
+}
+
+function shouldUseDirectExactMatch(inputText, candidate, scored, threshold, options = {}) {
+  return scored.exactMatchScore >= 100
+    && scored.plagiarismScore >= threshold
+    && String(candidate.text || '').length > MAX_SEGMENT_SCAN_SOURCE_LENGTH
+    && sourceHasDirectExactMatch(inputText, candidate.text, options);
 }
 
 function topicMatchThreshold(threshold) {
@@ -840,28 +979,54 @@ function buildUploadedCandidates(uploadedSources = []) {
   return uploadedSources
     .map((source, index) => {
       const title = schemaText(source.sourceTitle || source.source || `Uploaded file ${index + 1}`, MAX_SOURCE_TITLE_LENGTH);
-      const text = schemaText(source.text || '', MAX_SOURCE_TEXT_LENGTH);
+      const rawText = String(source.text || '');
+      const text = rawText.length > MAX_COMPARISON_SOURCE_TEXT_LENGTH
+        ? rawText.slice(0, MAX_COMPARISON_SOURCE_TEXT_LENGTH)
+        : rawText;
 
       return {
         source: schemaText(source.source || `upload:${title}`, MAX_SOURCE_LENGTH),
         sourceTitle: title,
-        sourceUrl: '',
+        sourceUrl: schemaText(source.sourceUrl || '', MAX_SOURCE_URL_LENGTH),
         sourceType: 'uploads',
         text,
+        mimeType: source.mimeType || '',
+        size: source.size || 0,
       };
     })
-    .filter((source) => countWords(source.text) >= 5);
+    .filter((source) => hasAtLeastWords(source.text, 5));
+}
+
+function hasUploadedSourceText(uploadedSources = []) {
+  return Array.isArray(uploadedSources)
+    && uploadedSources.some((source) => hasAtLeastWords(source?.text, 5));
 }
 
 function normalizeSourceConfig(payload = {}) {
   const incoming = payload.sources || {};
   const references = incoming.references ?? payload.includeReferences ?? DEFAULT_SOURCE_CONFIG.references;
+  const uploads = hasUploadedSourceText(payload.uploadedSources)
+    ? true
+    : incoming.uploads ?? DEFAULT_SOURCE_CONFIG.uploads;
+
   return {
     database: incoming.database ?? DEFAULT_SOURCE_CONFIG.database,
     references,
     web: incoming.web ?? DEFAULT_SOURCE_CONFIG.web,
-    uploads: incoming.uploads ?? DEFAULT_SOURCE_CONFIG.uploads,
+    uploads,
   };
+}
+
+function getBestSourceEvidenceText(candidate = {}) {
+  const bestPlagiarismMatch = Array.isArray(candidate.matches) ? candidate.matches[0] : null;
+  if (bestPlagiarismMatch?.sourceText) return bestPlagiarismMatch.sourceText;
+
+  const bestTopicMatch = Array.isArray(candidate.topicMatches) ? candidate.topicMatches[0] : null;
+  if (bestTopicMatch?.sourceText) return bestTopicMatch.sourceText;
+
+  if (candidate.sourceType === 'uploads') return candidate.snippet || '';
+
+  return candidate.comparisonText || '';
 }
 
 function getEffectiveThreshold(threshold, sensitivity) {
@@ -993,10 +1158,18 @@ async function checkPlagiarism(userId, payload) {
 
   const scoredSources = candidates
     .map((candidate) => {
-      const comparisonCandidateText = stripIgnoredSegments(candidate.text, scoringOptions);
+      const isLargeSource = String(candidate.text || '').length > MAX_SEGMENT_SCAN_SOURCE_LENGTH;
+      const comparisonCandidateText = isLargeSource ? candidate.text : stripIgnoredSegments(candidate.text, scoringOptions);
       const textScore = scoreTexts(comparisonCheckText, comparisonCandidateText, scoringOptions);
-      const matches = findSegmentMatches(checkText, candidate, effectiveThreshold, scoringOptions);
-      const topicMatches = findTopicSegmentMatches(checkText, candidate, effectiveThreshold, scoringOptions);
+      const useDirectExactMatch = shouldUseDirectExactMatch(checkText, candidate, textScore, effectiveThreshold, scoringOptions);
+      const matches = useDirectExactMatch
+        ? [buildDirectExactMatch(checkText, candidate, textScore, scoringOptions)]
+        : isLargeSource
+          ? []
+          : findSegmentMatches(checkText, candidate, effectiveThreshold, scoringOptions);
+      const topicMatches = useDirectExactMatch || isLargeSource
+        ? []
+        : findTopicSegmentMatches(checkText, candidate, effectiveThreshold, scoringOptions);
       const bestSegment = matches[0] || {};
       const bestMatchScore = bestSegment.score || 0;
       const exactMatchScore = Math.max(textScore.exactMatchScore, bestSegment.exactMatchScore || 0);
@@ -1037,8 +1210,8 @@ async function checkPlagiarism(userId, payload) {
     similarity: candidate.similarity,
     plagiarismScore: candidate.plagiarismScore,
     topicSimilarityScore: candidate.topicSimilarityScore,
-    snippet: schemaText(candidate.snippet, MAX_SNIPPET_LENGTH),
-    sourceText: schemaText(candidate.comparisonText, MAX_SOURCE_TEXT_LENGTH),
+    snippet: schemaText(getBestSourceEvidenceText(candidate) || candidate.snippet, MAX_SNIPPET_LENGTH),
+    sourceText: schemaText(getBestSourceEvidenceText(candidate), MAX_SOURCE_TEXT_LENGTH),
     matchedWords: candidate.matchedWords,
     totalWords: candidate.totalWords,
     exactMatchScore: candidate.exactMatchScore,
@@ -1167,6 +1340,8 @@ module.exports = {
     findTopicSegmentMatches,
     stripIgnoredSegments,
     buildWebSearchText,
+    buildUploadedCandidates,
+    normalizeSourceConfig,
     removeIgnoredPhrasesForDisplay,
     getPlagiarismScore,
     getTopicSimilarityScore,

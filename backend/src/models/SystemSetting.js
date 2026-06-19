@@ -1,5 +1,41 @@
 const mongoose = require('mongoose');
 
+const emailTemplateSchema = new mongoose.Schema(
+  {
+    key: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 80,
+    },
+    name: {
+      type: String,
+      trim: true,
+      maxlength: 120,
+      default: '',
+    },
+    subject: {
+      type: String,
+      trim: true,
+      maxlength: 200,
+      default: '',
+    },
+    text: {
+      type: String,
+      trim: true,
+      maxlength: 6000,
+      default: '',
+    },
+    html: {
+      type: String,
+      trim: true,
+      maxlength: 12000,
+      default: '',
+    },
+  },
+  { _id: false },
+);
+
 const systemSettingSchema = new mongoose.Schema(
   {
     key: {
@@ -40,6 +76,15 @@ const systemSettingSchema = new mongoose.Schema(
     emailVerificationRequired: {
       type: Boolean,
       default: false,
+    },
+    emailTemplates: {
+      type: [emailTemplateSchema],
+      default: [],
+    },
+    quotaResetAt: {
+      type: Date,
+      default: null,
+      index: true,
     },
     updatedBy: {
       type: mongoose.Schema.Types.ObjectId,

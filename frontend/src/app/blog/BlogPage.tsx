@@ -5,11 +5,12 @@ import { PublicFooter } from '@/app/components/public/PublicFooter';
 import { Badge } from '@/app/components/ui/badge';
 import { Input } from '@/app/components/ui/input';
 import { ImageWithFallback } from '@/app/components/figma/ImageWithFallback';
-import { BLOG_CATEGORIES, BLOG_POSTS } from '@/mocks/blog';
+import { BLOG_CATEGORIES } from '@/lib/publicBlogConfig';
 import { publicSiteService, type PublicBlogPost } from '@/services/publicSiteService';
 import { Search, Clock, ArrowRight, BookOpen, TrendingUp, Cpu, Wand2 } from 'lucide-react';
 import { DataPagination } from '@/app/components/common/DataPagination';
 import { usePagination } from '@/hooks/usePagination';
+import { matchesSearchRegex } from '@/lib/searchRegex';
 
 const catColor: Record<string, string> = {
   ai: 'bg-primary/10 text-primary',
@@ -22,15 +23,15 @@ const catColor: Record<string, string> = {
 export function BlogPage() {
   const [cat, setCat] = useState('all');
   const [search, setSearch] = useState('');
-  const [posts, setPosts] = useState<PublicBlogPost[]>(BLOG_POSTS.map(post => ({ ...post, published: true })));
+  const [posts, setPosts] = useState<PublicBlogPost[]>([]);
 
   useEffect(() => {
     let active = true;
     publicSiteService.getBlogPage()
       .then((page) => {
         const apiPosts = page?.content?.posts;
-        if (!active || !Array.isArray(apiPosts) || apiPosts.length === 0) return;
-        setPosts(apiPosts.filter(post => post.published !== false));
+        if (!active) return;
+        setPosts(Array.isArray(apiPosts) ? apiPosts.filter(post => post.published !== false) : []);
       })
       .catch(() => undefined);
 
@@ -56,8 +57,7 @@ export function BlogPage() {
 
   const filtered = posts.filter(post => {
     const matchCat = cat === 'all' || post.cat === cat;
-    const query = search.trim().toLowerCase();
-    const matchSearch = !query || post.title.toLowerCase().includes(query) || post.excerpt.toLowerCase().includes(query);
+    const matchSearch = matchesSearchRegex(search, [post.title, post.excerpt]);
     return matchCat && matchSearch;
   });
 

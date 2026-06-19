@@ -14,6 +14,8 @@ import { ToggleGroup, ToggleGroupItem } from '@/app/components/ui/toggle-group';
 import { DataPagination } from '@/app/components/common/DataPagination';
 import { usePagination } from '@/hooks/usePagination';
 import { cn } from '@/app/components/ui/utils';
+import { matchesSearchRegex } from '@/lib/searchRegex';
+import { auditLogService, type AuditLogLevel } from '@/services/auditLogService';
 import {
   ADMIN_ROLES,
   CUSTOMER_ROLES,
@@ -154,10 +156,8 @@ export function AdminPermissions() {
   const selectedRoleDef = activeRoles[activeSelectedRole];
   const roleScopeLabel = getPermissionScopeLabel(roleScope);
   const roleEntries = useMemo(() => {
-    const keyword = roleSearch.trim().toLowerCase();
     const entries = Object.entries(activeRoles).filter(([key, role]) => {
-      const haystack = [key, role.label, role.description].join(' ').toLowerCase();
-      return !keyword || haystack.includes(keyword);
+      return matchesSearchRegex(roleSearch, [key, role.label, role.description]);
     });
 
     return entries.sort(([, a], [, b]) => {
@@ -189,13 +189,9 @@ export function AdminPermissions() {
     Array.from(new Set(permissions.map(permission => permission.group).filter(Boolean))).sort((a, b) => a.localeCompare(b, 'vi'))
   ), [permissions]);
   const filteredPermissions = useMemo(() => {
-    const keyword = permissionSearch.trim().toLowerCase();
     return permissions.filter((permission) => {
       const scope = getPermissionScope(permission);
-      const haystack = [permission.key, permission.label, permission.group, permission.description, permission.route, getPermissionScopeLabel(scope)]
-        .join(' ')
-        .toLowerCase();
-      const matchSearch = !keyword || haystack.includes(keyword);
+      const matchSearch = matchesSearchRegex(permissionSearch, [permission.key, permission.label, permission.group, permission.description, permission.route, getPermissionScopeLabel(scope)]);
       const matchGroup = permissionGroup === 'all' || permission.group === permissionGroup;
       const matchScope = permissionScope === 'all' || scope === permissionScope;
       return matchSearch && matchGroup && matchScope;
@@ -211,13 +207,9 @@ export function AdminPermissions() {
     new Set(activeScopePermissions.map((permission) => permission.key))
   ), [activeScopePermissions]);
   const roleFilteredPermissions = useMemo(() => {
-    const keyword = permissionSearch.trim().toLowerCase();
     return activeScopePermissions.filter((permission) => {
       const scope = getPermissionScope(permission);
-      const haystack = [permission.key, permission.label, permission.group, permission.description, permission.route, getPermissionScopeLabel(scope)]
-        .join(' ')
-        .toLowerCase();
-      const matchSearch = !keyword || haystack.includes(keyword);
+      const matchSearch = matchesSearchRegex(permissionSearch, [permission.key, permission.label, permission.group, permission.description, permission.route, getPermissionScopeLabel(scope)]);
       const matchGroup = permissionGroup === 'all' || permission.group === permissionGroup;
       return matchSearch && matchGroup;
     });
@@ -240,6 +232,16 @@ export function AdminPermissions() {
     initialPageSize: 5,
     resetKey: customPermissions.length,
   });
+
+  const recordPermissionAudit = (
+    action: string,
+    targetType: string,
+    targetId: string,
+    metadata: Record<string, unknown>,
+    level: AuditLogLevel = 'info',
+  ) => {
+    void auditLogService.create({ action, targetType, targetId, level, metadata }).catch(() => undefined);
+  };
 
   const persistPermissions = (next: AdminPermissionDef[]) => {
     setPermissions(next);
@@ -339,6 +341,14 @@ export function AdminPermissions() {
         system: false,
       },
     ]);
+    recordPermissionAudit('admin.permission.created', 'permission', key, {
+      details: `Created permission ${newPermission.label.trim()}`,
+      key,
+      label: newPermission.label.trim(),
+      group: newPermission.group.trim() || routeOption?.group || 'Custom',
+      route,
+      scope: routeScope,
+    });
     setNewPermission({ key: '', label: '', group: 'Custom', description: '', route: '' });
     toast.success('Đã tạo quyền mới');
   };
@@ -367,6 +377,14 @@ export function AdminPermissions() {
         ]),
       ),
     );
+    recordPermissionAudit('admin.permission.deleted', 'permission', key, {
+      details: `Deleted permission ${permission?.label || key}`,
+      key,
+      label: permission?.label,
+      group: permission?.group,
+      route: permission?.route,
+      scope: permission ? getPermissionScope(permission) : undefined,
+    }, 'warning');
     toast.success('Đã xoá quyền');
   };
 
@@ -395,6 +413,12 @@ export function AdminPermissions() {
     };
     persistActiveRoles(next);
     setActiveSelectedRole(key);
+    recordPermissionAudit('admin.role.created', `${roleScope}_role`, key, {
+      details: `Created ${roleScopeLabel} role ${newRole.label.trim()}`,
+      key,
+      label: newRole.label.trim(),
+      scope: roleScope,
+    });
     setNewRole({ key: '', label: '', description: '', preset: 'Forest' });
     toast.success(`Đã tạo nhóm ${roleScopeLabel} mới`);
   };
@@ -408,12 +432,19 @@ export function AdminPermissions() {
     delete next[key];
     persistActiveRoles(next);
     setActiveSelectedRole(DEFAULT_ROLE_BY_SCOPE[roleScope]);
+    recordPermissionAudit('admin.role.deleted', `${roleScope}_role`, key, {
+      details: `Deleted ${roleScopeLabel} role ${activeRoles[key]?.label || key}`,
+      key,
+      label: activeRoles[key]?.label,
+      scope: roleScope,
+    }, 'warning');
     toast.success(`Đã xoá nhóm ${roleScopeLabel}`);
   };
 
   const togglePermission = (permissionKey: string) => {
     if (!selectedRoleDef || (roleScope === 'admin' && activeSelectedRole === 'super_admin')) return;
     const hasPermission = selectedRoleDef.permissions.includes(permissionKey);
+    const nextEnabled = !hasPermission;
     persistActiveRoles({
       ...activeRoles,
       [activeSelectedRole]: {
@@ -422,6 +453,14 @@ export function AdminPermissions() {
           ? selectedRoleDef.permissions.filter((key) => key !== permissionKey)
           : [...selectedRoleDef.permissions, permissionKey],
       },
+    });
+    recordPermissionAudit('admin.role.permission.updated', `${roleScope}_role`, activeSelectedRole, {
+      details: `${nextEnabled ? 'Granted' : 'Revoked'} permission ${permissionKey} for ${selectedRoleDef.label}`,
+      roleKey: activeSelectedRole,
+      roleLabel: selectedRoleDef.label,
+      permissionKey,
+      enabled: nextEnabled,
+      scope: roleScope,
     });
   };
 
@@ -432,6 +471,9 @@ export function AdminPermissions() {
     setCustomerRoles(getCustomerRoles());
     setSelectedRole('super_admin');
     setSelectedCustomerRole('pro_customer');
+    recordPermissionAudit('admin.permissions.reset', 'permission_config', 'default', {
+      details: 'Reset permission configuration to defaults',
+    }, 'warning');
     toast.success('Đã khôi phục cấu hình phân quyền mặc định');
   };
 
@@ -492,16 +534,16 @@ export function AdminPermissions() {
             }}
             className="grid w-full grid-cols-1 gap-1 rounded-xl bg-muted p-1 sm:grid-cols-2"
           >
-            <ToggleGroupItem value="groups" className="min-h-12 justify-start gap-3 rounded-lg px-3 py-2 text-left data-[state=on]:bg-card data-[state=on]:shadow-sm">
+            <ToggleGroupItem value="groups" className="min-h-12 justify-center gap-3 rounded-lg px-3 py-2 text-center data-[state=on]:bg-card data-[state=on]:shadow-sm">
               <Users className="h-4 w-4 shrink-0" />
-              <span className="min-w-0">
+              <span className="min-w-0 text-center">
                 <span className="block truncate text-sm font-semibold">Nhóm người dùng</span>
                 <span className="block truncate text-xs font-normal text-muted-foreground">Chọn nhóm và gán quyền</span>
               </span>
             </ToggleGroupItem>
-            <ToggleGroupItem value="permissions" className="min-h-12 justify-start gap-3 rounded-lg px-3 py-2 text-left data-[state=on]:bg-card data-[state=on]:shadow-sm">
+            <ToggleGroupItem value="permissions" className="min-h-12 justify-center gap-3 rounded-lg px-3 py-2 text-center data-[state=on]:bg-card data-[state=on]:shadow-sm">
               <KeyRound className="h-4 w-4 shrink-0" />
-              <span className="min-w-0">
+              <span className="min-w-0 text-center">
                 <span className="block truncate text-sm font-semibold">Loại quyền</span>
                 <span className="block truncate text-xs font-normal text-muted-foreground">Tạo và quản lý danh mục quyền</span>
               </span>

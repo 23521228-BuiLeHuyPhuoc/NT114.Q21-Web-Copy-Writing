@@ -20,7 +20,7 @@ import { usePublicSystemStatus } from '@/hooks/queries/useSystemSettings';
 const PLANS = [
   { id: 'free',  name: 'Miễn Phí', price: '0₫',     icon: Zap,      desc: '30 copy/tháng',         color: 'border-border bg-card',      check: 'bg-muted text-muted-foreground',   badge: '' },
   { id: 'pro',   name: 'Pro',       price: '299K₫',  icon: Crown,    desc: '500 copy · Fine-tuning', color: 'border-primary bg-primary/5',  check: 'bg-primary/10 text-primary', badge: 'Phổ biến' },
-  { id: 'biz',   name: 'Business',  price: '799K₫',  icon: Building2, desc: 'Unlimited · API 50K',  color: 'border-green-400 bg-primary/5', check: 'bg-primary/10 text-primary', badge: '' },
+  { id: 'biz',   name: 'Business',  price: '799K₫',  icon: Building2, desc: '3.000 copy · API 50K',  color: 'border-green-400 bg-primary/5', check: 'bg-primary/10 text-primary', badge: '' },
 ];
 
 interface RegisterFormData { name: string; email: string; password: string; confirm: string }

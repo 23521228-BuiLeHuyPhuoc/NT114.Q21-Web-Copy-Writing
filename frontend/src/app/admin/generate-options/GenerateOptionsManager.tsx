@@ -17,6 +17,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Textarea } from '@/app/components/ui/textarea';
 import { DataPagination } from '@/app/components/common/DataPagination';
 import { usePagination } from '@/hooks/usePagination';
+import { matchesSearchRegex } from '@/lib/searchRegex';
 import {
   useAdminGenerateOptions,
   useCreateGenerateOption,
@@ -136,12 +137,8 @@ export function GenerateOptionsManager({ group, title, description, noun, iconHi
   const [deleteItem, setDeleteItem] = useState<GenerateOption | null>(null);
 
   const filtered = useMemo(() => {
-    const keyword = search.trim().toLowerCase();
     const filteredOptions = options.filter((option) => {
-      const matchSearch = !keyword || [option.name, option.slug, option.description, option.icon]
-        .join(' ')
-        .toLowerCase()
-        .includes(keyword);
+      const matchSearch = matchesSearchRegex(search, [option.name, option.slug, option.description, option.icon]);
       const matchStatus = filterStatus === 'all'
         || (filterStatus === 'active' && option.isActive)
         || (filterStatus === 'inactive' && !option.isActive);

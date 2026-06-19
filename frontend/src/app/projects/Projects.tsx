@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Layout } from '@/app/components/Layout';
 import { Card } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
@@ -7,6 +7,7 @@ import { Badge } from '@/app/components/ui/badge';
 import { Progress } from '@/app/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/app/components/ui/dialog';
 import { Label } from '@/app/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select';
 import { Textarea } from '@/app/components/ui/textarea';
 import { useNavigate } from '@/lib/next-router-compat';
 import {
@@ -18,30 +19,80 @@ import toast from 'react-hot-toast';
 import { useCreateProject, useProjects } from '@/hooks/queries/useProjects';
 import { DataPagination } from '@/app/components/common/DataPagination';
 import { usePagination } from '@/hooks/usePagination';
+import { matchesSearchRegex } from '@/lib/searchRegex';
+
+type ProjectSort = 'newest' | 'oldest' | 'updated' | 'name' | 'contentCount' | 'progress';
+type ProjectStatusFilter = 'all' | 'active' | 'archived';
+type ProjectPropertyFilter = 'all' | 'hasContent' | 'empty' | 'completed' | 'inProgress';
+
+function getTime(value?: string) {
+  const time = new Date(value || '').getTime();
+  return Number.isFinite(time) ? time : 0;
+}
 
 export function CustomerProjects() {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [showNew, setShowNew] = useState(false);
+  const [filterStatus, setFilterStatus] = useState<ProjectStatusFilter>('all');
+  const [filterIndustry, setFilterIndustry] = useState('all');
+  const [filterProperty, setFilterProperty] = useState<ProjectPropertyFilter>('all');
+  const [sortBy, setSortBy] = useState<ProjectSort>('newest');
   const [newName, setNewName] = useState('');
   const [newDesc, setNewDesc] = useState('');
   const [newIndustry, setNewIndustry] = useState('');
-  const { data: projects = [], isLoading } = useProjects({ limit: 50 });
+  const { data: projects = [], isLoading } = useProjects({ limit: 50, includeArchived: true });
   const createProject = useCreateProject();
 
-  const keyword = search.trim().toLowerCase();
-  const filtered = projects.filter((project) => {
-    if (!keyword) return true;
-    return [
-      project.name,
-      project.desc,
-      project.industry,
-    ].join(' ').toLowerCase().includes(keyword);
-  });
+  const industries = useMemo(() => (
+    Array.from(new Set(projects.map(project => project.industry).filter(Boolean)))
+      .sort((a, b) => a.localeCompare(b, 'vi'))
+  ), [projects]);
+
+  const filtered = useMemo(() => {
+    return projects
+      .filter((project) => {
+        const matchSearch = matchesSearchRegex(search, [
+          project.name,
+          project.desc,
+          project.industry,
+        ]);
+        const matchStatus = filterStatus === 'all' || project.status === filterStatus;
+        const matchIndustry = filterIndustry === 'all' || project.industry === filterIndustry;
+        const matchProperty = (() => {
+          if (filterProperty === 'hasContent') return project.contentCount > 0;
+          if (filterProperty === 'empty') return project.contentCount === 0;
+          if (filterProperty === 'completed') return project.contentCount > 0 && project.completionPercent >= 100;
+          if (filterProperty === 'inProgress') return project.contentCount > 0 && project.completionPercent < 100;
+          return true;
+        })();
+
+        return matchSearch && matchStatus && matchIndustry && matchProperty;
+      })
+      .sort((a, b) => {
+        if (sortBy === 'oldest') return getTime(a.createdAtRaw) - getTime(b.createdAtRaw);
+        if (sortBy === 'updated') return getTime(b.updatedAtRaw) - getTime(a.updatedAtRaw);
+        if (sortBy === 'name') return a.name.localeCompare(b.name, 'vi');
+        if (sortBy === 'contentCount') return b.contentCount - a.contentCount;
+        if (sortBy === 'progress') return b.completionPercent - a.completionPercent;
+        return getTime(b.createdAtRaw) - getTime(a.createdAtRaw);
+      });
+  }, [filterIndustry, filterProperty, filterStatus, projects, search, sortBy]);
+
+  const hasActiveFilters = Boolean(search.trim()) || filterStatus !== 'all' || filterIndustry !== 'all' || filterProperty !== 'all' || sortBy !== 'newest';
+
   const pagination = usePagination(filtered, {
     initialPageSize: 6,
-    resetKey: search,
+    resetKey: `${search}|${filterStatus}|${filterIndustry}|${filterProperty}|${sortBy}`,
   });
+
+  const resetFilters = () => {
+    setSearch('');
+    setFilterStatus('all');
+    setFilterIndustry('all');
+    setFilterProperty('all');
+    setSortBy('newest');
+  };
 
   const handleCreateProject = async () => {
     const name = newName.trim();
@@ -82,11 +133,55 @@ export function CustomerProjects() {
           </Button>
         </div>
 
-        {/* Search */}
-        <div className="relative mb-6">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/80" />
-          <Input placeholder="Tìm dự án..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 max-w-md" />
-        </div>
+        <Card className="p-4 mb-6">
+          <div className="flex flex-wrap gap-3">
+            <div className="relative flex-1 min-w-56">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/80" />
+              <Input placeholder="Tìm dự án..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+            </div>
+            <Select value={filterStatus} onValueChange={(value) => setFilterStatus(value as ProjectStatusFilter)}>
+              <SelectTrigger className="w-40"><SelectValue placeholder="Trạng thái" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                <SelectItem value="active">Đang hoạt động</SelectItem>
+                <SelectItem value="archived">Đã lưu trữ</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={filterIndustry} onValueChange={setFilterIndustry}>
+              <SelectTrigger className="w-44"><SelectValue placeholder="Ngành" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả ngành</SelectItem>
+                {industries.map(industry => (
+                  <SelectItem key={industry} value={industry}>{industry}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={filterProperty} onValueChange={(value) => setFilterProperty(value as ProjectPropertyFilter)}>
+              <SelectTrigger className="w-48"><SelectValue placeholder="Thuộc tính" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả thuộc tính</SelectItem>
+                <SelectItem value="hasContent">Có nội dung</SelectItem>
+                <SelectItem value="empty">Chưa có nội dung</SelectItem>
+                <SelectItem value="inProgress">Đang thực hiện</SelectItem>
+                <SelectItem value="completed">Hoàn thành 100%</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={sortBy} onValueChange={(value) => setSortBy(value as ProjectSort)}>
+              <SelectTrigger className="w-44"><SelectValue placeholder="Sắp xếp" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">Mới tạo nhất</SelectItem>
+                <SelectItem value="oldest">Cũ nhất</SelectItem>
+                <SelectItem value="updated">Mới cập nhật</SelectItem>
+                <SelectItem value="name">Tên A-Z</SelectItem>
+                <SelectItem value="contentCount">Nhiều nội dung</SelectItem>
+                <SelectItem value="progress">Tiến độ cao</SelectItem>
+              </SelectContent>
+            </Select>
+            {hasActiveFilters && (
+              <Button variant="outline" onClick={resetFilters}>Bỏ lọc</Button>
+            )}
+          </div>
+        </Card>
 
         {isLoading && (
           <Card className="p-6 text-sm text-muted-foreground">Đang tải danh sách dự án...</Card>

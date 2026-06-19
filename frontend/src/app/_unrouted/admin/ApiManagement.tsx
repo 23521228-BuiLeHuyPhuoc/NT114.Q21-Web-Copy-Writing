@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { AreaChart, LineChart } from '@/app/components/charts';
+import { matchesSearchRegex } from '@/lib/searchRegex';
 
 const ENDPOINTS = [
   { method: 'POST', path: '/api/v1/generate', desc: 'Tạo copy với AI', rateLimit: '100/min', avgLatency: '1.8s', calls24h: 3420, errors: 12, status: 'healthy' },
@@ -71,7 +72,7 @@ export function AdminApiManagement() {
       (logFilter === 'error' && l.status >= 400) ||
       (logFilter === 'success' && l.status < 400) ||
       (logFilter === 'ratelimit' && l.status === 429);
-    const matchSearch = l.user.toLowerCase().includes(search.toLowerCase()) || l.endpoint.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = matchesSearchRegex(search, [l.user, l.endpoint]);
     return matchFilter && matchSearch;
   });
 

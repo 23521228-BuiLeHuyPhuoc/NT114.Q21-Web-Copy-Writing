@@ -10,5 +10,8 @@ export function useMyBilling() {
   return useQuery({
     queryKey: billingKeys.me(),
     queryFn: () => billingService.me(),
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 }

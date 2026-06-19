@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Layout } from '@/app/components/Layout';
 import { Card } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
@@ -14,46 +14,50 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-import { CODE_SAMPLES } from '@/mocks/apiKeys';
-import { useApiKeys, useApiKeyLogs } from '@/hooks/queries/useApiKeys';
+import { CODE_SAMPLES } from '@/lib/apiCodeSamples';
+import {
+  useApiKeyLogs,
+  useApiKeys,
+  useCreateApiKey,
+  useRevokeApiKey,
+} from '@/hooks/queries/useApiKeys';
 
 
 export function CustomerApiKeys() {
-  const { data: initialKeys } = useApiKeys();
+  const { data: keys = [] } = useApiKeys();
   const { data: logs = [] } = useApiKeyLogs();
-  const [keys, setKeys] = useState<NonNullable<typeof initialKeys>>([] as any);
-  useEffect(() => { if (initialKeys) setKeys(initialKeys); }, [initialKeys]);
-  const [showKey, setShowKey] = useState<Record<number, boolean>>({});
+  const createApiKey = useCreateApiKey();
+  const revokeApiKey = useRevokeApiKey();
+  const [showKey, setShowKey] = useState<Record<string, boolean>>({});
   const [newKeyDialog, setNewKeyDialog] = useState(false);
   const [newKeyName, setNewKeyName] = useState('');
   const [newKeyPermissions, setNewKeyPermissions] = useState<string[]>(['generate']);
   const [codeTab, setCodeTab] = useState('python');
 
-  const toggleShow = (id: number) => setShowKey(prev => ({ ...prev, [id]: !prev[id] }));
+  const toggleShow = (id: string) => setShowKey(prev => ({ ...prev, [id]: !prev[id] }));
 
   const maskKey = (key: string) => key.slice(0, 12) + '•'.repeat(20) + key.slice(-4);
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!newKeyName) { toast.error('Nhập tên key'); return; }
-    const newKey = {
-      id: Date.now(),
-      name: newKeyName,
-      key: `cpk_live_sk_${Math.random().toString(36).slice(2, 20)}`,
-      created: '23/03/2026',
-      lastUsed: 'Chưa dùng',
-      calls: 0,
-      status: 'active',
-      permissions: newKeyPermissions,
-    };
-    setKeys(prev => [...prev, newKey]);
-    setNewKeyDialog(false);
-    setNewKeyName('');
-    toast.success('API key đã được tạo!');
+    try {
+      const created = await createApiKey.mutateAsync({ name: newKeyName.trim(), permissions: newKeyPermissions });
+      setShowKey(prev => ({ ...prev, [created.id]: true }));
+      setNewKeyDialog(false);
+      setNewKeyName('');
+      toast.success('API key đã được tạo. Hãy sao chép key vì lần sau hệ thống chỉ hiển thị dạng che.');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Không tạo được API key');
+    }
   };
 
-  const handleRevoke = (id: number) => {
-    setKeys(prev => prev.filter(k => k.id !== id));
-    toast.success('Đã thu hồi API key');
+  const handleRevoke = async (id: string) => {
+    try {
+      await revokeApiKey.mutateAsync(id);
+      toast.success('Đã thu hồi API key');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Không thu hồi được API key');
+    }
   };
 
   return (
@@ -114,7 +118,7 @@ export function CustomerApiKeys() {
                       {k.permissions.map(p => <Badge key={p} className="bg-primary/10 text-primary border-0 text-xs">{p}</Badge>)}
                     </div>
                   </div>
-                  <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600 flex-shrink-0" onClick={() => handleRevoke(k.id)}>
+                  <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600 flex-shrink-0" disabled={revokeApiKey.isPending || k.status === 'revoked'} onClick={() => void handleRevoke(k.id)}>
                     <Trash2 className="w-4 h-4 mr-1" /> Thu hồi
                   </Button>
                 </div>
@@ -254,7 +258,7 @@ export function CustomerApiKeys() {
             </div>
             <div className="flex gap-2 pt-2">
               <Button variant="outline" onClick={() => setNewKeyDialog(false)} className="flex-1">Hủy</Button>
-              <Button onClick={handleCreate} className="flex-1 bg-primary hover:bg-green-700 text-white">Tạo key</Button>
+              <Button onClick={() => void handleCreate()} disabled={createApiKey.isPending} className="flex-1 bg-primary hover:bg-green-700 text-white">Tạo key</Button>
             </div>
           </div>
         </DialogContent>

@@ -4,14 +4,16 @@ import { Button } from '@/app/components/ui/button';
 import { BrandLogo } from '@/app/components/BrandLogo';
 import {
   Sparkles, Menu, X, ChevronDown,
-  Wand2, Brain, FileText, Key,
+  Wand2, Brain, FileText, FolderOpen, FileCheck, ScrollText,
 } from 'lucide-react';
 
-const PRODUCTS = [
-  { icon: Wand2, label: 'AI Generator', desc: 'Tạo copy với GPT-4o và Llama 3.1', href: '/login' },
-  { icon: Brain, label: 'Fine-tuning Studio', desc: 'Huấn luyện AI theo giọng thương hiệu', href: '/login' },
-  { icon: FileText, label: 'Template Library', desc: 'Mẫu copy tối ưu theo ngành', href: '/login' },
-  { icon: Key, label: 'RESTful API', desc: 'Tích hợp vào ứng dụng của bạn', href: '/login' },
+const FEATURE_LINKS = [
+  { icon: Wand2, label: 'Tạo nội dung AI', desc: 'Sinh headline, email, quảng cáo và bài đăng theo brief.', href: '/generate' },
+  { icon: ScrollText, label: 'Mẫu copy', desc: 'Duyệt template theo ngành và mục tiêu nội dung.', href: '/templates' },
+  { icon: FolderOpen, label: 'Dự án', desc: 'Quản lý nội dung theo chiến dịch và nhóm việc.', href: '/projects' },
+  { icon: FileText, label: 'Nội dung của tôi', desc: 'Lưu, xem lại và tái sử dụng các bản copy đã tạo.', href: '/contents' },
+  { icon: FileCheck, label: 'Kiểm tra đạo văn', desc: 'Phân tích mức độ trùng lặp trước khi xuất bản.', href: '/plagiarism-check' },
+  { icon: Brain, label: 'Fine-tuning', desc: 'Huấn luyện AI theo dữ liệu và giọng thương hiệu.', href: '/fine-tune' },
 ];
 
 interface DropdownProps {
@@ -108,10 +110,10 @@ export function PublicNavbar() {
 
           <nav className={`hidden items-center gap-1 lg:flex ${scrolled ? 'text-foreground/70' : 'text-white/90'}`}>
             <Dropdown
-              label="Sản phẩm"
-              items={PRODUCTS}
-              open={openDropdown === 'products'}
-              onToggle={() => toggleDropdown('products')}
+              label="Chức năng"
+              items={FEATURE_LINKS}
+              open={openDropdown === 'features'}
+              onToggle={() => toggleDropdown('features')}
               onClose={() => setOpenDropdown(null)}
             />
             {navLinks.map((link) => (
@@ -158,8 +160,8 @@ export function PublicNavbar() {
       {mobileOpen && (
         <div className="border-t border-border bg-card shadow-xl lg:hidden">
           <div className="mx-auto max-w-7xl space-y-1 px-5 py-5">
-            <p className="mb-2 px-3 text-xs font-bold uppercase tracking-widest text-muted-foreground">Sản phẩm</p>
-            {PRODUCTS.map((item) => {
+            <p className="mb-2 px-3 text-xs font-bold uppercase tracking-widest text-muted-foreground">Chức năng</p>
+            {FEATURE_LINKS.map((item) => {
               const Icon = item.icon;
               return (
                 <Link key={item.label} to={item.href} className="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-accent">

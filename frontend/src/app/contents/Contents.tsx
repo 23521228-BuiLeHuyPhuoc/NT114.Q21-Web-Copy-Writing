@@ -33,6 +33,7 @@ import { DataPagination } from '@/app/components/common/DataPagination';
 import { usePagination } from '@/hooks/usePagination';
 import type { UiContent } from '@/services/contentService';
 import { TrashBin } from '@/app/components/admin/TrashBin';
+import { matchesSearchRegex } from '@/lib/searchRegex';
 
 const CONTENT_FETCH_PAGE_SIZE = 100;
 const CONTENT_UI_PAGE_SIZE = 10;
@@ -58,8 +59,7 @@ export function CustomerContents() {
   const permanentDeleteAllContents = usePermanentDeleteAllContents();
 
   const filtered = contents.filter(c => {
-    const title = c.title || '';
-    const matchSearch = title.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = matchesSearchRegex(search, [c.title, c.type, c.model, c.content]);
     const matchStatus = filterStatus === 'all' || c.status === filterStatus;
     const matchType = filterType === 'all' || c.type === filterType;
     return matchSearch && matchStatus && matchType;
@@ -162,11 +162,13 @@ export function CustomerContents() {
           ].map((s) => {
             const Icon = s.icon;
             return (
-              <Card key={s.label} className="p-4 flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${s.color}`}><Icon className="w-4 h-4" /></div>
-                <div>
-                  <p className="text-xl font-bold text-foreground">{s.value}</p>
-                  <p className="text-xs text-muted-foreground">{s.label}</p>
+              <Card key={s.label} className="min-h-24 p-4 flex items-center gap-3 overflow-hidden">
+                <div className={`h-10 w-10 shrink-0 rounded-lg ${s.color} flex items-center justify-center`}>
+                  <Icon className="w-4 h-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-2xl font-bold leading-tight text-foreground truncate" title={String(s.value)}>{s.value}</p>
+                  <p className="mt-1 text-xs leading-snug text-muted-foreground line-clamp-2">{s.label}</p>
                 </div>
               </Card>
             );

@@ -48,8 +48,8 @@ const paymentSchema = new mongoose.Schema(
     },
     provider: {
       type: String,
-      enum: ['mock', 'manual', 'stripe', 'vnpay', 'zalopay', 'vietqr'],
-      default: 'mock',
+      enum: ['manual', 'stripe', 'vnpay', 'zalopay', 'vietqr'],
+      default: 'manual',
     },
     status: {
       type: String,

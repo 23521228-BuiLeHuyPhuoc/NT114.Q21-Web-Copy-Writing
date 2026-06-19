@@ -1,6 +1,25 @@
-import { BLOG_POSTS } from '@/mocks/blog';
 import { htmlToPlainText, sanitizeHtml } from '@/lib/richText';
 import type { PublicBlogPost, PublicBlogSection } from '@/services/publicSiteService';
+
+const DEFAULT_BLOG_POST: PublicBlogPost = {
+  id: '',
+  slug: '',
+  cat: 'news',
+  catLabel: 'Tin tuc',
+  title: '',
+  excerpt: '',
+  author: 'CopyPro Team',
+  authorRole: 'CopyPro',
+  date: '',
+  readTime: '',
+  img: '',
+  published: true,
+  content: {
+    lead: '',
+    html: '',
+    sections: [],
+  },
+};
 
 export type BlogPostForm = Omit<PublicBlogPost, 'id' | 'content'> & {
   id?: string | number;
@@ -100,11 +119,11 @@ export function htmlToSections(value: string): PublicBlogSection[] {
 
 export function normalizePosts(value: unknown): PublicBlogPost[] {
   if (!Array.isArray(value) || value.length === 0) {
-    return BLOG_POSTS.map(post => ({ ...post, published: true }));
+    return [];
   }
 
   return value.map((post, index) => ({
-    ...BLOG_POSTS[0],
+    ...DEFAULT_BLOG_POST,
     ...(post as Partial<PublicBlogPost>),
     id: (post as Partial<PublicBlogPost>).id || index + 1,
     content: {

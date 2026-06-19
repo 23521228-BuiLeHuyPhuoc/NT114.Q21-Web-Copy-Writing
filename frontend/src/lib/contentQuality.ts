@@ -75,6 +75,10 @@ function words(value: string) {
     .filter((word) => word.length >= 4 && !STOPWORDS.has(word));
 }
 
+function wordSet(value: string) {
+  return new Set(words(value));
+}
+
 function unique<T>(items: T[]) {
   return Array.from(new Set(items));
 }
@@ -98,12 +102,63 @@ function hasInvalidGeneratedText(text: string) {
 function getBriefTerms(input: ContentQualityInput) {
   const explicitTerms = words(input.keywords || '');
   const promptTerms = words(input.prompt || '');
-  const terms = unique([
-    ...explicitTerms,
-    ...promptTerms,
-  ]).filter((term) => term.length >= 4);
+  const sourceTerms = explicitTerms.length > 0 ? explicitTerms : promptTerms;
+  const terms = unique(sourceTerms).filter((term) => term.length >= 4);
 
   return terms.slice(0, explicitTerms.length > 0 ? 24 : 18);
+}
+
+function promptEchoPenalty(text: string, input: ContentQualityInput) {
+  const prompt = input.prompt || '';
+  const textNorm = normalize(text);
+  const promptNorm = normalize(prompt);
+  const lengthRatio = countWords(text) / Math.max(1, countWords(prompt));
+
+  if (
+    textNorm
+    && promptNorm
+    && lengthRatio <= 1.35
+    && (textNorm === promptNorm || promptNorm.includes(textNorm))
+  ) {
+    return 45;
+  }
+
+  const promptTokens = words(prompt);
+  const textTokens = words(text);
+  if (promptTokens.length < 4 || textTokens.length < 4) return 0;
+
+  const promptSet = wordSet(prompt);
+  const overlap = textTokens.filter((token) => promptSet.has(token)).length / textTokens.length;
+  let penalty = 0;
+
+  if (overlap >= 0.85 && lengthRatio <= 1.35) penalty += 35;
+  else if (overlap >= 0.7 && lengthRatio <= 1.6) penalty += 20;
+
+  if (/\b(hay viet|viet headline|viet .* tone|tao dung|dinh dang bat buoc|gioi han output|temperature|tokens)\b/i.test(textNorm)) {
+    penalty += 12;
+  }
+
+  return clamp(penalty, 0, 45);
+}
+
+function genericContentPenalty(text: string) {
+  const textNorm = normalize(text);
+  const tokens = words(text);
+  const genericPhrases = [
+    'chat luong cao',
+    'gia ca hop ly',
+    'phu hop moi nhu cau',
+    'san pham tot',
+    'uy tin hang dau',
+  ];
+  const genericMatches = genericPhrases.filter((phrase) => textNorm.includes(phrase)).length;
+  const uniqueRatio = tokens.length ? unique(tokens).length / tokens.length : 1;
+  let penalty = 0;
+
+  if (genericMatches >= 2 && countWords(text) < 90) penalty += 8;
+  if (tokens.length >= 20 && uniqueRatio < 0.35) penalty += 8;
+
+  return penalty;
 }
 
 function getExpectedRange(type?: string, length: ContentQualityLength = 'medium') {
@@ -155,7 +210,7 @@ function scoreReadability(text: string) {
   const totalWords = countWords(clean);
   if (totalWords < 3) return 1;
 
-  const sentenceParts = clean.split(/[.!?\n]+/).map((part) => part.trim()).filter(Boolean);
+  const sentenceParts = clean.split(/[.!?\n]+|[-*]\s+/).map((part) => part.trim()).filter(Boolean);
   const averageSentenceWords = sentenceParts.length
     ? sentenceParts.reduce((sum, sentence) => sum + countWords(sentence), 0) / sentenceParts.length
     : countWords(clean);
@@ -165,10 +220,10 @@ function scoreReadability(text: string) {
 
   let score = 4;
   if (totalWords >= 10) score += 3;
-  if (averageSentenceWords >= 4 && averageSentenceWords <= 28) score += 5;
-  else if (averageSentenceWords <= 42) score += 3;
+  if (averageSentenceWords >= 4 && averageSentenceWords <= 32) score += 5;
+  else if (averageSentenceWords <= 45) score += 3;
   if (/\n\s*\n|[-*]\s+|:\s*/.test(clean)) score += 3;
-  if (diacriticRatio > 0.03) score += 3;
+  if (diacriticRatio > 0.02) score += 3;
   if (/[\uFFFD]{1,}|\?{3,}|\bundefined\b|\bnull\b/i.test(clean)) score -= 5;
   if (/```|<script|<style/i.test(clean)) score -= 4;
 
@@ -218,7 +273,9 @@ export function scoreGeneratedContent(input: ContentQualityInput) {
     + scoreActionability(text)
     + scoreReadability(text)
     + scoreLength(text, input.type, input.length)
-    + scoreSpecificity(text, input);
+    + scoreSpecificity(text, input)
+    - promptEchoPenalty(text, input)
+    - genericContentPenalty(text);
 
   return Math.round(clamp(score, 0, 100));
 }

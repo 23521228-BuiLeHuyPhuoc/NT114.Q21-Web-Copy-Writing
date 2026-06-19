@@ -59,6 +59,8 @@ export interface UiProject {
   industry: string;
   createdAt: string;
   updatedAt: string;
+  createdAtRaw?: string;
+  updatedAtRaw?: string;
   status: 'active' | 'archived';
   isArchived: boolean;
   color: string;
@@ -109,6 +111,8 @@ function normalizeProject(item: BackendProject): UiProject {
     industry: item.industry || 'General',
     createdAt: formatDate(item.createdAt),
     updatedAt: formatDate(item.updatedAt),
+    createdAtRaw: item.createdAt,
+    updatedAtRaw: item.updatedAt,
     status: isArchived ? 'archived' : 'active',
     isArchived,
     color: getProjectGradientClass(item.color, id || item.name || ''),

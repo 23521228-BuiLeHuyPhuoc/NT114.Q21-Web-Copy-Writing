@@ -855,32 +855,23 @@ async function seedBillingPlans() {
       priceMonthly: 799000,
       priceYearly: 7990000,
       currency: 'VND',
-      limits: { copyMonthly: -1, apiCallsMonthly: 50000, apiCallsFiveHours: 8000, apiCallsWeekly: 20000, fineTuneModels: -1, plagiarismChecks: -1, seats: 10, historyDays: 90 },
-      features: ['Không giới hạn copy', 'Tất cả template', 'Tất cả model AI', 'API Access (50.000 calls/tháng)', 'Dedicated support'],
+      limits: { copyMonthly: 3000, apiCallsMonthly: 50000, apiCallsFiveHours: 8000, apiCallsWeekly: 20000, fineTuneModels: 10, plagiarismChecks: 500, seats: 10, historyDays: 90 },
+      features: ['3.000 copy/tháng', 'Tất cả template', 'Tất cả model AI', 'API Access (50.000 calls/tháng)', 'Fine-tuning Studio (10 models)', '500 lượt kiểm tra đạo văn', 'Dedicated support'],
       excludedFeatures: [],
       allowedModels: [],
       isPopular: false,
       isActive: true,
       sortOrder: 3,
     },
-    {
-      slug: 'enterprise',
-      name: 'Enterprise',
-      description: 'Gói tùy chỉnh cho doanh nghiệp lớn.',
-      priceMonthly: -1,
-      priceYearly: -1,
-      currency: 'VND',
-      limits: { copyMonthly: -1, apiCallsMonthly: -1, apiCallsFiveHours: -1, apiCallsWeekly: -1, fineTuneModels: -1, plagiarismChecks: -1, seats: -1, historyDays: -1 },
-      features: ['SSO', 'Private deployment', 'SLA riêng', 'Dedicated support team'],
-      excludedFeatures: [],
-      allowedModels: [],
-      isPopular: false,
-      isActive: true,
-      sortOrder: 4,
-    },
   ];
 
-  return Promise.all(plans.map((plan) => upsertPlan(plan)));
+  const seededPlans = await Promise.all(plans.map((plan) => upsertPlan(plan)));
+  await Plan.updateOne(
+    { slug: 'enterprise', isDeleted: { $ne: true } },
+    { $set: { isActive: false, isDeleted: true, deletedAt: new Date() } },
+  );
+
+  return seededPlans;
 }
 
 async function upsertSubscription(user, plan, data) {
@@ -895,7 +886,7 @@ async function upsertSubscription(user, plan, data) {
         currentPeriodStart: data.currentPeriodStart,
         currentPeriodEnd: data.currentPeriodEnd,
         cancelAtPeriodEnd: Boolean(data.cancelAtPeriodEnd),
-        provider: data.provider || 'mock',
+        provider: data.provider || 'manual',
         providerSubscriptionId: data.providerSubscriptionId || '',
       },
     },
@@ -915,7 +906,7 @@ async function upsertPayment(data) {
         amount: data.amount,
         currency: data.currency || 'VND',
         method: data.method || 'manual',
-        provider: data.provider || 'mock',
+        provider: data.provider || 'manual',
         status: data.status || 'pending',
         paidAt: data.paidAt || null,
         periodStart: data.periodStart || null,
@@ -928,14 +919,14 @@ async function upsertPayment(data) {
 }
 
 async function seedBilling(user) {
-  const [free, pro, business, enterprise] = await seedBillingPlans();
+  const [free, pro, business] = await seedBillingPlans();
 
   const subscription = await upsertSubscription(user, pro, {
     status: 'active',
     billingCycle: 'monthly',
     currentPeriodStart: new Date('2026-05-23T00:00:00.000Z'),
     currentPeriodEnd: new Date('2026-06-23T00:00:00.000Z'),
-    provider: 'mock',
+    provider: 'manual',
   });
 
   const payments = await Promise.all([
@@ -947,7 +938,7 @@ async function seedBilling(user) {
       amount: 299000,
       currency: 'VND',
       method: 'visa',
-      provider: 'mock',
+      provider: 'manual',
       status: 'success',
       paidAt: new Date('2026-03-23T14:30:00.000Z'),
       periodStart: new Date('2026-03-23T00:00:00.000Z'),
@@ -962,7 +953,7 @@ async function seedBilling(user) {
       amount: 799000,
       currency: 'VND',
       method: 'momo',
-      provider: 'mock',
+      provider: 'manual',
       status: 'success',
       paidAt: new Date('2026-03-23T11:15:00.000Z'),
       periodStart: new Date('2026-03-23T00:00:00.000Z'),
@@ -977,7 +968,7 @@ async function seedBilling(user) {
       amount: 299000,
       currency: 'VND',
       method: 'vnpay',
-      provider: 'mock',
+      provider: 'vnpay',
       status: 'pending',
       paidAt: null,
       periodStart: null,
@@ -992,7 +983,7 @@ async function seedBilling(user) {
       amount: 299000,
       currency: 'VND',
       method: 'visa',
-      provider: 'mock',
+      provider: 'manual',
       status: 'failed',
       paidAt: new Date('2026-03-22T09:20:00.000Z'),
       periodStart: null,
@@ -1007,7 +998,7 @@ async function seedBilling(user) {
       amount: 799000,
       currency: 'VND',
       method: 'bank',
-      provider: 'mock',
+      provider: 'manual',
       status: 'success',
       paidAt: new Date('2026-03-21T18:00:00.000Z'),
       periodStart: new Date('2026-03-21T00:00:00.000Z'),
@@ -1022,7 +1013,7 @@ async function seedBilling(user) {
       amount: 299000,
       currency: 'VND',
       method: 'momo',
-      provider: 'mock',
+      provider: 'manual',
       status: 'success',
       paidAt: new Date('2026-03-20T10:30:00.000Z'),
       periodStart: new Date('2026-03-20T00:00:00.000Z'),
@@ -1031,7 +1022,7 @@ async function seedBilling(user) {
     }),
   ]);
 
-  return { plans: [free, pro, business, enterprise], subscription, payments };
+  return { plans: [free, pro, business], subscription, payments };
 }
 
 async function upsertTemplate(data) {

@@ -6,6 +6,7 @@ const FineTunedModel = require('../models/FineTunedModel');
 const createError = require('../utils/createError');
 const { throwGoogleCredentialError } = require('../utils/googleCredentialError');
 const { GoogleAuth } = require('google-auth-library');
+const billingService = require('./billingService');
 const vertexOpenModelFineTuneService = require('./vertexOpenModelFineTuneService');
 
 const MIN_VALID_EXAMPLES = 10;
@@ -55,6 +56,19 @@ const VERTEX_MODEL_ALIASES = {
 const API_TRAINING_PROVIDERS = [
   { id: 'openai', name: 'OpenAI-compatible API', key: 'OPENAI_API_KEY' },
 ];
+
+async function getFineTunePlanLimits(userId) {
+  const plan = await billingService.getEffectivePlanForUser(userId);
+  const fineTuneModels = Number(plan?.limits?.fineTuneModels ?? 0);
+
+  return {
+    plan,
+    datasets: 20,
+    runningJobs: 2,
+    models: Number.isFinite(fineTuneModels) ? fineTuneModels : 0,
+    minValidExamples: MIN_VALID_EXAMPLES,
+  };
+}
 
 function getConfiguredFineTuneBaseModels() {
   const configured = process.env.FINE_TUNE_BASE_MODELS;
@@ -1907,8 +1921,27 @@ async function createFineTuneJob(userId, payload) {
   }
 
   const runningJobs = await FineTuneJob.countDocuments(buildRunningJobQuotaFilter(userId));
-  if (runningJobs >= 2) {
-    throw createError(429, 'Fine-tune running job quota exceeded', undefined, { limit: 2 });
+  const planLimits = await getFineTunePlanLimits(userId);
+  if (runningJobs >= planLimits.runningJobs) {
+    throw createError(429, 'Fine-tune running job quota exceeded', undefined, { limit: planLimits.runningJobs });
+  }
+
+  if (planLimits.models === 0) {
+    throw createError(403, 'Goi hien tai chua bao gom Fine-tuning Studio', undefined, {
+      code: 'FINE_TUNE_NOT_INCLUDED_IN_PLAN',
+      plan: planLimits.plan ? billingService.serializePlan(planLimits.plan) : null,
+    });
+  }
+
+  if (planLimits.models > 0) {
+    const modelCount = await FineTunedModel.countDocuments({ userId, isDeprecated: false });
+    if (modelCount >= planLimits.models) {
+      throw createError(429, 'Fine-tune model quota exceeded', undefined, {
+        code: 'FINE_TUNE_MODEL_QUOTA_EXCEEDED',
+        used: modelCount,
+        limit: planLimits.models,
+      });
+    }
   }
 
   const job = await FineTuneJob.create({
@@ -2649,16 +2682,22 @@ function listProviders() {
 
 async function getQuotas(userId) {
   const hiddenJobIds = await FineTuneJob.find({ userId, provider: { $nin: getSupportedTrainingProviderIds() } }).distinct('_id');
-  const [datasetCount, runningJobs, modelCount] = await Promise.all([
+  const [datasetCount, runningJobs, modelCount, planLimits] = await Promise.all([
     FineTuneDataset.countDocuments({ userId, status: { $ne: 'archived' } }),
     FineTuneJob.countDocuments(buildRunningJobQuotaFilter(userId)),
     FineTunedModel.countDocuments({ userId, isDeprecated: false, jobId: { $nin: hiddenJobIds } }),
+    getFineTunePlanLimits(userId),
   ]);
   return {
     datasetCount,
     runningJobs,
     modelCount,
-    limits: { datasets: 20, runningJobs: 2, models: 5, minValidExamples: MIN_VALID_EXAMPLES },
+    limits: {
+      datasets: planLimits.datasets,
+      runningJobs: planLimits.runningJobs,
+      models: planLimits.models,
+      minValidExamples: planLimits.minValidExamples,
+    },
   };
 }
 

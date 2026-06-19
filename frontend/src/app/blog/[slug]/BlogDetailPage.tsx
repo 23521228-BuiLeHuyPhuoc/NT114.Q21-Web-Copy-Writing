@@ -4,7 +4,6 @@ import { PublicNavbar } from '@/app/components/public/PublicNavbar';
 import { PublicFooter } from '@/app/components/public/PublicFooter';
 import { Badge } from '@/app/components/ui/badge';
 import { ImageWithFallback } from '@/app/components/figma/ImageWithFallback';
-import { BLOG_POSTS } from '@/mocks/blog';
 import { sanitizeHtml } from '@/lib/richText';
 import { publicSiteService, type PublicBlogPost } from '@/services/publicSiteService';
 import { ArrowLeft, ArrowRight, Calendar, Clock, User } from 'lucide-react';
@@ -19,7 +18,7 @@ const catColor: Record<string, string> = {
 
 export function BlogDetailPage() {
   const { slug } = useParams();
-  const [posts, setPosts] = useState<PublicBlogPost[]>(BLOG_POSTS.map(item => ({ ...item, published: true })));
+  const [posts, setPosts] = useState<PublicBlogPost[]>([]);
   const [loaded, setLoaded] = useState(false);
   const post = posts.find(item => item.slug === slug);
 
@@ -28,8 +27,8 @@ export function BlogDetailPage() {
     publicSiteService.getBlogPage()
       .then((page) => {
         const apiPosts = page?.content?.posts;
-        if (active && Array.isArray(apiPosts) && apiPosts.length > 0) {
-          setPosts(apiPosts.filter(item => item.published !== false));
+        if (active) {
+          setPosts(Array.isArray(apiPosts) ? apiPosts.filter(item => item.published !== false) : []);
         }
       })
       .catch(() => undefined)

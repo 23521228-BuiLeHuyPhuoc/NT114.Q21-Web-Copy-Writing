@@ -19,7 +19,7 @@ const CONTACT_TYPES = [
   { icon: MessageSquare, label: 'Tư vấn sản phẩm', desc: 'Hỏi về tính năng, phù hợp với nhu cầu', color: 'bg-primary/10 text-primary' },
   { icon: Headphones, label: 'Hỗ trợ kỹ thuật', desc: 'Lỗi, API, tích hợp hệ thống', color: 'bg-primary/10 text-primary' },
   { icon: BookOpen, label: 'Đối tác & Hợp tác', desc: 'Agency, reseller, co-marketing', color: 'bg-primary/10 text-primary' },
-  { icon: Zap, label: 'Demo Enterprise', desc: 'Demo và báo giá cho doanh nghiệp lớn', color: 'bg-warning/15 text-amber-800' },
+  { icon: Zap, label: 'Tư vấn Business', desc: 'Tư vấn quota, team và triển khai gói Business', color: 'bg-warning/15 text-amber-800' },
 ];
 
 const FAQ = [
@@ -173,7 +173,7 @@ export function ContactPage() {
                           <SelectItem value="product">Tư vấn sản phẩm</SelectItem>
                           <SelectItem value="support">Hỗ trợ kỹ thuật</SelectItem>
                           <SelectItem value="partner">Đối tác & Hợp tác</SelectItem>
-                          <SelectItem value="enterprise">Demo Enterprise</SelectItem>
+                          <SelectItem value="business">Tư vấn Business</SelectItem>
                           <SelectItem value="billing">Thanh toán & Hoá đơn</SelectItem>
                           <SelectItem value="other">Khác</SelectItem>
                         </SelectContent>
@@ -236,7 +236,6 @@ export function ContactPage() {
                   { plan: 'Gói Free', time: '< 72 giờ' },
                   { plan: 'Gói Pro', time: '< 24 giờ' },
                   { plan: 'Gói Business', time: '< 4 giờ' },
-                  { plan: 'Enterprise', time: 'Dedicated CSM' },
                 ].map(s => (
                   <div key={s.plan} className="flex justify-between py-2.5 border-b border-white/20 last:border-0">
                     <span className="text-green-100 text-sm">{s.plan}</span>

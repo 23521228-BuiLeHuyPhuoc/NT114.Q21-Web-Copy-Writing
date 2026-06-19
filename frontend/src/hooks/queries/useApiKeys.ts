@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
-import { apiKeyService } from '@/services/apiKeyService';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { apiKeyService, type CreateApiKeyPayload } from '@/services/apiKeyService';
 
 export const apiKeyKeys = {
   all: ['apiKeys'] as const,
@@ -18,5 +18,27 @@ export function useApiKeyLogs() {
   return useQuery({
     queryKey: apiKeyKeys.logs(),
     queryFn: () => apiKeyService.listLogs(),
+  });
+}
+
+export function useCreateApiKey() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: CreateApiKeyPayload) => apiKeyService.createKey(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: apiKeyKeys.all });
+    },
+  });
+}
+
+export function useRevokeApiKey() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => apiKeyService.revokeKey(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: apiKeyKeys.all });
+    },
   });
 }

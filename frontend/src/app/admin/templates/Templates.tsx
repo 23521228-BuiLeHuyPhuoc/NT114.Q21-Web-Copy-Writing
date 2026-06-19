@@ -33,6 +33,7 @@ import {
   useRestoreAdminTemplate,
   useUpdateAdminTemplate,
 } from '@/hooks/queries/useAdminTemplates';
+import { matchesSearchRegex } from '@/lib/searchRegex';
 import type { AdminTemplate } from '@/services/adminTemplateService';
 import toast from 'react-hot-toast';
 
@@ -121,13 +122,8 @@ export function AdminTemplates() {
   }, [templates]);
 
   const filtered = useMemo(() => {
-    const keyword = search.trim().toLowerCase();
-
     const filteredTemplates = templates.filter((template) => {
-      const haystack = [template.name, template.description, template.category, template.type]
-        .join(' ')
-        .toLowerCase();
-      const matchSearch = !keyword || haystack.includes(keyword);
+      const matchSearch = matchesSearchRegex(search, [template.name, template.description, template.category, template.type]);
       const matchCategory = filterCategory === 'all' || template.category === filterCategory;
       const matchType = filterType === 'all' || template.type === filterType;
       const matchStatus = filterStatus === 'all'

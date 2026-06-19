@@ -138,6 +138,25 @@ assert.strictEqual(
   'pasting the detected matched text into ignored phrases should remove that plagiarism match on recheck',
 );
 
+const uploadedTailCopy = 'Doan copy nay nam o phan cuoi file tai len sau moc ba muoi nghin ky tu nen van phai duoc so khop va bao dao van ro rang trong ket qua.';
+const uploadedLongSource = `${'noi dung dem khac hoan toan voi doan can check. '.repeat(8000)}${uploadedTailCopy}`;
+const uploadedCandidates = __test.buildUploadedCandidates([{ source: 'upload:long.txt', sourceTitle: 'long.txt', sourceUrl: 'https://res.cloudinary.com/demo/raw/upload/long.txt', text: uploadedLongSource }]);
+const uploadedTailScore = __test.scoreTexts(uploadedTailCopy, uploadedCandidates[0]?.text || '', scoringOptions);
+const normalizedUploadConfig = __test.normalizeSourceConfig({
+  sources: { database: false, references: false, web: false, uploads: false },
+  uploadedSources: [{ source: 'upload:long.txt', sourceTitle: 'long.txt', text: uploadedLongSource }],
+});
+
+assert(uploadedLongSource.indexOf(uploadedTailCopy) > 30000, 'uploaded tail fixture should start after the old 30000 character cutoff');
+assert.strictEqual(uploadedCandidates.length, 1, 'long uploaded source should become a comparison candidate');
+assert(
+  uploadedCandidates[0].text.includes(uploadedTailCopy),
+  'uploaded source comparison text should keep copied text after the old 30000 character cutoff',
+);
+assert.strictEqual(uploadedCandidates[0].sourceUrl, 'https://res.cloudinary.com/demo/raw/upload/long.txt', 'uploaded source should keep Cloudinary URL metadata');
+assert(uploadedTailScore.plagiarismScore >= threshold, 'copied text from the tail of an uploaded file should exceed plagiarism threshold');
+assert.strictEqual(normalizedUploadConfig.uploads, true, 'uploadedSources should enable upload comparison instead of being ignored');
+
 const customPhraseInput = 'dai su van hoa doc dai su van hoa doc hoc sinh lop bon yeu thu vien xanh';
 const customPhraseSource = 'dai su van hoa doc dai su van hoa doc phat dong phong trao thieu nhi doc sach';
 const customPhraseBaseline = __test.scoreTexts(customPhraseInput, customPhraseSource, scoringOptions);
@@ -579,6 +598,12 @@ console.log(JSON.stringify({
     topicSimilarityScore: copiedScore.topicSimilarityScore,
     matches: copiedMatches.length,
     matchesAfterIgnoringMatchedText: copiedMatchesAfterIgnoringMatchedText.length,
+  },
+  uploadedTailCopy: {
+    tailStart: uploadedLongSource.indexOf(uploadedTailCopy),
+    candidateTextLength: uploadedCandidates[0]?.text.length || 0,
+    plagiarismScore: uploadedTailScore.plagiarismScore,
+    uploadsEnabled: normalizedUploadConfig.uploads,
   },
   customIgnoredPhrase: {
     baselinePlagiarismScore: customPhraseBaseline.plagiarismScore,

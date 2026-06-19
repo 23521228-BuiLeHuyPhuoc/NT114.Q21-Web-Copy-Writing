@@ -41,8 +41,10 @@ const auditLogSchema = new mongoose.Schema(
       index: true,
     },
     targetId: {
-      type: mongoose.Schema.Types.ObjectId,
-      default: null,
+      type: String,
+      trim: true,
+      maxlength: 200,
+      default: '',
       index: true,
     },
     level: {

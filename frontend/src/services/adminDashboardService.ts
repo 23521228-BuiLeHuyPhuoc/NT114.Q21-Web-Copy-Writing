@@ -28,6 +28,64 @@ export interface AdminContentTypeStat {
   value: number;
 }
 
+export interface AdminUsageTotals {
+  count: number;
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+  quotaUnits: number;
+  activeUsers: number;
+  lastUsedAt?: string | null;
+}
+
+export interface AdminUsageModelStat {
+  model: string;
+  modelDisplayName?: string;
+  count: number;
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+  quotaUnits: number;
+  users: number;
+  lastUsedAt?: string | null;
+}
+
+export interface AdminUsageUserStat {
+  userId: string;
+  name: string;
+  email: string;
+  avatar?: string;
+  status?: string;
+  count: number;
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+  quotaUnits: number;
+  lastUsedAt?: string | null;
+}
+
+export interface AdminUsageTimeStat {
+  key: string;
+  label: string;
+  date?: string;
+  month?: string;
+  year?: string;
+  count: number;
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+  quotaUnits: number;
+}
+
+export interface AdminUsageReport {
+  totals: AdminUsageTotals;
+  byModel: AdminUsageModelStat[];
+  byUser: AdminUsageUserStat[];
+  byDay: AdminUsageTimeStat[];
+  byMonth: AdminUsageTimeStat[];
+  byYear: AdminUsageTimeStat[];
+}
+
 export interface AdminRecentContent {
   id: string;
   title: string;
@@ -48,7 +106,18 @@ export interface AdminDashboardData {
   monthlyData: AdminMonthlyStat[];
   contentTypeData: AdminContentTypeStat[];
   recentContents: AdminRecentContent[];
+  usageReport: AdminUsageReport;
 }
+
+const EMPTY_USAGE_TOTALS: AdminUsageTotals = {
+  count: 0,
+  promptTokens: 0,
+  completionTokens: 0,
+  totalTokens: 0,
+  quotaUnits: 0,
+  activeUsers: 0,
+  lastUsedAt: null,
+};
 
 const EMPTY_DASHBOARD: AdminDashboardData = {
   stats: {
@@ -68,6 +137,14 @@ const EMPTY_DASHBOARD: AdminDashboardData = {
   monthlyData: [],
   contentTypeData: [],
   recentContents: [],
+  usageReport: {
+    totals: EMPTY_USAGE_TOTALS,
+    byModel: [],
+    byUser: [],
+    byDay: [],
+    byMonth: [],
+    byYear: [],
+  },
 };
 
 interface DashboardResponse {
@@ -75,6 +152,8 @@ interface DashboardResponse {
 }
 
 function normalizeDashboard(data?: Partial<AdminDashboardData>): AdminDashboardData {
+  const usageReport = data?.usageReport || EMPTY_DASHBOARD.usageReport;
+
   return {
     stats: { ...EMPTY_DASHBOARD.stats, ...(data?.stats || {}) },
     monthlyData: data?.monthlyData || [],
@@ -83,6 +162,17 @@ function normalizeDashboard(data?: Partial<AdminDashboardData>): AdminDashboardD
       ...item,
       modelDisplayName: formatContentModelDisplayName(item.modelDisplayName, item.modelUsed),
     })),
+    usageReport: {
+      totals: { ...EMPTY_USAGE_TOTALS, ...(usageReport.totals || {}) },
+      byModel: (usageReport.byModel || []).map((item) => ({
+        ...item,
+        modelDisplayName: formatContentModelDisplayName(item.modelDisplayName, item.model),
+      })),
+      byUser: usageReport.byUser || [],
+      byDay: usageReport.byDay || [],
+      byMonth: usageReport.byMonth || [],
+      byYear: usageReport.byYear || [],
+    },
   };
 }
 

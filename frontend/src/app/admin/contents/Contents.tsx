@@ -16,6 +16,7 @@ import { AdminTable } from '@/app/components/admin/AdminTable';
 import { DataPagination } from '@/app/components/common/DataPagination';
 import { usePagination } from '@/hooks/usePagination';
 import { adminContentService, type AdminContentItem } from '@/services/adminContentService';
+import { matchesSearchRegex } from '@/lib/searchRegex';
 import toast from 'react-hot-toast';
 
 type ContentItem = AdminContentItem;
@@ -100,9 +101,8 @@ export function AdminContents() {
   }, [contents]);
 
   const filtered = useMemo(() => {
-    const keyword = search.trim().toLowerCase();
     const filteredItems = contents.filter(item => {
-      const matchSearch = !keyword || [
+      const matchSearch = matchesSearchRegex(search, [
         item.title,
         item.user,
         item.email,
@@ -110,7 +110,7 @@ export function AdminContents() {
         item.model,
         item.body,
         item.tags.join(' '),
-      ].join(' ').toLowerCase().includes(keyword);
+      ]);
       const matchType = filterType === 'all' || item.type === filterType;
       const matchModel = filterModel === 'all' || item.model === filterModel;
       const matchFavorite = filterFavorite === 'all'

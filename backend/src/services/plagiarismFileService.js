@@ -5,7 +5,11 @@ const pdfParse = require('pdf-parse');
 
 const createError = require('../utils/createError');
 
-const MAX_EXTRACTED_TEXT_LENGTH = 60000;
+const DEFAULT_MAX_EXTRACTED_TEXT_LENGTH = 100000000;
+const MAX_EXTRACTED_TEXT_LENGTH = Math.max(
+  60000,
+  Number(process.env.PLAGIARISM_MAX_EXTRACTED_TEXT_CHARS || DEFAULT_MAX_EXTRACTED_TEXT_LENGTH),
+);
 const MAX_UPLOAD_SOURCE_TITLE_LENGTH = 200;
 
 const TEXT_EXTENSIONS = new Set([
@@ -113,19 +117,21 @@ async function extractTextFromFile(file, options = {}) {
 
 function toUploadedSource(extractedFile, index = 0) {
   const title = normalizeFileName(extractedFile.fileName, `Uploaded source ${index + 1}`);
+  const cloudinary = extractedFile.cloudinary || {};
 
   return {
     source: `upload:${title}`,
     sourceTitle: title,
-    sourceUrl: '',
+    sourceUrl: cloudinary.url || '',
     sourceType: 'uploads',
     text: extractedFile.text,
     mimeType: extractedFile.mimeType || '',
-    size: extractedFile.size || 0,
+    size: cloudinary.bytes || extractedFile.size || 0,
   };
 }
 
 module.exports = {
+  DEFAULT_MAX_EXTRACTED_TEXT_LENGTH,
   MAX_EXTRACTED_TEXT_LENGTH,
   SUPPORTED_EXTENSIONS,
   extractTextFromFile,

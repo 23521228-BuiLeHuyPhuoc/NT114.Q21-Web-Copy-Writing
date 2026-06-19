@@ -1,10 +1,7 @@
-import { MOCK_HISTORY } from '@/mocks/history';
-
-const delay = (ms = 300) => new Promise((r) => setTimeout(r, ms));
+import { contentService } from '@/services/contentService';
 
 export const historyService = {
-  list: async () => {
-    await delay();
-    return MOCK_HISTORY;
+  async list() {
+    return contentService.list({ fetchAll: true, limit: 100 });
   },
 };

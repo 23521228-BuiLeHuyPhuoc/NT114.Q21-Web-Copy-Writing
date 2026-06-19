@@ -67,6 +67,9 @@ export function useFineTuneQuotas() {
   return useQuery({
     queryKey: fineTuningKeys.quotas(),
     queryFn: () => fineTuningService.getQuotas(),
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 }
 

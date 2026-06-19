@@ -21,6 +21,7 @@ import { DataPagination } from '@/app/components/common/DataPagination';
 import { usePagination } from '@/hooks/usePagination';
 import { useContents, useUpdateContent } from '@/hooks/queries/useContents';
 import { useProject } from '@/hooks/queries/useProjects';
+import { matchesSearchRegex } from '@/lib/searchRegex';
 
 const TYPE_LABELS: Record<string, string> = {
   headline: 'Headline',
@@ -67,19 +68,10 @@ export function CustomerProjectDetail() {
 
   const availableContents = useMemo(() => {
     const currentIds = new Set(contents.map(item => item.id));
-    const keyword = contentSearch.trim().toLowerCase();
 
     return allContents
       .filter(item => !currentIds.has(item.id))
-      .filter((item) => {
-        if (!keyword) return true;
-        return [
-          item.title,
-          item.type,
-          item.model,
-          item.tags.join(' '),
-        ].join(' ').toLowerCase().includes(keyword);
-      });
+      .filter((item) => matchesSearchRegex(contentSearch, [item.title, item.type, item.model, item.tags.join(' ')]));
   }, [allContents, contentSearch, contents]);
 
   const handleAddContent = async (contentId: string) => {

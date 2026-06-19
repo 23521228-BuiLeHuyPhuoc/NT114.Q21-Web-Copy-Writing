@@ -36,6 +36,7 @@ import { AdminTable } from '@/app/components/admin/AdminTable';
 import { DataPagination } from '@/app/components/common/DataPagination';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { getAdminRoleDef } from '@/lib/permissions';
+import { matchesSearchRegex } from '@/lib/searchRegex';
 import { adminUserService, type AdminUser } from '@/services/adminUserService';
 import {
   adminNotificationService,
@@ -195,16 +196,11 @@ export function AdminNotifications() {
   }, [historySearch, pageSize, recipientTypeFilter, sourceFilter, typeFilter]);
 
   const filteredRecipients = useMemo(() => {
-    const keyword = recipientSearch.trim().toLowerCase();
     return accounts
       .filter((account) => {
         if (account.id === user?.id && account.role === 'admin') return false;
         if (recipientRoleFilter !== 'all' && account.role !== recipientRoleFilter) return false;
-        if (!keyword) return true;
-        return [account.name, account.email, account.role, account.adminRole || '']
-          .join(' ')
-          .toLowerCase()
-          .includes(keyword);
+        return matchesSearchRegex(recipientSearch, [account.name, account.email, account.role, account.adminRole || '']);
       })
       .slice(0, 80);
   }, [accounts, recipientRoleFilter, recipientSearch, user?.id]);

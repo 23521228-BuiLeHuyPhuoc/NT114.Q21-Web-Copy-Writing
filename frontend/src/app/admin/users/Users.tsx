@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Layout } from '@/app/components/Layout';
 import { Card } from '@/app/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/app/components/ui/avatar';
 import { Button } from '@/app/components/ui/button';
 import { Input } from '@/app/components/ui/input';
 import { Badge } from '@/app/components/ui/badge';
@@ -19,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { getAdminRoleDef, getAdminRoles, getCustomerRoleDef, getCustomerRoles, type AdminRole, type CustomerRole } from '@/lib/permissions';
+import { matchesSearchRegex } from '@/lib/searchRegex';
 import { adminUserService, type AdminUser } from '@/services/adminUserService';
 import { ConfirmDialog } from '@/app/components/admin/ConfirmDialog';
 import { TrashBin } from '@/app/components/admin/TrashBin';
@@ -47,6 +49,10 @@ function formatDate(value?: string | Date | null) {
 
 function accountTypeOf(user: AdminUser) {
   return adminUserService.accountTypeFromRole(user.role);
+}
+
+function getUserInitial(item: AdminUser) {
+  return (item.name || item.email || '?').trim().charAt(0).toUpperCase() || '?';
 }
 
 export function AdminUsers() {
@@ -119,16 +125,15 @@ export function AdminUsers() {
   };
 
   const filteredUsers = useMemo(() => {
-    const keyword = search.trim().toLowerCase();
     const filtered = users.filter((item) => {
-      const matchSearch = !keyword || [
+      const matchSearch = matchesSearchRegex(search, [
         item.name,
         item.email,
         item.role,
         item.adminRole || '',
         item.customerRole || '',
         item.status,
-      ].join(' ').toLowerCase().includes(keyword);
+      ]);
       const matchRole = filterRole === 'all' || item.role === filterRole;
       const matchStatus = filterStatus === 'all' || item.status === filterStatus;
       return matchSearch && matchRole && matchStatus;
@@ -411,9 +416,12 @@ export function AdminUsers() {
                   <TableRow key={item.id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0 ${item.role === 'admin' ? 'bg-gradient-to-br from-green-500 to-green-700' : 'bg-gradient-to-br from-green-500 to-emerald-700'}`}>
-                          {item.name.charAt(0).toUpperCase()}
-                        </div>
+                        <Avatar className="h-8 w-8 rounded-lg flex-shrink-0">
+                          <AvatarImage src={item.avatar || undefined} alt={item.name || item.email} className="object-cover" />
+                          <AvatarFallback className={'rounded-lg text-xs font-bold text-white ' + (item.role === 'admin' ? 'bg-gradient-to-br from-green-500 to-green-700' : 'bg-gradient-to-br from-green-500 to-emerald-700')}>
+                            {getUserInitial(item)}
+                          </AvatarFallback>
+                        </Avatar>
                         <div>
                           <p className="font-medium text-sm text-foreground">{item.name}</p>
                           <p className="text-xs text-muted-foreground flex items-center gap-1"><Mail className="w-3 h-3" />{item.email}</p>

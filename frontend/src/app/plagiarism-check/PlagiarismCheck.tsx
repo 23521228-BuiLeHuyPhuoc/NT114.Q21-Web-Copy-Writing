@@ -64,6 +64,10 @@ function countWords(text: string) {
   return text.trim().split(/\s+/).filter(Boolean).length;
 }
 
+function normalizeComparableText(text: string) {
+  return text.replace(/\s+/g, ' ').trim();
+}
+
 function normalizeIgnoredPhrase(value: string) {
   return value.replace(/\s+/g, ' ').trim().slice(0, MAX_IGNORED_PHRASE_LENGTH).trim();
 }
@@ -517,6 +521,13 @@ function formatFileSize(size: number) {
   return `${size} B`;
 }
 
+function reportPlagiarismScore(report: PlagiarismReport | null) {
+  if (!report) return 0;
+
+  const sourceScore = Math.max(0, ...report.sources.map((source) => Number(source.plagiarismScore || source.similarity || 0)));
+  return Math.min(100, Math.max(0, Math.round(report.analysis.plagiarismScore || report.similarityScore || sourceScore || 0)));
+}
+
 function mergeReferenceFiles(current: File[], incoming: File[]) {
   const seen = new Set<string>();
   const next: File[] = [];
@@ -533,7 +544,9 @@ function mergeReferenceFiles(current: File[], incoming: File[]) {
 
 export function CustomerPlagiarismCheck() {
   const [text, setText] = useState('');
+  const [checkFile, setCheckFile] = useState<File | null>(null);
   const [checkFileName, setCheckFileName] = useState('');
+  const [checkFileText, setCheckFileText] = useState('');
   const [extractingFile, setExtractingFile] = useState(false);
   const [referenceFiles, setReferenceFiles] = useState<File[]>([]);
   const [result, setResult] = useState<PlagiarismReport | null>(null);
@@ -552,13 +565,13 @@ export function CustomerPlagiarismCheck() {
   const check = useCheckPlagiarism();
   const words = countWords(text);
   const historyItems = history?.items || [];
-  const selectedSourceCount = Object.values(sourceConfig).filter(Boolean).length;
   const displayMatches = result ? result.matches.filter((match) => hasDisplayableMatch(match, result.ignoredPhrases)) : [];
   const displayTopicMatches = result ? result.topicMatches.filter((match) => hasDisplayableMatch(match, result.ignoredPhrases)) : [];
-  const visiblePlagiarismScore = result && displayMatches.length > 0 ? (result.analysis.plagiarismScore || result.similarityScore) : 0;
+  const visiblePlagiarismScore = reportPlagiarismScore(result);
   const visibleOriginalityScore = 100 - visiblePlagiarismScore;
   const visibleRiskLevel = riskLevelFromScore(visiblePlagiarismScore);
-  const displaySources = result && (displayMatches.length > 0 || displayTopicMatches.length > 0)
+  const hasSimilaritySignal = visiblePlagiarismScore > 0 || displayMatches.length > 0 || displayTopicMatches.length > 0;
+  const displaySources = result && hasSimilaritySignal
     ? result.sources.filter((source) => countWords(removeIgnoredPhrasesFromText(source.sourceText || source.snippet, result.ignoredPhrases)) >= 3)
     : [];
   const visibleComparedSourceCount = result ? comparisonSourceCount(result, displayMatches.length, displayTopicMatches.length) : 0;
@@ -618,14 +631,20 @@ export function CustomerPlagiarismCheck() {
     if (!file) return;
 
     setExtractingFile(true);
+    setCheckFile(null);
     setCheckFileName(file.name);
+    setCheckFileText('');
     try {
       const extracted = await plagiarismService.extractText(file);
       setText(extracted.text);
+      setCheckFile(file);
+      setCheckFileText(extracted.text);
       setResult(null);
       toast.success(`Đã chuyển ${extracted.fileName} sang văn bản (${extracted.wordCount} từ)`);
     } catch (error) {
+      setCheckFile(null);
       setCheckFileName('');
+      setCheckFileText('');
       toast.error(errorMessage(error));
     } finally {
       setExtractingFile(false);
@@ -660,15 +679,32 @@ export function CustomerPlagiarismCheck() {
     const trimmed = text.trim();
     const pendingIgnoredPhrases = splitIgnoredPhraseInput(ignoredPhraseInput);
     const normalizedIgnoredPhrases = normalizeIgnoredPhrases([...ignoredPhrases, ...pendingIgnoredPhrases]);
+    const shouldUseCheckFileAsSource = Boolean(
+      checkFile
+      && checkFileText
+      && referenceFiles.length === 0
+      && normalizeComparableText(trimmed) !== normalizeComparableText(checkFileText),
+    );
+    const effectiveReferenceFiles = sourceConfig.uploads
+      ? referenceFiles
+      : shouldUseCheckFileAsSource && checkFile
+        ? [checkFile]
+        : [];
+    const effectiveSourceConfig: PlagiarismSourceConfig = {
+      ...sourceConfig,
+      uploads: sourceConfig.uploads || effectiveReferenceFiles.length > 0,
+    };
+    const effectiveSelectedSourceCount = Object.values(effectiveSourceConfig).filter(Boolean).length;
+
     if (trimmed.length < 20 || words < 5) {
       toast.error('Vui lòng nhập ít nhất 20 ký tự và 5 từ để kiểm tra');
       return;
     }
-    if (selectedSourceCount === 0) {
+    if (effectiveSelectedSourceCount === 0) {
       toast.error('Chọn ít nhất một nguồn để kiểm tra');
       return;
     }
-    if (sourceConfig.uploads && referenceFiles.length === 0) {
+    if (effectiveSourceConfig.uploads && effectiveReferenceFiles.length === 0) {
       toast.error('Tải lên ít nhất một file nguồn hoặc tắt phạm vi file tải lên');
       return;
     }
@@ -677,12 +713,12 @@ export function CustomerPlagiarismCheck() {
     check.mutate({
       text: trimmed,
       threshold: SENSITIVITY[sensitivity].threshold,
-      includeReferences: sourceConfig.references,
+      includeReferences: effectiveSourceConfig.references,
       sensitivity,
       ignoreCommonPhrases,
       ignoredPhrases: normalizedIgnoredPhrases,
-      sources: sourceConfig,
-      referenceFiles: sourceConfig.uploads ? referenceFiles : [],
+      sources: effectiveSourceConfig,
+      referenceFiles: effectiveReferenceFiles,
     }, {
       onSuccess: (report) => { setResult(report); setExpandedSources({}); toast.success('Kiểm tra đạo văn hoàn tất'); },
       onError: (error) => toast.error(errorMessage(error)),
@@ -695,7 +731,7 @@ export function CustomerPlagiarismCheck() {
         <h1 className='text-3xl font-bold text-foreground'>Kiểm tra đạo văn AI</h1>
         <Card className='p-5'>
           <div className='mb-3 flex items-center justify-between gap-3'>
-            <div><h2 className='font-semibold text-foreground'>Nội dung cần kiểm tra</h2><p className='text-xs text-muted-foreground'>So khớp với nội dung đã lưu và nguồn tham chiếu demo.</p></div>
+            <div><h2 className='font-semibold text-foreground'>Nội dung cần kiểm tra</h2><p className='text-xs text-muted-foreground'>Dán đoạn cần kiểm tra; file nguồn so khớp nằm ở khung riêng bên dưới.</p></div>
             <Badge variant='outline'>{words} từ</Badge>
           </div>
           <Textarea className='min-h-[220px] text-sm leading-6' placeholder='Dán nội dung AI hoặc bản nháp quảng cáo vào đây...' value={text} onChange={(event) => setText(event.target.value)} />
@@ -703,8 +739,8 @@ export function CustomerPlagiarismCheck() {
             <div className='rounded-md border bg-background p-3'>
               <div className='flex items-start justify-between gap-3'>
                 <div className='min-w-0'>
-                  <p className='text-sm font-medium text-foreground'>File nội dung cần kiểm tra</p>
-                  <p className='mt-1 text-xs text-muted-foreground'>Hỗ trợ TXT, MD, CSV, JSON, HTML, DOCX, PDF.</p>
+                  <p className='text-sm font-medium text-foreground'>Chuyển file thành văn bản kiểm tra</p>
+                  <p className='mt-1 text-xs text-muted-foreground'>File ở khung này chỉ đổ nội dung vào ô text, không dùng làm nguồn so khớp.</p>
                   {checkFileName && <p className='mt-2 break-words text-xs text-primary [overflow-wrap:anywhere]'>Đã đọc: {checkFileName}</p>}
                 </div>
                 <input
@@ -727,7 +763,7 @@ export function CustomerPlagiarismCheck() {
               <div className='flex items-start justify-between gap-3'>
                 <div className='min-w-0'>
                   <p className='text-sm font-medium text-foreground'>File nguồn để so khớp</p>
-                  <p className='mt-1 text-xs text-muted-foreground'>Tải tối đa {MAX_REFERENCE_FILES} file làm nguồn kiểm tra riêng.</p>
+                  <p className='mt-1 text-xs text-muted-foreground'>Đoạn paste sẽ được kiểm tra trùng lặp với các file trong khung này.</p>
                 </div>
                 <input
                   id='plagiarism-reference-files'
@@ -849,7 +885,7 @@ export function CustomerPlagiarismCheck() {
           </div>
           <div className='mt-4 flex gap-3'>
             <Button className='h-11 flex-1 text-white' onClick={handleCheck} disabled={check.isPending}>{check.isPending ? <><RefreshCw className='mr-2 h-4 w-4 animate-spin' /> Đang kiểm tra...</> : <><FileCheck className='mr-2 h-4 w-4' /> Kiểm tra đạo văn</>}</Button>
-            <Button variant='outline' onClick={() => { setText(''); setCheckFileName(''); setReferenceFiles([]); setSourceConfig(prev => ({ ...prev, uploads: false })); setResult(null); setExpandedSources({}); }}>Xóa</Button>
+            <Button variant='outline' onClick={() => { setText(''); setCheckFile(null); setCheckFileName(''); setCheckFileText(''); setReferenceFiles([]); setSourceConfig(prev => ({ ...prev, uploads: false })); setResult(null); setExpandedSources({}); }}>Xóa</Button>
           </div>
         </Card>
         {result && (

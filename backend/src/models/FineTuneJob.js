@@ -49,7 +49,7 @@ const fineTuneJobSchema = new mongoose.Schema(
       trim: true,
       lowercase: true,
       maxlength: 80,
-      default: 'mock',
+      default: 'vertex-gemini',
       index: true,
     },
     description: {

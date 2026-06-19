@@ -1,5 +1,4 @@
 ﻿import { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { Layout } from '@/app/components/Layout';
 import { Card } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
@@ -7,8 +6,8 @@ import { Badge } from '@/app/components/ui/badge';
 import { Progress } from '@/app/components/ui/progress';
 import { useNavigate } from '@/lib/next-router-compat';
 import { useAuth } from '@/app/contexts/AuthContext';
-import { api } from '@/lib/axios';
 import { useContents } from '@/hooks/queries/useContents';
+import { useMyBilling } from '@/hooks/queries/useBilling';
 import { useFineTuneJobs, useFineTuneQuotas, useFineTuningModels } from '@/hooks/queries/useFineTuning';
 import {
   Wand2, FileText, Sparkles, ArrowRight,
@@ -16,18 +15,6 @@ import {
 } from 'lucide-react';
 import { AreaChart } from '@/app/components/charts';
 import type { UiContent } from '@/services/contentService';
-
-interface BillingMeResponse {
-  currentPlan?: {
-    name?: string;
-    price?: number;
-    renewDate?: string;
-    copyUsed?: number;
-    copyLimit?: number;
-    apiCalls?: number;
-    apiLimit?: number;
-  };
-}
 
 const WEEKDAY_LABELS = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
 
@@ -86,15 +73,21 @@ function formatRelativeTime(value?: string) {
 }
 
 function getMostUsedModel(contents: UiContent[]) {
-  if (contents.length === 0) return 'Chưa có';
+  const realContents = contents.filter((content) => !isSeedDemoModel(content.model));
+  if (realContents.length === 0) return 'Chưa có dữ liệu thật';
 
   const modelCounts = new Map<string, number>();
-  contents.forEach((content) => {
+  realContents.forEach((content) => {
     const model = content.model || 'Không rõ';
     modelCounts.set(model, (modelCounts.get(model) || 0) + 1);
   });
 
-  return [...modelCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || 'Chưa có';
+  return [...modelCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || 'Chưa có dữ liệu thật';
+}
+
+function isSeedDemoModel(value?: string) {
+  const normalized = String(value || '').trim().toLowerCase();
+  return normalized === 'demo seed' || normalized === 'demo-seed' || normalized.includes('demo seed');
 }
 
 function getBillingRatio(used: number, limit: number) {
@@ -103,7 +96,7 @@ function getBillingRatio(used: number, limit: number) {
 }
 
 function getRemainingQuota(used: number, limit: number) {
-  if (limit < 0) return 'Không giới hạn';
+  if (limit < 0) return 'Chưa đặt';
   return formatNumber(Math.max(0, limit - used));
 }
 
@@ -118,21 +111,11 @@ function getRecentContents(contents: UiContent[]) {
     .slice(0, 5);
 }
 
-function useBillingSummary() {
-  return useQuery({
-    queryKey: ['billing', 'me'],
-    queryFn: async () => {
-      const response = await api.get<{ data?: BillingMeResponse }>('/billing/me');
-      return response.data.data?.currentPlan || null;
-    },
-  });
-}
-
 export function CustomerDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: contents = [], isLoading: contentsLoading, isError: contentsError } = useContents({ fetchAll: true, limit: 100 });
-  const { data: billing, isLoading: billingLoading } = useBillingSummary();
+  const { data: billingData, isLoading: billingLoading } = useMyBilling();
   const { data: fineTunedModels = [], isLoading: modelsLoading } = useFineTuningModels();
   const { data: fineTuneJobs = [] } = useFineTuneJobs();
   const { data: fineTuneQuotas } = useFineTuneQuotas();
@@ -152,18 +135,20 @@ export function CustomerDashboard() {
   const averageQuality = useMemo(() => getQualityAverage(contents), [contents]);
   const mostUsedModel = useMemo(() => getMostUsedModel(contents), [contents]);
   const copiesThisWeek = useMemo(() => weeklyData.reduce((sum, item) => sum + item.copies, 0), [weeklyData]);
-  const activeFineTunedModels = fineTunedModels.filter(model => model.isActive !== false);
-  const readyFineTunedModels = fineTunedModels.filter(model => model.status === 'ready');
+  const productionFineTunedModels = fineTunedModels.filter(model => !isSeedDemoModel(`${model.name} ${model.baseModel} ${model.providerModelId || ''}`));
+  const activeFineTunedModels = productionFineTunedModels.filter(model => model.isActive !== false);
+  const readyFineTunedModels = productionFineTunedModels.filter(model => model.status === 'ready');
   const liveFineTuneJobs = fineTuneJobs.filter(job => job.status === 'training' || job.status === 'pending');
 
+  const billing = billingData?.currentPlan;
   const copyUsed = Number(billing?.copyUsed || 0);
   const copyLimit = Number(billing?.copyLimit || 0);
   const quotaPercent = getBillingRatio(copyUsed, copyLimit);
   const planName = billing?.name || 'Free';
   const planPrice = formatCurrency(billing?.price);
-  const renewDate = billing?.renewDate || '-';
+  const expiresLabel = billing?.expiresAtLabel || billing?.renewDate || 'Chưa có ngày hết hạn';
   const quotaRemaining = getRemainingQuota(copyUsed, copyLimit);
-  const quotaLimitLabel = copyLimit < 0 ? 'không giới hạn' : formatNumber(copyLimit);
+  const quotaLimitLabel = copyLimit < 0 ? 'chưa đặt giới hạn' : formatNumber(copyLimit);
 
   const stats = [
     {
@@ -178,7 +163,7 @@ export function CustomerDashboard() {
       value: quotaRemaining,
       icon: Zap,
       color: 'bg-warning/100',
-      change: copyLimit < 0 ? 'Gói không giới hạn' : `/ ${quotaLimitLabel} copy tháng này`,
+      change: copyLimit < 0 ? 'Chưa đặt giới hạn copy' : `/ ${quotaLimitLabel} copy tháng này`,
     },
     {
       label: 'Model dùng nhiều nhất',
@@ -253,18 +238,18 @@ export function CustomerDashboard() {
             <div>
               <p className="font-semibold text-foreground">Quota gói {planName}</p>
               <p className="text-xs text-foreground/70">
-                {copyLimit < 0 ? `${formatNumber(copyUsed)} copy đã dùng trong tháng này` : `${formatNumber(copyUsed)} / ${quotaLimitLabel} copy đã dùng`}
+                {copyLimit < 0 ? `${formatNumber(copyUsed)} copy đã dùng - chưa đặt giới hạn` : `${formatNumber(copyUsed)} / ${quotaLimitLabel} copy đã dùng`}
               </p>
             </div>
             <div className="text-right">
-              <Badge className="bg-warning/15 text-amber-800 border-0">{copyLimit < 0 ? 'Unlimited' : `${quotaPercent}%`}</Badge>
+              <Badge className="bg-warning/15 text-amber-800 border-0">{copyLimit < 0 ? 'Chưa đặt' : `${quotaPercent}%`}</Badge>
               <p className="mt-1 text-xs text-muted-foreground">{planPrice}</p>
             </div>
           </div>
           <Progress value={copyLimit < 0 ? 100 : quotaPercent} className="h-2.5" />
           <div className="flex justify-between mt-2 text-xs text-muted-foreground">
             <span>Còn {quotaRemaining} copy</span>
-            <span>Gia hạn: {renewDate}</span>
+            <span>Hết hạn: {expiresLabel}</span>
           </div>
         </Card>
 

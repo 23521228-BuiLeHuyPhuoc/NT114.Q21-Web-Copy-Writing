@@ -2,7 +2,7 @@ import { Card } from '@/app/components/ui/card';
 import { Label } from '@/app/components/ui/label';
 import { Badge } from '@/app/components/ui/badge';
 import { Cpu } from 'lucide-react';
-import { MODELS } from '@/mocks/generator';
+import { MODELS } from '@/lib/generatorConfig';
 
 export type GeneratorModelOption = {
   id: string;

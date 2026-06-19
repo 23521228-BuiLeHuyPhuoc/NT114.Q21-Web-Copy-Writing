@@ -9,5 +9,6 @@ router.use(protect('admin'));
 
 router.get('/', paymentController.listPayments);
 router.get('/revenue', paymentController.getRevenue);
+router.patch('/:id/confirm', paymentController.confirmPayment);
 
 module.exports = router;

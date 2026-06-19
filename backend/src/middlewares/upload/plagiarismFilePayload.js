@@ -1,4 +1,5 @@
 const asyncHandler = require('../../utils/asyncHandler');
+const cloudinaryService = require('../../services/cloudinaryService');
 const { extractTextFromFile, toUploadedSource } = require('../../services/plagiarismFileService');
 
 function firstValue(value) {
@@ -89,22 +90,43 @@ function getUploadedFiles(files, field) {
   return Array.isArray(value) ? value : [value];
 }
 
+async function extractAndStoreFile(userId, file, index = 0) {
+  const [extractedFile, cloudinaryFile] = await Promise.all([
+    extractTextFromFile(file),
+    cloudinaryService.uploadPlagiarismFile(userId, file, index),
+  ]);
+
+  return {
+    ...extractedFile,
+    cloudinary: cloudinaryFile,
+  };
+}
+
 const preparePlagiarismFilePayload = asyncHandler(async (req, res, next) => {
   const payload = normalizeMultipartBody(req.body || {});
   const checkFile = getUploadedFiles(req.files, 'checkFile')[0];
   const referenceFiles = getUploadedFiles(req.files, 'referenceFiles');
+  const originalText = String(payload.text || '').trim();
+  let extractedCheckFile = null;
 
-  if (checkFile && !String(payload.text || '').trim()) {
-    const extracted = await extractTextFromFile(checkFile);
-    payload.text = extracted.text;
-    payload.checkFileName = extracted.fileName;
+  if (checkFile) {
+    extractedCheckFile = await extractAndStoreFile(req.user._id, checkFile, 0);
+
+    if (!originalText) {
+      payload.text = extractedCheckFile.text;
+      payload.checkFileName = extractedCheckFile.fileName;
+    }
   }
 
-  if (referenceFiles.length > 0) {
-    const extractedSources = await Promise.all(
-      referenceFiles.map(async (file, index) => toUploadedSource(await extractTextFromFile(file), index)),
-    );
+  const extractedSources = await Promise.all(
+    referenceFiles.map(async (file, index) => toUploadedSource(await extractAndStoreFile(req.user._id, file, index + 1), index)),
+  );
 
+  if (extractedCheckFile && originalText && referenceFiles.length === 0) {
+    extractedSources.unshift(toUploadedSource(extractedCheckFile, 0));
+  }
+
+  if (extractedSources.length > 0) {
     payload.uploadedSources = extractedSources;
     payload.sources = {
       ...payload.sources,

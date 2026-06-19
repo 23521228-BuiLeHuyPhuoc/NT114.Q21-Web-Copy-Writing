@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useRef, useState } from 'react';
+import { type ReactNode, type UIEvent, useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from '@/lib/next-router-compat';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { Button } from '@/app/components/ui/button';
@@ -134,6 +134,22 @@ export function Layout({ children }: LayoutProps) {
     : null;
   const adminPageTitle = activeAdminMenuItem?.label || adminSelfPage?.label || 'Quản trị';
   const adminPageSection = activeAdminMenuItem?.section || adminSelfPage?.section || 'Admin';
+  const sidebarScrollKey = `copypro.sidebar.scroll.${user?.role || 'guest'}`;
+
+  const restoreSidebarScroll = (node: HTMLDivElement | null) => {
+    if (!node || typeof window === 'undefined') return;
+    const savedTop = Number(window.sessionStorage.getItem(sidebarScrollKey) || 0);
+    if (!Number.isFinite(savedTop) || savedTop <= 0) return;
+
+    window.requestAnimationFrame(() => {
+      node.scrollTop = savedTop;
+    });
+  };
+
+  const saveSidebarScroll = (event: UIEvent<HTMLDivElement>) => {
+    if (typeof window === 'undefined') return;
+    window.sessionStorage.setItem(sidebarScrollKey, String(event.currentTarget.scrollTop));
+  };
 
   useEffect(() => {
     const handler = (event: MouseEvent) => {
@@ -380,7 +396,7 @@ export function Layout({ children }: LayoutProps) {
   );
 
   const Sidebar = () => (
-    <div className="h-full flex flex-col overflow-y-auto">
+    <div ref={restoreSidebarScroll} onScroll={saveSidebarScroll} className="h-full flex flex-col overflow-y-auto overscroll-contain">
       {/* Logo */}
       <div className="p-5 border-b flex-shrink-0">
         <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
@@ -406,7 +422,7 @@ export function Layout({ children }: LayoutProps) {
       </div>
 
       {/* Menu */}
-      <nav className="flex-1 p-3 overflow-y-auto">
+      <nav className="flex-1 p-3">
         {user?.role === 'admin' ? (
           <div className="space-y-3">
             {adminMenuGroups.map((group) => (
@@ -461,7 +477,7 @@ export function Layout({ children }: LayoutProps) {
   if (user?.role === 'admin') {
     return (
       <div className="min-h-screen bg-surface-muted flex">
-        <aside className="hidden md:block w-60 bg-card border-r flex-shrink-0 sticky top-0 h-screen overflow-y-auto">
+        <aside className="hidden md:block w-60 bg-card border-r flex-shrink-0 sticky top-0 h-screen">
           <Sidebar />
         </aside>
         <div className="flex-1 flex flex-col min-w-0">
@@ -498,7 +514,7 @@ export function Layout({ children }: LayoutProps) {
   return (
     <div className="min-h-screen bg-surface-muted flex">
       {/* Desktop Sidebar */}
-      <aside className="hidden md:block w-60 bg-card border-r flex-shrink-0 sticky top-0 h-screen overflow-y-auto">
+      <aside className="hidden md:block w-60 bg-card border-r flex-shrink-0 sticky top-0 h-screen">
         <Sidebar />
       </aside>
 

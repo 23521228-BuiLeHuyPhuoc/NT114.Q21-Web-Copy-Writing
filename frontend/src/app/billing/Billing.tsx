@@ -33,63 +33,58 @@ interface BillingPlanCard {
   price: number;
   currency: string;
   icon: PlanIcon;
-  color: string;
   features: string[];
   limits: string[];
-  popular?: boolean;
 }
 
-const CURRENT_PLAN = {
-  name: 'Pro',
-  slug: 'pro',
-  price: 299000,
-  renewDate: '23/04/2026',
-  copyUsed: 312,
-  copyLimit: 500,
-  apiCalls: 1250,
-  apiLimit: 5000,
-  quotaUsedFiveHours: 120,
-  quotaLimitFiveHours: 800,
-  quotaUsedWeekly: 720,
-  quotaLimitWeekly: 2000,
-};
+interface CurrentBillingPlan {
+  name: string;
+  slug: string;
+  price: number;
+  expiresAt: string | null;
+  expiresAtLabel: string;
+  renewDate: string;
+  hasExpirationDate: boolean;
+  isExpired: boolean;
+  copyUsed: number;
+  copyLimit: number;
+  apiCalls: number;
+  apiLimit: number;
+  quotaUsedFiveHours: number;
+  quotaLimitFiveHours: number;
+  quotaUsedWeekly: number;
+  quotaLimitWeekly: number;
+}
 
-const PLANS: BillingPlanCard[] = [
-  {
-    id: 'free',
-    slug: 'free',
-    name: 'Miễn phí',
-    price: 0,
-    currency: 'VND',
-    icon: Zap,
-    color: 'border-border',
-    features: ['30 copy/tháng', '2 model AI cơ bản', '5 templates', 'Không có API'],
-    limits: ['Không có fine-tuning', 'Không kiểm tra đạo văn'],
-  },
-  {
-    id: 'pro',
-    slug: 'pro',
-    name: 'Pro',
-    price: 299000,
-    currency: 'VND',
-    icon: Crown,
-    color: 'border-amber-500 ring-2 ring-amber-100',
-    features: ['500 copy/tháng', 'Tất cả model AI', '100+ templates', 'API 5,000 calls/tháng', 'Fine-tuning 3 models', 'Kiểm tra đạo văn 100 lần', 'Hỗ trợ ưu tiên'],
-    limits: [],
-    popular: true,
-  },
-  {
-    id: 'business',
-    slug: 'business',
-    name: 'Business',
-    price: 799000,
-    currency: 'VND',
-    icon: Building2,
-    color: 'border-border',
-    features: ['Unlimited copy', 'Tất cả model AI', 'Unlimited templates', 'API 50,000 calls/tháng', 'Fine-tuning unlimited', 'Kiểm tra đạo văn unlimited', 'Hỗ trợ 24/7 + SLA', 'Custom model training'],
-    limits: [],
-  },
-];
+interface BillingInvoice {
+  id: string;
+  date: string;
+  amount: number;
+  status: string;
+  plan: string;
+  method: string;
+}
+
+const PLAN_ORDER = ['free', 'pro', 'business'];
+
+const DEFAULT_CURRENT_PLAN: CurrentBillingPlan = {
+  name: '',
+  slug: '',
+  price: 0,
+  expiresAt: null,
+  expiresAtLabel: '',
+  renewDate: '',
+  hasExpirationDate: false,
+  isExpired: false,
+  copyUsed: 0,
+  copyLimit: 0,
+  apiCalls: 0,
+  apiLimit: 0,
+  quotaUsedFiveHours: 0,
+  quotaLimitFiveHours: 0,
+  quotaUsedWeekly: 0,
+  quotaLimitWeekly: 0,
+};
 
 const PAYMENT_METHODS = [
   {
@@ -121,18 +116,16 @@ const PAYMENT_METHODS = [
   },
 ];
 
-const INVOICES = [
-  { id: 'INV-2026-003', date: '23/03/2026', amount: 299000, status: 'paid', plan: 'Pro', method: 'MoMo' },
-  { id: 'INV-2026-002', date: '23/02/2026', amount: 299000, status: 'paid', plan: 'Pro', method: 'Chuyển khoản ngân hàng' },
-  { id: 'INV-2026-001', date: '23/01/2026', amount: 199000, status: 'paid', plan: 'Pro ưu đãi', method: 'ZaloPay' },
-];
-
 interface BillingMeResponse {
   currentPlan?: {
     name?: string;
     slug?: string;
     price?: number;
+    expiresAt?: string | null;
+    expiresAtLabel?: string;
     renewDate?: string;
+    hasExpirationDate?: boolean;
+    isExpired?: boolean;
     copyUsed?: number;
     copyLimit?: number;
     apiCalls?: number;
@@ -142,7 +135,7 @@ interface BillingMeResponse {
     quotaUsedWeekly?: number;
     quotaLimitWeekly?: number;
   };
-  invoices?: typeof INVOICES;
+  invoices?: BillingInvoice[];
 }
 
 interface BillingPlanResponseItem {
@@ -200,15 +193,35 @@ function formatCurrency(value: number) {
 }
 
 function formatLimitValue(value: number | undefined, label: string) {
-  if (value === -1) return `${label} không giới hạn`;
+  if (value === -1) return `Chưa đặt giới hạn ${label}`;
   if (!value || value <= 0) return '';
   return `${value.toLocaleString('vi-VN')} ${label}`;
 }
 
+function formatUsagePair(used: number, limit: number) {
+  if (limit < 0) return `${used.toLocaleString('vi-VN')} / Chưa đặt`;
+  return `${used.toLocaleString('vi-VN')} / ${limit.toLocaleString('vi-VN')}`;
+}
+
+function getUsageProgress(used: number, limit: number) {
+  if (limit < 0) return 0;
+  if (limit <= 0) return 0;
+  return Math.min(100, (used / limit) * 100);
+}
+
 function getPlanIcon(slug: string): PlanIcon {
   if (slug === 'free') return Zap;
-  if (slug === 'business' || slug === 'enterprise') return Building2;
+  if (slug === 'business') return Building2;
   return Crown;
+}
+
+function getPlanOrder(slug: string) {
+  const index = PLAN_ORDER.indexOf(slug);
+  return index === -1 ? Number.MAX_SAFE_INTEGER : index;
+}
+
+function isSupportedPlanSlug(slug: string) {
+  return PLAN_ORDER.includes(slug);
 }
 
 function normalizeBillingPlan(plan: BillingPlanResponseItem): BillingPlanCard {
@@ -223,8 +236,6 @@ function normalizeBillingPlan(plan: BillingPlanResponseItem): BillingPlanCard {
     formatLimitValue(limits.fineTuneModels, 'fine-tune models'),
     formatLimitValue(limits.plagiarismChecks, 'kiểm tra đạo văn'),
   ].filter(Boolean);
-  const popular = Boolean(plan.isPopular ?? plan.popular);
-
   return {
     id: plan.id || plan._id || slug,
     slug,
@@ -232,10 +243,8 @@ function normalizeBillingPlan(plan: BillingPlanResponseItem): BillingPlanCard {
     price: Number.isFinite(price) ? price : 0,
     currency: plan.currency || 'VND',
     icon: getPlanIcon(slug),
-    color: popular ? 'border-amber-500 ring-2 ring-amber-100' : 'border-border',
     features: (plan.features && plan.features.length > 0) ? plan.features : generatedFeatures,
     limits: plan.excludedFeatures || [],
-    popular,
   };
 }
 
@@ -261,9 +270,9 @@ function getInvoiceStatusMeta(status: string) {
 }
 
 export function CustomerBilling() {
-  const [currentPlan, setCurrentPlan] = useState(CURRENT_PLAN);
-  const [plans, setPlans] = useState<BillingPlanCard[]>(PLANS);
-  const [invoices, setInvoices] = useState(INVOICES);
+  const [currentPlan, setCurrentPlan] = useState<CurrentBillingPlan>(DEFAULT_CURRENT_PLAN);
+  const [plans, setPlans] = useState<BillingPlanCard[]>([]);
+  const [invoices, setInvoices] = useState<BillingInvoice[]>([]);
   const [checkoutMethod, setCheckoutMethod] = useState<(typeof PAYMENT_METHODS)[number]>(PAYMENT_METHODS[0]);
   const [checkoutPlan, setCheckoutPlan] = useState<BillingPlanCard | null>(null);
   const [checkoutPlanId, setCheckoutPlanId] = useState<string | null>(null);
@@ -273,11 +282,12 @@ export function CustomerBilling() {
     try {
       const response = await api.get<{ data?: BillingPlansResponse }>('/billing/plans');
       const items = response.data.data?.items || [];
-      if (items.length > 0) {
-        setPlans(items.map(normalizeBillingPlan));
-      }
+      setPlans(items
+        .map(normalizeBillingPlan)
+        .filter(plan => isSupportedPlanSlug(plan.slug))
+        .sort((a, b) => getPlanOrder(a.slug) - getPlanOrder(b.slug)));
     } catch {
-      // Giữ fallback demo nếu backend billing chưa sẵn sàng.
+      setPlans([]);
     }
   }, []);
 
@@ -294,7 +304,11 @@ export function CustomerBilling() {
           ...currentPlanData,
           slug: currentPlanData.slug || prev.slug,
           price: currentPlanData.price ?? prev.price,
+          expiresAt: currentPlanData.expiresAt ?? prev.expiresAt,
+          expiresAtLabel: currentPlanData.expiresAtLabel || currentPlanData.renewDate || prev.expiresAtLabel,
           renewDate: currentPlanData.renewDate || prev.renewDate,
+          hasExpirationDate: currentPlanData.hasExpirationDate ?? prev.hasExpirationDate,
+          isExpired: currentPlanData.isExpired ?? prev.isExpired,
           copyUsed: currentPlanData.copyUsed ?? prev.copyUsed,
           copyLimit: currentPlanData.copyLimit ?? prev.copyLimit,
           apiCalls: currentPlanData.apiCalls ?? prev.apiCalls,
@@ -308,15 +322,35 @@ export function CustomerBilling() {
 
       if (Array.isArray(data.invoices) && data.invoices.length > 0) {
         setInvoices(data.invoices);
+      } else {
+        setInvoices([]);
       }
     } catch {
-      // Giữ fallback demo nếu backend billing chưa sẵn sàng.
+      setInvoices([]);
     }
   }, []);
 
   useEffect(() => {
     void loadBilling();
     void loadPlans();
+  }, [loadBilling, loadPlans]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof document === 'undefined') return;
+
+    const refreshBilling = () => {
+      if (document.visibilityState === 'hidden') return;
+      void loadBilling();
+      void loadPlans();
+    };
+
+    window.addEventListener('focus', refreshBilling);
+    document.addEventListener('visibilitychange', refreshBilling);
+
+    return () => {
+      window.removeEventListener('focus', refreshBilling);
+      document.removeEventListener('visibilitychange', refreshBilling);
+    };
   }, [loadBilling, loadPlans]);
 
   useEffect(() => {
@@ -445,6 +479,9 @@ export function CustomerBilling() {
 
   const hasCreatedVietQr = checkoutMethod.id === 'vietqr' && Boolean(vietqrPayment);
   const checkoutButtonDisabled = !checkoutPlan || checkoutPlanId !== null || hasCreatedVietQr;
+  const CurrentPlanIcon = getPlanIcon(currentPlan.slug);
+  const hasCurrentPlan = Boolean(currentPlan.slug || currentPlan.name);
+  const currentPlanTitle = currentPlan.name ? `Gói ${currentPlan.name}` : 'Chưa có gói đang áp dụng';
 
   return (
     <Layout>
@@ -462,20 +499,22 @@ export function CustomerBilling() {
           </TabsList>
 
           <TabsContent value="plan">
-            <Card className="mb-6 border-amber-200 bg-gradient-to-r from-amber-50 to-green-50 p-6">
+            <Card className="mb-6 border-primary/20 bg-gradient-to-r from-primary/5 to-emerald-50 p-6">
               <div className="mb-4 flex items-start justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="rounded-lg bg-gradient-to-br from-amber-500 to-green-600 p-3">
-                    <Crown className="h-6 w-6 text-white" />
+                  <div className="rounded-lg bg-gradient-to-br from-green-600 to-emerald-700 p-3">
+                    <CurrentPlanIcon className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold text-foreground">Gói {currentPlan.name}</h2>
-                    <p className="text-sm text-foreground/70">Gia hạn ngày {currentPlan.renewDate}</p>
+                    <h2 className="text-xl font-bold text-foreground">{currentPlanTitle}</h2>
+                    <p className="text-sm text-foreground/70">
+                      {currentPlan.expiresAtLabel || currentPlan.renewDate ? 'Hết hạn ngày ' + (currentPlan.expiresAtLabel || currentPlan.renewDate) : 'Chưa có ngày hết hạn'}
+                    </p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-2xl font-bold text-amber-700">{formatCurrency(currentPlan.price)}</p>
-                  {currentPlan.price > 0 && <p className="text-xs text-muted-foreground">/tháng</p>}
+                  <p className="text-2xl font-bold text-primary">{hasCurrentPlan ? formatCurrency(currentPlan.price) : '--'}</p>
+                  {hasCurrentPlan && currentPlan.price > 0 && <p className="text-xs text-muted-foreground">/tháng</p>}
                 </div>
               </div>
 
@@ -483,30 +522,30 @@ export function CustomerBilling() {
                 <div>
                   <div className="mb-1 flex justify-between text-sm">
                     <span className="text-foreground/70">Copy đã tạo</span>
-                    <span className="font-semibold">{currentPlan.copyUsed}/{currentPlan.copyLimit}</span>
+                    <span className="font-semibold">{formatUsagePair(currentPlan.copyUsed, currentPlan.copyLimit)}</span>
                   </div>
-                  <Progress value={currentPlan.copyLimit > 0 ? (currentPlan.copyUsed / currentPlan.copyLimit) * 100 : 0} className="h-2" />
+                  <Progress value={getUsageProgress(currentPlan.copyUsed, currentPlan.copyLimit)} className="h-2" />
                 </div>
                 <div>
                   <div className="mb-1 flex justify-between text-sm">
                     <span className="text-foreground/70">Quota generate/tháng</span>
-                    <span className="font-semibold">{currentPlan.apiCalls.toLocaleString()}/{currentPlan.apiLimit.toLocaleString()}</span>
+                    <span className="font-semibold">{formatUsagePair(currentPlan.apiCalls, currentPlan.apiLimit)}</span>
                   </div>
-                  <Progress value={currentPlan.apiLimit > 0 ? (currentPlan.apiCalls / currentPlan.apiLimit) * 100 : 0} className="h-2" />
+                  <Progress value={getUsageProgress(currentPlan.apiCalls, currentPlan.apiLimit)} className="h-2" />
                 </div>
                 <div>
                   <div className="mb-1 flex justify-between text-sm">
                     <span className="text-foreground/70">Quota generate/5h</span>
-                    <span className="font-semibold">{currentPlan.quotaUsedFiveHours.toLocaleString()}/{currentPlan.quotaLimitFiveHours.toLocaleString()}</span>
+                    <span className="font-semibold">{formatUsagePair(currentPlan.quotaUsedFiveHours, currentPlan.quotaLimitFiveHours)}</span>
                   </div>
-                  <Progress value={currentPlan.quotaLimitFiveHours > 0 ? (currentPlan.quotaUsedFiveHours / currentPlan.quotaLimitFiveHours) * 100 : 0} className="h-2" />
+                  <Progress value={getUsageProgress(currentPlan.quotaUsedFiveHours, currentPlan.quotaLimitFiveHours)} className="h-2" />
                 </div>
                 <div>
                   <div className="mb-1 flex justify-between text-sm">
                     <span className="text-foreground/70">Quota generate/tuần</span>
-                    <span className="font-semibold">{currentPlan.quotaUsedWeekly.toLocaleString()}/{currentPlan.quotaLimitWeekly.toLocaleString()}</span>
+                    <span className="font-semibold">{formatUsagePair(currentPlan.quotaUsedWeekly, currentPlan.quotaLimitWeekly)}</span>
                   </div>
-                  <Progress value={currentPlan.quotaLimitWeekly > 0 ? (currentPlan.quotaUsedWeekly / currentPlan.quotaLimitWeekly) * 100 : 0} className="h-2" />
+                  <Progress value={getUsageProgress(currentPlan.quotaUsedWeekly, currentPlan.quotaLimitWeekly)} className="h-2" />
                 </div>
               </div>
             </Card>
@@ -519,64 +558,81 @@ export function CustomerBilling() {
               </p>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-3">
-              {plans.map((plan) => {
-                const Icon = plan.icon;
-                const current = isCurrentPlan(plan);
-                const isLoading = checkoutPlanId === plan.slug;
+            {plans.length === 0 ? (
+              <Card className="border-dashed p-6 text-center">
+                <p className="text-sm text-muted-foreground">Chưa có gói dịch vụ khả dụng.</p>
+              </Card>
+            ) : (
+              <div className="grid items-stretch gap-5 lg:grid-cols-3">
+                {plans.map((plan) => {
+                  const Icon = plan.icon;
+                  const current = isCurrentPlan(plan);
+                  const isLoading = checkoutPlanId === plan.slug;
+                  const cardStyle = current
+                    ? 'border-primary shadow-lg shadow-primary/10 ring-2 ring-primary/15'
+                    : 'border-border shadow-sm hover:border-primary/30 hover:shadow-md';
+                  const iconStyle = current
+                    ? 'bg-primary/10 text-primary'
+                    : 'bg-muted text-foreground/70';
 
-                return (
-                  <Card key={plan.id} className={`relative p-6 ${plan.color}`}>
-                    {current && (
-                      <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 border-0 bg-warning/100 px-3 text-white">Đang dùng</Badge>
-                    )}
-                    <div className="mb-6 text-center">
-                      <div className="mb-3 inline-flex rounded-lg bg-warning/15 p-3">
-                        <Icon className="h-6 w-6 text-amber-700" />
+                  return (
+                    <Card key={plan.id} className={`relative flex h-full min-h-[520px] flex-col rounded-xl border bg-card p-5 transition-all ${cardStyle}`}>
+                      {current && (
+                        <Badge className="absolute right-4 top-4 border-0 bg-primary px-3 text-primary-foreground">Đang dùng</Badge>
+                      )}
+                      <div className="mb-5 pt-4 text-center">
+                        <div className={`mb-3 inline-flex rounded-lg p-3 ${iconStyle}`}>
+                          <Icon className="h-6 w-6" />
+                        </div>
+                        <h3 className="text-xl font-bold text-foreground">{plan.name}</h3>
+                        <p className="mt-2 text-3xl font-bold text-foreground">
+                          {plan.price === 0 ? 'Miễn phí' : formatCurrency(plan.price)}
+                          {plan.price > 0 && <span className="text-sm font-normal text-muted-foreground">/tháng</span>}
+                        </p>
                       </div>
-                      <h3 className="text-xl font-bold text-foreground">{plan.name}</h3>
-                      <p className="mt-2 text-3xl font-bold text-foreground">
-                        {plan.price === 0 ? 'Miễn phí' : formatCurrency(plan.price)}
-                        {plan.price > 0 && <span className="text-sm font-normal text-muted-foreground">/tháng</span>}
-                      </p>
-                    </div>
-                    <div className="mb-6 space-y-2">
-                      {plan.features.map((feature) => (
-                        <div key={feature} className="flex items-center gap-2 text-sm">
-                          <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-primary" />
-                          <span className="text-foreground/80">{feature}</span>
-                        </div>
-                      ))}
-                      {plan.limits.map((limit) => (
-                        <div key={limit} className="flex items-center gap-2 text-sm">
-                          <X className="h-4 w-4 flex-shrink-0 text-muted-foreground/60" />
-                          <span className="text-muted-foreground/80">{limit}</span>
-                        </div>
-                      ))}
-                    </div>
-                    <Button
-                      className={`w-full ${current ? 'bg-warning/100 text-white hover:bg-amber-600' : ''}`}
-                      variant={current ? 'default' : 'outline'}
-                      onClick={() => openCheckout(plan)}
-                      disabled={checkoutPlanId !== null || current}
-                    >
-                      {isLoading ? (
-                        <span className="flex items-center gap-2">
-                          <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                          Đang tạo thanh toán...
-                        </span>
-                      ) : current ? 'Gói hiện tại' : plan.price < 0 ? 'Liên hệ tư vấn' : plan.price === 0 ? 'Chọn miễn phí' : 'Chọn gói'}
-                    </Button>
-                  </Card>
-                );
-              })}
-            </div>
+                      <div className="mb-6 flex-1 space-y-2">
+                        {plan.features.map((feature) => (
+                          <div key={feature} className="flex items-start gap-2 text-sm">
+                            <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
+                            <span className="text-foreground/80">{feature}</span>
+                          </div>
+                        ))}
+                        {plan.limits.map((limit) => (
+                          <div key={limit} className="flex items-start gap-2 text-sm">
+                            <X className="mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground/60" />
+                            <span className="text-muted-foreground/80">{limit}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <Button
+                        className={`mt-auto w-full ${current ? 'bg-primary text-primary-foreground hover:bg-primary/90' : ''}`}
+                        variant={current ? 'default' : 'outline'}
+                        onClick={() => openCheckout(plan)}
+                        disabled={checkoutPlanId !== null || current}
+                      >
+                        {isLoading ? (
+                          <span className="flex items-center gap-2">
+                            <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                            Đang tạo thanh toán...
+                          </span>
+                        ) : current ? 'Gói hiện tại' : plan.price < 0 ? 'Liên hệ tư vấn' : plan.price === 0 ? 'Chọn miễn phí' : 'Chọn gói'}
+                      </Button>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="invoices">
             <Card className="p-5">
               <h3 className="mb-4 font-semibold text-foreground">Lịch sử hóa đơn</h3>
               <div className="space-y-3">
+                {invoicePagination.pageItems.length === 0 && (
+                  <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+                    Chưa có hóa đơn.
+                  </div>
+                )}
                 {invoicePagination.pageItems.map((invoice) => {
                   const statusMeta = getInvoiceStatusMeta(invoice.status);
 
@@ -594,17 +650,19 @@ export function CustomerBilling() {
                   );
                 })}
               </div>
-              <DataPagination
-                page={invoicePagination.page}
-                pageSize={invoicePagination.pageSize}
-                totalItems={invoicePagination.totalItems}
-                totalPages={invoicePagination.totalPages}
-                startIndex={invoicePagination.startIndex}
-                endIndex={invoicePagination.endIndex}
-                onPageChange={invoicePagination.setPage}
-                onPageSizeChange={invoicePagination.setPageSize}
-                itemLabel="hóa đơn"
-              />
+              {invoicePagination.totalItems > 0 && (
+                <DataPagination
+                  page={invoicePagination.page}
+                  pageSize={invoicePagination.pageSize}
+                  totalItems={invoicePagination.totalItems}
+                  totalPages={invoicePagination.totalPages}
+                  startIndex={invoicePagination.startIndex}
+                  endIndex={invoicePagination.endIndex}
+                  onPageChange={invoicePagination.setPage}
+                  onPageSizeChange={invoicePagination.setPageSize}
+                  itemLabel="hóa đơn"
+                />
+              )}
             </Card>
           </TabsContent>
         </Tabs>
@@ -617,7 +675,7 @@ export function CustomerBilling() {
             }
           }}
         >
-          <DialogContent className="sm:max-w-2xl">
+          <DialogContent className="max-h-[calc(100vh-1.5rem)] overflow-y-auto overflow-x-hidden p-4 sm:max-w-3xl sm:p-6">
             <DialogHeader>
               <DialogTitle>Thanh toán gói {checkoutPlan?.name || ''}</DialogTitle>
             </DialogHeader>
@@ -662,7 +720,7 @@ export function CustomerBilling() {
               </div>
             )}
 
-            <DialogFooter>
+            <DialogFooter className="gap-2">
               <Button variant="outline" onClick={closeCheckout} disabled={checkoutPlanId !== null}>
                 Đóng
               </Button>
@@ -721,22 +779,33 @@ function VietQrPaymentPanel({
   ];
 
   return (
-    <div className="rounded-lg border border-sky-200 bg-sky-50/60 p-4">
-      <div className="grid gap-4 md:grid-cols-[220px_minmax(0,1fr)]">
-        <div className="rounded-lg border border-border bg-white p-3">
-          <img
-            src={payment.qrImageUrl}
-            alt="Mã VietQR thanh toán"
-            className="h-52 w-full object-contain"
-          />
+    <div className="max-w-full overflow-hidden rounded-lg border border-sky-200 bg-sky-50/70 p-3 sm:p-4">
+      <div className="mb-3 flex min-w-0 flex-wrap items-center justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-sky-950">Quét mã VietQR</p>
+          <p className="text-xs leading-relaxed text-sky-800">Kiểm tra đúng số tiền và nội dung trước khi chuyển khoản.</p>
+        </div>
+        <Badge className="shrink-0 border-0 bg-sky-100 text-sky-700">Chờ xác nhận</Badge>
+      </div>
+
+      <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(180px,240px)_minmax(0,1fr)]">
+        <div className="mx-auto w-full max-w-60 rounded-lg border border-border bg-white p-3 shadow-sm">
+          <div className="aspect-square w-full overflow-hidden rounded-md bg-white">
+            <img
+              src={payment.qrImageUrl}
+              alt="Mã VietQR thanh toán"
+              className="h-full w-full object-contain"
+            />
+          </div>
+          <p className="mt-2 text-center text-xs text-muted-foreground">Mở app ngân hàng để quét mã</p>
         </div>
 
-        <div className="space-y-2">
+        <div className="min-w-0 space-y-2">
           {rows.map((row) => row.value ? (
-            <div key={row.label} className="flex items-center justify-between gap-3 rounded-lg border border-white/70 bg-white/80 px-3 py-2">
+            <div key={row.label} className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-white/70 bg-white/90 px-3 py-2 shadow-sm">
               <div className="min-w-0">
                 <p className="text-xs font-medium text-muted-foreground">{row.label}</p>
-                <p className={`break-words text-sm ${row.emphasis ? 'font-semibold text-foreground' : 'text-foreground/80'}`}>
+                <p className={`max-w-full break-words text-sm [overflow-wrap:anywhere] ${row.emphasis ? 'font-semibold text-foreground' : 'text-foreground/80'}`}>
                   {row.value}
                 </p>
               </div>
@@ -755,7 +824,7 @@ function VietQrPaymentPanel({
         </div>
       </div>
 
-      <p className="mt-3 text-xs leading-relaxed text-sky-800">
+      <p className="mt-3 max-w-full text-xs leading-relaxed text-sky-800">
         Sau khi chuyển khoản, hóa đơn sẽ ở trạng thái chờ xác nhận. Vui lòng giữ đúng số tiền và nội dung chuyển khoản để đối soát nhanh hơn.
       </p>
     </div>

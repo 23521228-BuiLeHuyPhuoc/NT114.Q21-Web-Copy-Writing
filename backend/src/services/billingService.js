@@ -23,6 +23,8 @@ const METHOD_LABELS = {
   manual: 'Ghi nhận thủ công',
 };
 
+const CUSTOMER_PLAN_SLUGS = ['free', 'pro', 'business'];
+
 function toId(value) {
   if (!value) return null;
   if (value._id) return value._id.toString();
@@ -235,6 +237,7 @@ function serializePlan(plan, subscriberCount = 0) {
 
 function serializeSubscription(subscription, plan) {
   if (!subscription) return null;
+  const currentPeriodEnd = subscription.currentPeriodEnd || null;
   return {
     id: subscription._id.toString(),
     _id: subscription._id.toString(),
@@ -244,8 +247,12 @@ function serializeSubscription(subscription, plan) {
     status: subscription.status,
     billingCycle: subscription.billingCycle,
     currentPeriodStart: subscription.currentPeriodStart,
-    currentPeriodEnd: subscription.currentPeriodEnd,
-    renewDate: formatDate(subscription.currentPeriodEnd),
+    currentPeriodEnd,
+    expiresAt: currentPeriodEnd,
+    expiresAtLabel: formatDate(currentPeriodEnd),
+    renewDate: formatDate(currentPeriodEnd),
+    hasExpirationDate: Boolean(currentPeriodEnd),
+    isExpired: currentPeriodEnd ? new Date(currentPeriodEnd).getTime() < Date.now() : false,
     cancelAtPeriodEnd: Boolean(subscription.cancelAtPeriodEnd),
     provider: subscription.provider,
   };
@@ -302,6 +309,7 @@ async function findPlanOrThrow(id, includeDeleted = false) {
 async function listPlans({ activeOnly = true, deleted = false } = {}) {
   const filter = deleted ? { isDeleted: true } : { isDeleted: { $ne: true } };
   if (activeOnly) filter.isActive = true;
+  filter.slug = { $in: CUSTOMER_PLAN_SLUGS };
 
   const [plans, subscriberCountMap] = await Promise.all([
     Plan.find(filter).sort({ sortOrder: 1, priceMonthly: 1, name: 1 }),
@@ -373,8 +381,11 @@ async function getCurrentSubscription(userId) {
 }
 
 async function getFallbackPlan() {
-  return Plan.findOne({ slug: 'free', isDeleted: { $ne: true } })
-    || Plan.findOne({ isDeleted: { $ne: true } }).sort({ sortOrder: 1, priceMonthly: 1 });
+  const freePlan = await Plan.findOne({ slug: 'free', isDeleted: { $ne: true } });
+  if (freePlan) return freePlan;
+
+  return Plan.findOne({ slug: { $in: CUSTOMER_PLAN_SLUGS }, isDeleted: { $ne: true } })
+    .sort({ sortOrder: 1, priceMonthly: 1 });
 }
 
 async function getEffectivePlanForUser(userId) {
@@ -539,7 +550,7 @@ async function getMyBilling(userId) {
 
   const plan = subscription?.planId || await getFallbackPlan();
   const serializedPlan = plan ? serializePlan(plan) : null;
-  const renewDate = subscription?.currentPeriodEnd || addMonths(new Date(), 1);
+  const expiresAt = subscription?.currentPeriodEnd || null;
   const limits = serializedPlan?.limits || {};
 
   return {
@@ -547,7 +558,11 @@ async function getMyBilling(userId) {
       name: serializedPlan?.name || 'Free',
       slug: serializedPlan?.slug || 'free',
       price: serializedPlan?.monthlyPrice ?? 0,
-      renewDate: formatDate(renewDate),
+      expiresAt,
+      expiresAtLabel: formatDate(expiresAt),
+      renewDate: formatDate(expiresAt),
+      hasExpirationDate: Boolean(expiresAt),
+      isExpired: expiresAt ? new Date(expiresAt).getTime() < Date.now() : false,
       copyUsed: usage.monthly.copyUsed,
       copyLimit: limits.copyMonthly ?? 0,
       apiCalls: usage.monthly.quotaUnits,
@@ -610,7 +625,17 @@ function getPaymentProvider(method) {
   if (method === 'vnpay') return 'vnpay';
   if (method === 'zalo') return 'zalopay';
   if (method === 'vietqr') return 'vietqr';
-  return 'mock';
+  return 'manual';
+}
+
+function getVietQrCheckoutAmount(defaultAmount) {
+  const rawValue = process.env.VIETQR_TEST_AMOUNT;
+  if (!rawValue) return defaultAmount;
+
+  const value = Number(String(rawValue).replace(/[,_\s]/g, ''));
+  if (!Number.isFinite(value) || value <= 0) return defaultAmount;
+
+  return Math.round(value);
 }
 
 async function createPaymentRecord({
@@ -724,6 +749,44 @@ async function markPaymentFailed(payment, reason, providerPayload = {}) {
   return payment;
 }
 
+async function confirmPaymentSuccess(id, adminId = null) {
+  const lookup = mongoose.Types.ObjectId.isValid(id)
+    ? { _id: id }
+    : { invoiceNo: String(id || '').trim() };
+  const payment = await Payment.findOne(lookup);
+
+  if (!payment) {
+    throw createError(404, 'Payment not found');
+  }
+
+  if (payment.status === 'success') {
+    await payment.populate(['userId', 'planId', 'subscriptionId']);
+    return serializePayment(payment);
+  }
+
+  if (payment.status !== 'pending') {
+    throw createError(409, 'Chỉ có thể xác nhận giao dịch đang chờ xử lý');
+  }
+
+  if (payment.method !== 'vietqr' && payment.provider !== 'vietqr') {
+    throw createError(400, 'Chỉ hỗ trợ xác nhận thủ công giao dịch VietQR');
+  }
+
+  const updatedPayment = await activatePayment(payment, {
+    provider: 'vietqr',
+    providerTransactionId: `admin-confirm-${Date.now()}`,
+    providerPayload: {
+      adminConfirmation: {
+        confirmedBy: adminId ? String(adminId) : null,
+        confirmedAt: new Date().toISOString(),
+        note: 'Manual payment confirmation from admin dashboard',
+      },
+    },
+  });
+
+  return serializePayment(updatedPayment);
+}
+
 function buildCheckoutResponse(payment, extras = {}) {
   return {
     payment: serializePayment(payment),
@@ -737,13 +800,18 @@ function buildCheckoutResponse(payment, extras = {}) {
   };
 }
 
-async function createMockCheckout(userId, payload, req = {}) {
+async function createCheckout(userId, payload, req = {}) {
   const user = await ensureUserExists(userId);
   const plan = await findPlanOrThrow(payload.planId || payload.planSlug);
-  const billingCycle = payload.billingCycle === 'yearly' ? 'yearly' : 'monthly';
-  const amount = billingCycle === 'yearly' ? plan.priceYearly : plan.priceMonthly;
+  if (!CUSTOMER_PLAN_SLUGS.includes(plan.slug)) {
+    throw createError(404, 'Plan not found');
+  }
 
-  if (amount < 0) {
+  const billingCycle = payload.billingCycle === 'yearly' ? 'yearly' : 'monthly';
+  const planAmount = billingCycle === 'yearly' ? plan.priceYearly : plan.priceMonthly;
+  let amount = planAmount;
+
+  if (planAmount < 0) {
     throw createError(400, 'Gói này cần liên hệ tư vấn để kích hoạt');
   }
 
@@ -752,6 +820,10 @@ async function createMockCheckout(userId, payload, req = {}) {
   const isGateway = method === 'vnpay' || method === 'zalo';
   const now = new Date();
   const periodEnd = addMonths(now, getBillingCycleMonths(billingCycle));
+
+  if (method === 'vietqr' && planAmount > 0) {
+    amount = getVietQrCheckoutAmount(planAmount);
+  }
 
   if (amount > 0 && method === 'zalo') {
     const minAmount = Number(process.env.ZALOPAY_MIN_AMOUNT || 1000);
@@ -798,6 +870,10 @@ async function createMockCheckout(userId, payload, req = {}) {
         gateway: provider,
         gatewayMethod: method,
         userEmail: user.email,
+        ...(amount !== planAmount ? {
+          originalPlanAmount: planAmount,
+          vietqrTestAmount: amount,
+        } : {}),
       },
     });
 
@@ -910,25 +986,19 @@ async function createMockCheckout(userId, payload, req = {}) {
       plan,
       amount,
       method,
-      provider: 'mock',
+      provider: 'manual',
       billingCycle,
       status: 'pending',
       metadata: {
-        note: `Mock immediate payment for ${method}`,
+        note: `${METHOD_LABELS[method] || method} gateway is not configured; awaiting manual confirmation`,
       },
     });
 
-    await activatePayment(payment, {
-      provider: 'mock',
-      providerTransactionId: '',
-      providerPayload: {
-        note: `Mock immediate payment for ${method}`,
-      },
-    });
+    await payment.populate(['userId', 'planId']);
 
     return buildCheckoutResponse(payment, {
-      gateway: 'mock',
-      message: `Thanh toán demo thành công qua ${METHOD_LABELS[method] || method}`,
+      gateway: 'manual',
+      message: 'Da tao hoa don, cho xac nhan thanh toan thu cong',
     });
   }
 
@@ -1268,14 +1338,16 @@ module.exports = {
   ensureGenerateQuotaAvailable,
   calculateGenerateQuotaUnits,
   estimateGenerateQuotaUnits,
+  getEffectivePlanForUser,
   getGenerateUsageSummary,
   getMyBilling,
-  createMockCheckout,
+  createCheckout,
   handleVnpayReturn,
   handleVnpayIpn,
   handleZalopayCallback,
   handleZalopayReturn,
   buildPaymentRedirectUrl,
+  confirmPaymentSuccess,
   listPayments,
   getRevenueData,
   getPaymentStats,

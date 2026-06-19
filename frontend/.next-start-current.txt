@@ -1,0 +1,4 @@
+PORT=3000
+PID=22608
+OUT=E:\baitap\NT114\NT114-Git\NT114.Q21-Web-Copy-Writing\frontend\.next-start-3000.out.log
+ERR=E:\baitap\NT114\NT114-Git\NT114.Q21-Web-Copy-Writing\frontend\.next-start-3000.err.log

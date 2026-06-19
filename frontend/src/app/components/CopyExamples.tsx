@@ -453,7 +453,7 @@ Bạn sẽ làm được:
 - Hoàn thiện 3 dự án portfolio có feedback từ mentor.
 
 Bằng chứng:
-Học viên được chấm bài theo rubric, có buổi sửa CV và mock interview cuối khóa.
+Học viên được chấm bài theo rubric, có buổi sửa CV và phỏng vấn thử cuối khóa.
 
 CTA:
 Nhận lộ trình học và bài kiểm tra đầu vào`

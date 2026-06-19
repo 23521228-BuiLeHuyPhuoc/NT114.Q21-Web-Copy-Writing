@@ -20,6 +20,7 @@ const adminSystemSettingsRoutes = require('./routes/admin/systemSettingsRoutes')
 const adminTemplateRoutes = require('./routes/admin/templateRoutes');
 const adminUserRoutes = require('./routes/admin/userRoutes');
 const maintenanceMode = require('./middlewares/system/maintenanceMode');
+const apiKeyRoutes = require('./routes/user/apiKeyRoutes');
 const billingRoutes = require('./routes/user/billingRoutes');
 const contentRoutes = require('./routes/user/contentRoutes');
 const fineTuneRoutes = require('./routes/user/fineTuneRoutes');
@@ -81,6 +82,7 @@ app.use('/api/admin/templates', adminTemplateRoutes);
 app.use('/api/public-site', publicSiteRoutes);
 app.use(maintenanceMode);
 app.use('/api/auth/user', userAuthRoutes);
+app.use('/api/api-keys', apiKeyRoutes);
 app.use('/api/billing', billingRoutes);
 app.use('/api/contents', contentRoutes);
 app.use('/api/fine-tune', fineTuneRoutes);
