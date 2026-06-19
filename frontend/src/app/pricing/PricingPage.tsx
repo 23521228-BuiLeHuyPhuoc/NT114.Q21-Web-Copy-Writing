@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, Link } from '@/lib/next-router-compat';
 import { PublicNavbar } from '@/app/components/public/PublicNavbar';
 import { PublicFooter } from '@/app/components/public/PublicFooter';
@@ -7,6 +7,7 @@ import {
   Sparkles, CheckCircle2, X, Crown, Zap, Building2,
   Star, ChevronDown, ChevronUp, ArrowRight, HelpCircle,
 } from 'lucide-react';
+import { billingService, type BillingPlan } from '@/services/billingService';
 
 /* ─── Data ─────────────────────────────────────────────────── */
 
@@ -70,6 +71,49 @@ const PLANS = [
   },
 ];
 
+type PricingPlan = (typeof PLANS)[number];
+
+function buildLimitFeatures(plan: BillingPlan) {
+  const limits = plan.limits;
+  const formatLimit = (value: number, suffix: string) => {
+    if (value === -1) return `Khong gioi han ${suffix}`;
+    if (value === 0) return '';
+    return `${value.toLocaleString('vi-VN')} ${suffix}`;
+  };
+
+  return [
+    formatLimit(limits.copyMonthly, 'copy/thang'),
+    formatLimit(limits.apiCallsMonthly, 'API calls/thang'),
+    formatLimit(limits.fineTuneModels, 'fine-tune models'),
+    formatLimit(limits.seats, 'seats'),
+    formatLimit(limits.historyDays, 'ngay lich su'),
+  ].filter(Boolean);
+}
+
+function toPricingPlan(plan: BillingPlan, index: number): PricingPlan {
+  const fallback = PLANS.find(item => item.id === plan.slug) || PLANS[Math.min(index, PLANS.length - 1)];
+  const positiveFeatures = plan.features.length > 0 ? plan.features : buildLimitFeatures(plan);
+  const negativeFeatures = plan.excludedFeatures.length > 0
+    ? plan.excludedFeatures
+    : fallback.features.filter(feature => !feature.ok).map(feature => feature.text);
+
+  return {
+    ...fallback,
+    id: plan.slug || plan.id,
+    name: plan.name || fallback.name,
+    monthlyPrice: plan.monthlyPrice,
+    yearlyPrice: plan.yearlyPrice,
+    desc: plan.description || fallback.desc,
+    highlight: plan.isPopular,
+    badge: plan.isPopular ? (fallback.badge || 'Pho bien') : '',
+    features: [
+      ...positiveFeatures.map(text => ({ text, ok: true })),
+      ...negativeFeatures.map(text => ({ text, ok: false })),
+    ],
+    cta: plan.monthlyPrice === -1 ? 'Lien he tu van' : plan.monthlyPrice === 0 ? 'Bat dau mien phi' : `Bat dau dung ${plan.name}`,
+  };
+}
+
 const COMPARE_ROWS = [
   { label: 'Copy/tháng',             free: '30',              pro: '500',                business: 'Không giới hạn' },
   { label: 'Ngành nghề',             free: '5',               pro: '15+',                business: '15+ & custom' },
@@ -105,8 +149,29 @@ export function PricingPage() {
   const navigate = useNavigate();
   const [yearly, setYearly] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [plans, setPlans] = useState<PricingPlan[]>(PLANS);
 
-  const formatPrice = (p: number) => p === 0 ? 'Miễn phí' : `${(p / 1000).toFixed(0)}K₫`;
+  useEffect(() => {
+    let active = true;
+    billingService.listPlans()
+      .then((items) => {
+        if (active && items.length > 0) {
+          setPlans(items.map(toPricingPlan));
+        }
+      })
+      .catch(() => undefined);
+
+    return () => { active = false; };
+  }, []);
+
+  const compareRows = useMemo(() => {
+    const labels = Array.from(new Set(plans.flatMap(plan => plan.features.filter(feature => feature.ok).map(feature => feature.text))));
+    if (labels.length === 0) return COMPARE_ROWS.map(row => ({ label: row.label, values: [row.free, row.pro, row.business] }));
+    return labels.slice(0, 12).map(label => ({
+      label,
+      values: plans.map(plan => plan.features.some(feature => feature.ok && feature.text === label) || null),
+    }));
+  }, [plans]);
 
   return (
     <div className="min-h-screen bg-card overflow-x-hidden">
@@ -160,7 +225,7 @@ export function PricingPage() {
       <section className="pb-24 -mt-6">
         <div className="max-w-6xl mx-auto px-5 lg:px-8">
           <div className="grid md:grid-cols-3 gap-6 items-start">
-            {PLANS.map(plan => {
+            {plans.map(plan => {
               const Icon = plan.icon;
               const price = yearly ? plan.yearlyPrice : plan.monthlyPrice;
               return (
@@ -191,7 +256,11 @@ export function PricingPage() {
 
                   {/* Price */}
                   <div className="mb-6 pb-6 border-b border-border">
-                    {price === 0 ? (
+                    {price === -1 ? (
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-4xl font-bold text-foreground tracking-tight">Lien he</span>
+                      </div>
+                    ) : price === 0 ? (
                       <div className="flex items-baseline gap-1">
                         <span className="text-4xl font-bold text-foreground tracking-tight">Miễn phí</span>
                       </div>
@@ -201,7 +270,7 @@ export function PricingPage() {
                           <span className="text-4xl font-bold text-foreground tracking-tight">{(price / 1000).toFixed(0)}K</span>
                           <span className="text-muted-foreground/80 text-sm">₫ / tháng</span>
                         </div>
-                        {yearly && (
+                        {yearly && price > 0 && (
                           <p className="text-sm text-primary font-medium mt-1">
                             Thanh toán {((price * 12) / 1000).toFixed(0)}K₫ / năm
                           </p>
@@ -217,7 +286,7 @@ export function PricingPage() {
 
                   {/* CTA */}
                   <button
-                    onClick={() => navigate(plan.id === 'business' ? '/contact' : '/register')}
+                    onClick={() => navigate(plan.monthlyPrice === -1 || plan.id === 'business' ? '/contact' : '/register')}
                     className={`w-full py-3.5 rounded-2xl font-bold text-sm mb-7 transition-all ${
                       plan.highlight
                         ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white shadow-lg shadow-primary/20'
@@ -289,7 +358,7 @@ export function PricingPage() {
               <thead>
                 <tr className="bg-background border-b border-border">
                   <th className="text-left px-6 py-4 text-sm font-semibold text-foreground/70 w-1/2">Tính năng</th>
-                  {PLANS.map(p => (
+                  {plans.map(p => (
                     <th key={p.id} className={`px-4 py-4 text-sm font-bold text-center ${p.highlight ? 'text-primary bg-primary/5' : 'text-foreground/80'}`}>
                       {p.name}
                     </th>
@@ -297,16 +366,16 @@ export function PricingPage() {
                 </tr>
               </thead>
               <tbody>
-                {COMPARE_ROWS.map((row, i) => (
+                {compareRows.map((row, i) => (
                   <tr key={i} className={`border-b border-border ${i % 2 === 0 ? 'bg-card' : 'bg-background/50'}`}>
                     <td className="px-6 py-4 text-sm text-foreground/80 font-medium">{row.label}</td>
-                    {([row.free, row.pro, row.business] as (string | boolean | null)[]).map((val, j) => (
-                      <td key={j} className={`px-4 py-4 text-center text-sm ${PLANS[j].highlight ? 'bg-primary/5' : ''}`}>
+                    {row.values.map((val, j) => (
+                      <td key={j} className={`px-4 py-4 text-center text-sm ${plans[j]?.highlight ? 'bg-primary/5' : ''}`}>
                         {val === null
                           ? <X className="w-4 h-4 text-muted-foreground/60 mx-auto" />
                           : val === true
                           ? <CheckCircle2 className="w-4 h-4 text-primary mx-auto" />
-                          : <span className={`font-medium ${PLANS[j].highlight ? 'text-primary' : 'text-foreground/80'}`}>{val as string}</span>
+                          : <span className={`font-medium ${plans[j]?.highlight ? 'text-primary' : 'text-foreground/80'}`}>{val as string}</span>
                         }
                       </td>
                     ))}

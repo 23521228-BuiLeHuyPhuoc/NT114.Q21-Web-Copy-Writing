@@ -5,6 +5,8 @@ import { PublicFooter } from '@/app/components/public/PublicFooter';
 import { AIDemoSection } from '@/app/components/public/AIDemoSection';
 import { HeroGeneratorDemo } from '@/app/components/public/HeroGeneratorDemo';
 import { Badge } from '@/app/components/ui/badge';
+import { getPublicText } from '@/lib/publicSiteDefaults';
+import { publicSiteService, type PublicPageContent } from '@/services/publicSiteService';
 import {
   Sparkles, Wand2, FileText, ShoppingBag, Home,
   Cpu, Utensils, Stethoscope, GraduationCap, Star, CheckCircle2,
@@ -85,6 +87,7 @@ const STATS = [
 export function LandingPage() {
   const navigate = useNavigate();
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [homeContent, setHomeContent] = useState<PublicPageContent>({});
 
   useEffect(() => {
     const updateScrollProgress = () => {
@@ -106,6 +109,22 @@ export function LandingPage() {
     };
   }, []);
 
+  useEffect(() => {
+    let active = true;
+    publicSiteService.getPage('home')
+      .then((page) => {
+        if (active && page?.content) setHomeContent(page.content);
+      })
+      .catch(() => undefined);
+    return () => { active = false; };
+  }, []);
+
+  const homeHeroBadge = getPublicText(homeContent, 'heroBadge', 'AI Copywriting cho doanh nghiệp Việt');
+  const homeHeroTitle = getPublicText(homeContent, 'heroTitle', 'Tạo copy marketing rõ ý, đúng giọng thương hiệu');
+  const homeHeroDescription = getPublicText(homeContent, 'heroDescription', 'CopyPro giúp đội marketing tạo headline, email, landing page và social post trong vài giây, có thể tinh chỉnh theo ngành và thương hiệu.');
+  const homePrimaryCta = getPublicText(homeContent, 'primaryCta', 'Dùng thử miễn phí');
+  const homeSecondaryCta = getPublicText(homeContent, 'secondaryCta', 'Xem cách hoạt động');
+
   return (
     <div className="min-h-screen overflow-x-hidden bg-card">
       <div className="pointer-events-none fixed left-0 right-0 top-0 z-[70] h-1 bg-transparent" aria-hidden="true">
@@ -126,13 +145,13 @@ export function LandingPage() {
           <div className="grid items-center gap-10 lg:grid-cols-12 lg:gap-12">
             <div className="text-center lg:col-span-5 lg:text-left">
               <Badge className="mb-5 border border-green-700/40 bg-green-950/45 px-4 py-1.5 text-sm text-green-200">
-                AI Copywriting cho doanh nghiệp Việt
+                {homeHeroBadge}
               </Badge>
               <h1 className="mb-6 text-white leading-[1.08]">
-                Tạo copy marketing rõ ý, đúng giọng thương hiệu
+                {homeHeroTitle}
               </h1>
               <p className="mx-auto mb-8 max-w-xl text-base leading-relaxed text-muted-foreground/60 lg:mx-0 lg:text-lg">
-                CopyPro giúp đội marketing tạo headline, email, landing page và social post trong vài giây, có thể tinh chỉnh theo ngành và thương hiệu.
+                {homeHeroDescription}
               </p>
 
               <div className="mb-7 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
@@ -141,7 +160,7 @@ export function LandingPage() {
                   className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-green-500 to-emerald-500 px-7 py-3.5 text-sm font-bold text-white shadow-lg shadow-primary/25 transition-all hover:from-green-400 hover:to-emerald-400"
                 >
                   <Sparkles className="h-4 w-4" />
-                  Dùng thử miễn phí
+                  {homePrimaryCta}
                   <ArrowRight className="h-4 w-4" />
                 </button>
                 <button
@@ -149,7 +168,7 @@ export function LandingPage() {
                   className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/25 bg-card/10 px-7 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-card/15"
                 >
                   <Play className="h-4 w-4" />
-                  Xem cách hoạt động
+                  {homeSecondaryCta}
                 </button>
               </div>
 

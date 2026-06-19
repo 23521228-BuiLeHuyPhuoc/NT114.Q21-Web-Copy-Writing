@@ -52,6 +52,8 @@ export interface UpsertAdminPlanPayload {
   plagiarismChecks?: number;
   seats?: number;
   historyDays?: number;
+  features?: string[];
+  excludedFeatures?: string[];
   allowedModels?: string[];
   isPopular?: boolean;
   popular?: boolean;

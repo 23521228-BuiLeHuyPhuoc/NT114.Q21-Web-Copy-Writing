@@ -1,9 +1,11 @@
+import { useEffect, useState } from 'react';
 import { Link, Navigate, useParams } from '@/lib/next-router-compat';
 import { PublicNavbar } from '@/app/components/public/PublicNavbar';
 import { PublicFooter } from '@/app/components/public/PublicFooter';
 import { Badge } from '@/app/components/ui/badge';
 import { ImageWithFallback } from '@/app/components/figma/ImageWithFallback';
 import { BLOG_POSTS } from '@/mocks/blog';
+import { publicSiteService, type PublicBlogPost } from '@/services/publicSiteService';
 import { ArrowLeft, ArrowRight, Calendar, Clock, User } from 'lucide-react';
 
 const catColor: Record<string, string> = {
@@ -16,13 +18,36 @@ const catColor: Record<string, string> = {
 
 export function BlogDetailPage() {
   const { slug } = useParams();
-  const post = BLOG_POSTS.find(item => item.slug === slug);
+  const [posts, setPosts] = useState<PublicBlogPost[]>(BLOG_POSTS.map(item => ({ ...item, published: true })));
+  const [loaded, setLoaded] = useState(false);
+  const post = posts.find(item => item.slug === slug);
+
+  useEffect(() => {
+    let active = true;
+    publicSiteService.getBlogPage()
+      .then((page) => {
+        const apiPosts = page?.content?.posts;
+        if (active && Array.isArray(apiPosts) && apiPosts.length > 0) {
+          setPosts(apiPosts.filter(item => item.published !== false));
+        }
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (active) setLoaded(true);
+      });
+
+    return () => { active = false; };
+  }, []);
+
+  if (!post && !loaded) {
+    return <div className="min-h-screen bg-card" />;
+  }
 
   if (!post) return <Navigate to="/blog" replace />;
 
-  const relatedPosts = BLOG_POSTS
+  const relatedPosts = posts
     .filter(item => item.slug !== post.slug && item.cat === post.cat)
-    .concat(BLOG_POSTS.filter(item => item.slug !== post.slug && item.cat !== post.cat))
+    .concat(posts.filter(item => item.slug !== post.slug && item.cat !== post.cat))
     .slice(0, 3);
 
   return (

@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { PublicNavbar } from '@/app/components/public/PublicNavbar';
 import { PublicFooter } from '@/app/components/public/PublicFooter';
 import { Badge } from '@/app/components/ui/badge';
@@ -8,6 +9,8 @@ import {
   TrendingUp, Globe, Shield, ArrowRight,
   CheckCircle2, Linkedin, Twitter,
 } from 'lucide-react';
+import { getPublicText } from '@/lib/publicSiteDefaults';
+import { publicSiteService, type PublicPageContent } from '@/services/publicSiteService';
 
 const TEAM = [
   { name: 'Nguyễn Minh Trí', role: 'CEO & Co-founder', desc: '10+ năm kinh nghiệm AI/ML tại Google, VNG', avatar: 'NT', bg: 'from-green-600 to-emerald-700' },
@@ -53,6 +56,24 @@ const STATS = [
 ];
 
 export function AboutPage() {
+  const [aboutContent, setAboutContent] = useState<PublicPageContent>({});
+
+  useEffect(() => {
+    let active = true;
+    publicSiteService.getPage('about')
+      .then((page) => {
+        if (active && page?.content) setAboutContent(page.content);
+      })
+      .catch(() => undefined);
+    return () => { active = false; };
+  }, []);
+
+  const aboutHeroBadge = getPublicText(aboutContent, 'heroBadge', '🌱 Câu chuyện của chúng tôi');
+  const aboutHeroTitle = getPublicText(aboutContent, 'heroTitle', 'Xây dựng tương lai Copywriting bằng AI');
+  const aboutHeroDescription = getPublicText(aboutContent, 'heroDescription', 'CopyPro ra đời từ một câu hỏi đơn giản: "Tại sao marketer Việt Nam phải mất hàng giờ để viết một đoạn copy, trong khi AI có thể làm trong vài giây?" Chúng tôi đã xây dựng câu trả lời đó.');
+  const missionTitle = getPublicText(aboutContent, 'missionTitle', 'Dân chủ hóa copywriting chuyên nghiệp cho mọi doanh nghiệp Việt Nam');
+  const missionDescription = getPublicText(aboutContent, 'missionDescription', 'Cung cấp công nghệ AI copywriting tiên tiến nhất, được tối ưu cho văn hóa và ngôn ngữ Việt Nam, với chi phí phù hợp cho mọi quy mô doanh nghiệp.');
+
   return (
     <div className="min-h-screen bg-card">
       <PublicNavbar />
@@ -66,19 +87,15 @@ export function AboutPage() {
         <div className="max-w-7xl mx-auto px-5 lg:px-8 relative">
           <div className="max-w-3xl mx-auto text-center">
             <Badge className="mb-6 bg-green-950/50 text-green-200 border border-green-700/40 px-4 py-1.5 backdrop-blur">
-              🌱 Câu chuyện của chúng tôi
+              {aboutHeroBadge}
             </Badge>
             <h1
               className="text-white mb-6"
             >
-              Xây dựng tương lai
-              <br />
-              <span className="bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
-                Copywriting bằng AI
-              </span>
+              {aboutHeroTitle}
             </h1>
             <p className="text-muted-foreground/80 text-lg leading-relaxed">
-              CopyPro ra đời từ một câu hỏi đơn giản: <em>"Tại sao marketer Việt Nam phải mất hàng giờ để viết một đoạn copy, trong khi AI có thể làm trong vài giây?"</em> Chúng tôi đã xây dựng câu trả lời đó.
+              {aboutHeroDescription}
             </p>
           </div>
         </div>
@@ -91,7 +108,7 @@ export function AboutPage() {
             <div>
               <Badge className="mb-4 bg-primary/10 text-primary border-0">Tầm nhìn & Sứ mệnh</Badge>
               <h2 className="text-foreground mb-6">
-                Dân chủ hóa copywriting chuyên nghiệp cho mọi doanh nghiệp Việt Nam
+                {missionTitle}
               </h2>
               <div className="space-y-5">
                 <div className="flex gap-4">
@@ -101,7 +118,7 @@ export function AboutPage() {
                   <div>
                     <h4 className="text-foreground mb-1">Sứ mệnh</h4>
                     <p className="text-foreground/70 text-sm leading-relaxed">
-                      Cung cấp công nghệ AI copywriting tiên tiến nhất, được tối ưu cho văn hóa và ngôn ngữ Việt Nam, với chi phí phù hợp cho mọi quy mô doanh nghiệp.
+                      {missionDescription}
                     </p>
                   </div>
                 </div>

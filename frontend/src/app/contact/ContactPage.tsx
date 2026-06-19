@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { PublicNavbar } from '@/app/components/public/PublicNavbar';
 import { PublicFooter } from '@/app/components/public/PublicFooter';
 import { Badge } from '@/app/components/ui/badge';
@@ -7,6 +7,8 @@ import { Label } from '@/app/components/ui/label';
 import { Textarea } from '@/app/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select';
 import toast from 'react-hot-toast';
+import { getPublicText } from '@/lib/publicSiteDefaults';
+import { publicSiteService, type PublicPageContent } from '@/services/publicSiteService';
 import {
   Mail, Phone, MapPin, Clock, MessageSquare,
   Send, Headphones, BookOpen, Zap, CheckCircle2,
@@ -31,6 +33,24 @@ export function ContactPage() {
   const [form, setForm] = useState({ name: '', email: '', company: '', topic: '', message: '' });
   const [submitted, setSubmitted] = useState(false);
   const [faqOpen, setFaqOpen] = useState<number | null>(null);
+  const [contactContent, setContactContent] = useState<PublicPageContent>({});
+
+  useEffect(() => {
+    let active = true;
+    publicSiteService.getPage('contact')
+      .then((page) => {
+        if (active && page?.content) setContactContent(page.content);
+      })
+      .catch(() => undefined);
+    return () => { active = false; };
+  }, []);
+
+  const contactHeroBadge = getPublicText(contactContent, 'heroBadge', '💬 Liên hệ với chúng tôi');
+  const contactHeroTitle = getPublicText(contactContent, 'heroTitle', 'Chúng tôi luôn sẵn sàng lắng nghe');
+  const contactHeroDescription = getPublicText(contactContent, 'heroDescription', 'Dù bạn có câu hỏi về sản phẩm, cần hỗ trợ kỹ thuật hay muốn thảo luận về hợp tác — đội ngũ của chúng tôi sẽ phản hồi trong vòng 24 giờ.');
+  const contactEmail = getPublicText(contactContent, 'email', 'hello@copypro.vn');
+  const contactPhone = getPublicText(contactContent, 'phone', '+84 901 234 567');
+  const contactAddress = getPublicText(contactContent, 'address', 'Innovation Hub, Q.1, TP.HCM');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,13 +72,13 @@ export function ContactPage() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_50%_-10%,rgba(34,197,94,0.12),transparent)]" />
         <div className="max-w-3xl mx-auto px-5 text-center relative">
           <Badge className="mb-5 bg-green-950/50 text-green-200 border border-green-700/40 px-4 py-1.5">
-            💬 Liên hệ với chúng tôi
+            {contactHeroBadge}
           </Badge>
           <h1 className="text-white mb-4">
-            Chúng tôi luôn sẵn sàng lắng nghe
+            {contactHeroTitle}
           </h1>
           <p className="text-muted-foreground/80 text-base">
-            Dù bạn có câu hỏi về sản phẩm, cần hỗ trợ kỹ thuật hay muốn thảo luận về hợp tác — đội ngũ của chúng tôi sẽ phản hồi trong vòng 24 giờ.
+            {contactHeroDescription}
           </p>
         </div>
       </section>
@@ -183,9 +203,9 @@ export function ContactPage() {
                 <h3 className="text-foreground mb-6" style={{ fontSize: '1.1rem' }}>Thông tin liên hệ</h3>
                 <div className="space-y-5">
                   {[
-                    { icon: Mail, label: 'Email', value: 'hello@copypro.vn', sub: 'Phản hồi trong 24h' },
-                    { icon: Phone, label: 'Hotline', value: '+84 901 234 567', sub: 'T2-T6, 8:00 - 18:00' },
-                    { icon: MapPin, label: 'Văn phòng', value: 'Innovation Hub, Q.1, TP.HCM', sub: 'Hẹn gặp trực tiếp' },
+                    { icon: Mail, label: 'Email', value: contactEmail, sub: 'Phản hồi trong 24h' },
+                    { icon: Phone, label: 'Hotline', value: contactPhone, sub: 'T2-T6, 8:00 - 18:00' },
+                    { icon: MapPin, label: 'Văn phòng', value: contactAddress, sub: 'Hẹn gặp trực tiếp' },
                     { icon: Clock, label: 'Giờ làm việc', value: 'Thứ 2 – Thứ 6', sub: '8:00 – 18:00 GMT+7' },
                   ].map((item) => {
                     const Icon = item.icon;

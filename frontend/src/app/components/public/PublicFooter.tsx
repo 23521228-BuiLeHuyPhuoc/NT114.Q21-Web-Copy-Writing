@@ -1,6 +1,9 @@
+import { useEffect, useState } from 'react';
 import { Link } from '@/lib/next-router-compat';
 import { BrandLogo } from '@/app/components/BrandLogo';
 import { Sparkles, Mail, Phone, MapPin, Facebook, Youtube, Linkedin, Twitter, ArrowUpRight } from 'lucide-react';
+import { getPublicText } from '@/lib/publicSiteDefaults';
+import { publicSiteService, type PublicPageContent } from '@/services/publicSiteService';
 
 const FOOTER_LINKS = {
   product: {
@@ -52,6 +55,27 @@ const SOCIALS = [
 ];
 
 export function PublicFooter() {
+  const [footerContent, setFooterContent] = useState<PublicPageContent>({});
+
+  useEffect(() => {
+    let active = true;
+    publicSiteService.getPage('footer')
+      .then((page) => {
+        if (active && page?.content) setFooterContent(page.content);
+      })
+      .catch(() => undefined);
+    return () => { active = false; };
+  }, []);
+
+  const footerCtaTitle = getPublicText(footerContent, 'ctaTitle', 'Sẵn sàng tạo copy đỉnh cao?');
+  const footerCtaDescription = getPublicText(footerContent, 'ctaDescription', 'Dùng thử miễn phí 14 ngày · Không cần thẻ tín dụng · Hủy bất kỳ lúc nào');
+  const footerBrandDescription = getPublicText(footerContent, 'brandDescription', 'Nền tảng AI Copywriting hàng đầu Việt Nam — tích hợp GPT-4o, Llama 3.1 và Fine-tuning, giúp doanh nghiệp tạo nội dung marketing chuyên nghiệp trong vài giây.');
+  const footerEmail = getPublicText(footerContent, 'email', 'hello@copypro.vn');
+  const footerPhone = getPublicText(footerContent, 'phone', '+84 901 234 567');
+  const footerAddress = getPublicText(footerContent, 'address', 'Tòa nhà Innovation Hub, 2 Nguyễn Thị Minh Khai, Q.1, TP.HCM');
+  const footerCopyright = getPublicText(footerContent, 'copyright', '© 2026 CopyPro Vietnam Co., Ltd.');
+  const footerPhoneHref = footerPhone.replace(/[^\d+]/g, '');
+
   return (
     <footer className="dark bg-gray-950 text-muted-foreground/80">
       {/* Top CTA strip */}
@@ -63,10 +87,10 @@ export function PublicFooter() {
                 className="text-2xl font-bold text-white mb-2"
                 style={{ letterSpacing: '-0.02em' }}
               >
-                Sẵn sàng tạo copy đỉnh cao?
+                {footerCtaTitle}
               </h3>
               <p className="text-muted-foreground/80 text-sm">
-                Dùng thử miễn phí 14 ngày · Không cần thẻ tín dụng · Hủy bất kỳ lúc nào
+                {footerCtaDescription}
               </p>
             </div>
             <div className="flex gap-3 flex-shrink-0">
@@ -96,22 +120,22 @@ export function PublicFooter() {
               <BrandLogo size="lg" tone="light" surface="light" />
             </Link>
             <p className="text-sm leading-relaxed mb-6 text-muted-foreground">
-              Nền tảng AI Copywriting hàng đầu Việt Nam — tích hợp GPT-4o, Llama 3.1 và Fine-tuning, giúp doanh nghiệp tạo nội dung marketing chuyên nghiệp trong vài giây.
+              {footerBrandDescription}
             </p>
 
             {/* Contact */}
             <div className="space-y-2.5 text-sm">
-              <a href="mailto:hello@copypro.vn" className="flex items-center gap-2.5 hover:text-primary transition-colors">
+              <a href={`mailto:${footerEmail}`} className="flex items-center gap-2.5 hover:text-primary transition-colors">
                 <Mail className="w-4 h-4 text-primary flex-shrink-0" />
-                hello@copypro.vn
+                {footerEmail}
               </a>
-              <a href="tel:+84901234567" className="flex items-center gap-2.5 hover:text-primary transition-colors">
+              <a href={`tel:${footerPhoneHref}`} className="flex items-center gap-2.5 hover:text-primary transition-colors">
                 <Phone className="w-4 h-4 text-primary flex-shrink-0" />
-                +84 901 234 567
+                {footerPhone}
               </a>
               <div className="flex items-start gap-2.5">
                 <MapPin className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
-                <span>Tòa nhà Innovation Hub, 2 Nguyễn Thị Minh Khai, Q.1, TP.HCM</span>
+                <span>{footerAddress}</span>
               </div>
             </div>
 
@@ -156,7 +180,7 @@ export function PublicFooter() {
         {/* Bottom */}
         <div className="border-t border-gray-800 mt-14 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-sm text-foreground/70">
-            <span>© 2026 CopyPro Vietnam Co., Ltd.</span>
+            <span>{footerCopyright}</span>
             <span className="text-foreground/80">·</span>
             <span>Mã số doanh nghiệp: 0317xxxxxx</span>
           </div>

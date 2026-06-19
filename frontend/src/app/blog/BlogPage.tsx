@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from '@/lib/next-router-compat';
 import { PublicNavbar } from '@/app/components/public/PublicNavbar';
 import { PublicFooter } from '@/app/components/public/PublicFooter';
 import { Badge } from '@/app/components/ui/badge';
 import { Input } from '@/app/components/ui/input';
 import { ImageWithFallback } from '@/app/components/figma/ImageWithFallback';
-import { BLOG_CATEGORIES, BLOG_POSTS, TRENDING_POSTS } from '@/mocks/blog';
+import { BLOG_CATEGORIES, BLOG_POSTS } from '@/mocks/blog';
+import { publicSiteService, type PublicBlogPost } from '@/services/publicSiteService';
 import { Search, Clock, ArrowRight, BookOpen, TrendingUp, Cpu, Wand2 } from 'lucide-react';
 import { DataPagination } from '@/app/components/common/DataPagination';
 import { usePagination } from '@/hooks/usePagination';
@@ -21,8 +22,39 @@ const catColor: Record<string, string> = {
 export function BlogPage() {
   const [cat, setCat] = useState('all');
   const [search, setSearch] = useState('');
+  const [posts, setPosts] = useState<PublicBlogPost[]>(BLOG_POSTS.map(post => ({ ...post, published: true })));
 
-  const filtered = BLOG_POSTS.filter(post => {
+  useEffect(() => {
+    let active = true;
+    publicSiteService.getBlogPage()
+      .then((page) => {
+        const apiPosts = page?.content?.posts;
+        if (!active || !Array.isArray(apiPosts) || apiPosts.length === 0) return;
+        setPosts(apiPosts.filter(post => post.published !== false));
+      })
+      .catch(() => undefined);
+
+    return () => { active = false; };
+  }, []);
+
+  const categories = useMemo(() => {
+    const existingIds = new Set(BLOG_CATEGORIES.map(category => category.id));
+    const dynamic = new Map<string, string>();
+    posts.forEach((post) => {
+      if (post.cat && !existingIds.has(post.cat) && !dynamic.has(post.cat)) {
+        dynamic.set(post.cat, post.catLabel || post.cat);
+      }
+    });
+    return [...BLOG_CATEGORIES, ...Array.from(dynamic, ([id, label]) => ({ id, label }))];
+  }, [posts]);
+
+  const trendingPosts = useMemo(() => posts.slice(0, 4).map((post, index) => ({
+    title: post.title,
+    reads: ['4.2K', '3.8K', '3.1K', '2.7K'][index] || '1.2K',
+    slug: post.slug,
+  })), [posts]);
+
+  const filtered = posts.filter(post => {
     const matchCat = cat === 'all' || post.cat === cat;
     const query = search.trim().toLowerCase();
     const matchSearch = !query || post.title.toLowerCase().includes(query) || post.excerpt.toLowerCase().includes(query);
@@ -66,7 +98,7 @@ export function BlogPage() {
       <div className="sticky top-[70px] z-30 border-b border-border bg-card shadow-sm">
         <div className="mx-auto max-w-7xl px-5 lg:px-8">
           <div className="flex gap-1 overflow-x-auto py-3 scrollbar-hide">
-            {BLOG_CATEGORIES.map(category => (
+            {categories.map(category => (
               <button
                 key={category.id}
                 onClick={() => setCat(category.id)}
@@ -186,7 +218,7 @@ export function BlogPage() {
                 <TrendingUp className="h-4 w-4 text-primary" /> Đọc nhiều nhất
               </h3>
               <div className="space-y-4">
-                {TRENDING_POSTS.map((post, index) => (
+                {trendingPosts.map((post, index) => (
                   <Link key={post.slug} to={`/blog/${post.slug}`} className="group flex gap-4">
                     <span
                       className="flex-shrink-0 text-2xl font-bold"

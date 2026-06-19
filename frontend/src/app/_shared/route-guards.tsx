@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { AdminAccessDenied } from '@/app/components/admin/AdminAccessDenied';
-import { getPermissionForRoute, hasPermission } from '@/lib/permissions';
+import { CustomerAccessDenied } from '@/app/components/customer/CustomerAccessDenied';
+import { getPermissionForRoute, hasCustomerPermission, hasPermission } from '@/lib/permissions';
 
 function LoadingState() {
   return (
@@ -25,6 +26,7 @@ export function ProtectedRoute({
   requiredRole?: 'admin' | 'customer';
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, isLoading } = useAuth();
 
   useEffect(() => {
@@ -40,6 +42,14 @@ export function ProtectedRoute({
 
   if (isLoading || !user || (requiredRole && user.role !== requiredRole)) {
     return <LoadingState />;
+  }
+
+  const customerPermission = requiredRole === 'customer'
+    ? getPermissionForRoute(pathname, 'customer')
+    : undefined;
+
+  if (customerPermission && !hasCustomerPermission(user.customerRole, customerPermission)) {
+    return <CustomerAccessDenied />;
   }
 
   return <>{children}</>;

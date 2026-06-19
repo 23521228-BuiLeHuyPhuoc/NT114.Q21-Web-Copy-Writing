@@ -3,6 +3,7 @@ import { Layout } from '@/app/components/Layout';
 import { Card } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
 import { Input } from '@/app/components/ui/input';
+import { Textarea } from '@/app/components/ui/textarea';
 import { Badge } from '@/app/components/ui/badge';
 import { Label } from '@/app/components/ui/label';
 import { Switch } from '@/app/components/ui/switch';
@@ -46,6 +47,10 @@ function parseOptionalNumber(value: string) {
   if (value.trim() === '') return undefined;
   const numeric = Number(value);
   return Number.isFinite(numeric) ? numeric : undefined;
+}
+
+function splitLines(value: string) {
+  return value.split('\n').map(line => line.trim()).filter(Boolean);
 }
 
 const FINE_TUNED_MODEL_ACCESS = 'fine-tuned';
@@ -178,6 +183,8 @@ export function AdminPlans() {
   const [addSeats, setAddSeats] = useState('');
   const [addHistoryDays, setAddHistoryDays] = useState('');
   const [addDesc, setAddDesc] = useState('');
+  const [addFeatures, setAddFeatures] = useState('');
+  const [addExcludedFeatures, setAddExcludedFeatures] = useState('');
   const [addAllowedModels, setAddAllowedModels] = useState<string[]>([]);
 
   const [editItem, setEditItem] = useState<AdminPlan | null>(null);
@@ -191,6 +198,8 @@ export function AdminPlans() {
   const [editSeats, setEditSeats] = useState('');
   const [editHistoryDays, setEditHistoryDays] = useState('');
   const [editDesc, setEditDesc] = useState('');
+  const [editFeatures, setEditFeatures] = useState('');
+  const [editExcludedFeatures, setEditExcludedFeatures] = useState('');
   const [editPopular, setEditPopular] = useState(false);
   const [editAllowedModels, setEditAllowedModels] = useState<string[]>([]);
 
@@ -278,6 +287,8 @@ export function AdminPlans() {
     setAddSeats('');
     setAddHistoryDays('');
     setAddDesc('');
+    setAddFeatures('');
+    setAddExcludedFeatures('');
     setAddAllowedModels([]);
   };
 
@@ -293,6 +304,8 @@ export function AdminPlans() {
     setEditSeats(plan.seats === -1 ? '' : String(plan.seats));
     setEditHistoryDays(plan.historyDays === -1 ? '' : String(plan.historyDays));
     setEditDesc(plan.description);
+    setEditFeatures(plan.features.join('\n'));
+    setEditExcludedFeatures(plan.excludedFeatures.join('\n'));
     setEditPopular(plan.popular);
     setEditAllowedModels(plan.allowedModels || []);
   };
@@ -312,6 +325,8 @@ export function AdminPlans() {
         plagiarismChecks: parseBlankNumber(addPlagiarism, -1),
         seats: parseBlankNumber(addSeats, -1),
         historyDays: parseBlankNumber(addHistoryDays, -1),
+        features: splitLines(addFeatures),
+        excludedFeatures: splitLines(addExcludedFeatures),
         allowedModels: addAllowedModels,
         isActive: true,
       });
@@ -341,6 +356,8 @@ export function AdminPlans() {
           plagiarismChecks: parseBlankNumber(editPlagiarism, -1),
           seats: parseBlankNumber(editSeats, -1),
           historyDays: parseBlankNumber(editHistoryDays, -1),
+          features: splitLines(editFeatures),
+          excludedFeatures: splitLines(editExcludedFeatures),
           allowedModels: editAllowedModels,
           isPopular: editPopular,
         },
@@ -612,6 +629,16 @@ export function AdminPlans() {
                 <Input value={addHistoryDays} onChange={event => setAddHistoryDays(event.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
               </div>
             </div>
+            <div className="grid gap-3 md:grid-cols-2">
+              <div>
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Feature hiá»ƒn trÃªn pricing</Label>
+                <Textarea value={addFeatures} onChange={event => setAddFeatures(event.target.value)} placeholder="Má»—i dÃ²ng lÃ  má»™t feature" className="min-h-28" />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Feature khÃ´ng bao gá»“m</Label>
+                <Textarea value={addExcludedFeatures} onChange={event => setAddExcludedFeatures(event.target.value)} placeholder="Má»—i dÃ²ng lÃ  má»™t feature bá»‹ táº¯t" className="min-h-28" />
+              </div>
+            </div>
             <ModelAccessSelector allowedModels={addAllowedModels} onChange={setAddAllowedModels} />
             <div className="flex gap-2 pt-1">
               <button onClick={() => setShowAdd(false)} className="flex-1 h-10 border border-border rounded-xl text-sm font-semibold text-foreground/70 hover:bg-surface-muted transition-colors">Hủy</button>
@@ -675,6 +702,16 @@ export function AdminPlans() {
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Lưu lịch sử (ngày)</Label>
                   <Input value={editHistoryDays} onChange={event => setEditHistoryDays(event.target.value)} placeholder="Trống = Unlimited" className="h-10" type="number" />
+                </div>
+              </div>
+              <div className="grid gap-3 md:grid-cols-2">
+                <div>
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Feature hiá»ƒn trÃªn pricing</Label>
+                  <Textarea value={editFeatures} onChange={event => setEditFeatures(event.target.value)} placeholder="Má»—i dÃ²ng lÃ  má»™t feature" className="min-h-28" />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Feature khÃ´ng bao gá»“m</Label>
+                  <Textarea value={editExcludedFeatures} onChange={event => setEditExcludedFeatures(event.target.value)} placeholder="Má»—i dÃ²ng lÃ  má»™t feature bá»‹ táº¯t" className="min-h-28" />
                 </div>
               </div>
               <ModelAccessSelector allowedModels={editAllowedModels} onChange={setEditAllowedModels} />

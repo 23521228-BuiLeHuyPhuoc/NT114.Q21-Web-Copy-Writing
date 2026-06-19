@@ -16,16 +16,20 @@ import { usePagination } from '@/hooks/usePagination';
 import { cn } from '@/app/components/ui/utils';
 import {
   ADMIN_ROLES,
+  CUSTOMER_ROLES,
   PERMISSION_ROUTE_OPTIONS,
   getPermissionScope,
   getPermissionScopeLabel,
   getAdminPermissions,
   getAdminRoles,
+  getCustomerRoles,
   resetAdminPermissionConfig,
   saveAdminPermissions,
   saveAdminRoles,
+  saveCustomerRoles,
   type AdminPermissionDef,
   type AdminRoleDef,
+  type CustomerRoleDef,
   type PermissionScope,
 } from '@/lib/permissions';
 
@@ -39,6 +43,11 @@ const COLOR_PRESETS = [
 ];
 
 type ManagementView = 'groups' | 'permissions';
+
+const DEFAULT_ROLE_BY_SCOPE: Record<PermissionScope, string> = {
+  admin: 'super_admin',
+  customer: 'pro_customer',
+};
 
 interface CompactPaginationProps {
   page: number;
@@ -114,7 +123,9 @@ function getDefaultPermissionKey(route: string, scope: PermissionScope) {
 export function AdminPermissions() {
   const [permissions, setPermissions] = useState<AdminPermissionDef[]>(() => getAdminPermissions());
   const [roles, setRoles] = useState<Record<string, AdminRoleDef>>(() => getAdminRoles());
+  const [customerRoles, setCustomerRoles] = useState<Record<string, CustomerRoleDef>>(() => getCustomerRoles());
   const [selectedRole, setSelectedRole] = useState('super_admin');
+  const [selectedCustomerRole, setSelectedCustomerRole] = useState('pro_customer');
   const [newPermission, setNewPermission] = useState({ key: '', label: '', group: 'Custom', description: '', route: '' });
   const [newRole, setNewRole] = useState({ key: '', label: '', description: '', preset: 'Forest' });
   const [roleSearch, setRoleSearch] = useState('');
@@ -123,11 +134,16 @@ export function AdminPermissions() {
   const [permissionGroup, setPermissionGroup] = useState('all');
   const [permissionScope, setPermissionScope] = useState<'all' | PermissionScope>('all');
   const [managementView, setManagementView] = useState<ManagementView>('groups');
+  const [roleScope, setRoleScope] = useState<PermissionScope>('admin');
 
-  const selectedRoleDef = roles[selectedRole];
+  const activeRoles = roleScope === 'admin' ? roles : customerRoles;
+  const activeSystemRoles = roleScope === 'admin' ? ADMIN_ROLES : CUSTOMER_ROLES;
+  const activeSelectedRole = roleScope === 'admin' ? selectedRole : selectedCustomerRole;
+  const selectedRoleDef = activeRoles[activeSelectedRole];
+  const roleScopeLabel = getPermissionScopeLabel(roleScope);
   const roleEntries = useMemo(() => {
     const keyword = roleSearch.trim().toLowerCase();
-    const entries = Object.entries(roles).filter(([key, role]) => {
+    const entries = Object.entries(activeRoles).filter(([key, role]) => {
       const haystack = [key, role.label, role.description].join(' ').toLowerCase();
       return !keyword || haystack.includes(keyword);
     });
@@ -145,7 +161,7 @@ export function AdminPermissions() {
           return a.label.localeCompare(b.label, 'vi');
       }
     });
-  }, [roleSearch, roleSort, roles]);
+  }, [activeRoles, roleSearch, roleSort]);
   const customPermissions = useMemo(() => permissions.filter((permission) => !permission.system), [permissions]);
   const routeUsageMap = useMemo(() => (
     new Map(permissions.filter((permission) => permission.route).map((permission) => [permission.route, permission]))
@@ -173,13 +189,34 @@ export function AdminPermissions() {
       return matchSearch && matchGroup && matchScope;
     });
   }, [permissionGroup, permissionScope, permissionSearch, permissions]);
+  const activeScopePermissions = useMemo(() => (
+    permissions.filter((permission) => getPermissionScope(permission) === roleScope)
+  ), [permissions, roleScope]);
+  const rolePermissionGroups = useMemo(() => (
+    Array.from(new Set(activeScopePermissions.map(permission => permission.group).filter(Boolean))).sort((a, b) => a.localeCompare(b, 'vi'))
+  ), [activeScopePermissions]);
+  const activeScopePermissionKeys = useMemo(() => (
+    new Set(activeScopePermissions.map((permission) => permission.key))
+  ), [activeScopePermissions]);
+  const roleFilteredPermissions = useMemo(() => {
+    const keyword = permissionSearch.trim().toLowerCase();
+    return activeScopePermissions.filter((permission) => {
+      const scope = getPermissionScope(permission);
+      const haystack = [permission.key, permission.label, permission.group, permission.description, permission.route, getPermissionScopeLabel(scope)]
+        .join(' ')
+        .toLowerCase();
+      const matchSearch = !keyword || haystack.includes(keyword);
+      const matchGroup = permissionGroup === 'all' || permission.group === permissionGroup;
+      return matchSearch && matchGroup;
+    });
+  }, [activeScopePermissions, permissionGroup, permissionSearch]);
   const rolesPagination = usePagination(roleEntries, {
     initialPageSize: 6,
-    resetKey: `${roleSearch}|${roleSort}|${roleEntries.length}`,
+    resetKey: `${roleScope}|${roleSearch}|${roleSort}|${roleEntries.length}`,
   });
-  const permissionPagination = usePagination(filteredPermissions, {
+  const permissionPagination = usePagination(roleFilteredPermissions, {
     initialPageSize: 8,
-    resetKey: `${selectedRole}|${permissionSearch}|${permissionGroup}|${permissionScope}`,
+    resetKey: `${roleScope}|${activeSelectedRole}|${permissionSearch}|${permissionGroup}|${roleFilteredPermissions.length}`,
   });
   const permissionDirectoryPagination = usePagination(filteredPermissions, {
     initialPageSize: 8,
@@ -200,6 +237,27 @@ export function AdminPermissions() {
   const persistRoles = (next: Record<string, AdminRoleDef>) => {
     setRoles(next);
     saveAdminRoles(next);
+  };
+
+  const persistCustomerRoleDefs = (next: Record<string, CustomerRoleDef>) => {
+    setCustomerRoles(next);
+    saveCustomerRoles(next);
+  };
+
+  const persistActiveRoles = (next: Record<string, AdminRoleDef>) => {
+    if (roleScope === 'admin') {
+      persistRoles(next);
+    } else {
+      persistCustomerRoleDefs(next);
+    }
+  };
+
+  const setActiveSelectedRole = (key: string) => {
+    if (roleScope === 'admin') {
+      setSelectedRole(key);
+    } else {
+      setSelectedCustomerRole(key);
+    }
   };
 
   const handlePermissionRouteChange = (route: string) => {
@@ -267,6 +325,14 @@ export function AdminPermissions() {
         ]),
       ),
     );
+    persistCustomerRoleDefs(
+      Object.fromEntries(
+        Object.entries(customerRoles).map(([roleKey, role]) => [
+          roleKey,
+          { ...role, permissions: role.permissions.filter((permissionKey) => permissionKey !== key) },
+        ]),
+      ),
+    );
     toast.success('Đã xoá quyền');
   };
 
@@ -276,47 +342,47 @@ export function AdminPermissions() {
       toast.error('Nhập mã nhóm và tên hiển thị');
       return;
     }
-    if (roles[key]) {
-      toast.error('Nhóm admin đã tồn tại');
+    if (activeRoles[key]) {
+      toast.error(`Nhóm ${roleScopeLabel} đã tồn tại`);
       return;
     }
 
     const preset = COLOR_PRESETS.find((item) => item.name === newRole.preset) || COLOR_PRESETS[0];
     const { name: _, ...colors } = preset;
     const next = {
-      ...roles,
+      ...activeRoles,
       [key]: {
         label: newRole.label.trim(),
-        description: newRole.description.trim() || 'Nhóm admin tùy chỉnh',
+        description: newRole.description.trim() || `Nhóm ${roleScopeLabel} tùy chỉnh`,
         ...colors,
-        permissions: ['dashboard'],
+        permissions: roleScope === 'admin' ? ['dashboard'] : ['customer_dashboard'],
         system: false,
       },
     };
-    persistRoles(next);
-    setSelectedRole(key);
+    persistActiveRoles(next);
+    setActiveSelectedRole(key);
     setNewRole({ key: '', label: '', description: '', preset: 'Forest' });
-    toast.success('Đã tạo nhóm admin mới');
+    toast.success(`Đã tạo nhóm ${roleScopeLabel} mới`);
   };
 
   const deleteRole = (key: string) => {
-    if (roles[key]?.system || ADMIN_ROLES[key]?.system) {
+    if (activeRoles[key]?.system || activeSystemRoles[key]?.system) {
       toast.error('Không thể xoá nhóm hệ thống');
       return;
     }
-    const next = { ...roles };
+    const next = { ...activeRoles };
     delete next[key];
-    persistRoles(next);
-    setSelectedRole('super_admin');
-    toast.success('Đã xoá nhóm admin');
+    persistActiveRoles(next);
+    setActiveSelectedRole(DEFAULT_ROLE_BY_SCOPE[roleScope]);
+    toast.success(`Đã xoá nhóm ${roleScopeLabel}`);
   };
 
   const togglePermission = (permissionKey: string) => {
-    if (!selectedRoleDef || selectedRole === 'super_admin') return;
+    if (!selectedRoleDef || (roleScope === 'admin' && activeSelectedRole === 'super_admin')) return;
     const hasPermission = selectedRoleDef.permissions.includes(permissionKey);
-    persistRoles({
-      ...roles,
-      [selectedRole]: {
+    persistActiveRoles({
+      ...activeRoles,
+      [activeSelectedRole]: {
         ...selectedRoleDef,
         permissions: hasPermission
           ? selectedRoleDef.permissions.filter((key) => key !== permissionKey)
@@ -329,15 +395,20 @@ export function AdminPermissions() {
     resetAdminPermissionConfig();
     setPermissions(getAdminPermissions());
     setRoles(getAdminRoles());
+    setCustomerRoles(getCustomerRoles());
     setSelectedRole('super_admin');
+    setSelectedCustomerRole('pro_customer');
     toast.success('Đã khôi phục cấu hình phân quyền mặc định');
   };
 
   const getRolePermissionCount = (key: string, role: AdminRoleDef) => (
-    key === 'super_admin' ? permissions.length : role.permissions.length
+    roleScope === 'admin' && key === 'super_admin'
+      ? activeScopePermissions.length
+      : role.permissions.filter((permissionKey) => activeScopePermissionKeys.has(permissionKey)).length
   );
-  const selectedPermissionCount = selectedRoleDef ? getRolePermissionCount(selectedRole, selectedRoleDef) : 0;
-  const systemPermissionCount = permissions.length - customPermissions.length;
+  const selectedPermissionCount = selectedRoleDef ? getRolePermissionCount(activeSelectedRole, selectedRoleDef) : 0;
+  const adminPermissionCount = permissions.filter((permission) => getPermissionScope(permission) === 'admin').length;
+  const customerPermissionCount = permissions.filter((permission) => getPermissionScope(permission) === 'customer').length;
 
   return (
     <Layout>
@@ -346,11 +417,11 @@ export function AdminPermissions() {
           <div className="min-w-0">
             <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-semibold text-primary">
               <Shield className="h-3.5 w-3.5" />
-              RBAC Admin
+              RBAC
             </div>
-            <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Phân quyền Admin</h1>
+            <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Phân quyền người dùng</h1>
             <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
-              Quản lý nhóm người dùng admin, loại quyền và phạm vi truy cập theo từng nhóm.
+              Quản lý nhóm admin, nhóm customer, loại quyền và phạm vi truy cập theo từng route.
             </p>
           </div>
           <Button variant="outline" className="w-full gap-2 md:w-auto" onClick={resetConfig}>
@@ -365,16 +436,16 @@ export function AdminPermissions() {
             <p className="mt-2 text-2xl font-bold text-foreground">{Object.keys(roles).length}</p>
           </div>
           <div className="rounded-lg border bg-card p-4">
-            <p className="text-xs font-medium uppercase text-muted-foreground">Loại quyền</p>
-            <p className="mt-2 text-2xl font-bold text-foreground">{permissions.length}</p>
+            <p className="text-xs font-medium uppercase text-muted-foreground">Nhóm customer</p>
+            <p className="mt-2 text-2xl font-bold text-foreground">{Object.keys(customerRoles).length}</p>
           </div>
           <div className="rounded-lg border bg-card p-4">
-            <p className="text-xs font-medium uppercase text-muted-foreground">Quyền hệ thống</p>
-            <p className="mt-2 text-2xl font-bold text-foreground">{systemPermissionCount}</p>
+            <p className="text-xs font-medium uppercase text-muted-foreground">Quyền admin</p>
+            <p className="mt-2 text-2xl font-bold text-foreground">{adminPermissionCount}</p>
           </div>
           <div className="rounded-lg border bg-card p-4">
-            <p className="text-xs font-medium uppercase text-muted-foreground">Quyền tùy chỉnh</p>
-            <p className="mt-2 text-2xl font-bold text-foreground">{customPermissions.length}</p>
+            <p className="text-xs font-medium uppercase text-muted-foreground">Quyền customer</p>
+            <p className="mt-2 text-2xl font-bold text-foreground">{customerPermissionCount}</p>
           </div>
         </div>
 
@@ -419,6 +490,21 @@ export function AdminPermissions() {
                   <Badge className="border-0 bg-muted text-foreground/80">{roleEntries.length}</Badge>
                 </div>
 
+                <ToggleGroup
+                  type="single"
+                  value={roleScope}
+                  onValueChange={(value) => {
+                    if (value) {
+                      setRoleScope(value as PermissionScope);
+                      setPermissionGroup('all');
+                    }
+                  }}
+                  className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1"
+                >
+                  <ToggleGroupItem value="admin" className="rounded-md data-[state=on]:bg-card data-[state=on]:shadow-sm">Admin</ToggleGroupItem>
+                  <ToggleGroupItem value="customer" className="rounded-md data-[state=on]:bg-card data-[state=on]:shadow-sm">Customer</ToggleGroupItem>
+                </ToggleGroup>
+
                 <div className="grid gap-2 sm:grid-cols-[1fr_150px]">
                   <Input placeholder="Tìm nhóm..." value={roleSearch} onChange={(event) => setRoleSearch(event.target.value)} />
                   <Select value={roleSort} onValueChange={setRoleSort}>
@@ -439,10 +525,10 @@ export function AdminPermissions() {
                     <button
                       key={key}
                       type="button"
-                      onClick={() => setSelectedRole(key)}
+                      onClick={() => setActiveSelectedRole(key)}
                       className={cn(
                         'w-full rounded-lg border p-3 text-left transition-colors',
-                        selectedRole === key ? 'border-primary/40 bg-primary/5' : 'border-border hover:bg-surface-muted',
+                        activeSelectedRole === key ? 'border-primary/40 bg-primary/5' : 'border-border hover:bg-surface-muted',
                       )}
                     >
                       <div className="flex min-w-0 items-center gap-2">
@@ -472,12 +558,12 @@ export function AdminPermissions() {
               <Card className="gap-4 p-5">
                 <div className="flex items-center gap-2">
                   <Plus className="h-5 w-5 text-primary" />
-                  <h2 className="text-lg font-bold text-foreground">Tạo nhóm admin</h2>
+                  <h2 className="text-lg font-bold text-foreground">Tạo nhóm {roleScopeLabel}</h2>
                 </div>
                 <div className="grid gap-4">
                   <div>
                     <Label>Mã nhóm</Label>
-                    <Input className="mt-2" placeholder="support_manager" value={newRole.key} onChange={(event) => setNewRole((prev) => ({ ...prev, key: normalizeKey(event.target.value) }))} />
+                    <Input className="mt-2" placeholder={roleScope === 'admin' ? 'support_manager' : 'vip_customer'} value={newRole.key} onChange={(event) => setNewRole((prev) => ({ ...prev, key: normalizeKey(event.target.value) }))} />
                   </div>
                   <div>
                     <Label>Tên hiển thị</Label>
@@ -527,9 +613,9 @@ export function AdminPermissions() {
                       <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{selectedRoleDef.description}</p>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      <Badge className="border-0 bg-muted text-foreground/80">{selectedPermissionCount}/{permissions.length} quyền</Badge>
+                      <Badge className="border-0 bg-muted text-foreground/80">{selectedPermissionCount}/{activeScopePermissions.length} quyền</Badge>
                       {!selectedRoleDef.system && (
-                        <Button variant="outline" className="gap-2 border-red-200 text-red-600 hover:bg-destructive/10" onClick={() => deleteRole(selectedRole)}>
+                        <Button variant="outline" className="gap-2 border-red-200 text-red-600 hover:bg-destructive/10" onClick={() => deleteRole(activeSelectedRole)}>
                           <Trash2 className="h-4 w-4" />
                           Xoá nhóm
                         </Button>
@@ -537,28 +623,20 @@ export function AdminPermissions() {
                     </div>
                   </div>
 
-                  {selectedRole === 'super_admin' && (
+                  {roleScope === 'admin' && activeSelectedRole === 'super_admin' && (
                     <div className="flex items-start gap-2 rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm text-primary">
                       <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
                       <span>Super Admin luôn có toàn bộ quyền, bao gồm cả quyền tùy chỉnh được tạo sau này.</span>
                     </div>
                   )}
 
-                  <div className="grid gap-2 md:grid-cols-[1fr_190px_190px]">
+                  <div className="grid gap-2 md:grid-cols-[1fr_190px]">
                     <Input placeholder="Tìm quyền..." value={permissionSearch} onChange={(event) => setPermissionSearch(event.target.value)} />
-                    <Select value={permissionScope} onValueChange={(value) => setPermissionScope(value as 'all' | PermissionScope)}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Tất cả phạm vi</SelectItem>
-                        <SelectItem value="admin">Admin</SelectItem>
-                        <SelectItem value="customer">Customer</SelectItem>
-                      </SelectContent>
-                    </Select>
                     <Select value={permissionGroup} onValueChange={setPermissionGroup}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">Tất cả nhóm</SelectItem>
-                        {permissionGroups.map(group => <SelectItem key={group} value={group}>{group}</SelectItem>)}
+                        {rolePermissionGroups.map(group => <SelectItem key={group} value={group}>{group}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -575,13 +653,14 @@ export function AdminPermissions() {
                           </div>
                           <div className="grid gap-3 md:grid-cols-2">
                             {items.map((permission) => {
-                              const checked = selectedRole === 'super_admin' || selectedRoleDef.permissions.includes(permission.key);
+                              const isLockedRole = roleScope === 'admin' && activeSelectedRole === 'super_admin';
+                              const checked = isLockedRole || selectedRoleDef.permissions.includes(permission.key);
                               const scope = getPermissionScope(permission);
                               return (
                                 <div key={permission.key} className="flex gap-3 rounded-lg border border-border p-3">
                                   <Checkbox
                                     checked={checked}
-                                    disabled={selectedRole === 'super_admin'}
+                                    disabled={isLockedRole}
                                     onCheckedChange={() => togglePermission(permission.key)}
                                     className="mt-0.5"
                                   />

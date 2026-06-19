@@ -1,6 +1,6 @@
 import { api } from '@/lib/axios';
 import type { User, UserRole, UserStatus } from '@/types/auth';
-import type { AdminRole } from '@/lib/permissions';
+import type { AdminRole, CustomerRole } from '@/lib/permissions';
 
 export type AdminUserAccountType = 'user' | 'admin';
 
@@ -15,6 +15,7 @@ export interface CreateAdminUserPayload {
   role: UserRole;
   status?: UserStatus;
   adminRole?: AdminRole;
+  customerRole?: CustomerRole;
 }
 
 export interface UpdateAdminUserPayload {
@@ -22,6 +23,7 @@ export interface UpdateAdminUserPayload {
   email?: string;
   status?: UserStatus;
   adminRole?: AdminRole;
+  customerRole?: CustomerRole;
 }
 
 interface ListResponse {

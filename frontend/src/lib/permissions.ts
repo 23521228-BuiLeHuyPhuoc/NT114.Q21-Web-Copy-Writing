@@ -4,6 +4,7 @@ import {
   Crown,
   DollarSign,
   FileText,
+  Globe2,
   KeyRound,
   LayoutDashboard,
   MessageSquare,
@@ -15,6 +16,7 @@ import {
 } from 'lucide-react';
 
 export type AdminRole = string;
+export type CustomerRole = string;
 export type AdminPermission = string;
 export type PermissionScope = 'admin' | 'customer';
 
@@ -46,8 +48,12 @@ export interface AdminRoleDef {
   system?: boolean;
 }
 
+export type CustomerRoleDef = AdminRoleDef;
+
 const ROLE_STORAGE_KEY = 'admin_role_defs';
+const CUSTOMER_ROLE_STORAGE_KEY = 'customer_role_defs';
 const PERMISSION_STORAGE_KEY = 'admin_permission_defs';
+const DEFAULT_CUSTOMER_ROLE: CustomerRole = 'pro_customer';
 
 export const PERMISSION_ROUTE_OPTIONS: PermissionRouteOption[] = [
   { scope: 'admin', route: '/admin', label: 'Bảng điều khiển admin', group: 'Tổng quan' },
@@ -108,6 +114,23 @@ export const ADMIN_PERMISSIONS: AdminPermissionDef[] = [
   { key: 'customer_notifications', label: 'Thông báo khách hàng', description: 'Xem thông báo phía khách hàng', group: 'Customer - Tài khoản', route: '/notifications', scope: 'customer', system: true },
 ];
 
+PERMISSION_ROUTE_OPTIONS.push({
+  scope: 'admin',
+  route: '/admin/public-site',
+  label: 'Public site',
+  group: 'Noi dung',
+});
+
+ADMIN_PERMISSIONS.push({
+  key: 'public_site',
+  label: 'Public site',
+  description: 'Quan ly home, about, blog, contact va footer ngoai website',
+  group: 'Noi dung',
+  route: '/admin/public-site',
+  scope: 'admin',
+  system: true,
+});
+
 export const ADMIN_ROLES: Record<AdminRole, AdminRoleDef> = {
   super_admin: {
     label: 'Super Admin',
@@ -126,7 +149,7 @@ export const ADMIN_ROLES: Record<AdminRole, AdminRoleDef> = {
     textColor: 'text-green-700',
     borderColor: 'border-green-200',
     dotColor: 'bg-green-500',
-    permissions: ['dashboard', 'contents', 'templates', 'generate_industries', 'generate_copy_types', 'generate_tones'],
+    permissions: ['dashboard', 'contents', 'templates', 'public_site', 'generate_industries', 'generate_copy_types', 'generate_tones'],
     system: true,
   },
   user_manager: {
@@ -167,6 +190,49 @@ export const ADMIN_ROLES: Record<AdminRole, AdminRoleDef> = {
     borderColor: 'border-rose-200',
     dotColor: 'bg-rose-500',
     permissions: ['dashboard', 'audit_logs'],
+    system: true,
+  },
+};
+
+const CUSTOMER_BASE_PERMISSION_KEYS = ADMIN_PERMISSIONS
+  .filter((permission) => permission.scope === 'customer')
+  .map((permission) => permission.key);
+
+const CUSTOMER_STANDARD_PERMISSION_KEYS = CUSTOMER_BASE_PERMISSION_KEYS.filter((permission) => (
+  !['customer_fine_tune', 'customer_plagiarism'].includes(permission)
+));
+
+export const CUSTOMER_ROLES: Record<CustomerRole, CustomerRoleDef> = {
+  free_customer: {
+    label: 'Khách hàng Free',
+    description: 'Quyền cơ bản để tạo nội dung, xem nội dung đã tạo và quản lý tài khoản.',
+    color: 'bg-slate-100',
+    textColor: 'text-slate-700',
+    borderColor: 'border-slate-200',
+    dotColor: 'bg-slate-500',
+    permissions: CUSTOMER_STANDARD_PERMISSION_KEYS.filter((permission) => (
+      !['customer_projects', 'customer_project_detail'].includes(permission)
+    )),
+    system: true,
+  },
+  pro_customer: {
+    label: 'Khách hàng Pro',
+    description: 'Quyền mặc định cho khách hàng hiện tại, bao gồm các trang customer đang có.',
+    color: 'bg-teal-100',
+    textColor: 'text-teal-700',
+    borderColor: 'border-teal-200',
+    dotColor: 'bg-teal-500',
+    permissions: CUSTOMER_BASE_PERMISSION_KEYS,
+    system: true,
+  },
+  business_customer: {
+    label: 'Khách hàng Business',
+    description: 'Quyền nâng cao cho nhóm khách hàng cần dự án, AI nâng cao và thanh toán.',
+    color: 'bg-emerald-100',
+    textColor: 'text-emerald-700',
+    borderColor: 'border-emerald-200',
+    dotColor: 'bg-emerald-500',
+    permissions: CUSTOMER_BASE_PERMISSION_KEYS,
     system: true,
   },
 };
@@ -251,6 +317,10 @@ export function getAdminPermissions(): AdminPermissionDef[] {
   return merged;
 }
 
+export function getPermissionsByScope(scope: PermissionScope): AdminPermissionDef[] {
+  return getAdminPermissions().filter((permission) => getPermissionScope(permission) === scope);
+}
+
 export function saveAdminPermissions(permissions: AdminPermissionDef[]) {
   writeJson(PERMISSION_STORAGE_KEY, permissions);
 }
@@ -279,9 +349,42 @@ export function saveAdminRoles(roles: Record<AdminRole, AdminRoleDef>) {
   writeJson(ROLE_STORAGE_KEY, roles);
 }
 
+export function getCustomerRoles(): Record<CustomerRole, CustomerRoleDef> {
+  const stored = readJson<Record<CustomerRole, CustomerRoleDef>>(CUSTOMER_ROLE_STORAGE_KEY, {});
+  const validCustomerPermissions = new Set(getPermissionsByScope('customer').map((permission) => permission.key));
+  const merged: Record<CustomerRole, CustomerRoleDef> = { ...CUSTOMER_ROLES };
+
+  Object.entries(stored).forEach(([key, role]) => {
+    const systemRole = CUSTOMER_ROLES[key];
+    const permissions = Array.isArray(role.permissions)
+      ? role.permissions.filter((permission) => validCustomerPermissions.has(permission))
+      : systemRole?.permissions || [];
+
+    if (systemRole?.system) {
+      merged[key] = {
+        ...systemRole,
+        permissions,
+      };
+      return;
+    }
+
+    merged[key] = {
+      ...role,
+      permissions,
+    };
+  });
+
+  return merged;
+}
+
+export function saveCustomerRoles(roles: Record<CustomerRole, CustomerRoleDef>) {
+  writeJson(CUSTOMER_ROLE_STORAGE_KEY, roles);
+}
+
 export function resetAdminPermissionConfig() {
   if (!canUseStorage()) return;
   window.localStorage.removeItem(ROLE_STORAGE_KEY);
+  window.localStorage.removeItem(CUSTOMER_ROLE_STORAGE_KEY);
   window.localStorage.removeItem(PERMISSION_STORAGE_KEY);
 }
 
@@ -302,12 +405,22 @@ export const ADMIN_MENU_ITEMS = [
   { section: 'Hệ thống', label: 'Cài đặt', icon: Settings, path: '/admin/settings', permission: 'settings' as AdminPermission },
 ];
 
+const publicSiteMenuSection = ADMIN_MENU_ITEMS.find(item => item.path === '/admin/contents')?.section || 'Noi dung';
+ADMIN_MENU_ITEMS.splice(3, 0, {
+  section: publicSiteMenuSection,
+  label: 'Public site',
+  icon: Globe2,
+  path: '/admin/public-site',
+  permission: 'public_site' as AdminPermission,
+});
+
 export const PERMISSION_ROUTE_MAP: Record<string, AdminPermission> = {
   '/admin': 'dashboard',
   '/admin/users': 'users',
   '/admin/notifications': 'notifications',
   '/admin/contents': 'contents',
   '/admin/templates': 'templates',
+  '/admin/public-site': 'public_site',
   '/admin/generate-options/industries': 'generate_industries',
   '/admin/generate-options/copy-types': 'generate_copy_types',
   '/admin/generate-options/tones': 'generate_tones',
@@ -336,7 +449,22 @@ export function hasPermission(adminRole: AdminRole | undefined, permission: Admi
   return getAdminRoles()[adminRole]?.permissions.includes(permission) ?? false;
 }
 
+export function resolveCustomerRole(customerRole: CustomerRole | undefined): CustomerRole {
+  const roles = getCustomerRoles();
+  if (customerRole && roles[customerRole]) return customerRole;
+  return DEFAULT_CUSTOMER_ROLE;
+}
+
+export function hasCustomerPermission(customerRole: CustomerRole | undefined, permission: AdminPermission): boolean {
+  const role = resolveCustomerRole(customerRole);
+  return getCustomerRoles()[role]?.permissions.includes(permission) ?? false;
+}
+
 export function getAdminRoleDef(adminRole: AdminRole | undefined): AdminRoleDef | null {
   if (!adminRole) return null;
   return getAdminRoles()[adminRole] ?? null;
+}
+
+export function getCustomerRoleDef(customerRole: CustomerRole | undefined): CustomerRoleDef | null {
+  return getCustomerRoles()[resolveCustomerRole(customerRole)] ?? null;
 }

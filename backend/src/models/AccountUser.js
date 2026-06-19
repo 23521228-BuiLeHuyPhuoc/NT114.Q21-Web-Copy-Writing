@@ -39,6 +39,11 @@ const accountUserSchema = new mongoose.Schema(
       default: 'active',
       index: true,
     },
+    customerRole: {
+      type: String,
+      trim: true,
+      default: 'pro_customer',
+    },
     avatar: {
       type: String,
       default: '',

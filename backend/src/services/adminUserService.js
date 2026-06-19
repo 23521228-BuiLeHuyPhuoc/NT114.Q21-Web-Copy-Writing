@@ -18,6 +18,7 @@ function serializeUser(account) {
     name: account.name,
     email: account.email,
     role: 'customer',
+    customerRole: account.customerRole || 'pro_customer',
     status: account.status,
     avatar: account.avatar,
     isVerified: account.isVerified,
@@ -108,6 +109,7 @@ async function createUser(payload) {
     name: payload.name,
     email: payload.email,
     password: payload.password,
+    customerRole: payload.customerRole || 'pro_customer',
     status: normalizeUserStatus(payload.status),
     isVerified: true,
   });
@@ -136,8 +138,9 @@ async function updateUser(accountType, id, payload) {
   if (type === 'admin') {
     if (payload.adminRole) account.adminRole = payload.adminRole;
     if (payload.status) account.status = normalizeAdminStatus(payload.status);
-  } else if (payload.status) {
-    account.status = normalizeUserStatus(payload.status);
+  } else {
+    if (payload.customerRole) account.customerRole = payload.customerRole;
+    if (payload.status) account.status = normalizeUserStatus(payload.status);
   }
 
   await account.save();

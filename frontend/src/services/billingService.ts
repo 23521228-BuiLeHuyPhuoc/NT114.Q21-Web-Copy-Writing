@@ -84,6 +84,13 @@ function normalizePlan(item: Partial<BillingPlan> | null | undefined): BillingPl
 }
 
 export const billingService = {
+  async listPlans(): Promise<BillingPlan[]> {
+    const response = await api.get<BillingResponse<{ items?: BillingPlan[] }>>('/billing/plans');
+    return (response.data.data?.items || [])
+      .map(item => normalizePlan(item))
+      .filter((plan): plan is BillingPlan => Boolean(plan));
+  },
+
   async me(): Promise<MyBilling> {
     const response = await api.get<BillingResponse<MyBilling>>('/billing/me');
     const data = response.data.data;

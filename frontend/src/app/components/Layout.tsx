@@ -20,7 +20,7 @@ import {
   FileCheck, ChevronDown, ShieldCheck, Settings,
 } from 'lucide-react';
 import {
-  ADMIN_MENU_ITEMS, getAdminRoleDef, hasPermission,
+  ADMIN_MENU_ITEMS, getAdminRoleDef, getCustomerRoleDef, getPermissionForRoute, hasCustomerPermission, hasPermission,
 } from '@/lib/permissions';
 import {
   useAdminHeaderNotifications,
@@ -84,6 +84,16 @@ export function Layout({ children }: LayoutProps) {
     },
   ];
 
+  const filteredCustomerMenuGroups = customerMenuGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => {
+        const permission = getPermissionForRoute(item.path, 'customer');
+        return !permission || hasCustomerPermission(user?.customerRole, permission);
+      }),
+    }))
+    .filter((group) => group.items.length > 0);
+
   const filteredAdminMenu = ADMIN_MENU_ITEMS.filter(item =>
     hasPermission(user?.adminRole, item.permission)
   );
@@ -105,6 +115,9 @@ export function Layout({ children }: LayoutProps) {
 
   const adminRoleDef = user?.role === 'admin' && user.adminRole
     ? getAdminRoleDef(user.adminRole)
+    : null;
+  const customerRoleDef = user?.role === 'customer'
+    ? getCustomerRoleDef(user.customerRole)
     : null;
   const userInitial = user?.name?.charAt(0).toUpperCase() || 'U';
   const firstName = user?.name?.split(' ')[0] || (user?.role === 'admin' ? 'Admin' : 'User');
@@ -380,8 +393,13 @@ export function Layout({ children }: LayoutProps) {
             <div className={`w-2 h-2 rounded-full flex-shrink-0 ${adminRoleDef.dotColor}`} />
             <span className={`text-xs font-semibold ${adminRoleDef.textColor} truncate`}>{adminRoleDef.label}</span>
           </div>
+        ) : customerRoleDef ? (
+          <div className={['inline-flex w-full items-center gap-1.5 rounded-lg border px-2.5 py-1.5', customerRoleDef.color, customerRoleDef.borderColor].join(' ')}>
+            <div className={['h-2 w-2 flex-shrink-0 rounded-full', customerRoleDef.dotColor].join(' ')} />
+            <span className={['truncate text-xs font-semibold', customerRoleDef.textColor].join(' ')}>{customerRoleDef.label}</span>
+          </div>
         ) : (
-          <Badge variant="warning">👤 Khách hàng · Pro</Badge>
+          <Badge variant="warning">Khách hàng</Badge>
         )}
       </div>
 
@@ -402,7 +420,7 @@ export function Layout({ children }: LayoutProps) {
           </div>
         ) : (
           <div className="space-y-3">
-            {customerMenuGroups.map((group) => (
+            {filteredCustomerMenuGroups.map((group) => (
               <div key={group.label} className="space-y-1">
                 <p className="px-3 text-[11px] font-semibold uppercase text-muted-foreground/70">
                   {group.label}

@@ -42,6 +42,7 @@ function serializeAccount(account, accountType) {
   if (accountType === 'admin') {
     data.adminRole = account.adminRole;
   } else {
+    data.customerRole = account.customerRole || 'pro_customer';
     data.isVerified = account.isVerified;
     data.notificationPreferences = {
       quotaLow: account.notificationPreferences?.quotaLow !== false,

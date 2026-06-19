@@ -18,7 +18,7 @@ import {
   UserPlus,
 } from 'lucide-react';
 import { useAuth } from '@/app/contexts/AuthContext';
-import { getAdminRoleDef, getAdminRoles, type AdminRole } from '@/lib/permissions';
+import { getAdminRoleDef, getAdminRoles, getCustomerRoleDef, getCustomerRoles, type AdminRole, type CustomerRole } from '@/lib/permissions';
 import { adminUserService, type AdminUser } from '@/services/adminUserService';
 import { ConfirmDialog } from '@/app/components/admin/ConfirmDialog';
 import { TrashBin } from '@/app/components/admin/TrashBin';
@@ -53,6 +53,7 @@ export function AdminUsers() {
   const { user } = useAuth();
   const isSuperAdmin = user?.adminRole === 'super_admin';
   const adminRoles = getAdminRoles();
+  const customerRoles = getCustomerRoles();
 
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [trashUsers, setTrashUsers] = useState<AdminUser[]>([]);
@@ -71,6 +72,7 @@ export function AdminUsers() {
   const [addConfirmPassword, setAddConfirmPassword] = useState('');
   const [addRole, setAddRole] = useState<UserRole>('customer');
   const [addAdminRole, setAddAdminRole] = useState<AdminRole>('analyst');
+  const [addCustomerRole, setAddCustomerRole] = useState<CustomerRole>('pro_customer');
   const [addStatus, setAddStatus] = useState<UserStatus>('active');
   const [addSaving, setAddSaving] = useState(false);
 
@@ -78,6 +80,7 @@ export function AdminUsers() {
   const [editName, setEditName] = useState('');
   const [editEmail, setEditEmail] = useState('');
   const [editRole, setEditRole] = useState<AdminRole>('analyst');
+  const [editCustomerRole, setEditCustomerRole] = useState<CustomerRole>('pro_customer');
   const [editStatus, setEditStatus] = useState<UserStatus>('active');
   const [editSaving, setEditSaving] = useState(false);
 
@@ -111,6 +114,7 @@ export function AdminUsers() {
     setAddConfirmPassword('');
     setAddRole('customer');
     setAddAdminRole('analyst');
+    setAddCustomerRole('pro_customer');
     setAddStatus('active');
   };
 
@@ -122,6 +126,7 @@ export function AdminUsers() {
         item.email,
         item.role,
         item.adminRole || '',
+        item.customerRole || '',
         item.status,
       ].join(' ').toLowerCase().includes(keyword);
       const matchRole = filterRole === 'all' || item.role === filterRole;
@@ -158,6 +163,7 @@ export function AdminUsers() {
     setEditName(item.name);
     setEditEmail(item.email);
     setEditRole(item.adminRole || 'analyst');
+    setEditCustomerRole(item.customerRole || 'pro_customer');
     setEditStatus(item.status);
   };
 
@@ -170,6 +176,7 @@ export function AdminUsers() {
         email: editEmail.trim(),
         status: editStatus,
         ...(editUser.role === 'admin' ? { adminRole: editRole } : {}),
+        ...(editUser.role === 'customer' ? { customerRole: editCustomerRole } : {}),
       });
       await loadUsers();
       setEditUser(null);
@@ -204,6 +211,7 @@ export function AdminUsers() {
         role: addRole,
         status: addStatus,
         ...(addRole === 'admin' ? { adminRole: addAdminRole } : {}),
+        ...(addRole === 'customer' ? { customerRole: addCustomerRole } : {}),
       });
       const createdName = addName.trim();
       resetAddForm();
@@ -270,7 +278,16 @@ export function AdminUsers() {
   };
 
   const roleBadge = (item: AdminUser) => {
-    if (item.role === 'customer') return <Badge className="bg-muted text-foreground/70 border-0">Khách hàng</Badge>;
+    if (item.role === 'customer') {
+      const def = getCustomerRoleDef(item.customerRole);
+      if (!def) return <Badge className="bg-muted text-foreground/70 border-0">Khách hàng</Badge>;
+      return (
+        <Badge className={`${def.color} ${def.textColor} border-0 gap-1`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${def.dotColor}`} />
+          {def.label}
+        </Badge>
+      );
+    }
     const def = getAdminRoleDef(item.adminRole);
     if (!def) return <Badge className="bg-destructive/10 text-destructive border-0">Quản trị viên</Badge>;
     return (
@@ -486,6 +503,24 @@ export function AdminUsers() {
                 </Select>
               </div>
             )}
+            {addRole === 'customer' && (
+              <div>
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Nhóm Customer</Label>
+                <Select value={addCustomerRole} onValueChange={(value) => setAddCustomerRole(value)}>
+                  <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(customerRoles).map(([key, def]) => (
+                      <SelectItem key={key} value={key}>
+                        <div className="flex items-center gap-2">
+                          <span className={`w-2 h-2 rounded-full ${def.dotColor}`} />
+                          {def.label}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div className="flex gap-2 pt-2">
               <button onClick={() => setAddOpen(false)} className="flex-1 h-10 border border-border rounded-xl text-sm font-semibold text-foreground/70 hover:bg-surface-muted transition-colors">Hủy</button>
               <button onClick={handleCreateUser} disabled={addSaving} className="flex-1 h-10 bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-2">
@@ -523,6 +558,24 @@ export function AdminUsers() {
                     <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {Object.entries(adminRoles).map(([key, def]) => (
+                        <SelectItem key={key} value={key}>
+                          <div className="flex items-center gap-2">
+                            <span className={`w-2 h-2 rounded-full ${def.dotColor}`} />
+                            {def.label}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              {editUser.role === 'customer' && (
+                <div>
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Nhóm Customer</Label>
+                  <Select value={editCustomerRole} onValueChange={(value) => setEditCustomerRole(value)}>
+                    <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(customerRoles).map(([key, def]) => (
                         <SelectItem key={key} value={key}>
                           <div className="flex items-center gap-2">
                             <span className={`w-2 h-2 rounded-full ${def.dotColor}`} />
