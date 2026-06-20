@@ -530,6 +530,7 @@ export function AdminSettings() {
                     <Label>HTML template</Label>
                     <div className="mt-2 overflow-hidden rounded-lg border border-border bg-card">
                       <Editor
+                        key={selectedTemplate.key}
                         apiKey={tinymceApiKey}
                         value={selectedTemplate.html}
                         init={{
