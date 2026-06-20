@@ -32,7 +32,7 @@ const PLANS = [
     cta: 'Bắt đầu miễn phí',
   },
   {
-    id: 'pro', name: 'Pro', icon: Crown, monthlyPrice: 299000, yearlyPrice: 249000,
+    id: 'pro', name: 'Pro', icon: Crown, monthlyPrice: 299000, yearlyPrice: 2990000,
     desc: 'Dành cho marketer & freelancer chuyên nghiệp',
     color: 'border-primary', accent: 'text-primary', highlight: true,
     badge: 'Phổ biến nhất',
@@ -51,7 +51,7 @@ const PLANS = [
     cta: 'Bắt đầu dùng Pro',
   },
   {
-    id: 'business', name: 'Business', icon: Building2, monthlyPrice: 799000, yearlyPrice: 665000,
+    id: 'business', name: 'Business', icon: Building2, monthlyPrice: 799000, yearlyPrice: 7990000,
     desc: 'Dành cho team và doanh nghiệp cần quota lớn, kiểm soát rõ ràng',
     color: 'border-border', accent: 'text-foreground/80', highlight: false,
     badge: '',
@@ -115,9 +115,7 @@ function buildLimitFeatures(plan: BillingPlan) {
 function toPricingPlan(plan: BillingPlan, index: number): PricingPlan {
   const fallback = PLANS.find(item => item.id === plan.slug) || PLANS[Math.min(index, PLANS.length - 1)];
   const positiveFeatures = plan.features.length > 0 ? plan.features : buildLimitFeatures(plan);
-  const negativeFeatures = plan.excludedFeatures.length > 0
-    ? plan.excludedFeatures
-    : fallback.features.filter(feature => !feature.ok).map(feature => feature.text);
+  const negativeFeatures = plan.excludedFeatures;
 
   return {
     ...fallback,
@@ -204,6 +202,17 @@ export function PricingPage() {
     return COMPARE_ROWS.map(row => ({ label: row.label, values: [row.free, row.pro, row.business] }));
   }, [plans]);
 
+  const yearlyDiscountPercent = useMemo(() => {
+    const discounts = plans
+      .map((plan) => {
+        if (plan.monthlyPrice <= 0 || plan.yearlyPrice <= 0) return 0;
+        return Math.round((1 - (plan.yearlyPrice / (plan.monthlyPrice * 12))) * 100);
+      })
+      .filter((value) => value > 0);
+
+    return discounts.length > 0 ? Math.max(...discounts) : 0;
+  }, [plans]);
+
   return (
     <div className="min-h-screen bg-card overflow-x-hidden">
       <PublicNavbar />
@@ -241,13 +250,13 @@ export function PricingPage() {
               className={`px-6 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 ${yearly ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-300 hover:text-white'}`}
             >
               Hàng năm
-              {yearly && <Badge className="bg-primary/10 text-primary border-0 text-xs">-17%</Badge>}
-              {!yearly && <span className="text-xs bg-primary/20 text-primary rounded-md px-2 py-0.5">-17%</span>}
+              {yearlyDiscountPercent > 0 && yearly && <Badge className="bg-primary/10 text-primary border-0 text-xs">-{yearlyDiscountPercent}%</Badge>}
+              {yearlyDiscountPercent > 0 && !yearly && <span className="text-xs bg-primary/20 text-primary rounded-md px-2 py-0.5">-{yearlyDiscountPercent}%</span>}
             </button>
           </div>
 
           <div className="mx-auto mt-6 max-w-2xl rounded-xl border border-amber-300/30 bg-amber-950/25 px-4 py-3 text-sm leading-relaxed text-amber-100">
-            MVP demo: cac goi hien chi dung de chon luong dang ky hoac lien he tu van. He thong chua ket noi thanh toan tu dong hay Stripe production.
+            Thông tin gói được lấy từ cấu hình hiện hành trong hệ thống. Thanh toán đang chạy qua VNPAY, ZaloPay và VietQR ở môi trường kiểm thử.
           </div>
         </div>
       </section>
@@ -255,10 +264,12 @@ export function PricingPage() {
       {/* ─── PRICING CARDS ─── */}
       <section className="pb-24 -mt-6">
         <div className="max-w-6xl mx-auto px-5 lg:px-8">
-          <div className="grid md:grid-cols-3 gap-6 items-start">
+          <div className="grid gap-6 items-start md:grid-cols-3">
             {plans.map(plan => {
               const Icon = plan.icon;
-              const price = yearly ? plan.yearlyPrice : plan.monthlyPrice;
+              const yearlyTotal = plan.yearlyPrice;
+              const displayPrice = yearly && yearlyTotal > 0 ? Math.round(yearlyTotal / 12) : plan.monthlyPrice;
+              const annualSavings = plan.monthlyPrice > 0 && yearlyTotal > 0 ? (plan.monthlyPrice * 12) - yearlyTotal : 0;
               return (
                 <div
                   key={plan.id}
@@ -287,28 +298,28 @@ export function PricingPage() {
 
                   {/* Price */}
                   <div className="mb-6 pb-6 border-b border-border">
-                    {price === -1 ? (
+                    {displayPrice === -1 ? (
                       <div className="flex items-baseline gap-1">
                         <span className="text-4xl font-bold text-foreground tracking-tight">Liên hệ</span>
                       </div>
-                    ) : price === 0 ? (
+                    ) : displayPrice === 0 ? (
                       <div className="flex items-baseline gap-1">
                         <span className="text-4xl font-bold text-foreground tracking-tight">Miễn phí</span>
                       </div>
                     ) : (
                       <div>
                         <div className="flex items-baseline gap-1">
-                          <span className="text-4xl font-bold text-foreground tracking-tight">{(price / 1000).toFixed(0)}K</span>
+                          <span className="text-4xl font-bold text-foreground tracking-tight">{(displayPrice / 1000).toFixed(0)}K</span>
                           <span className="text-muted-foreground/80 text-sm">₫ / tháng</span>
                         </div>
-                        {yearly && price > 0 && (
+                        {yearly && yearlyTotal > 0 && (
                           <p className="text-sm text-primary font-medium mt-1">
-                            Thanh toán {((price * 12) / 1000).toFixed(0)}K₫ / năm
+                            Thanh toán {(yearlyTotal / 1000).toFixed(0)}K₫ / năm
                           </p>
                         )}
-                        {!yearly && plan.yearlyPrice > 0 && (
+                        {!yearly && annualSavings > 0 && (
                           <p className="text-xs text-muted-foreground/80 mt-1">
-                            Tiết kiệm {(((plan.monthlyPrice - plan.yearlyPrice) * 12) / 1000).toFixed(0)}K₫/năm khi trả theo năm
+                            Tiết kiệm {(annualSavings / 1000).toFixed(0)}K₫/năm khi trả theo năm
                           </p>
                         )}
                       </div>
@@ -317,7 +328,7 @@ export function PricingPage() {
 
                   {/* CTA */}
                   <button
-                    onClick={() => navigate(plan.monthlyPrice === -1 || plan.id === 'business' ? '/contact' : '/register')}
+                    onClick={() => navigate(plan.monthlyPrice === -1 ? '/contact' : '/register')}
                     className={`w-full py-3.5 rounded-2xl font-bold text-sm mb-7 transition-all ${
                       plan.highlight
                         ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white shadow-lg shadow-primary/20'

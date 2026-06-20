@@ -74,7 +74,7 @@ function buildVnpayIpnUrl() {
 }
 
 function buildZalopayReturnUrl() {
-  return getEnv('ZALOPAY_RETURN_URL') || `${getFrontendBaseUrl()}/billing?payment=zalopay-return`;
+  return getEnv('ZALOPAY_RETURN_URL') || `${getApiBaseUrl()}/api/billing/zalopay/return`;
 }
 
 function buildZalopayCallbackUrl() {
@@ -89,11 +89,30 @@ function buildZalopayDescription(invoiceNo, planName) {
   return `CopyPro ${planName} ${invoiceNo}`;
 }
 
+function appendQueryParams(url, params = {}) {
+  const target = new URL(url);
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      target.searchParams.set(key, String(value));
+    }
+  });
+  return target.toString();
+}
+
 function getZalopayPreferredPaymentMethods() {
   return getEnv('ZALOPAY_PREFERRED_PAYMENT_METHODS')
     .split(',')
     .map((method) => method.trim())
     .filter(Boolean);
+}
+
+function getZalopayPaymentUrl(response = {}) {
+  const mode = getEnv('ZALOPAY_PAYMENT_URL_MODE', 'multi').toLowerCase();
+  if (mode === 'cashier') {
+    return response.cashier_order_url || response.order_url || response.orderUrl || response.orderurl || '';
+  }
+
+  return response.order_url || response.orderUrl || response.orderurl || response.cashier_order_url || '';
 }
 
 function buildVietQrTransferContent(invoiceNo) {
@@ -245,7 +264,11 @@ async function createZalopayPaymentUrl({ invoiceNo, amount, planName, billingCyc
   const appTransId = buildZalopayTransId(invoiceNo);
   const appTime = Date.now();
   const callbackUrl = buildZalopayCallbackUrl();
-  const returnUrl = buildZalopayReturnUrl();
+  const returnUrl = appendQueryParams(buildZalopayReturnUrl(), {
+    app_trans_id: appTransId,
+    invoice: invoiceNo,
+    payment_id: paymentId,
+  });
   const embedData = JSON.stringify({
     preferred_payment_method: getZalopayPreferredPaymentMethods(),
     redirecturl: returnUrl,
@@ -292,7 +315,7 @@ async function createZalopayPaymentUrl({ invoiceNo, amount, planName, billingCyc
   }
 
   return {
-    paymentUrl: response.order_url || response.orderUrl || response.orderurl || '',
+    paymentUrl: getZalopayPaymentUrl(response),
     gatewayTransactionId: appTransId,
     gatewayResponse: response,
     callbackUrl,

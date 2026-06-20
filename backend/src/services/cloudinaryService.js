@@ -40,6 +40,11 @@ function uploadBuffer(buffer, options) {
   });
 }
 
+function getUploadFormat(extension) {
+  const format = String(extension || '').replace(/^\./, '').toLowerCase();
+  return format || undefined;
+}
+
 async function uploadUserAvatar(userId, file) {
   const folder = process.env.CLOUDINARY_AVATAR_FOLDER || 'copypro/avatars/users';
   const result = await uploadBuffer(file.buffer, {
@@ -109,15 +114,38 @@ function safeFileBaseName(value, fallback = 'file') {
 async function uploadPlagiarismFile(userId, file, index = 0) {
   const folder = process.env.CLOUDINARY_PLAGIARISM_FOLDER || 'copypro/plagiarism/uploads';
   const extension = path.extname(file.originalname || '').toLowerCase();
+  const format = getUploadFormat(extension);
   const timestamp = Date.now();
   const safeName = safeFileBaseName(file.originalname, 'plagiarism-file');
-  const result = await uploadBuffer(file.buffer, {
+  const publicId = `user_${userId}_${timestamp}_${index}_${safeName}`;
+  const baseOptions = {
     folder,
-    public_id: `user_${userId}_${timestamp}_${index}_${safeName}${extension}`,
+    public_id: publicId,
     overwrite: false,
-    resource_type: 'raw',
     filename_override: file.originalname || `${safeName}${extension}`,
-  });
+    ...(format ? { format } : {}),
+  };
+  const uploadAttempts = extension === '.pdf'
+    ? [
+      { ...baseOptions, resource_type: 'image' },
+      { ...baseOptions, resource_type: 'raw' },
+    ]
+    : [
+      { ...baseOptions, resource_type: 'raw' },
+    ];
+
+  let lastError;
+  let result;
+  for (const options of uploadAttempts) {
+    try {
+      result = await uploadBuffer(file.buffer, options);
+      break;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  if (!result) throw lastError || createError(502, 'Could not upload file to Cloudinary');
 
   return {
     publicId: result.public_id,

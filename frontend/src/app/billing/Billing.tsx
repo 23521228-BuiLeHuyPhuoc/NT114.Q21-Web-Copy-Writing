@@ -6,7 +6,9 @@ import { Badge } from '@/app/components/ui/badge';
 import { Progress } from '@/app/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/app/components/ui/dialog';
+import { useAuth } from '@/app/contexts/AuthContext';
 import { api } from '@/lib/axios';
+import type { CustomerRole } from '@/lib/permissions';
 import {
   Crown,
   Zap,
@@ -66,6 +68,11 @@ interface BillingInvoice {
 }
 
 const PLAN_ORDER = ['free', 'pro', 'business'];
+const CUSTOMER_ROLE_BY_PLAN_SLUG: Record<string, CustomerRole> = {
+  free: 'free_customer',
+  pro: 'pro_customer',
+  business: 'business_customer',
+};
 
 const DEFAULT_CURRENT_PLAN: CurrentBillingPlan = {
   name: '',
@@ -224,6 +231,10 @@ function isSupportedPlanSlug(slug: string) {
   return PLAN_ORDER.includes(slug);
 }
 
+function getCustomerRoleForPlanSlug(slug: string | undefined) {
+  return CUSTOMER_ROLE_BY_PLAN_SLUG[String(slug || '').toLowerCase()] || null;
+}
+
 function normalizeBillingPlan(plan: BillingPlanResponseItem): BillingPlanCard {
   const slug = plan.slug || plan.id || plan._id || '';
   const price = Number(plan.monthlyPrice ?? plan.price ?? 0);
@@ -249,6 +260,7 @@ function normalizeBillingPlan(plan: BillingPlanResponseItem): BillingPlanCard {
 }
 
 function getPaymentNotice(payment: string | null) {
+  if (payment?.includes('failed')) return { type: 'error' as const, message: 'Thanh toan khong thanh cong. Vui long thu lai hoac chon phuong thuc khac.' };
   if (!payment) return null;
   if (payment.includes('success')) return { type: 'success' as const, message: 'Thanh toán đã được ghi nhận.' };
   if (payment.includes('pending')) return { type: 'info' as const, message: 'Giao dịch đang chờ xác nhận từ cổng thanh toán.' };
@@ -270,6 +282,7 @@ function getInvoiceStatusMeta(status: string) {
 }
 
 export function CustomerBilling() {
+  const { user, updateUser } = useAuth();
   const [currentPlan, setCurrentPlan] = useState<CurrentBillingPlan>(DEFAULT_CURRENT_PLAN);
   const [plans, setPlans] = useState<BillingPlanCard[]>([]);
   const [invoices, setInvoices] = useState<BillingInvoice[]>([]);
@@ -299,6 +312,11 @@ export function CustomerBilling() {
 
       const currentPlanData = data.currentPlan;
       if (currentPlanData) {
+        const nextCustomerRole = getCustomerRoleForPlanSlug(currentPlanData.slug);
+        if (user?.role === 'customer' && nextCustomerRole && user.customerRole !== nextCustomerRole) {
+          updateUser({ ...user, customerRole: nextCustomerRole });
+        }
+
         setCurrentPlan((prev) => ({
           ...prev,
           ...currentPlanData,
@@ -328,7 +346,7 @@ export function CustomerBilling() {
     } catch {
       setInvoices([]);
     }
-  }, []);
+  }, [updateUser, user]);
 
   useEffect(() => {
     void loadBilling();
@@ -362,6 +380,7 @@ export function CustomerBilling() {
 
     if (notice) {
       if (notice.type === 'success') toast.success(notice.message);
+      else if (notice.type === 'error') toast.error(notice.message);
       else toast(notice.message);
       void loadBilling();
       if (payment?.includes('return') || payment?.includes('pending')) {
@@ -382,6 +401,11 @@ export function CustomerBilling() {
   });
 
   const isCurrentPlan = (plan: BillingPlanCard) => plan.slug === currentPlan.slug;
+  const isLowerPlan = (plan: BillingPlanCard) => (
+    isSupportedPlanSlug(currentPlan.slug)
+    && isSupportedPlanSlug(plan.slug)
+    && getPlanOrder(plan.slug) < getPlanOrder(currentPlan.slug)
+  );
 
   const closeCheckout = () => {
     setCheckoutPlan(null);
@@ -407,6 +431,11 @@ export function CustomerBilling() {
   const openCheckout = (plan: BillingPlanCard) => {
     if (isCurrentPlan(plan)) {
       toast.success('Đây là gói hiện tại!');
+      return;
+    }
+
+    if (isLowerPlan(plan)) {
+      toast.error('Không thể thanh toán gói thấp hơn gói hiện tại. Vui lòng dùng luồng hạ gói riêng nếu cần.');
       return;
     }
 
@@ -567,6 +596,7 @@ export function CustomerBilling() {
                 {plans.map((plan) => {
                   const Icon = plan.icon;
                   const current = isCurrentPlan(plan);
+                  const lowerPlan = isLowerPlan(plan);
                   const isLoading = checkoutPlanId === plan.slug;
                   const cardStyle = current
                     ? 'border-primary shadow-lg shadow-primary/10 ring-2 ring-primary/15'
@@ -608,14 +638,14 @@ export function CustomerBilling() {
                         className={`mt-auto w-full ${current ? 'bg-primary text-primary-foreground hover:bg-primary/90' : ''}`}
                         variant={current ? 'default' : 'outline'}
                         onClick={() => openCheckout(plan)}
-                        disabled={checkoutPlanId !== null || current}
+                        disabled={checkoutPlanId !== null || current || lowerPlan}
                       >
                         {isLoading ? (
                           <span className="flex items-center gap-2">
                             <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                             Đang tạo thanh toán...
                           </span>
-                        ) : current ? 'Gói hiện tại' : plan.price < 0 ? 'Liên hệ tư vấn' : plan.price === 0 ? 'Chọn miễn phí' : 'Chọn gói'}
+                        ) : current ? 'Gói hiện tại' : lowerPlan ? 'Không thể hạ gói' : plan.price < 0 ? 'Liên hệ tư vấn' : plan.price === 0 ? 'Chọn miễn phí' : 'Chọn gói'}
                       </Button>
                     </Card>
                   );

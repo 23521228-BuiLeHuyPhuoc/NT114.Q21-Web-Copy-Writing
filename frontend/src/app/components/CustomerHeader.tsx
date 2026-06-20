@@ -17,6 +17,7 @@ import {
   X,
 } from 'lucide-react';
 import { BREADCRUMB_MAP, QUICK_ACTIONS } from '@/lib/customerHeaderConfig';
+import { getCustomerRoleDef } from '@/lib/permissions';
 import {
   useHeaderNotifications,
   useMarkAllNotificationsRead,
@@ -46,6 +47,7 @@ export function CustomerHeader() {
   const pageTitle = BREADCRUMB_MAP[location.pathname] || 'CopyPro';
   const userInitial = user?.name?.charAt(0).toUpperCase() || 'U';
   const firstName = user?.name?.split(' ')[0] || 'User';
+  const customerRoleDef = getCustomerRoleDef(user?.customerRole);
 
   useEffect(() => {
     const handler = (event: MouseEvent) => {
@@ -242,7 +244,7 @@ export function CustomerHeader() {
                     <p className="font-bold text-sm text-foreground truncate">{user?.name}</p>
                     <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
                     <Badge variant="warning" className="text-[10px] mt-1 px-1.5 py-0 h-4">
-                      <Crown className="w-2.5 h-2.5 mr-1" /> Pro
+                      <Crown className="w-2.5 h-2.5 mr-1" /> {customerRoleDef?.label || 'Khách hàng'}
                     </Badge>
                   </div>
                 </div>

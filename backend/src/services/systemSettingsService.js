@@ -1,6 +1,68 @@
+const fs = require('fs/promises');
+const path = require('path');
+
 const SystemSetting = require('../models/SystemSetting');
 const { BASE_GENERATOR_MODELS } = require('../config/generatorModels');
 const { formatBaseModelDisplayName } = require('../utils/modelDisplayName');
+
+const ENV_FILE_PATH = path.resolve(__dirname, '..', '..', '.env');
+
+const ENV_SECTIONS = [
+  {
+    id: 'ai',
+    title: 'AI Models',
+    description: 'Các biến này được ghi trực tiếp vào backend/.env và process.env của server hiện tại.',
+    keys: [
+      { key: 'AI_PROVIDER', label: 'Provider đang dùng', secret: false, placeholder: 'gemini | vertex-gemini | groq | openrouter | openai | freegpt4 | auto' },
+      { key: 'GEMINI_API_KEY', label: 'Gemini API key', secret: true },
+      { key: 'GOOGLE_API_KEY', label: 'Google API key', secret: true },
+      { key: 'GEMINI_MODEL', label: 'Gemini model mặc định', secret: false, placeholder: 'Để trống để dùng model chọn trong UI' },
+      { key: 'GOOGLE_CLOUD_PROJECT', label: 'Google Cloud project', secret: false },
+      { key: 'GOOGLE_CLOUD_LOCATION', label: 'Google Cloud location', secret: false },
+      { key: 'GOOGLE_APPLICATION_CREDENTIALS', label: 'Google credentials path', secret: true },
+      { key: 'VERTEX_API_KEY', label: 'Vertex API key', secret: true },
+      { key: 'VERTEX_TUNING_BASE_MODELS', label: 'Vertex Gemini tuning base models', secret: false },
+      { key: 'VERTEX_OPEN_MODEL_TUNING_BASE_MODELS', label: 'Vertex open-model tuning base models', secret: false },
+      { key: 'VERTEX_QWEN_TUNING_BASE_MODELS', label: 'Vertex Qwen tuning base models', secret: false },
+      { key: 'VERTEX_LLAMA_TUNING_ENDPOINT', label: 'Vertex Llama tuning endpoint', secret: false },
+      { key: 'VERTEX_QWEN_TUNING_ENDPOINT', label: 'Vertex Qwen tuning endpoint', secret: false },
+      { key: 'VERTEX_CLAUDE_LOCATIONS', label: 'Vertex Claude locations', secret: false },
+      { key: 'OPENROUTER_API_KEY', label: 'OpenRouter API key', secret: true },
+      { key: 'OPENROUTER_MODEL', label: 'OpenRouter model mặc định', secret: false },
+      { key: 'OPENROUTER_SITE_URL', label: 'OpenRouter site URL', secret: false },
+      { key: 'OPENROUTER_APP_NAME', label: 'OpenRouter app name', secret: false },
+      { key: 'OPENAI_API_KEY', label: 'OpenAI-compatible API key', secret: true },
+      { key: 'OPENAI_MODEL', label: 'OpenAI-compatible model mặc định', secret: false },
+      { key: 'OPENAI_BASE_URL', label: 'OpenAI-compatible base URL', secret: false },
+      { key: 'GROQ_API_KEY', label: 'Groq API key', secret: true },
+      { key: 'GROQ_MODEL', label: 'Groq model mặc định', secret: false },
+      { key: 'FREEGPT4_BASE_URL', label: 'Free-GPT4 base URL', secret: false },
+      { key: 'FREEGPT4_MODEL', label: 'Free-GPT4 model', secret: false },
+      { key: 'FREEGPT4_KEYWORD', label: 'Free-GPT4 keyword', secret: false },
+      { key: 'FREEGPT4_TIMEOUT_MS', label: 'Free-GPT4 timeout', secret: false },
+      { key: 'HUGGINGFACE_TOKEN', label: 'Hugging Face token', secret: true },
+    ],
+  },
+  {
+    id: 'email',
+    title: 'Email SMTP',
+    description: 'Các biến SMTP/OTP được ghi trực tiếp vào backend/.env.',
+    keys: [
+      { key: 'SMTP_HOST', label: 'SMTP host', secret: false },
+      { key: 'SMTP_PORT', label: 'SMTP port', secret: false },
+      { key: 'SMTP_SECURE', label: 'SMTP secure', secret: false, placeholder: 'true | false' },
+      { key: 'SMTP_USER', label: 'SMTP user', secret: true },
+      { key: 'SMTP_PASS', label: 'SMTP password', secret: true },
+      { key: 'SMTP_FROM', label: 'SMTP from', secret: false },
+      { key: 'OTP_EXPIRES_MINUTES', label: 'OTP expires minutes', secret: false },
+    ],
+  },
+];
+
+const ENV_KEY_DEFINITIONS = ENV_SECTIONS.flatMap((section) => (
+  section.keys.map((item) => ({ ...item, sectionId: section.id, sectionTitle: section.title }))
+));
+const ALLOWED_ENV_KEYS = new Set(ENV_KEY_DEFINITIONS.map((item) => item.key));
 
 const EMAIL_TEMPLATE_DEFINITIONS = [
   {
@@ -115,7 +177,7 @@ const DEFAULT_SETTINGS = {
   siteName: 'CopyPro',
   supportEmail: 'support@copypro.vn',
   maintenanceMode: false,
-  maintenanceMessage: 'He thong dang bao tri. Vui long quay lai sau.',
+  maintenanceMessage: 'Hệ thống đang bảo trì. Vui lòng quay lại sau.',
   registrationEnabled: true,
   emailVerificationRequired: false,
   emailTemplates: getDefaultEmailTemplates(),
@@ -135,6 +197,111 @@ function envValue(name, fallback = '') {
 
 function envConfigured(name) {
   return Boolean(envValue(name));
+}
+
+async function readEnvFile() {
+  try {
+    return await fs.readFile(ENV_FILE_PATH, 'utf8');
+  } catch (error) {
+    if (error.code === 'ENOENT') return '';
+    throw error;
+  }
+}
+
+function parseEnvFile(text) {
+  const values = {};
+  String(text || '').split(/\r?\n/).forEach((line) => {
+    const match = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)\s*$/);
+    if (!match) return;
+
+    let value = match[2] || '';
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1);
+    }
+    values[match[1]] = value;
+  });
+  return values;
+}
+
+function normalizeEnvValue(value) {
+  return String(value ?? '').replace(/[\r\n]/g, '').trim();
+}
+
+function serializeEnvLine(key, value) {
+  return `${key}=${normalizeEnvValue(value)}`;
+}
+
+function getEnvFileValues(fileValues = {}) {
+  const merged = {};
+  ALLOWED_ENV_KEYS.forEach((key) => {
+    merged[key] = fileValues[key] ?? process.env[key] ?? '';
+  });
+  return merged;
+}
+
+function serializeEnvSettings(fileValues = {}) {
+  const values = getEnvFileValues(fileValues);
+
+  return {
+    updatedAt: new Date().toISOString(),
+    sections: ENV_SECTIONS.map((section) => ({
+      id: section.id,
+      title: section.title,
+      description: section.description,
+      keys: section.keys.map((definition) => ({
+        ...definition,
+        value: values[definition.key] || '',
+        configured: Boolean(values[definition.key]),
+      })),
+    })),
+  };
+}
+
+function normalizeEnvSettingsPayload(payload = {}) {
+  const incoming = payload.values || payload;
+  const values = {};
+
+  Object.entries(incoming || {}).forEach(([key, value]) => {
+    if (!ALLOWED_ENV_KEYS.has(key)) return;
+    values[key] = normalizeEnvValue(value);
+  });
+
+  return values;
+}
+
+async function getEnvSettings() {
+  const envText = await readEnvFile();
+  return serializeEnvSettings(parseEnvFile(envText));
+}
+
+async function updateEnvSettings(payload = {}) {
+  const updates = normalizeEnvSettingsPayload(payload);
+  const envText = await readEnvFile();
+  const lines = envText ? envText.split(/\r?\n/) : [];
+  const seen = new Set();
+  const nextLines = lines.map((line) => {
+    const match = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=/);
+    const key = match?.[1];
+
+    if (!key || !(key in updates)) return line;
+    seen.add(key);
+    return serializeEnvLine(key, updates[key]);
+  });
+
+  const missingKeys = Object.keys(updates).filter((key) => !seen.has(key));
+  if (missingKeys.length > 0) {
+    if (nextLines.length > 0 && nextLines[nextLines.length - 1] !== '') nextLines.push('');
+    nextLines.push('# Admin-managed runtime settings');
+    missingKeys.forEach((key) => nextLines.push(serializeEnvLine(key, updates[key])));
+  }
+
+  await fs.writeFile(ENV_FILE_PATH, `${nextLines.join('\n').replace(/\n+$/g, '')}\n`, 'utf8');
+
+  Object.entries(updates).forEach(([key, value]) => {
+    process.env[key] = value;
+  });
+
+  return getEnvSettings();
 }
 
 function anyEnvConfigured(names) {
@@ -402,10 +569,14 @@ function getPublicSystemStatus(settings) {
 
 module.exports = {
   EMAIL_TEMPLATE_DEFINITIONS,
+  ENV_KEY_DEFINITIONS,
+  ENV_SECTIONS,
+  getEnvSettings,
   getEmailTemplate,
   getPublicSystemStatus,
   getQuotaResetAt,
   getSystemSettings,
   resetAllUserQuotas,
+  updateEnvSettings,
   updateSystemSettings,
 };

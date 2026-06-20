@@ -1,5 +1,6 @@
 const nodemailer = require('nodemailer');
 const createError = require('../utils/createError');
+const systemSettingsService = require('./systemSettingsService');
 
 function parseBoolean(value) {
   if (value === undefined || value === null || value === '') return undefined;
@@ -44,34 +45,56 @@ function escapeHtml(value) {
     .replace(/'/g, '&#039;');
 }
 
+function renderTemplate(template, variables = {}) {
+  const rawValues = Object.entries(variables).reduce((acc, [key, value]) => {
+    acc[key] = value === undefined || value === null ? '' : String(value);
+    return acc;
+  }, {});
+  const htmlValues = Object.entries(rawValues).reduce((acc, [key, value]) => {
+    acc[key] = escapeHtml(value);
+    return acc;
+  }, {});
+  const replace = (source, values) => String(source || '').replace(/{{\s*([a-zA-Z0-9_]+)\s*}}/g, (match, key) => (
+    Object.prototype.hasOwnProperty.call(values, key) ? values[key] : match
+  ));
+
+  return {
+    subject: replace(template.subject, rawValues),
+    text: replace(template.text, rawValues),
+    html: replace(template.html, htmlValues),
+  };
+}
+
+async function getMailTemplateContext(templateKey, variables = {}) {
+  const settings = await systemSettingsService.getSystemSettings();
+  const template = settings.emailTemplates.find((item) => item.key === templateKey)
+    || await systemSettingsService.getEmailTemplate(templateKey);
+
+  return renderTemplate(template, {
+    siteName: settings.siteName,
+    supportEmail: settings.supportEmail,
+    ...variables,
+  });
+}
+
 async function sendPasswordResetOtpEmail({ to, otp, accountType, name }) {
   const transporter = nodemailer.createTransport(getSmtpConfig());
   const accountLabel = accountType === 'admin' ? 'admin account' : 'customer account';
   const minutes = getOtpMinutes();
   const displayName = name || 'there';
-  const safeDisplayName = escapeHtml(displayName);
+  const rendered = await getMailTemplateContext('passwordResetOtp', {
+    name: displayName,
+    otp,
+    accountLabel,
+    minutes,
+  });
 
   await transporter.sendMail({
     from: getMailFrom(),
     to,
-    subject: 'Your CopyPro password reset OTP',
-    text: [
-      `Hi ${displayName},`,
-      '',
-      `Your OTP for resetting your ${accountLabel} password is: ${otp}`,
-      `This code expires in ${minutes} minutes.`,
-      '',
-      'If you did not request this, please ignore this email.',
-    ].join('\n'),
-    html: `
-      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #111827;">
-        <p>Hi ${safeDisplayName},</p>
-        <p>Your OTP for resetting your ${accountLabel} password is:</p>
-        <p style="font-size: 28px; font-weight: 700; letter-spacing: 6px; margin: 16px 0;">${otp}</p>
-        <p>This code expires in ${minutes} minutes.</p>
-        <p style="color: #6b7280;">If you did not request this, please ignore this email.</p>
-      </div>
-    `,
+    subject: rendered.subject,
+    text: rendered.text,
+    html: rendered.html,
   });
 }
 
@@ -79,29 +102,18 @@ async function sendEmailVerificationOtpEmail({ to, otp, name }) {
   const transporter = nodemailer.createTransport(getSmtpConfig());
   const minutes = getOtpMinutes();
   const displayName = name || 'there';
-  const safeDisplayName = escapeHtml(displayName);
+  const rendered = await getMailTemplateContext('emailVerificationOtp', {
+    name: displayName,
+    otp,
+    minutes,
+  });
 
   await transporter.sendMail({
     from: getMailFrom(),
     to,
-    subject: 'Verify your CopyPro email',
-    text: [
-      `Hi ${displayName},`,
-      '',
-      `Your CopyPro email verification OTP is: ${otp}`,
-      `This code expires in ${minutes} minutes.`,
-      '',
-      'If you did not create this account, please ignore this email.',
-    ].join('\n'),
-    html: `
-      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #111827;">
-        <p>Hi ${safeDisplayName},</p>
-        <p>Your CopyPro email verification OTP is:</p>
-        <p style="font-size: 28px; font-weight: 700; letter-spacing: 6px; margin: 16px 0;">${otp}</p>
-        <p>This code expires in ${minutes} minutes.</p>
-        <p style="color: #6b7280;">If you did not create this account, please ignore this email.</p>
-      </div>
-    `,
+    subject: rendered.subject,
+    text: rendered.text,
+    html: rendered.html,
   });
 }
 

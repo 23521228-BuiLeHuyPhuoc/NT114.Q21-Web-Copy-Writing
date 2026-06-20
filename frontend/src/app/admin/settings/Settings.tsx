@@ -1,406 +1,488 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { Editor } from '@tinymce/tinymce-react';
+import { AlertCircle, Cpu, Eye, EyeOff, Gauge, KeyRound, Mail, RefreshCw, Save, Settings } from 'lucide-react';
+import toast from 'react-hot-toast';
+
 import { Layout } from '@/app/components/Layout';
-import { Card } from '@/app/components/ui/card';
+import { Badge } from '@/app/components/ui/badge';
 import { Button } from '@/app/components/ui/button';
+import { Card } from '@/app/components/ui/card';
 import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
-import { Textarea } from '@/app/components/ui/textarea';
 import { Switch } from '@/app/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select';
-import { Slider } from '@/app/components/ui/slider';
+import { Textarea } from '@/app/components/ui/textarea';
 import {
-  Settings, Key, Bell, Shield, Globe, Cpu,
-  Mail, Save, RefreshCw, AlertCircle, CheckCircle2,
-  Database, Clock, Lock, Eye, EyeOff
-} from 'lucide-react';
-import toast from 'react-hot-toast';
-import {
+  useAdminEnvSettings,
   useAdminSystemSettings,
+  useResetAdminQuotas,
+  useUpdateAdminEnvSettings,
   useUpdateAdminSystemSettings,
 } from '@/hooks/queries/useSystemSettings';
+import type { EmailTemplate, EnvSettingSection } from '@/services/systemSettingsService';
+
+const tinymceApiKey = process.env.NEXT_PUBLIC_TINYMCE_API_KEY || 'no-api-key';
+
+type SettingsForm = {
+  siteName: string;
+  supportEmail: string;
+  maintenanceMode: boolean;
+  maintenanceMessage: string;
+  registrationEnabled: boolean;
+  emailVerificationRequired: boolean;
+  emailTemplates: EmailTemplate[];
+};
+
+const EMPTY_FORM: SettingsForm = {
+  siteName: 'CopyPro',
+  supportEmail: 'support@copypro.vn',
+  maintenanceMode: false,
+  maintenanceMessage: 'Hệ thống đang bảo trì. Vui lòng quay lại sau.',
+  registrationEnabled: true,
+  emailVerificationRequired: false,
+  emailTemplates: [],
+};
+
+function formatDateTime(value?: string | null) {
+  if (!value) return 'Chưa reset';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Chưa reset';
+
+  return new Intl.DateTimeFormat('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(date);
+}
+
+function getProviderBadge(provider: { active: boolean; configured: boolean }) {
+  if (provider.active && provider.configured) return { variant: 'success' as const, label: 'Đang dùng' };
+  if (provider.active) return { variant: 'warning' as const, label: 'Đang chọn, thiếu cấu hình' };
+  if (provider.configured) return { variant: 'info' as const, label: 'Đã cấu hình' };
+  return { variant: 'neutral' as const, label: 'Chưa cấu hình' };
+}
+
+function sectionValues(section: EnvSettingSection | undefined, values: Record<string, string>) {
+  if (!section) return {};
+  return section.keys.reduce<Record<string, string>>((result, item) => {
+    result[item.key] = values[item.key] ?? '';
+    return result;
+  }, {});
+}
 
 export function AdminSettings() {
-  const { data: systemSettings, isLoading: loadingSystemSettings, error: systemSettingsError } = useAdminSystemSettings();
+  const { data: systemSettings, isLoading, error } = useAdminSystemSettings();
+  const { data: envSettings, isLoading: envLoading, error: envError } = useAdminEnvSettings();
   const updateSystemSettings = useUpdateAdminSystemSettings();
-  const [showKeys, setShowKeys] = useState<Record<string, boolean>>({});
-  const [settings, setSettings] = useState({
-    siteName: 'CopyPro',
-    siteUrl: 'https://copypro.vn',
-    supportEmail: 'support@copypro.vn',
-    maintenanceMode: false,
-    maintenanceMessage: 'Hệ thống đang bảo trì. Vui lòng quay lại sau.',
-    registrationEnabled: true,
-    emailVerificationRequired: false,
-    defaultModel: 'gpt-4o',
-    defaultLanguage: 'vi',
-    maxCopyLength: 2000,
-    openaiKey: 'sk-proj-aBcDeFgH1234567890XyZaBcDeFgH',
-    openaiOrg: 'org-aBcDeFgH',
-    llamaEndpoint: 'http://localhost:11434/api',
-    llamaModel: 'llama3.1:70b',
-    smtpHost: 'smtp.gmail.com',
-    smtpPort: '587',
-    smtpUser: 'no-reply@copypro.vn',
-    smtpPass: '••••••••••••',
-    logLevel: 'info',
-    logRetention: 30,
-    backupEnabled: true,
-    backupFrequency: 'daily',
-    temperature: [0.7],
-    maxTokensPerRequest: [2000],
-  });
+  const updateEnvSettings = useUpdateAdminEnvSettings();
+  const resetQuotas = useResetAdminQuotas();
+  const [form, setForm] = useState<SettingsForm>(EMPTY_FORM);
+  const [selectedTemplateKey, setSelectedTemplateKey] = useState('');
+  const [envValues, setEnvValues] = useState<Record<string, string>>({});
+  const [visibleEnvKeys, setVisibleEnvKeys] = useState<Record<string, boolean>>({});
+
+  const runtime = systemSettings?.runtimeConfig;
+  const envAiSection = envSettings?.sections.find((section) => section.id === 'ai');
+  const envEmailSection = envSettings?.sections.find((section) => section.id === 'email');
+  const selectedTemplate = useMemo(
+    () => form.emailTemplates.find((template) => template.key === selectedTemplateKey) || form.emailTemplates[0],
+    [form.emailTemplates, selectedTemplateKey],
+  );
 
   useEffect(() => {
     if (!systemSettings) return;
-    setSettings((prev) => ({
-      ...prev,
+
+    setForm({
       siteName: systemSettings.siteName,
       supportEmail: systemSettings.supportEmail,
       maintenanceMode: systemSettings.maintenanceMode,
       maintenanceMessage: systemSettings.maintenanceMessage,
       registrationEnabled: systemSettings.registrationEnabled,
       emailVerificationRequired: systemSettings.emailVerificationRequired,
-    }));
+      emailTemplates: systemSettings.emailTemplates,
+    });
+
+    if (systemSettings.emailTemplates[0]) {
+      setSelectedTemplateKey((current) => current || systemSettings.emailTemplates[0].key);
+    }
   }, [systemSettings]);
 
   useEffect(() => {
-    if (systemSettingsError) {
-      toast.error('Không tải được cài đặt hệ thống');
-    }
-  }, [systemSettingsError]);
+    if (!envSettings) return;
 
-  const toggle = (key: string) => setShowKeys(p => ({...p, [key]: !p[key]}));
-  const update = (key: string, val: any) => setSettings(p => ({...p, [key]: val}));
+    const nextValues: Record<string, string> = {};
+    envSettings.sections.forEach((section) => {
+      section.keys.forEach((item) => {
+        nextValues[item.key] = item.value || '';
+      });
+    });
+    setEnvValues(nextValues);
+  }, [envSettings]);
+
+  useEffect(() => {
+    if (error) toast.error('Không tải được cài đặt hệ thống');
+  }, [error]);
+
+  useEffect(() => {
+    if (envError) toast.error('Không tải được biến môi trường');
+  }, [envError]);
+
+  const updateField = <K extends keyof SettingsForm>(key: K, value: SettingsForm[K]) => {
+    setForm((current) => ({ ...current, [key]: value }));
+  };
+
+  const updateTemplate = (key: keyof EmailTemplate, value: string) => {
+    if (!selectedTemplate) return;
+
+    setForm((current) => ({
+      ...current,
+      emailTemplates: current.emailTemplates.map((template) => (
+        template.key === selectedTemplate.key ? { ...template, [key]: value } : template
+      )),
+    }));
+  };
+
+  const updateEnvValue = (key: string, value: string) => {
+    setEnvValues((current) => ({ ...current, [key]: value }));
+  };
+
+  const toggleEnvVisibility = (key: string) => {
+    setVisibleEnvKeys((current) => ({ ...current, [key]: !current[key] }));
+  };
+
   const save = async () => {
     try {
-      await updateSystemSettings.mutateAsync({
-        siteName: settings.siteName,
-        supportEmail: settings.supportEmail,
-        maintenanceMode: settings.maintenanceMode,
-        maintenanceMessage: settings.maintenanceMessage,
-        registrationEnabled: settings.registrationEnabled,
-        emailVerificationRequired: settings.emailVerificationRequired,
-      });
+      await updateSystemSettings.mutateAsync(form);
       toast.success('Đã lưu cài đặt hệ thống');
-    } catch (error) {
-      const err = error as { response?: { data?: { message?: string } }; message?: string };
+    } catch (saveError) {
+      const err = saveError as { response?: { data?: { message?: string } }; message?: string };
       toast.error(err.response?.data?.message || err.message || 'Không lưu được cài đặt hệ thống');
     }
   };
 
+  const saveEnv = async (section: EnvSettingSection | undefined) => {
+    if (!section) return;
+
+    try {
+      await updateEnvSettings.mutateAsync({ values: sectionValues(section, envValues) });
+      toast.success(`Đã lưu ${section.title} vào file .env`);
+    } catch (saveError) {
+      const err = saveError as { response?: { data?: { message?: string } }; message?: string };
+      toast.error(err.response?.data?.message || err.message || 'Không lưu được file .env');
+    }
+  };
+
+  const handleResetQuotas = async () => {
+    const confirmed = window.confirm('Reset quota đã sử dụng của tất cả người dùng về 0?');
+    if (!confirmed) return;
+
+    try {
+      const settings = await resetQuotas.mutateAsync();
+      toast.success(`Đã reset quota lúc ${formatDateTime(settings.quotaResetAt)}`);
+    } catch (resetError) {
+      const err = resetError as { response?: { data?: { message?: string } }; message?: string };
+      toast.error(err.response?.data?.message || err.message || 'Không reset được quota');
+    }
+  };
+
+  const renderEnvSection = (section: EnvSettingSection | undefined) => {
+    if (!section) {
+      return <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">Chưa có cấu hình .env để hiển thị.</div>;
+    }
+
+    return (
+      <Card className="space-y-4 p-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h3 className="flex items-center gap-2 font-semibold text-foreground"><KeyRound className="h-4 w-4" /> {section.title} trong .env</h3>
+            <p className="mt-1 text-sm text-muted-foreground">{section.description}</p>
+          </div>
+          <Button type="button" onClick={() => void saveEnv(section)} disabled={updateEnvSettings.isPending || envLoading}>
+            {updateEnvSettings.isPending ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+            Lưu .env
+          </Button>
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-2">
+          {section.keys.map((item) => {
+            const visible = visibleEnvKeys[item.key];
+            const inputType = item.secret && !visible ? 'password' : 'text';
+
+            return (
+              <div key={item.key} className="rounded-lg border bg-background p-3">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <Label className="text-sm font-medium">{item.label}</Label>
+                  <Badge variant={envValues[item.key] ? 'success' : 'neutral'}>{item.key}</Badge>
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    type={inputType}
+                    value={envValues[item.key] ?? ''}
+                    placeholder={item.placeholder || item.key}
+                    onChange={(event) => updateEnvValue(item.key, event.target.value)}
+                    autoComplete="off"
+                    className="font-mono text-sm"
+                  />
+                  {item.secret && (
+                    <Button type="button" variant="outline" size="icon" className="shrink-0" onClick={() => toggleEnvVisibility(item.key)} title={visible ? 'Ẩn giá trị' : 'Hiện giá trị'}>
+                      {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </Card>
+    );
+  };
+
   return (
     <Layout>
-      <div className="p-6 max-w-5xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-1">Cài Đặt Hệ Thống</h1>
-          <p className="text-foreground/70">Quản lý cấu hình toàn bộ platform CopyPro</p>
+      <div className="mx-auto max-w-6xl p-6">
+        <div className="mb-8 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Cài đặt hệ thống</h1>
+            <p className="text-foreground/70">Quản lý cấu hình vận hành, AI model, email và quota của CopyPro.</p>
+          </div>
+          {(isLoading || envLoading) && <Badge variant="neutral">Đang tải</Badge>}
         </div>
 
         <Tabs defaultValue="general">
-          <TabsList className="mb-6 flex-wrap h-auto gap-1">
-            <TabsTrigger value="general"><Settings className="w-4 h-4 mr-1" />Chung</TabsTrigger>
-            <TabsTrigger value="ai"><Cpu className="w-4 h-4 mr-1" />AI Models</TabsTrigger>
-            <TabsTrigger value="email"><Mail className="w-4 h-4 mr-1" />Email</TabsTrigger>
-            <TabsTrigger value="security"><Shield className="w-4 h-4 mr-1" />Bảo mật</TabsTrigger>
-            <TabsTrigger value="notifications"><Bell className="w-4 h-4 mr-1" />Thông báo</TabsTrigger>
-            <TabsTrigger value="system"><Database className="w-4 h-4 mr-1" />Hệ thống</TabsTrigger>
+          <TabsList className="mb-6 flex h-auto flex-wrap gap-1">
+            <TabsTrigger value="general"><Settings className="mr-1 h-4 w-4" />Chung</TabsTrigger>
+            <TabsTrigger value="ai"><Cpu className="mr-1 h-4 w-4" />AI Models</TabsTrigger>
+            <TabsTrigger value="email"><Mail className="mr-1 h-4 w-4" />Email</TabsTrigger>
+            <TabsTrigger value="quota"><Gauge className="mr-1 h-4 w-4" />Quota</TabsTrigger>
           </TabsList>
 
-          {/* General */}
           <TabsContent value="general" className="space-y-4">
-            <Card className="p-6 space-y-4">
+            <Card className="space-y-4 p-6">
               <h3 className="font-semibold text-foreground">Thông tin cơ bản</h3>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div><Label>Tên website</Label><Input value={settings.siteName} onChange={e => update('siteName', e.target.value)} className="mt-2" /></div>
-                <div><Label>URL website</Label><Input value={settings.siteUrl} onChange={e => update('siteUrl', e.target.value)} className="mt-2" /></div>
-                <div><Label>Email hỗ trợ</Label><Input value={settings.supportEmail} onChange={e => update('supportEmail', e.target.value)} className="mt-2" /></div>
+              <div className="grid gap-4 md:grid-cols-2">
                 <div>
-                  <Label>Ngôn ngữ mặc định</Label>
-                  <Select value={settings.defaultLanguage} onValueChange={v => update('defaultLanguage', v)}>
-                    <SelectTrigger className="mt-2"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="vi">Tiếng Việt</SelectItem>
-                      <SelectItem value="en">English</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label>Tên website</Label>
+                  <Input value={form.siteName} onChange={(event) => updateField('siteName', event.target.value)} className="mt-2" />
+                </div>
+                <div>
+                  <Label>Email hỗ trợ</Label>
+                  <Input value={form.supportEmail} onChange={(event) => updateField('supportEmail', event.target.value)} className="mt-2" />
                 </div>
               </div>
             </Card>
 
-            <Card className="p-6 space-y-4">
-              <div className="flex items-center justify-between gap-3">
-                <h3 className="font-semibold text-foreground">Chế độ hoạt động</h3>
-                {loadingSystemSettings && (
-                  <span className="text-xs text-muted-foreground">Đang tải cài đặt...</span>
-                )}
-              </div>
-              {[
-                { key: 'maintenanceMode', label: 'Chế độ bảo trì', desc: 'Hiển thị trang bảo trì cho người dùng. Admin vẫn truy cập được.', danger: true },
-                { key: 'registrationEnabled', label: 'Cho phép đăng ký mới', desc: 'Tắt để ngừng nhận người dùng mới.' },
-                { key: 'emailVerificationRequired', label: 'Xác thực email bắt buộc', desc: 'Yêu cầu xác thực email khi đăng ký.' },
-              ].map(s => (
-                <div key={s.key} className="flex items-center justify-between p-4 border rounded-xl">
+            <Card className="space-y-4 p-6">
+              <h3 className="font-semibold text-foreground">Chế độ hoạt động</h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-4 rounded-lg border p-4">
                   <div>
-                    <p className={`font-medium text-sm ${s.danger ? 'text-red-700' : 'text-foreground'}`}>{s.label}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{s.desc}</p>
+                    <p className="text-sm font-medium text-red-700">Chế độ bảo trì</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">Người dùng sẽ thấy trang bảo trì, admin vẫn truy cập được.</p>
                   </div>
-                  <Switch checked={(settings as any)[s.key]} onCheckedChange={v => update(s.key, v)} />
+                  <Switch checked={form.maintenanceMode} onCheckedChange={(value) => updateField('maintenanceMode', value)} />
                 </div>
-              ))}
-              {settings.maintenanceMode && (
+                <div className="flex items-center justify-between gap-4 rounded-lg border p-4">
+                  <div>
+                    <p className="text-sm font-medium text-foreground">Cho phép đăng ký mới</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">Tắt tùy chọn này để dừng nhận tài khoản mới.</p>
+                  </div>
+                  <Switch checked={form.registrationEnabled} onCheckedChange={(value) => updateField('registrationEnabled', value)} />
+                </div>
+                <div className="flex items-center justify-between gap-4 rounded-lg border p-4">
+                  <div>
+                    <p className="text-sm font-medium text-foreground">Bắt buộc xác thực email</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">Áp dụng cho tài khoản người dùng mới.</p>
+                  </div>
+                  <Switch checked={form.emailVerificationRequired} onCheckedChange={(value) => updateField('emailVerificationRequired', value)} />
+                </div>
+              </div>
+              {form.maintenanceMode && (
                 <div>
                   <Label>Nội dung trang bảo trì</Label>
                   <Textarea
-                    value={settings.maintenanceMessage}
-                    onChange={event => update('maintenanceMessage', event.target.value)}
+                    value={form.maintenanceMessage}
+                    onChange={(event) => updateField('maintenanceMessage', event.target.value)}
                     className="mt-2 min-h-24"
-                    placeholder="Thông báo hiển thị cho người dùng khi hệ thống bảo trì"
                   />
                 </div>
               )}
             </Card>
-
           </TabsContent>
 
-          {/* AI Models */}
           <TabsContent value="ai" className="space-y-4">
-            <Card className="p-6 space-y-4">
-              <h3 className="font-semibold text-foreground">OpenAI Configuration</h3>
-              <div>
-                <Label>OpenAI API Key</Label>
-                <div className="relative mt-2">
-                  <Input type={showKeys['openai'] ? 'text' : 'password'} value={settings.openaiKey} onChange={e => update('openaiKey', e.target.value)} className="pr-10" />
-                  <button onClick={() => toggle('openai')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/80">
-                    {showKeys['openai'] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
+            {renderEnvSection(envAiSection)}
+
+            <Card className="space-y-4 p-6">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h3 className="font-semibold text-foreground">Trạng thái provider từ runtime</h3>
+                  <p className="text-sm text-muted-foreground">AI_PROVIDER={runtime?.ai.provider || 'gemini'}</p>
                 </div>
+                <Badge variant="outline">{runtime?.ai.googleCloudLocation || 'us-central1'}</Badge>
               </div>
-              <div>
-                <Label>Organization ID</Label>
-                <Input value={settings.openaiOrg} onChange={e => update('openaiOrg', e.target.value)} className="mt-2" />
+
+              <div className="grid gap-3 md:grid-cols-2">
+                {(runtime?.ai.providers || []).map((provider) => {
+                  const badge = getProviderBadge(provider);
+                  return (
+                    <div key={provider.id} className="rounded-lg border p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-medium text-foreground">{provider.name}</p>
+                          <p className="mt-1 break-all text-xs text-muted-foreground">{provider.modelEnv}: {provider.model}</p>
+                        </div>
+                        <Badge variant={badge.variant}>{badge.label}</Badge>
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {provider.keyEnv.map((key) => (
+                          <Badge key={key} variant={provider.keyConfigured ? 'success' : 'neutral'}>{key}</Badge>
+                        ))}
+                        {provider.usesSelectedModel && <Badge variant="warning">Dùng model từ UI</Badge>}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-              <Button variant="outline" size="sm" onClick={() => toast.success('Kết nối OpenAI thành công! ✓')}>
-                <CheckCircle2 className="w-4 h-4 mr-2" /> Kiểm tra kết nối
-              </Button>
             </Card>
 
-            <Card className="p-6 space-y-4">
-              <h3 className="font-semibold text-foreground">Llama (Self-hosted)</h3>
-              <div className="grid md:grid-cols-2 gap-4">
+            <Card className="space-y-4 p-6">
+              <h3 className="font-semibold text-foreground">Models hiện có</h3>
+              <div className="grid gap-4 lg:grid-cols-3">
                 <div>
-                  <Label>API Endpoint</Label>
-                  <Input value={settings.llamaEndpoint} onChange={e => update('llamaEndpoint', e.target.value)} className="mt-2" />
+                  <p className="mb-2 text-sm font-medium text-foreground">Generator</p>
+                  <div className="flex flex-wrap gap-2">
+                    {(runtime?.ai.generatorModels || []).map((model) => <Badge key={model.id} variant="outline">{model.name}</Badge>)}
+                  </div>
                 </div>
                 <div>
-                  <Label>Model name</Label>
-                  <Input value={settings.llamaModel} onChange={e => update('llamaModel', e.target.value)} className="mt-2" />
+                  <p className="mb-2 text-sm font-medium text-foreground">Vertex Gemini tuning</p>
+                  <div className="flex flex-wrap gap-2">
+                    {(runtime?.ai.fineTuneBaseModels || []).map((model) => <Badge key={model.id} variant="outline">{model.name}</Badge>)}
+                  </div>
                 </div>
-              </div>
-              <Button variant="outline" size="sm" onClick={() => toast.success('Ollama server đang hoạt động! ✓')}>
-                <CheckCircle2 className="w-4 h-4 mr-2" /> Kiểm tra kết nối
-              </Button>
-            </Card>
-
-            <Card className="p-6 space-y-4">
-              <h3 className="font-semibold text-foreground">Tham số mặc định</h3>
-              <div>
-                <Label>Model mặc định</Label>
-                <Select value={settings.defaultModel} onValueChange={v => update('defaultModel', v)}>
-                  <SelectTrigger className="mt-2"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="gpt-4o">GPT-4o</SelectItem>
-                    <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
-                    <SelectItem value="llama-3.1-70b">Llama 3.1 70B</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Temperature mặc định: {settings.temperature[0]}</Label>
-                <Slider value={settings.temperature} onValueChange={v => update('temperature', v)} min={0} max={1} step={0.1} className="mt-2" />
-              </div>
-              <div>
-                <Label>Max tokens/request: {settings.maxTokensPerRequest[0]}</Label>
-                <Slider value={settings.maxTokensPerRequest} onValueChange={v => update('maxTokensPerRequest', v)} min={256} max={4096} step={128} className="mt-2" />
+                <div>
+                  <p className="mb-2 text-sm font-medium text-foreground">Open-model tuning</p>
+                  <div className="flex flex-wrap gap-2">
+                    {(runtime?.ai.openModelTuningBaseModels || []).map((model) => <Badge key={model.id} variant="outline">{model.name}</Badge>)}
+                  </div>
+                </div>
               </div>
             </Card>
           </TabsContent>
 
-          {/* Email */}
-          <TabsContent value="email">
-            <Card className="p-6 space-y-4">
-              <h3 className="font-semibold text-foreground">SMTP Configuration</h3>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div><Label>SMTP Host</Label><Input value={settings.smtpHost} onChange={e => update('smtpHost', e.target.value)} className="mt-2" /></div>
-                <div><Label>SMTP Port</Label><Input value={settings.smtpPort} onChange={e => update('smtpPort', e.target.value)} className="mt-2" /></div>
-                <div><Label>Username</Label><Input value={settings.smtpUser} onChange={e => update('smtpUser', e.target.value)} className="mt-2" /></div>
-                <div>
-                  <Label>Password</Label>
-                  <div className="relative mt-2">
-                    <Input type={showKeys['smtp'] ? 'text' : 'password'} value={settings.smtpPass} onChange={e => update('smtpPass', e.target.value)} className="pr-10" />
-                    <button onClick={() => toggle('smtp')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/80">
-                      {showKeys['smtp'] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
+          <TabsContent value="email" className="space-y-4">
+            {renderEnvSection(envEmailSection)}
+
+            <Card className="space-y-4 p-6">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <h3 className="font-semibold text-foreground">Trạng thái SMTP từ runtime</h3>
+                <Badge variant={runtime?.smtp.configured ? 'success' : 'warning'}>
+                  {runtime?.smtp.configured ? 'Đã cấu hình' : 'Thiếu SMTP_USER/SMTP_PASS'}
+                </Badge>
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div><Label>SMTP_HOST</Label><Input value={runtime?.smtp.host || ''} readOnly className="mt-2" /></div>
+                <div><Label>SMTP_PORT</Label><Input value={runtime?.smtp.port || ''} readOnly className="mt-2" /></div>
+                <div><Label>SMTP_FROM</Label><Input value={runtime?.smtp.from || ''} readOnly className="mt-2" /></div>
+                <div><Label>SMTP_SECURE</Label><Input value={runtime?.smtp.secure ? 'true' : 'false'} readOnly className="mt-2" /></div>
+              </div>
+            </Card>
+
+            <Card className="space-y-4 p-6">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <h3 className="font-semibold text-foreground">Email templates</h3>
+                <div className="flex flex-wrap gap-2">
+                  {form.emailTemplates.map((template) => (
+                    <Button
+                      key={template.key}
+                      type="button"
+                      variant={selectedTemplate?.key === template.key ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setSelectedTemplateKey(template.key)}
+                    >
+                      {template.name}
+                    </Button>
+                  ))}
                 </div>
               </div>
-              <Button variant="outline" size="sm" onClick={() => toast.success('Email test đã được gửi!')}>
-                <Mail className="w-4 h-4 mr-2" /> Gửi email test
-              </Button>
-            </Card>
 
-            <Card className="p-6 mt-4">
-              <h3 className="font-semibold text-foreground mb-4">Email Templates</h3>
-              <div className="space-y-3">
-                {['Welcome Email', 'OTP Xác thực', 'Đặt lại mật khẩu', 'Nhắc nhở gia hạn', 'Thông báo hết quota'].map(t => (
-                  <div key={t} className="flex items-center justify-between p-3 border rounded-lg">
-                    <span className="text-sm text-foreground/80">{t}</span>
-                    <Button variant="ghost" size="sm" onClick={() => toast.success(`Mở template: ${t}`)}>Chỉnh sửa</Button>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          </TabsContent>
-
-          {/* Security */}
-          <TabsContent value="security" className="space-y-4">
-            <Card className="p-6 space-y-4">
-              <h3 className="font-semibold text-foreground">Bảo mật tài khoản</h3>
-              {[
-                { label: 'Bắt buộc 2FA cho Admin', desc: 'Admin phải bật xác thực 2 bước.' },
-                { label: 'Khóa tài khoản sau 5 lần sai mật khẩu', desc: 'Tự động khóa 15 phút.' },
-                { label: 'JWT token ngắn hạn (1 giờ)', desc: 'Tăng bảo mật nhưng cần đăng nhập lại thường xuyên hơn.' },
-                { label: 'Log tất cả hành động Admin', desc: 'Audit trail đầy đủ cho tài khoản Admin.' },
-              ].map(s => (
-                <div key={s.label} className="flex items-center justify-between p-4 border rounded-xl">
+              {selectedTemplate ? (
+                <div className="grid gap-4">
                   <div>
-                    <p className="font-medium text-sm text-foreground">{s.label}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{s.desc}</p>
+                    <Label>Subject</Label>
+                    <Input value={selectedTemplate.subject} onChange={(event) => updateTemplate('subject', event.target.value)} className="mt-2" />
                   </div>
-                  <Switch defaultChecked />
-                </div>
-              ))}
-            </Card>
-
-            <Card className="p-6 space-y-4">
-              <h3 className="font-semibold text-foreground">IP Access Control</h3>
-              <div>
-                <Label>IP Whitelist (Admin access)</Label>
-                <Textarea placeholder="Mỗi IP một dòng, VD: 116.96.0.0/24" className="mt-2 font-mono text-sm min-h-24" defaultValue={'116.96.0.0/24\n42.118.0.0/24'} />
-              </div>
-              <div>
-                <Label>IP Blacklist</Label>
-                <Textarea placeholder="IPs bị chặn..." className="mt-2 font-mono text-sm min-h-16" defaultValue={'185.220.101.x\n171.25.193.x'} />
-              </div>
-            </Card>
-          </TabsContent>
-
-          {/* Notifications */}
-          <TabsContent value="notifications">
-            <Card className="p-6 space-y-4">
-              <h3 className="font-semibold text-foreground">Cảnh báo hệ thống</h3>
-              {[
-                { label: 'Gửi email khi lỗi rate >5%', desc: 'Alert khi tỷ lệ lỗi API vượt ngưỡng', defaultOn: true },
-                { label: 'Cảnh báo training job thất bại', desc: 'Thông báo ngay khi fine-tuning job gặp lỗi', defaultOn: true },
-                { label: 'Thông báo OpenAI quota cạn', desc: 'Cảnh báo khi sử dụng 80% quota OpenAI', defaultOn: true },
-                { label: 'Weekly analytics report', desc: 'Báo cáo tổng quan hàng tuần gửi email', defaultOn: false },
-                { label: 'User exceeded quota', desc: 'Khi user dùng hết 90% quota tháng', defaultOn: false },
-              ].map(n => (
-                <div key={n.label} className="flex items-center justify-between p-4 border rounded-xl">
                   <div>
-                    <p className="font-medium text-sm text-foreground">{n.label}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{n.desc}</p>
+                    <Label>Plain text fallback</Label>
+                    <Textarea value={selectedTemplate.text} onChange={(event) => updateTemplate('text', event.target.value)} className="mt-2 min-h-32 font-mono text-sm" />
                   </div>
-                  <Switch defaultChecked={n.defaultOn} />
+                  <div>
+                    <Label>HTML template</Label>
+                    <div className="mt-2 overflow-hidden rounded-lg border border-border bg-card">
+                      <Editor
+                        apiKey={tinymceApiKey}
+                        value={selectedTemplate.html}
+                        init={{
+                          height: 420,
+                          menubar: 'edit insert view format table tools',
+                          branding: false,
+                          statusbar: true,
+                          plugins: 'autolink lists link table code wordcount autoresize preview searchreplace visualblocks fullscreen',
+                          toolbar: 'undo redo | blocks | bold italic underline forecolor backcolor | alignleft aligncenter alignright | bullist numlist | link table | removeformat | preview fullscreen code',
+                          content_style: 'body { font-family: Inter, Arial, sans-serif; font-size: 14px; line-height: 1.7; color: #111827; } p { margin: 0 0 12px; } .token { font-family: monospace; background: #f3f4f6; padding: 2px 4px; border-radius: 4px; } table { border-collapse: collapse; width: 100%; } td, th { border: 1px solid #d1d5db; padding: 8px; }',
+                        }}
+                        onEditorChange={(value: string) => updateTemplate('html', value)}
+                      />
+                    </div>
+                  </div>
+                  <div className="rounded-lg border bg-muted/30 p-3 text-xs text-muted-foreground">
+                    Biến có sẵn: {'{{siteName}}'}, {'{{supportEmail}}'}, {'{{name}}'}, {'{{otp}}'}, {'{{minutes}}'}, {'{{accountLabel}}'}, {'{{planName}}'}, {'{{renewDate}}'}, {'{{quotaUsed}}'}, {'{{quotaLimit}}'}.
+                  </div>
                 </div>
-              ))}
-            </Card>
-            <Card className="p-6 mt-4">
-              <h3 className="font-semibold text-foreground mb-4">Webhook URL</h3>
-              <Input placeholder="https://hooks.slack.com/services/..." className="font-mono" />
-              <p className="text-xs text-muted-foreground mt-2">Nhận thông báo qua Slack, Discord hoặc bất kỳ webhook URL nào</p>
-            </Card>
-          </TabsContent>
-
-          {/* System */}
-          <TabsContent value="system" className="space-y-4">
-            <Card className="p-6 space-y-4">
-              <h3 className="font-semibold text-foreground">Logging</h3>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <Label>Log Level</Label>
-                  <Select value={settings.logLevel} onValueChange={v => update('logLevel', v)}>
-                    <SelectTrigger className="mt-2"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="debug">Debug (verbose)</SelectItem>
-                      <SelectItem value="info">Info (mặc định)</SelectItem>
-                      <SelectItem value="warn">Warning only</SelectItem>
-                      <SelectItem value="error">Error only</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Giữ log ({settings.logRetention} ngày)</Label>
-                  <Slider value={[settings.logRetention]} onValueChange={v => update('logRetention', v[0])} min={7} max={90} step={7} className="mt-4" />
-                </div>
-              </div>
-            </Card>
-
-            <Card className="p-6 space-y-4">
-              <h3 className="font-semibold text-foreground">Backup</h3>
-              <div className="flex items-center justify-between p-4 border rounded-xl">
-                <div>
-                  <p className="font-medium text-sm">Tự động backup database</p>
-                  <p className="text-xs text-muted-foreground">Backup dữ liệu định kỳ lên S3/cloud storage</p>
-                </div>
-                <Switch checked={settings.backupEnabled} onCheckedChange={v => update('backupEnabled', v)} />
-              </div>
-              {settings.backupEnabled && (
-                <div>
-                  <Label>Tần suất backup</Label>
-                  <Select value={settings.backupFrequency} onValueChange={v => update('backupFrequency', v)}>
-                    <SelectTrigger className="mt-2"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="hourly">Mỗi giờ</SelectItem>
-                      <SelectItem value="daily">Hàng ngày (00:00)</SelectItem>
-                      <SelectItem value="weekly">Hàng tuần (CN 00:00)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              ) : (
+                <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">Chưa có template email.</div>
               )}
-              <Button variant="outline" size="sm" onClick={() => toast.success('Đang backup ngay bây giờ...')}>
-                <Database className="w-4 h-4 mr-2" /> Backup ngay
-              </Button>
             </Card>
+          </TabsContent>
 
-            <Card className="p-6">
-              <h3 className="font-semibold text-foreground mb-4">Thao tác nguy hiểm</h3>
-              <div className="space-y-3">
-                <Button variant="outline" className="w-full justify-start border-amber-300 text-amber-700 hover:bg-warning/10" onClick={() => toast('Đang xóa cache...')}>
-                  <RefreshCw className="w-4 h-4 mr-2" /> Xóa cache toàn bộ
-                </Button>
-                <Button variant="outline" className="w-full justify-start border-red-300 text-red-700 hover:bg-destructive/10" onClick={() => toast.error('Thao tác này cần xác nhận!')}>
-                  <AlertCircle className="w-4 h-4 mr-2" /> Reset tất cả rate limits
-                </Button>
+          <TabsContent value="quota" className="space-y-4">
+            <Card className="space-y-4 p-6">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <h3 className="font-semibold text-foreground">Reset quota người dùng</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">Quota đã sử dụng của tất cả gói sẽ được tính lại từ thời điểm reset.</p>
+                </div>
+                <Badge variant="outline">Lần gần nhất: {formatDateTime(systemSettings?.quotaResetAt)}</Badge>
               </div>
+              <div className="rounded-lg border border-amber-300 bg-warning/10 p-4 text-sm text-amber-800">
+                <AlertCircle className="mr-2 inline h-4 w-4" />
+                Hành động này không xóa lịch sử generate, chỉ đặt mốc để quota hiện tại trở về 0.
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full justify-start border-amber-300 text-amber-800 hover:bg-warning/10 sm:w-auto"
+                onClick={() => void handleResetQuotas()}
+                disabled={resetQuotas.isPending}
+              >
+                {resetQuotas.isPending ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+                Reset quota tất cả người dùng
+              </Button>
             </Card>
           </TabsContent>
         </Tabs>
 
-        {/* Save button */}
-        <div className="flex justify-end mt-6">
-          <Button
-            size="lg"
-            className="bg-gradient-to-r from-green-600 to-green-600 text-white px-10"
-            onClick={() => void save()}
-            disabled={updateSystemSettings.isPending}
-          >
+        <div className="mt-6 flex justify-end">
+          <Button size="lg" onClick={() => void save()} disabled={updateSystemSettings.isPending}>
             {updateSystemSettings.isPending ? (
               <span className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-white/40 border-t-white" />
             ) : (
-              <Save className="w-5 h-5 mr-2" />
+              <Save className="mr-2 h-5 w-5" />
             )}
-            {updateSystemSettings.isPending ? 'Đang lưu...' : 'Lưu tất cả cài đặt'}
+            {updateSystemSettings.isPending ? 'Đang lưu...' : 'Lưu cài đặt hệ thống'}
           </Button>
         </div>
       </div>

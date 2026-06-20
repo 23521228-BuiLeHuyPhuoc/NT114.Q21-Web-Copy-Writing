@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import toast from 'react-hot-toast';
 import { getPublicText } from '@/lib/publicSiteDefaults';
 import { publicSiteService, type PublicPageContent } from '@/services/publicSiteService';
+import { contactSubmissionService, type ContactTopic } from '@/services/contactSubmissionService';
 import {
   Mail, Phone, MapPin, Clock, MessageSquare,
   Send, Headphones, BookOpen, Zap, CheckCircle2,
@@ -30,9 +31,16 @@ const FAQ = [
   { q: 'Copy được tạo có bị phát hiện là AI không?', a: 'Model của chúng tôi được tối ưu để tạo văn phong tự nhiên. Fine-tuning với giọng văn riêng của bạn sẽ giúp copy nghe hoàn toàn như con người viết.' },
 ];
 
+function getContactErrorMessage(error: unknown) {
+  const err = error as { response?: { data?: { message?: string; errors?: Array<{ message?: string }> } }; message?: string };
+  const firstValidationMessage = err.response?.data?.errors?.find(item => item.message)?.message;
+  return firstValidationMessage || err.response?.data?.message || err.message || 'Không gửi được tin nhắn';
+}
+
 export function ContactPage() {
-  const [form, setForm] = useState({ name: '', email: '', company: '', topic: '', message: '' });
+  const [form, setForm] = useState<{ name: string; email: string; company: string; topic: ContactTopic | ''; message: string }>({ name: '', email: '', company: '', topic: '', message: '' });
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [faqOpen, setFaqOpen] = useState<number | null>(null);
   const [contactContent, setContactContent] = useState<PublicPageContent>({});
 
@@ -55,13 +63,29 @@ export function ContactPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name || !form.email || !form.message) {
+    const name = form.name.trim();
+    const email = form.email.trim();
+    const company = form.company.trim();
+    const message = form.message.trim();
+    const topic = form.topic;
+
+    if (!name || !email || !topic || !message) {
       toast.error('Vui lòng điền đầy đủ thông tin bắt buộc');
       return;
     }
-    await new Promise(r => setTimeout(r, 800));
-    setSubmitted(true);
-    toast.success('Đã gửi tin nhắn! Chúng tôi sẽ phản hồi trong 24 giờ.');
+
+    const payload = { name, email, company, topic, message };
+
+    setSubmitting(true);
+    try {
+      await contactSubmissionService.create(payload);
+      setSubmitted(true);
+      toast.success('Đã gửi tin nhắn! Chúng tôi sẽ phản hồi trong 24 giờ.');
+    } catch (error) {
+      toast.error(getContactErrorMessage(error));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -167,7 +191,7 @@ export function ContactPage() {
                     </div>
                     <div>
                       <Label>Chủ đề *</Label>
-                      <Select value={form.topic} onValueChange={v => setForm({ ...form, topic: v })}>
+                      <Select value={form.topic} onValueChange={v => setForm({ ...form, topic: v as ContactTopic })}>
                         <SelectTrigger className="mt-2 h-12 rounded-xl border-border"><SelectValue placeholder="Chọn chủ đề" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="product">Tư vấn sản phẩm</SelectItem>
@@ -192,9 +216,10 @@ export function ContactPage() {
                   </div>
                   <button
                     type="submit"
+                    disabled={submitting}
                     className="w-full h-13 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-lg shadow-primary/20 py-4"
                   >
-                    <Send className="w-4 h-4" /> Gửi tin nhắn
+                    <Send className="w-4 h-4" /> {submitting ? 'Đang gửi...' : 'Gửi tin nhắn'}
                   </button>
                 </form>
               )}

@@ -64,10 +64,6 @@ function countWords(text: string) {
   return text.trim().split(/\s+/).filter(Boolean).length;
 }
 
-function normalizeComparableText(text: string) {
-  return text.replace(/\s+/g, ' ').trim();
-}
-
 function normalizeIgnoredPhrase(value: string) {
   return value.replace(/\s+/g, ' ').trim().slice(0, MAX_IGNORED_PHRASE_LENGTH).trim();
 }
@@ -546,7 +542,6 @@ export function CustomerPlagiarismCheck() {
   const [text, setText] = useState('');
   const [checkFile, setCheckFile] = useState<File | null>(null);
   const [checkFileName, setCheckFileName] = useState('');
-  const [checkFileText, setCheckFileText] = useState('');
   const [extractingFile, setExtractingFile] = useState(false);
   const [referenceFiles, setReferenceFiles] = useState<File[]>([]);
   const [result, setResult] = useState<PlagiarismReport | null>(null);
@@ -633,18 +628,15 @@ export function CustomerPlagiarismCheck() {
     setExtractingFile(true);
     setCheckFile(null);
     setCheckFileName(file.name);
-    setCheckFileText('');
     try {
       const extracted = await plagiarismService.extractText(file);
       setText(extracted.text);
       setCheckFile(file);
-      setCheckFileText(extracted.text);
       setResult(null);
       toast.success(`Đã chuyển ${extracted.fileName} sang văn bản (${extracted.wordCount} từ)`);
     } catch (error) {
       setCheckFile(null);
       setCheckFileName('');
-      setCheckFileText('');
       toast.error(errorMessage(error));
     } finally {
       setExtractingFile(false);
@@ -679,20 +671,10 @@ export function CustomerPlagiarismCheck() {
     const trimmed = text.trim();
     const pendingIgnoredPhrases = splitIgnoredPhraseInput(ignoredPhraseInput);
     const normalizedIgnoredPhrases = normalizeIgnoredPhrases([...ignoredPhrases, ...pendingIgnoredPhrases]);
-    const shouldUseCheckFileAsSource = Boolean(
-      checkFile
-      && checkFileText
-      && referenceFiles.length === 0
-      && normalizeComparableText(trimmed) !== normalizeComparableText(checkFileText),
-    );
-    const effectiveReferenceFiles = sourceConfig.uploads
-      ? referenceFiles
-      : shouldUseCheckFileAsSource && checkFile
-        ? [checkFile]
-        : [];
+    const effectiveReferenceFiles = sourceConfig.uploads ? referenceFiles : [];
     const effectiveSourceConfig: PlagiarismSourceConfig = {
       ...sourceConfig,
-      uploads: sourceConfig.uploads || effectiveReferenceFiles.length > 0,
+      uploads: sourceConfig.uploads && effectiveReferenceFiles.length > 0,
     };
     const effectiveSelectedSourceCount = Object.values(effectiveSourceConfig).filter(Boolean).length;
 
@@ -885,7 +867,7 @@ export function CustomerPlagiarismCheck() {
           </div>
           <div className='mt-4 flex gap-3'>
             <Button className='h-11 flex-1 text-white' onClick={handleCheck} disabled={check.isPending}>{check.isPending ? <><RefreshCw className='mr-2 h-4 w-4 animate-spin' /> Đang kiểm tra...</> : <><FileCheck className='mr-2 h-4 w-4' /> Kiểm tra đạo văn</>}</Button>
-            <Button variant='outline' onClick={() => { setText(''); setCheckFile(null); setCheckFileName(''); setCheckFileText(''); setReferenceFiles([]); setSourceConfig(prev => ({ ...prev, uploads: false })); setResult(null); setExpandedSources({}); }}>Xóa</Button>
+            <Button variant='outline' onClick={() => { setText(''); setCheckFile(null); setCheckFileName(''); setReferenceFiles([]); setSourceConfig(prev => ({ ...prev, uploads: false })); setResult(null); setExpandedSources({}); }}>Xóa</Button>
           </div>
         </Card>
         {result && (

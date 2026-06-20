@@ -57,6 +57,8 @@ export const AUDIT_ACTION_ICONS: Record<string, LucideIcon> = {
   'admin.template.deleted': Trash2,
   'admin.template.restored': CheckCircle2,
   'admin.template.permanent_delete': Trash2,
+  'admin.contact.updated': Edit2,
+  'admin.contact.deleted': Trash2,
   'admin.settings.update': Settings,
   'model.finetune.start': Settings,
   'api.rate_limit': AlertTriangle,

@@ -11,6 +11,7 @@ const {
 } = require('../config/generatorModels');
 const createError = require('../utils/createError');
 const paymentGatewayService = require('./paymentGatewayService');
+const systemSettingsService = require('./systemSettingsService');
 
 const METHOD_LABELS = {
   cash: 'Tiền mặt',
@@ -24,6 +25,78 @@ const METHOD_LABELS = {
 };
 
 const CUSTOMER_PLAN_SLUGS = ['free', 'pro', 'business'];
+const CHECKOUT_PLAN_SLUGS = ['free', 'pro', 'business'];
+const CUSTOMER_ROLE_BY_PLAN_SLUG = {
+  free: 'free_customer',
+  pro: 'pro_customer',
+  business: 'business_customer',
+};
+
+function getPlanRank(plan) {
+  const slug = String(plan?.slug || '').toLowerCase();
+  const index = CUSTOMER_PLAN_SLUGS.indexOf(slug);
+  if (index !== -1) return index;
+
+  const sortOrder = Number(plan?.sortOrder);
+  if (Number.isFinite(sortOrder) && sortOrder > 0) return sortOrder;
+
+  const price = Number(plan?.priceMonthly ?? plan?.price ?? 0);
+  return Number.isFinite(price) ? price : 0;
+}
+
+function isSubscriptionCurrentlyUsable(subscription) {
+  if (!subscription || !['active', 'trialing', 'past_due'].includes(subscription.status)) return false;
+  if (!subscription.currentPeriodEnd) return true;
+  return new Date(subscription.currentPeriodEnd).getTime() > Date.now();
+}
+
+function getPlanChangeDirection(currentPlan, targetPlan) {
+  const currentRank = getPlanRank(currentPlan);
+  const targetRank = getPlanRank(targetPlan);
+
+  if (targetRank > currentRank) return 'upgrade';
+  if (targetRank < currentRank) return 'downgrade';
+  return 'same';
+}
+
+function getCustomerRoleForPlan(plan) {
+  return CUSTOMER_ROLE_BY_PLAN_SLUG[String(plan?.slug || '').toLowerCase()] || null;
+}
+
+async function syncCustomerRoleForPlan(userId, plan) {
+  const customerRole = getCustomerRoleForPlan(plan);
+  if (!customerRole) return;
+
+  await AccountUser.updateOne(
+    { _id: userId },
+    { $set: { customerRole } },
+  );
+}
+
+async function assertCheckoutPlanChangeAllowed(userId, targetPlan) {
+  const subscription = await getCurrentSubscription(userId);
+  if (!isSubscriptionCurrentlyUsable(subscription)) return null;
+
+  const currentPlan = subscription.planId;
+  if (!currentPlan) return null;
+
+  const direction = getPlanChangeDirection(currentPlan, targetPlan);
+  if (direction === 'upgrade') return { subscription, currentPlan, direction };
+
+  if (direction === 'same') {
+    throw createError(409, 'Gói này đang được áp dụng cho tài khoản của bạn', undefined, {
+      code: 'PLAN_ALREADY_ACTIVE',
+      currentPlan: serializePlan(currentPlan),
+      requestedPlan: serializePlan(targetPlan),
+    });
+  }
+
+  throw createError(409, 'Không thể thanh toán gói thấp hơn gói hiện tại. Vui lòng dùng chức năng đổi gói/hạ gói riêng nếu cần.', undefined, {
+    code: 'PLAN_DOWNGRADE_NOT_ALLOWED',
+    currentPlan: serializePlan(currentPlan),
+    requestedPlan: serializePlan(targetPlan),
+  });
+}
 
 function toId(value) {
   if (!value) return null;
@@ -444,25 +517,31 @@ async function getUsageForWindow(userId, start, end) {
 }
 
 async function getGenerateUsageSummary(userId, now = new Date()) {
+  const quotaResetAt = await systemSettingsService.getQuotaResetAt();
+  const resetDate = quotaResetAt ? new Date(quotaResetAt) : null;
   const monthStart = startOfMonth(now);
   const monthEnd = endOfMonth(now);
   const fiveHoursStart = subtractHours(now, 5);
   const weekStart = subtractDays(now, 7);
+  const effectiveMonthStart = resetDate && resetDate > monthStart ? resetDate : monthStart;
+  const effectiveFiveHoursStart = resetDate && resetDate > fiveHoursStart ? resetDate : fiveHoursStart;
+  const effectiveWeekStart = resetDate && resetDate > weekStart ? resetDate : weekStart;
 
   const [monthly, fiveHours, weekly] = await Promise.all([
-    getUsageForWindow(userId, monthStart, monthEnd),
-    getUsageForWindow(userId, fiveHoursStart, now),
-    getUsageForWindow(userId, weekStart, now),
+    getUsageForWindow(userId, effectiveMonthStart, monthEnd),
+    getUsageForWindow(userId, effectiveFiveHoursStart, now),
+    getUsageForWindow(userId, effectiveWeekStart, now),
   ]);
 
   return {
     monthly,
     fiveHours,
     weekly,
+    quotaResetAt,
     windows: {
-      monthly: { start: monthStart, end: monthEnd },
-      fiveHours: { start: fiveHoursStart, end: now },
-      weekly: { start: weekStart, end: now },
+      monthly: { start: effectiveMonthStart, end: monthEnd },
+      fiveHours: { start: effectiveFiveHoursStart, end: now },
+      weekly: { start: effectiveWeekStart, end: now },
     },
   };
 }
@@ -675,6 +754,7 @@ async function createPaymentRecord({
 async function activatePayment(payment, { provider, providerTransactionId, providerPayload } = {}) {
   if (payment.status === 'success') {
     await payment.populate(['userId', 'planId', 'subscriptionId']);
+    await syncCustomerRoleForPlan(payment.userId, payment.planId);
     return payment;
   }
 
@@ -682,6 +762,14 @@ async function activatePayment(payment, { provider, providerTransactionId, provi
   if (!plan) {
     throw createError(404, 'Plan not found');
   }
+  if (plan.isDeleted || !plan.isActive) {
+    throw createError(409, 'Gói của hóa đơn này không còn khả dụng để kích hoạt', undefined, {
+      code: 'PAYMENT_PLAN_NOT_AVAILABLE',
+      requestedPlan: serializePlan(plan),
+    });
+  }
+
+  await assertCheckoutPlanChangeAllowed(toId(payment.userId), plan);
 
   const billingCycle = payment.metadata?.billingCycle || 'monthly';
   const now = new Date();
@@ -726,6 +814,7 @@ async function activatePayment(payment, { provider, providerTransactionId, provi
   };
   payment.markModified('metadata');
   await payment.save();
+  await syncCustomerRoleForPlan(payment.userId, plan);
   await payment.populate(['userId', 'planId', 'subscriptionId']);
 
   return payment;
@@ -803,9 +892,17 @@ function buildCheckoutResponse(payment, extras = {}) {
 async function createCheckout(userId, payload, req = {}) {
   const user = await ensureUserExists(userId);
   const plan = await findPlanOrThrow(payload.planId || payload.planSlug);
-  if (!CUSTOMER_PLAN_SLUGS.includes(plan.slug)) {
+  if (!CHECKOUT_PLAN_SLUGS.includes(plan.slug)) {
     throw createError(404, 'Plan not found');
   }
+  if (!plan.isActive) {
+    throw createError(409, 'Gói này hiện không khả dụng để thanh toán', undefined, {
+      code: 'PLAN_NOT_AVAILABLE',
+      requestedPlan: serializePlan(plan),
+    });
+  }
+
+  await assertCheckoutPlanChangeAllowed(userId, plan);
 
   const billingCycle = payload.billingCycle === 'yearly' ? 'yearly' : 'monthly';
   const planAmount = billingCycle === 'yearly' ? plan.priceYearly : plan.priceMonthly;
@@ -1038,6 +1135,12 @@ async function findPaymentByGatewayTransaction(gatewayTransactionId) {
     .populate('subscriptionId');
 }
 
+function getZalopayGatewayFailureMessage(gatewayResult = {}) {
+  return gatewayResult.sub_return_message
+    || gatewayResult.return_message
+    || `ZaloPay response ${gatewayResult.return_code ?? 'unknown'}`;
+}
+
 function isVnpayPaymentSuccessful(params) {
   return params.vnp_ResponseCode === '00'
     && (!params.vnp_TransactionStatus || params.vnp_TransactionStatus === '00');
@@ -1191,25 +1294,41 @@ async function handleZalopayCallback(body = {}) {
 
 async function handleZalopayReturn(query = {}) {
   const appTransId = query.app_trans_id || query.apptransid || query.appTransId;
-  const payment = await findPaymentByGatewayTransaction(appTransId);
+  const invoiceNo = query.invoice || query.invoiceNo || query.invoice_no;
+  const payment = await findPaymentByGatewayTransaction(appTransId) || await findPaymentByInvoiceNo(invoiceNo);
 
   if (!payment) {
     return {
       gateway: 'zalopay',
-      invoiceNo: null,
+      invoiceNo: invoiceNo || null,
       success: false,
       pending: true,
       message: 'Waiting for ZaloPay callback',
     };
   }
 
+  const resolvedAppTransId = appTransId || payment.metadata?.gatewayTransactionId;
+
   if (payment.status === 'pending') {
     try {
-      const gatewayResult = await paymentGatewayService.queryZalopayOrder(appTransId);
+      const gatewayResult = await paymentGatewayService.queryZalopayOrder(resolvedAppTransId);
       if (Number(gatewayResult.return_code) === 1) {
+        if (Number(gatewayResult.amount) !== Math.round(payment.amount)) {
+          const failedPayment = await markPaymentFailed(payment, 'Invalid ZaloPay amount', {
+            zalopayQuery: gatewayResult,
+          });
+          return {
+            gateway: 'zalopay',
+            invoiceNo: failedPayment.invoiceNo,
+            success: false,
+            payment: serializePayment(failedPayment),
+            message: 'Invalid amount',
+          };
+        }
+
         const updatedPayment = await activatePayment(payment, {
           provider: 'zalopay',
-          providerTransactionId: String(gatewayResult.zp_trans_id || appTransId),
+          providerTransactionId: String(gatewayResult.zp_trans_id || resolvedAppTransId),
           providerPayload: { zalopayQuery: gatewayResult },
         });
         return {
@@ -1217,6 +1336,19 @@ async function handleZalopayReturn(query = {}) {
           invoiceNo: updatedPayment.invoiceNo,
           success: true,
           payment: serializePayment(updatedPayment),
+        };
+      }
+
+      if (Number(gatewayResult.return_code) === 2) {
+        const failedPayment = await markPaymentFailed(payment, getZalopayGatewayFailureMessage(gatewayResult), {
+          zalopayQuery: gatewayResult,
+        });
+        return {
+          gateway: 'zalopay',
+          invoiceNo: failedPayment.invoiceNo,
+          success: false,
+          payment: serializePayment(failedPayment),
+          message: getZalopayGatewayFailureMessage(gatewayResult),
         };
       }
     } catch (error) {

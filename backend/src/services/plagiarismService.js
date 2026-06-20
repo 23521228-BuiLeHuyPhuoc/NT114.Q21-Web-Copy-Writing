@@ -268,6 +268,9 @@ function scoreTexts(inputText, sourceText, options = {}) {
   const directExactScore = scoreDirectExactContainment(inputText, sourceText, options);
   if (directExactScore) return directExactScore;
 
+  const normalizedExactScore = scoreNormalizedExactContainment(inputText, sourceText, options);
+  if (normalizedExactScore) return normalizedExactScore;
+
   if (String(sourceText || '').length > MAX_SEGMENT_SCAN_SOURCE_LENGTH) {
     return emptyScoreFromInput(inputText, options);
   }
@@ -400,8 +403,21 @@ function scoreDirectExactContainment(inputText, sourceText, options = {}) {
   return exactScoreFromInput(inputText, options);
 }
 
+function scoreNormalizedExactContainment(inputText, sourceText, options = {}) {
+  const input = normalizeForComparison(inputText, options);
+  if (input.length < 40) return null;
+
+  const source = normalizeForComparison(sourceText, options);
+  if (!source.includes(input)) return null;
+
+  return exactScoreFromInput(inputText, options);
+}
+
 function sourceHasDirectExactMatch(inputText, sourceText, options = {}) {
-  return Boolean(scoreDirectExactContainment(inputText, sourceText, options));
+  return Boolean(
+    scoreDirectExactContainment(inputText, sourceText, options)
+    || scoreNormalizedExactContainment(inputText, sourceText, options),
+  );
 }
 
 function splitSegments(text) {
@@ -641,7 +657,7 @@ function buildDirectExactMatch(inputText, candidate, scored, options = {}) {
     exactMatchScore: scored.exactMatchScore,
     phraseOverlapScore: scored.phraseOverlapScore,
     wordOverlapScore: scored.wordOverlapScore,
-    scoreBasis: 'exact',
+    scoreBasis: getScoreBasis(scored),
     matchedWords: scored.matchedWords,
     totalWords: scored.totalWords,
     matchedPhrases: scored.matchedPhrases,
@@ -655,6 +671,11 @@ function shouldUseDirectExactMatch(inputText, candidate, scored, threshold, opti
     && scored.plagiarismScore >= threshold
     && String(candidate.text || '').length > MAX_SEGMENT_SCAN_SOURCE_LENGTH
     && sourceHasDirectExactMatch(inputText, candidate.text, options);
+}
+
+function shouldUseDocumentLevelMatch(scored, threshold) {
+  return scored.plagiarismScore >= threshold
+    && (scored.exactMatchScore >= threshold || scored.phraseOverlapScore >= threshold);
 }
 
 function topicMatchThreshold(threshold) {
@@ -1162,12 +1183,13 @@ async function checkPlagiarism(userId, payload) {
       const comparisonCandidateText = isLargeSource ? candidate.text : stripIgnoredSegments(candidate.text, scoringOptions);
       const textScore = scoreTexts(comparisonCheckText, comparisonCandidateText, scoringOptions);
       const useDirectExactMatch = shouldUseDirectExactMatch(checkText, candidate, textScore, effectiveThreshold, scoringOptions);
-      const matches = useDirectExactMatch
+      const useDocumentLevelMatch = useDirectExactMatch || shouldUseDocumentLevelMatch(textScore, effectiveThreshold);
+      const matches = useDocumentLevelMatch
         ? [buildDirectExactMatch(checkText, candidate, textScore, scoringOptions)]
         : isLargeSource
           ? []
           : findSegmentMatches(checkText, candidate, effectiveThreshold, scoringOptions);
-      const topicMatches = useDirectExactMatch || isLargeSource
+      const topicMatches = useDocumentLevelMatch || isLargeSource
         ? []
         : findTopicSegmentMatches(checkText, candidate, effectiveThreshold, scoringOptions);
       const bestSegment = matches[0] || {};

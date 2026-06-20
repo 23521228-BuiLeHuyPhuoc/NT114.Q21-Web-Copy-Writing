@@ -40,6 +40,22 @@ function buildSearchFilter(search) {
   };
 }
 
+async function ensureProjectNameAvailable(userId, name, exceptId = null) {
+  const normalizedName = String(name || '').trim();
+  if (!normalizedName) return;
+
+  const query = {
+    userId,
+    name: new RegExp(`^${escapeRegExp(normalizedName)}$`, 'i'),
+  };
+  if (exceptId) query._id = { $ne: exceptId };
+
+  const existing = await Project.findOne(query).select('_id');
+  if (existing) {
+    throw createError(409, 'Tên dự án đã tồn tại trong tài khoản này');
+  }
+}
+
 function normalizeProjectStats(stats = {}) {
   const contentCount = Number(stats.contentCount ?? stats.count ?? 0);
   const completedCount = Number(stats.completedCount ?? stats.completed ?? 0);
@@ -161,6 +177,7 @@ async function getProject(userId, id) {
 }
 
 async function createProject(userId, payload) {
+  await ensureProjectNameAvailable(userId, payload.name);
   const existingCount = await Project.countDocuments({ userId });
   const project = await Project.create({
     userId,
@@ -175,6 +192,10 @@ async function createProject(userId, payload) {
 
 async function updateProject(userId, id, payload) {
   const project = await findProjectOrThrow(userId, id);
+
+  if (payload.name !== undefined) {
+    await ensureProjectNameAvailable(userId, payload.name, project._id);
+  }
 
   if (payload.name !== undefined) project.name = payload.name;
   if (payload.description !== undefined) project.description = payload.description;

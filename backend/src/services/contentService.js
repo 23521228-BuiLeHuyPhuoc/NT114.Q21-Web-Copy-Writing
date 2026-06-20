@@ -372,6 +372,9 @@ async function getContent(userId, id) {
 
 async function createContent(userId, payload) {
   await projectService.ensureProjectBelongsToUser(userId, payload.projectId);
+  if (payload.templateId) {
+    await templateService.getTemplateForGenerate(userId, payload.templateId);
+  }
 
   const content = await Content.create({
     userId,

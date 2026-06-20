@@ -1,10 +1,19 @@
 const Joi = require('joi');
 
 const objectId = Joi.string().hex().length(24).required();
+const customerPlanSlug = Joi.string().valid('free', 'pro', 'business');
+const paymentLookupId = Joi.alternatives().try(
+  objectId,
+  Joi.string().trim().pattern(/^INV-\d{8}-\d{1,12}$/).max(80),
+).required();
 const modelId = Joi.string().trim().min(1).max(600);
 
 const paramsWithId = Joi.object({
   id: objectId,
+});
+
+const paramsWithPaymentLookupId = Joi.object({
+  id: paymentLookupId,
 });
 
 const limitValue = Joi.number().integer().min(-1);
@@ -56,14 +65,20 @@ const updatePlanSchema = Joi.object(planPayload).min(1);
 
 const checkoutSchema = Joi.object({
   planId: Joi.string().hex().length(24),
-  planSlug: Joi.string().trim().lowercase().max(80),
+  planSlug: customerPlanSlug,
   billingCycle: Joi.string().valid('monthly', 'yearly').default('monthly'),
   method: Joi.string().valid('cash', 'bank', 'momo', 'zalo', 'zalopay', 'vnpay', 'vietqr', 'visa', 'manual').default('manual'),
 }).xor('planId', 'planSlug');
 
+const listPaymentsSchema = Joi.object({
+  status: Joi.string().valid('all', 'success', 'pending', 'failed', 'refunded').default('all'),
+});
+
 module.exports = {
   paramsWithId,
+  paramsWithPaymentLookupId,
   createPlanSchema,
   updatePlanSchema,
   checkoutSchema,
+  listPaymentsSchema,
 };

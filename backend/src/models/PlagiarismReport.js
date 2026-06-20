@@ -7,6 +7,11 @@ function countWords(text) {
     .filter(Boolean).length;
 }
 
+const MAX_CHECK_TEXT_LENGTH = Math.max(
+  60000,
+  Number(process.env.PLAGIARISM_MAX_CHECK_TEXT_CHARS || process.env.PLAGIARISM_MAX_EXTRACTED_TEXT_CHARS || 300000),
+);
+
 const matchSchema = new mongoose.Schema(
   {
     start: {
@@ -346,7 +351,7 @@ const plagiarismReportSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
-      maxlength: 60000,
+      maxlength: MAX_CHECK_TEXT_LENGTH,
     },
     wordCount: {
       type: Number,

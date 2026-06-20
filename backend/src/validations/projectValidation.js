@@ -1,6 +1,11 @@
 const Joi = require('joi');
 
 const objectId = Joi.string().hex().length(24);
+const projectColor = Joi.string()
+  .trim()
+  .pattern(/^from-[a-z]+-\d{3}\s+to-[a-z]+-\d{3}$/)
+  .message('color must be a supported gradient class')
+  .max(80);
 
 const paramsWithId = Joi.object({
   id: objectId.required(),
@@ -17,7 +22,7 @@ const createProjectSchema = Joi.object({
   name: Joi.string().trim().min(2).max(120).required(),
   description: Joi.string().trim().max(1000).allow('').default(''),
   industry: Joi.string().trim().max(120).allow('').default('General'),
-  color: Joi.string().trim().max(80).allow('').optional(),
+  color: projectColor.allow('').optional(),
 });
 
 const updateProjectSchema = Joi.object({
@@ -25,7 +30,7 @@ const updateProjectSchema = Joi.object({
   description: Joi.string().trim().max(1000).allow(''),
   industry: Joi.string().trim().max(120).allow(''),
   isArchived: Joi.boolean(),
-  color: Joi.string().trim().max(80).allow(''),
+  color: projectColor.allow(''),
 }).min(1);
 
 module.exports = {

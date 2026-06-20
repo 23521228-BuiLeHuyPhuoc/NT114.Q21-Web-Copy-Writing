@@ -71,6 +71,11 @@ function decodeTextBuffer(buffer) {
   return buffer.toString('latin1');
 }
 
+function toPdfParseBuffer(buffer) {
+  if (buffer instanceof Uint8Array) return new Uint8Array(buffer);
+  return buffer;
+}
+
 async function readFileText(file) {
   if (!file?.buffer) {
     throw createError(400, 'Please upload a file to extract text');
@@ -79,8 +84,12 @@ async function readFileText(file) {
   const extension = getFileExtension(file);
 
   if (extension === '.pdf') {
-    const parsed = await pdfParse(file.buffer);
-    return parsed.text || '';
+    try {
+      const parsed = await pdfParse(toPdfParseBuffer(file.buffer));
+      return parsed.text || '';
+    } catch (error) {
+      throw createError(400, `Could not read text from PDF ${normalizeFileName(file.originalname)}: ${error.message || 'invalid PDF'}`);
+    }
   }
 
   if (extension === '.docx') {

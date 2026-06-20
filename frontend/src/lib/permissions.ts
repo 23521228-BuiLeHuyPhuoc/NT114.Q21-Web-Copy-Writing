@@ -5,6 +5,7 @@ import {
   DollarSign,
   FileText,
   Globe2,
+  Inbox,
   KeyRound,
   LayoutDashboard,
   MessageSquare,
@@ -131,6 +132,23 @@ ADMIN_PERMISSIONS.push({
   system: true,
 });
 
+PERMISSION_ROUTE_OPTIONS.push({
+  scope: 'admin',
+  route: '/admin/contacts',
+  label: 'Lien he',
+  group: 'Nguoi dung',
+});
+
+ADMIN_PERMISSIONS.push({
+  key: 'contacts',
+  label: 'Lien he',
+  description: 'Quan ly tin nhan lien he tu public site',
+  group: 'Nguoi dung',
+  route: '/admin/contacts',
+  scope: 'admin',
+  system: true,
+});
+
 export const ADMIN_ROLES: Record<AdminRole, AdminRoleDef> = {
   super_admin: {
     label: 'Super Admin',
@@ -149,7 +167,7 @@ export const ADMIN_ROLES: Record<AdminRole, AdminRoleDef> = {
     textColor: 'text-green-700',
     borderColor: 'border-green-200',
     dotColor: 'bg-green-500',
-    permissions: ['dashboard', 'contents', 'templates', 'public_site', 'generate_industries', 'generate_copy_types', 'generate_tones'],
+    permissions: ['dashboard', 'contents', 'templates', 'public_site', 'contacts', 'generate_industries', 'generate_copy_types', 'generate_tones'],
     system: true,
   },
   user_manager: {
@@ -159,7 +177,7 @@ export const ADMIN_ROLES: Record<AdminRole, AdminRoleDef> = {
     textColor: 'text-green-700',
     borderColor: 'border-green-200',
     dotColor: 'bg-green-500',
-    permissions: ['dashboard', 'users', 'notifications'],
+    permissions: ['dashboard', 'users', 'notifications', 'contacts'],
     system: true,
   },
   finance_manager: {
@@ -414,10 +432,20 @@ ADMIN_MENU_ITEMS.splice(3, 0, {
   permission: 'public_site' as AdminPermission,
 });
 
+const notificationsMenuIndex = ADMIN_MENU_ITEMS.findIndex(item => item.path === '/admin/notifications');
+ADMIN_MENU_ITEMS.splice(notificationsMenuIndex >= 0 ? notificationsMenuIndex + 1 : ADMIN_MENU_ITEMS.length, 0, {
+  section: 'Người dùng',
+  label: 'Liên hệ',
+  icon: Inbox,
+  path: '/admin/contacts',
+  permission: 'contacts' as AdminPermission,
+});
+
 export const PERMISSION_ROUTE_MAP: Record<string, AdminPermission> = {
   '/admin': 'dashboard',
   '/admin/users': 'users',
   '/admin/notifications': 'notifications',
+  '/admin/contacts': 'contacts',
   '/admin/contents': 'contents',
   '/admin/templates': 'templates',
   '/admin/public-site': 'public_site',

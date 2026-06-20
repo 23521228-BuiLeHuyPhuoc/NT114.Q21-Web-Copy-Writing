@@ -90,11 +90,25 @@ function getUploadedFiles(files, field) {
   return Array.isArray(value) ? value : [value];
 }
 
+async function safeUploadPlagiarismFile(userId, file, index = 0) {
+  try {
+    return await cloudinaryService.uploadPlagiarismFile(userId, file, index);
+  } catch (error) {
+    console.warn(`Plagiarism Cloudinary upload skipped for ${file.originalname || 'uploaded file'}: ${error.message}`);
+    return {
+      publicId: '',
+      url: '',
+      bytes: file.size || 0,
+      format: '',
+      resourceType: '',
+      error: error.message,
+    };
+  }
+}
+
 async function extractAndStoreFile(userId, file, index = 0) {
-  const [extractedFile, cloudinaryFile] = await Promise.all([
-    extractTextFromFile(file),
-    cloudinaryService.uploadPlagiarismFile(userId, file, index),
-  ]);
+  const extractedFile = await extractTextFromFile(file);
+  const cloudinaryFile = await safeUploadPlagiarismFile(userId, file, index);
 
   return {
     ...extractedFile,
@@ -121,10 +135,6 @@ const preparePlagiarismFilePayload = asyncHandler(async (req, res, next) => {
   const extractedSources = await Promise.all(
     referenceFiles.map(async (file, index) => toUploadedSource(await extractAndStoreFile(req.user._id, file, index + 1), index)),
   );
-
-  if (extractedCheckFile && originalText && referenceFiles.length === 0) {
-    extractedSources.unshift(toUploadedSource(extractedCheckFile, 0));
-  }
 
   if (extractedSources.length > 0) {
     payload.uploadedSources = extractedSources;
