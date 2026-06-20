@@ -87,9 +87,32 @@ const resetQuotas = asyncHandler(async (req, res) => {
   });
 });
 
+const resetUserQuota = asyncHandler(async (req, res) => {
+  const user = await systemSettingsService.resetUserQuota(req.params.userId);
+
+  await auditLogService.createAdminAuditLog(req, {
+    action: 'admin.settings.reset_user_quota',
+    targetType: 'account_user',
+    targetId: user.id,
+    level: 'warning',
+    metadata: {
+      details: `Reset quota usage counter for ${user.email}`,
+      email: user.email,
+      quotaResetAt: user.quotaResetAt,
+    },
+  });
+
+  return res.status(200).json({
+    success: true,
+    message: 'User quota reset',
+    data: { user },
+  });
+});
+
 module.exports = {
   getEnvSettings,
   getSettings,
+  resetUserQuota,
   resetQuotas,
   updateEnvSettings,
   updateSettings,

@@ -249,7 +249,7 @@ export function CustomerHeader() {
                 {[
                   { icon: User, label: 'Hồ sơ', path: '/profile' },
                   { icon: CreditCard, label: 'Thanh toán', path: '/billing' },
-                  { icon: Crown, label: 'Nâng gói', path: '/subscription' },
+                  { icon: Crown, label: 'Nâng gói', path: '/billing' },
                   { icon: Settings, label: 'Cài đặt', path: '/profile' },
                   { icon: HelpCircle, label: 'Hỗ trợ', path: '/contact' },
                 ].map((item) => {

@@ -1,8 +1,10 @@
 const fs = require('fs/promises');
 const path = require('path');
 
+const AccountUser = require('../models/AccountUser');
 const SystemSetting = require('../models/SystemSetting');
 const { BASE_GENERATOR_MODELS } = require('../config/generatorModels');
+const createError = require('../utils/createError');
 const { formatBaseModelDisplayName } = require('../utils/modelDisplayName');
 
 const ENV_FILE_PATH = path.resolve(__dirname, '..', '..', '.env');
@@ -555,6 +557,27 @@ async function resetAllUserQuotas(adminId = null) {
   return serializeSettings(settings);
 }
 
+function serializeQuotaResetUser(user) {
+  return {
+    id: user._id.toString(),
+    name: user.name,
+    email: user.email,
+    quotaResetAt: user.quotaResetAt || null,
+  };
+}
+
+async function resetUserQuota(userId) {
+  const quotaResetAt = new Date();
+  const user = await AccountUser.findOneAndUpdate(
+    { _id: userId, isDeleted: { $ne: true } },
+    { $set: { quotaResetAt } },
+    { new: true, runValidators: true },
+  );
+
+  if (!user) throw createError(404, 'User not found');
+  return serializeQuotaResetUser(user);
+}
+
 function getPublicSystemStatus(settings) {
   const serialized = serializeSettings(settings);
   return {
@@ -577,6 +600,7 @@ module.exports = {
   getQuotaResetAt,
   getSystemSettings,
   resetAllUserQuotas,
+  resetUserQuota,
   updateEnvSettings,
   updateSystemSettings,
 };

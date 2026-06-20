@@ -88,6 +88,13 @@ export interface SystemSettings {
   updatedAt?: string | null;
 }
 
+export interface QuotaResetUser {
+  id: string;
+  name: string;
+  email: string;
+  quotaResetAt?: string | null;
+}
+
 export type UpdateSystemSettingsPayload = Partial<Pick<
   SystemSettings,
   | 'siteName'
@@ -114,6 +121,12 @@ interface AdminEnvSettingsResponse {
 interface PublicStatusResponse {
   data?: {
     status?: Partial<SystemSettings>;
+  };
+}
+
+interface ResetUserQuotaResponse {
+  data?: {
+    user?: Partial<QuotaResetUser>;
   };
 }
 
@@ -232,6 +245,15 @@ function normalizeEnvSettings(item?: Partial<EnvSettings>): EnvSettings {
   };
 }
 
+function normalizeQuotaResetUser(item?: Partial<QuotaResetUser>): QuotaResetUser {
+  return {
+    id: item?.id || '',
+    name: item?.name || '',
+    email: item?.email || '',
+    quotaResetAt: item?.quotaResetAt || null,
+  };
+}
+
 export const systemSettingsService = {
   async getAdminSettings() {
     const response = await api.get<AdminSettingsResponse>('/admin/settings/system');
@@ -256,6 +278,11 @@ export const systemSettingsService = {
   async resetQuotas() {
     const response = await api.post<AdminSettingsResponse>('/admin/settings/reset-quotas');
     return normalizeSettings(response.data.data?.settings);
+  },
+
+  async resetUserQuota(userId: string) {
+    const response = await api.post<ResetUserQuotaResponse>(`/admin/settings/reset-quotas/${userId}`);
+    return normalizeQuotaResetUser(response.data.data?.user);
   },
 
   async getPublicStatus() {

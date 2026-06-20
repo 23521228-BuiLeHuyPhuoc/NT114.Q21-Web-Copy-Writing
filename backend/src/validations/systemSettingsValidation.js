@@ -32,7 +32,12 @@ const envSettingsSchema = Joi.object({
     .required(),
 }).required();
 
+const resetUserQuotaParams = Joi.object({
+  userId: Joi.string().trim().hex().length(24).required(),
+}).required();
+
 module.exports = {
   envSettingsSchema,
+  resetUserQuotaParams,
   systemSettingsSchema,
 };

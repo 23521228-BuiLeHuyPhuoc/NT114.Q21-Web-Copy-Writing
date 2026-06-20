@@ -77,7 +77,7 @@ export function ResetPasswordPage() {
             <Label>Mật khẩu mới</Label>
             <div className="relative mt-1">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/80" />
-              <Input type={showPw ? 'text' : 'password'} placeholder="••••••••" {...register('password', { required: 'Mật khẩu là bắt buộc', minLength: { value: 8, message: 'Mật khẩu ít nhất 8 ký tự' }, pattern: { value: /^(?=.*[A-Z])(?=.*\d).+$/, message: 'Mật khẩu cần có chữ hoa và số' } })} className="pl-10 pr-10" />
+              <Input type={showPw ? 'text' : 'password'} placeholder="Nhập mật khẩu mới" {...register('password', { required: 'Mật khẩu là bắt buộc', minLength: { value: 8, message: 'Mật khẩu ít nhất 8 ký tự' }, pattern: { value: /^(?=.*[A-Z])(?=.*\d).+$/, message: 'Mật khẩu cần có chữ hoa và số' } })} className="pl-10 pr-10" />
               <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2" onClick={() => setShowPw(!showPw)}>
                 {showPw ? <EyeOff className="w-4 h-4 text-muted-foreground/80" /> : <Eye className="w-4 h-4 text-muted-foreground/80" />}
               </button>
@@ -97,7 +97,7 @@ export function ResetPasswordPage() {
             <Label>Xác nhận mật khẩu</Label>
             <div className="relative mt-1">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/80" />
-              <Input type="password" placeholder="••••••••" {...register('confirm', { required: 'Xác nhận mật khẩu là bắt buộc', validate: (v) => v === watch('password') || 'Mật khẩu không khớp' })} className="pl-10" />
+              <Input type="password" placeholder="Nhập lại mật khẩu mới" {...register('confirm', { required: 'Xác nhận mật khẩu là bắt buộc', validate: (v) => v === watch('password') || 'Mật khẩu không khớp' })} className="pl-10" />
             </div>
             {errors.confirm && <p className="text-xs text-red-500 mt-1">{errors.confirm.message}</p>}
           </div>

@@ -223,7 +223,7 @@ export function RegisterPage() {
                   <Label className="text-foreground/80 mb-2 block">Email công ty / cá nhân</Label>
                   <div className="relative">
                     <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/80" />
-                    <Input type="email" placeholder="your@email.com" {...registerField('email', { validate: validateEmail })} className="pl-10 h-12 rounded-xl border-border focus:border-primary" />
+                  <Input type="email" placeholder="Nhập email của bạn" {...registerField('email', { validate: validateEmail })} className="pl-10 h-12 rounded-xl border-border focus:border-primary" />
                   </div>
                   {errors.email && <p className="text-xs text-red-600 mt-1">{errors.email.message}</p>}
                 </div>

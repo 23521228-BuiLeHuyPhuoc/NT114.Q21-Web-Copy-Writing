@@ -160,7 +160,7 @@ export function AdminLoginPage() {
                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/70" />
                 <Input
                   type="email"
-                  placeholder="admin@copypro.vn"
+                  placeholder="Nhập email admin"
                   {...register('email', {
                     validate: validateEmail,
                   })}
@@ -178,7 +178,7 @@ export function AdminLoginPage() {
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/70" />
                 <Input
                   type={showPass ? 'text' : 'password'}
-                  placeholder="••••••••"
+                  placeholder="Nhập mật khẩu admin"
                   {...register('password', { validate: validateLoginPassword })}
                   className="pl-10 pr-10 h-12 rounded-xl bg-gray-900 border-gray-700 text-white placeholder:text-foreground/70 focus:border-primary focus:bg-gray-800"
                 />

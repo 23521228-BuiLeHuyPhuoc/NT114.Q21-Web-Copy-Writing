@@ -8,6 +8,7 @@ const billingService = require('./billingService');
 const notificationService = require('./notificationService');
 const projectService = require('./projectService');
 const templateService = require('./templateService');
+const generateOptionService = require('./generateOptionService');
 const createError = require('../utils/createError');
 const {
   buildModelDisplayNameMap,
@@ -459,6 +460,39 @@ function buildTitleFromOutput(type, outputText) {
   return `${type || 'content'} - ${new Date().toLocaleString('vi-VN')}`;
 }
 
+async function ensureActiveGenerateOptions(payload) {
+  const groups = await generateOptionService.listAllActiveOptions();
+  const activeCopyTypes = new Set((groups.copyTypes || []).map((item) => item.slug));
+  const activeTones = new Set((groups.tones || []).map((item) => item.slug));
+  const activeIndustries = new Set((groups.industries || []).map((item) => item.slug));
+  const errors = [];
+
+  if (!activeCopyTypes.has(payload.type)) {
+    errors.push({
+      field: 'type',
+      message: 'Copy type is not active in Generate options',
+    });
+  }
+
+  if (!activeTones.has(payload.tone)) {
+    errors.push({
+      field: 'tone',
+      message: 'Tone is not active in Generate options',
+    });
+  }
+
+  if (payload.industry && !activeIndustries.has(payload.industry)) {
+    errors.push({
+      field: 'industry',
+      message: 'Industry is not active in Generate options',
+    });
+  }
+
+  if (errors.length > 0) {
+    throw createError(400, 'Validation error', errors);
+  }
+}
+
 function buildPromptWithTemplate(prompt, template) {
   if (!template) return prompt;
 
@@ -628,6 +662,7 @@ async function resolveFineTunedModelForGenerate(userId, payload) {
 }
 
 async function generateContent(userId, payload) {
+  await ensureActiveGenerateOptions(payload);
   await projectService.ensureProjectBelongsToUser(userId, payload.projectId);
   await billingService.ensureGenerateModelAllowed(userId, payload);
 

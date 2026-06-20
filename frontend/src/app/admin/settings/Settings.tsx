@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Editor } from '@tinymce/tinymce-react';
-import { AlertCircle, Cpu, Eye, EyeOff, Gauge, KeyRound, Mail, RefreshCw, Save, Settings } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { AlertCircle, Cpu, Eye, EyeOff, Gauge, KeyRound, Mail, RefreshCw, Save, Settings, UserRound } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 import { Layout } from '@/app/components/Layout';
@@ -10,15 +11,18 @@ import { Card } from '@/app/components/ui/card';
 import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
 import { Switch } from '@/app/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs';
 import { Textarea } from '@/app/components/ui/textarea';
 import {
   useAdminEnvSettings,
   useAdminSystemSettings,
   useResetAdminQuotas,
+  useResetAdminUserQuota,
   useUpdateAdminEnvSettings,
   useUpdateAdminSystemSettings,
 } from '@/hooks/queries/useSystemSettings';
+import { adminUserService, type AdminUser } from '@/services/adminUserService';
 import type { EmailTemplate, EnvSettingSection } from '@/services/systemSettingsService';
 
 const tinymceApiKey = process.env.NEXT_PUBLIC_TINYMCE_API_KEY || 'no-api-key';
@@ -42,6 +46,18 @@ const EMPTY_FORM: SettingsForm = {
   emailVerificationRequired: false,
   emailTemplates: [],
 };
+
+const EMAIL_TEMPLATE_USAGE: Record<string, { label: string; active: boolean }> = {
+  emailVerificationOtp: { label: 'Đang dùng cho OTP xác thực email', active: true },
+  passwordResetOtp: { label: 'Đang dùng cho OTP đặt lại mật khẩu', active: true },
+  welcome: { label: 'Chưa nối với luồng gửi email', active: false },
+  renewalReminder: { label: 'Chưa nối với luồng gửi email', active: false },
+  quotaWarning: { label: 'Chưa nối với luồng gửi email', active: false },
+};
+
+function getTemplateUsage(templateKey: string) {
+  return EMAIL_TEMPLATE_USAGE[templateKey] || { label: 'Template hệ thống', active: false };
+}
 
 function formatDateTime(value?: string | null) {
   if (!value) return 'Chưa reset';
@@ -73,14 +89,29 @@ function sectionValues(section: EnvSettingSection | undefined, values: Record<st
   }, {});
 }
 
+function matchesQuotaUserSearch(user: AdminUser, search: string) {
+  const keyword = search.trim().toLowerCase();
+  if (!keyword) return true;
+
+  return [user.name, user.email, user.customerRole || '', user.status]
+    .some((value) => value.toLowerCase().includes(keyword));
+}
+
 export function AdminSettings() {
   const { data: systemSettings, isLoading, error } = useAdminSystemSettings();
   const { data: envSettings, isLoading: envLoading, error: envError } = useAdminEnvSettings();
   const updateSystemSettings = useUpdateAdminSystemSettings();
   const updateEnvSettings = useUpdateAdminEnvSettings();
   const resetQuotas = useResetAdminQuotas();
+  const resetUserQuota = useResetAdminUserQuota();
+  const { data: quotaUsers = [], isLoading: quotaUsersLoading } = useQuery({
+    queryKey: ['adminUsers', 'quotaReset'],
+    queryFn: () => adminUserService.list(),
+  });
   const [form, setForm] = useState<SettingsForm>(EMPTY_FORM);
   const [selectedTemplateKey, setSelectedTemplateKey] = useState('');
+  const [quotaUserSearch, setQuotaUserSearch] = useState('');
+  const [selectedQuotaUserId, setSelectedQuotaUserId] = useState('');
   const [envValues, setEnvValues] = useState<Record<string, string>>({});
   const [visibleEnvKeys, setVisibleEnvKeys] = useState<Record<string, boolean>>({});
 
@@ -91,6 +122,25 @@ export function AdminSettings() {
     () => form.emailTemplates.find((template) => template.key === selectedTemplateKey) || form.emailTemplates[0],
     [form.emailTemplates, selectedTemplateKey],
   );
+  const quotaCustomerUsers = useMemo(
+    () => quotaUsers.filter((item) => item.role === 'customer'),
+    [quotaUsers],
+  );
+  const selectedQuotaUser = useMemo(
+    () => quotaCustomerUsers.find((item) => item.id === selectedQuotaUserId) || null,
+    [quotaCustomerUsers, selectedQuotaUserId],
+  );
+  const quotaUserOptions = useMemo(() => {
+    const filtered = quotaCustomerUsers
+      .filter((item) => matchesQuotaUserSearch(item, quotaUserSearch))
+      .slice(0, 100);
+
+    if (selectedQuotaUser && !filtered.some((item) => item.id === selectedQuotaUser.id)) {
+      return [selectedQuotaUser, ...filtered];
+    }
+
+    return filtered;
+  }, [quotaCustomerUsers, quotaUserSearch, selectedQuotaUser]);
 
   useEffect(() => {
     if (!systemSettings) return;
@@ -163,6 +213,16 @@ export function AdminSettings() {
     }
   };
 
+  const saveEmailTemplates = async () => {
+    try {
+      await updateSystemSettings.mutateAsync({ emailTemplates: form.emailTemplates });
+      toast.success('Đã lưu email templates. Các email gửi mới sẽ dùng nội dung này.');
+    } catch (saveError) {
+      const err = saveError as { response?: { data?: { message?: string } }; message?: string };
+      toast.error(err.response?.data?.message || err.message || 'Không lưu được email templates');
+    }
+  };
+
   const saveEnv = async (section: EnvSettingSection | undefined) => {
     if (!section) return;
 
@@ -185,6 +245,25 @@ export function AdminSettings() {
     } catch (resetError) {
       const err = resetError as { response?: { data?: { message?: string } }; message?: string };
       toast.error(err.response?.data?.message || err.message || 'Không reset được quota');
+    }
+  };
+
+  const handleResetUserQuota = async () => {
+    if (!selectedQuotaUserId) {
+      toast.error('Vui lòng chọn người dùng cần reset quota');
+      return;
+    }
+
+    const targetLabel = selectedQuotaUser?.email || 'người dùng này';
+    const confirmed = window.confirm(`Reset quota đã sử dụng của ${targetLabel} về 0?`);
+    if (!confirmed) return;
+
+    try {
+      const user = await resetUserQuota.mutateAsync(selectedQuotaUserId);
+      toast.success(`Đã reset quota của ${user.email} lúc ${formatDateTime(user.quotaResetAt)}`);
+    } catch (resetError) {
+      const err = resetError as { response?: { data?: { message?: string } }; message?: string };
+      toast.error(err.response?.data?.message || err.message || 'Không reset được quota người dùng');
     }
   };
 
@@ -392,22 +471,50 @@ export function AdminSettings() {
             </Card>
 
             <Card className="space-y-4 p-6">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                  <h3 className="font-semibold text-foreground">Email templates</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">Nội dung đã lưu ở đây sẽ được dùng cho các email hệ thống gửi sau đó.</p>
+                </div>
+                <Button
+                  type="button"
+                  onClick={() => void saveEmailTemplates()}
+                  disabled={updateSystemSettings.isPending || form.emailTemplates.length === 0}
+                >
+                  {updateSystemSettings.isPending ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                  Lưu email templates
+                </Button>
+              </div>
+
               <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                <h3 className="font-semibold text-foreground">Email templates</h3>
                 <div className="flex flex-wrap gap-2">
-                  {form.emailTemplates.map((template) => (
-                    <Button
-                      key={template.key}
-                      type="button"
-                      variant={selectedTemplate?.key === template.key ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setSelectedTemplateKey(template.key)}
-                    >
-                      {template.name}
-                    </Button>
-                  ))}
+                  {form.emailTemplates.map((template) => {
+                    const usage = getTemplateUsage(template.key);
+
+                    return (
+                      <Button
+                        key={template.key}
+                        type="button"
+                        variant={selectedTemplate?.key === template.key ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setSelectedTemplateKey(template.key)}
+                        title={usage.label}
+                      >
+                        {template.name}
+                      </Button>
+                    );
+                  })}
                 </div>
               </div>
+
+              {selectedTemplate ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant={getTemplateUsage(selectedTemplate.key).active ? 'success' : 'neutral'}>
+                    {getTemplateUsage(selectedTemplate.key).label}
+                  </Badge>
+                  <Badge variant="outline">{selectedTemplate.key}</Badge>
+                </div>
+              ) : null}
 
               {selectedTemplate ? (
                 <div className="grid gap-4">
@@ -470,6 +577,66 @@ export function AdminSettings() {
               >
                 {resetQuotas.isPending ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
                 Reset quota tất cả người dùng
+              </Button>
+            </Card>
+
+            <Card className="space-y-4 p-6">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <h3 className="flex items-center gap-2 font-semibold text-foreground"><UserRound className="h-4 w-4" />Reset quota một người dùng</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">Chọn customer cần đưa quota hiện tại về 0.</p>
+                </div>
+                {selectedQuotaUser?.quotaResetAt && (
+                  <Badge variant="outline">Mốc riêng: {formatDateTime(selectedQuotaUser.quotaResetAt)}</Badge>
+                )}
+              </div>
+
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
+                <div>
+                  <Label>Tìm customer</Label>
+                  <Input
+                    value={quotaUserSearch}
+                    onChange={(event) => setQuotaUserSearch(event.target.value)}
+                    placeholder="Tên, email hoặc role"
+                    className="mt-2"
+                  />
+                </div>
+                <div>
+                  <Label>Customer</Label>
+                  <Select value={selectedQuotaUserId} onValueChange={setSelectedQuotaUserId} disabled={quotaUsersLoading || quotaCustomerUsers.length === 0}>
+                    <SelectTrigger className="mt-2">
+                      <SelectValue placeholder={quotaUsersLoading ? 'Đang tải customer' : 'Chọn customer'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {quotaUserOptions.length > 0 ? quotaUserOptions.map((item) => (
+                        <SelectItem key={item.id} value={item.id}>
+                          {item.name} · {item.email}
+                        </SelectItem>
+                      )) : (
+                        <div className="px-2 py-2 text-sm text-muted-foreground">Không có customer phù hợp</div>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {selectedQuotaUser && (
+                <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                  <Badge variant="neutral">{selectedQuotaUser.customerRole || 'customer'}</Badge>
+                  <span>{selectedQuotaUser.name}</span>
+                  <span className="break-all">{selectedQuotaUser.email}</span>
+                </div>
+              )}
+
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full justify-start sm:w-auto"
+                onClick={() => void handleResetUserQuota()}
+                disabled={resetUserQuota.isPending || !selectedQuotaUserId}
+              >
+                {resetUserQuota.isPending ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+                Reset quota người dùng đã chọn
               </Button>
             </Card>
           </TabsContent>

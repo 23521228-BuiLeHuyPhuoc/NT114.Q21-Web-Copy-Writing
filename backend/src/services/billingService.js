@@ -197,17 +197,39 @@ function normalizeLimitValue(value, fallback = 0) {
   return Number.isFinite(numeric) ? numeric : fallback;
 }
 
+function calculateYearlyPrice(priceMonthly) {
+  const numeric = Number(priceMonthly);
+  if (!Number.isFinite(numeric)) return 0;
+  if (numeric <= 0) return numeric;
+  return Math.round(numeric * 10);
+}
+
+function calculateWeeklyQuota(apiCallsFiveHours) {
+  const numeric = Number(apiCallsFiveHours);
+  if (!Number.isFinite(numeric)) return 0;
+  if (numeric <= 0) return numeric;
+  return Math.floor(numeric * 24 * 7 / 5);
+}
+
 function normalizePlanPayload(payload = {}, existing = null) {
+  const hasMonthlyPriceInput = payload.priceMonthly !== undefined
+    || payload.monthlyPrice !== undefined
+    || payload.price !== undefined;
+  const hasYearlyPriceInput = payload.priceYearly !== undefined || payload.yearlyPrice !== undefined;
   const priceMonthly = normalizeLimitValue(
     payload.priceMonthly ?? payload.monthlyPrice ?? payload.price,
     existing?.priceMonthly ?? 0,
   );
   const priceYearly = normalizeLimitValue(
     payload.priceYearly ?? payload.yearlyPrice,
-    existing?.priceYearly ?? (priceMonthly > 0 ? Math.round(priceMonthly * 10) : priceMonthly),
+    hasYearlyPriceInput || !hasMonthlyPriceInput
+      ? existing?.priceYearly ?? calculateYearlyPrice(priceMonthly)
+      : calculateYearlyPrice(priceMonthly),
   );
   const limits = { ...(existing?.limits?.toObject?.() || existing?.limits || {}) };
   const incomingLimits = payload.limits || {};
+  const hasFiveHourQuotaInput = incomingLimits.apiCallsFiveHours !== undefined || payload.apiLimitFiveHours !== undefined;
+  const hasWeeklyQuotaInput = incomingLimits.apiCallsWeekly !== undefined || payload.apiLimitWeekly !== undefined;
 
   limits.copyMonthly = normalizeLimitValue(
     incomingLimits.copyMonthly ?? payload.copyLimit,
@@ -223,7 +245,9 @@ function normalizePlanPayload(payload = {}, existing = null) {
   );
   limits.apiCallsWeekly = normalizeLimitValue(
     incomingLimits.apiCallsWeekly ?? payload.apiLimitWeekly,
-    limits.apiCallsWeekly ?? 0,
+    hasWeeklyQuotaInput || !hasFiveHourQuotaInput
+      ? limits.apiCallsWeekly ?? 0
+      : calculateWeeklyQuota(limits.apiCallsFiveHours),
   );
   limits.fineTuneModels = normalizeLimitValue(
     incomingLimits.fineTuneModels ?? payload.fineTune,
@@ -516,8 +540,31 @@ async function getUsageForWindow(userId, start, end) {
   return rows[0] || { copyUsed: 0, totalTokens: 0, quotaUnits: 0 };
 }
 
+function toValidDate(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function latestDate(...values) {
+  return values.reduce((latest, value) => {
+    const date = toValidDate(value);
+    if (!date) return latest;
+    return !latest || date > latest ? date : latest;
+  }, null);
+}
+
+async function getEffectiveQuotaResetAt(userId) {
+  const [quotaResetAt, user] = await Promise.all([
+    systemSettingsService.getQuotaResetAt(),
+    AccountUser.findById(userId).select('quotaResetAt').lean(),
+  ]);
+
+  return latestDate(quotaResetAt, user?.quotaResetAt);
+}
+
 async function getGenerateUsageSummary(userId, now = new Date()) {
-  const quotaResetAt = await systemSettingsService.getQuotaResetAt();
+  const quotaResetAt = await getEffectiveQuotaResetAt(userId);
   const resetDate = quotaResetAt ? new Date(quotaResetAt) : null;
   const monthStart = startOfMonth(now);
   const monthEnd = endOfMonth(now);

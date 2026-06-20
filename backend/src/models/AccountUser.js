@@ -60,6 +60,11 @@ const accountUserSchema = new mongoose.Schema(
       type: notificationPreferencesSchema,
       default: () => ({}),
     },
+    quotaResetAt: {
+      type: Date,
+      default: null,
+      index: true,
+    },
     isDeleted: {
       type: Boolean,
       default: false,

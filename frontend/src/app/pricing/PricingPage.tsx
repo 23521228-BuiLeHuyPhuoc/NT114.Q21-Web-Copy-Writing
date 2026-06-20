@@ -22,7 +22,6 @@ const PLANS = [
       { text: '5 ngành nghề cơ bản', ok: true },
       { text: '20 template', ok: true },
       { text: 'GPT-3.5 Turbo', ok: true },
-      { text: 'Lịch sử 7 ngày', ok: true },
       { text: 'GPT-4o & Llama 3.1', ok: false },
       { text: 'Fine-tuning Studio', ok: false },
       { text: 'API Access', ok: false },
@@ -41,7 +40,6 @@ const PLANS = [
       { text: '15+ ngành nghề', ok: true },
       { text: '100+ template', ok: true },
       { text: 'GPT-4o + GPT-3.5 + Llama 3.1', ok: true },
-      { text: 'Lịch sử 30 ngày', ok: true },
       { text: 'Fine-tuning Studio (3 models)', ok: true },
       { text: 'API Access (5.000 calls/tháng)', ok: true },
       { text: 'Xuất file (.docx, .txt)', ok: true },
@@ -60,7 +58,6 @@ const PLANS = [
       { text: '15+ ngành nghề', ok: true },
       { text: 'Tất cả template', ok: true },
       { text: 'Tất cả model AI (incl. custom)', ok: true },
-      { text: 'Lịch sử 90 ngày', ok: true },
       { text: 'Fine-tuning nâng cao (10 models)', ok: true },
       { text: 'API Access (50.000 calls/tháng)', ok: true },
       { text: 'Xuất file (.docx, .pdf, .csv)', ok: true },
@@ -90,8 +87,6 @@ function buildCompareRows(plans: PricingPlan[]) {
     { label: 'Generate/tuần', values: plans.map(plan => formatCompareLimit(plan.limits?.apiCallsWeekly)) },
     { label: 'Fine-tune models', values: plans.map(plan => formatCompareLimit(plan.limits?.fineTuneModels)) },
     { label: 'Kiểm tra đạo văn', values: plans.map(plan => formatCompareLimit(plan.limits?.plagiarismChecks, 'lần')) },
-    { label: 'Seats', values: plans.map(plan => formatCompareLimit(plan.limits?.seats)) },
-    { label: 'Lịch sử', values: plans.map(plan => formatCompareLimit(plan.limits?.historyDays, 'ngày')) },
   ];
 }
 
@@ -107,8 +102,6 @@ function buildLimitFeatures(plan: BillingPlan) {
     formatLimit(limits.copyMonthly, 'copy/tháng'),
     formatLimit(limits.apiCallsMonthly, 'API calls/tháng'),
     formatLimit(limits.fineTuneModels, 'fine-tune models'),
-    formatLimit(limits.seats, 'seats'),
-    formatLimit(limits.historyDays, 'ngay lich su'),
   ].filter(Boolean);
 }
 
@@ -151,7 +144,6 @@ const COMPARE_ROWS = [
   { label: 'Model AI',               free: 'GPT-3.5',         pro: 'GPT-4o, 3.5, Llama', business: 'Tất cả + custom' },
   { label: 'Fine-tuning Studio',     free: null,              pro: '3 models',           business: '10 models' },
   { label: 'API Access (calls/tháng)',free: null,             pro: '5.000',              business: '50.000' },
-  { label: 'Lịch sử copy',           free: '7 ngày',          pro: '30 ngày',            business: '90 ngày' },
   { label: 'Xuất file',              free: null,              pro: '.docx, .txt',        business: '.docx, .pdf, .csv' },
   { label: 'Hỗ trợ',                 free: 'Email (72h)',      pro: 'Email (24h)',        business: 'Email + Chat (4h)' },
   { label: 'Dedicated CSM',          free: null,              pro: null,                 business: true },

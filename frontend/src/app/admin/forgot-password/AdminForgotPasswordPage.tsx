@@ -64,7 +64,7 @@ export function AdminForgotPasswordPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [resendSeconds, setResendSeconds] = useState(0);
 
-  const emailForm = useForm<EmailFormData>({ defaultValues: { email: 'admin@copypro.vn' } });
+  const emailForm = useForm<EmailFormData>({ defaultValues: { email: '' } });
   const resetForm = useForm<ResetFormData>({ defaultValues: { newPass: '', confirmPass: '' } });
   const email = emailForm.watch('email');
   const newPassword = resetForm.watch('newPass', '');
@@ -204,7 +204,7 @@ export function AdminForgotPasswordPage() {
                 </Label>
                 <Input
                   type="email"
-                  placeholder="admin@copypro.vn"
+                  placeholder="Nhập email admin"
                   {...emailForm.register('email', { validate: validateEmail })}
                   className="h-12 rounded-xl bg-gray-950 border-gray-700 text-white placeholder:text-foreground/70 focus:border-primary"
                 />

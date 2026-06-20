@@ -93,8 +93,11 @@ function getFineTunedRegistryModelId(modelId: string) {
 }
 
 function getErrorMessage(error: unknown, fallback: string) {
-  const err = error as { response?: { data?: { message?: string } }; message?: string };
-  return err.response?.data?.message || err.message || fallback;
+  const err = error as {
+    response?: { data?: { message?: string; errors?: { message?: string }[] } };
+    message?: string;
+  };
+  return err.response?.data?.errors?.[0]?.message || err.response?.data?.message || err.message || fallback;
 }
 
 function buildQualityKeywords(...values: string[]) {

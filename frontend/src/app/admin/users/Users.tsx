@@ -479,7 +479,7 @@ export function AdminUsers() {
             </div>
             <div>
               <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Email</Label>
-              <Input value={addEmail} onChange={event => setAddEmail(event.target.value)} placeholder="user@copypro.vn" className="h-10" />
+                <Input value={addEmail} onChange={event => setAddEmail(event.target.value)} placeholder="Nhập email người dùng" className="h-10" />
             </div>
             <div>
               <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Mật khẩu</Label>

@@ -73,3 +73,16 @@ export function useResetAdminQuotas() {
     },
   });
 }
+
+export function useResetAdminUserQuota() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (userId: string) => systemSettingsService.resetUserQuota(userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
+      queryClient.invalidateQueries({ queryKey: ['billing'] });
+      queryClient.invalidateQueries({ queryKey: ['fineTuning'] });
+    },
+  });
+}

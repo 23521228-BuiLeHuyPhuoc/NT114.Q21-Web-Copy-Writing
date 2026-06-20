@@ -22,6 +22,7 @@ function serializeUser(account) {
     status: account.status,
     avatar: account.avatar,
     isVerified: account.isVerified,
+    quotaResetAt: account.quotaResetAt || null,
     createdAt: account.createdAt,
     deletedAt: account.deletedAt,
   };

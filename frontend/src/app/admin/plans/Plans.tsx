@@ -49,14 +49,24 @@ function parseLimitNumber(value: string) {
   return parseBlankNumber(value, 0);
 }
 
-function parseOptionalNumber(value: string) {
-  if (value.trim() === '') return undefined;
-  const numeric = Number(value);
-  return Number.isFinite(numeric) ? numeric : undefined;
-}
-
 function splitLines(value: string) {
   return value.split('\n').map(line => line.trim()).filter(Boolean);
+}
+
+function calculateYearlyPrice(monthlyPrice: string) {
+  if (monthlyPrice.trim() === '') return '';
+  const numeric = Number(monthlyPrice);
+  if (!Number.isFinite(numeric)) return '';
+  if (numeric <= 0) return String(numeric);
+  return String(Math.round(numeric * 10));
+}
+
+function calculateWeeklyQuota(fiveHourQuota: string) {
+  if (fiveHourQuota.trim() === '') return '';
+  const numeric = Number(fiveHourQuota);
+  if (!Number.isFinite(numeric)) return '';
+  if (numeric <= 0) return String(numeric);
+  return String(Math.floor(numeric * 24 * 7 / 5));
 }
 
 const FINE_TUNED_MODEL_ACCESS = 'fine-tuned';
@@ -189,8 +199,6 @@ export function AdminPlans() {
   const [addApiWeekly, setAddApiWeekly] = useState('');
   const [addFine, setAddFine] = useState('');
   const [addPlagiarism, setAddPlagiarism] = useState('');
-  const [addSeats, setAddSeats] = useState('');
-  const [addHistoryDays, setAddHistoryDays] = useState('');
   const [addDesc, setAddDesc] = useState('');
   const [addFeatures, setAddFeatures] = useState('');
   const [addExcludedFeatures, setAddExcludedFeatures] = useState('');
@@ -206,8 +214,6 @@ export function AdminPlans() {
   const [editApiWeekly, setEditApiWeekly] = useState('');
   const [editFine, setEditFine] = useState('');
   const [editPlagiarism, setEditPlagiarism] = useState('');
-  const [editSeats, setEditSeats] = useState('');
-  const [editHistoryDays, setEditHistoryDays] = useState('');
   const [editDesc, setEditDesc] = useState('');
   const [editFeatures, setEditFeatures] = useState('');
   const [editExcludedFeatures, setEditExcludedFeatures] = useState('');
@@ -296,8 +302,6 @@ export function AdminPlans() {
     setAddApiWeekly('');
     setAddFine('');
     setAddPlagiarism('');
-    setAddSeats('');
-    setAddHistoryDays('');
     setAddDesc('');
     setAddFeatures('');
     setAddExcludedFeatures('');
@@ -315,13 +319,31 @@ export function AdminPlans() {
     setEditApiWeekly(plan.apiLimitWeekly === -1 ? '' : String(plan.apiLimitWeekly));
     setEditFine(plan.fineTune === -1 ? '' : String(plan.fineTune));
     setEditPlagiarism(plan.plagiarismChecks === -1 ? '' : String(plan.plagiarismChecks));
-    setEditSeats(plan.seats === -1 ? '' : String(plan.seats));
-    setEditHistoryDays(plan.historyDays === -1 ? '' : String(plan.historyDays));
     setEditDesc(plan.description);
     setEditFeatures(plan.features.join('\n'));
     setEditExcludedFeatures(plan.excludedFeatures.join('\n'));
     setEditPopular(plan.popular);
     setEditAllowedModels(plan.allowedModels || []);
+  };
+
+  const handleAddPriceChange = (value: string) => {
+    setAddPrice(value);
+    setAddYearlyPrice(calculateYearlyPrice(value));
+  };
+
+  const handleEditPriceChange = (value: string) => {
+    setEditPrice(value);
+    setEditYearlyPrice(calculateYearlyPrice(value));
+  };
+
+  const handleAddFiveHourQuotaChange = (value: string) => {
+    setAddApiFiveHours(value);
+    setAddApiWeekly(calculateWeeklyQuota(value));
+  };
+
+  const handleEditFiveHourQuotaChange = (value: string) => {
+    setEditApiFiveHours(value);
+    setEditApiWeekly(calculateWeeklyQuota(value));
   };
 
   const handleAdd = async () => {
@@ -332,15 +354,13 @@ export function AdminPlans() {
         name: addName.trim(),
         description: addDesc.trim(),
         price: parseBlankNumber(addPrice, -1),
-        yearlyPrice: parseOptionalNumber(addYearlyPrice),
+        yearlyPrice: parseBlankNumber(addYearlyPrice, -1),
         copyLimit: parseLimitNumber(addCopy),
         apiLimit: parseLimitNumber(addApi),
         apiLimitFiveHours: parseLimitNumber(addApiFiveHours),
         apiLimitWeekly: parseLimitNumber(addApiWeekly),
         fineTune: parseLimitNumber(addFine),
         plagiarismChecks: parseLimitNumber(addPlagiarism),
-        seats: parseLimitNumber(addSeats),
-        historyDays: parseLimitNumber(addHistoryDays),
         features: splitLines(addFeatures),
         excludedFeatures: splitLines(addExcludedFeatures),
         allowedModels: addAllowedModels,
@@ -365,15 +385,13 @@ export function AdminPlans() {
           name: editName.trim(),
           description: editDesc.trim(),
           price: parseBlankNumber(editPrice, -1),
-          yearlyPrice: parseOptionalNumber(editYearlyPrice),
+          yearlyPrice: parseBlankNumber(editYearlyPrice, -1),
           copyLimit: parseLimitNumber(editCopy),
           apiLimit: parseLimitNumber(editApi),
           apiLimitFiveHours: parseLimitNumber(editApiFiveHours),
           apiLimitWeekly: parseLimitNumber(editApiWeekly),
           fineTune: parseLimitNumber(editFine),
           plagiarismChecks: parseLimitNumber(editPlagiarism),
-          seats: parseLimitNumber(editSeats),
-          historyDays: parseLimitNumber(editHistoryDays),
           features: splitLines(editFeatures),
           excludedFeatures: splitLines(editExcludedFeatures),
           allowedModels: editAllowedModels,
@@ -572,8 +590,6 @@ export function AdminPlans() {
                         <span>Generate/tuần: <strong className="font-semibold text-foreground">{formatLimit(plan.apiLimitWeekly)}</strong></span>
                         <span>Fine-tune: <strong className="font-semibold text-foreground">{formatLimit(plan.fineTune)}</strong></span>
                         <span>Đạo văn: <strong className="font-semibold text-foreground">{formatLimit(plan.plagiarismChecks)}</strong></span>
-                        <span>Seats: <strong className="font-semibold text-foreground">{formatLimit(plan.seats)}</strong></span>
-                        <span>Lịch sử: <strong className="font-semibold text-foreground">{formatLimit(plan.historyDays, ' ngày')}</strong></span>
                       </div>
                     </TableCell>
                     <TableCell className="max-w-56 text-xs text-foreground/70" title={formatAllowedModels(plan.allowedModels)}>{formatAllowedModels(plan.allowedModels)}</TableCell>
@@ -630,11 +646,11 @@ export function AdminPlans() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Giá/tháng</Label>
-                <Input value={addPrice} onChange={event => setAddPrice(event.target.value)} placeholder="Trống = Liên hệ" className="h-10" type="number" />
+                <Input value={addPrice} onChange={event => handleAddPriceChange(event.target.value)} placeholder="Trống = Liên hệ" className="h-10" type="number" />
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Giá/năm</Label>
-                <Input value={addYearlyPrice} onChange={event => setAddYearlyPrice(event.target.value)} placeholder="Trống = tự tính" className="h-10" type="number" />
+                <Input value={addYearlyPrice} readOnly placeholder="Tự tính = giá tháng x10" className="h-10 bg-surface-muted" type="number" />
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Copy/tháng</Label>
@@ -646,11 +662,11 @@ export function AdminPlans() {
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Quota generate/5h</Label>
-                <Input value={addApiFiveHours} onChange={event => setAddApiFiveHours(event.target.value)} placeholder="Nhập số giới hạn" className="h-10" type="number" />
+                <Input value={addApiFiveHours} onChange={event => handleAddFiveHourQuotaChange(event.target.value)} placeholder="Nhập số giới hạn" className="h-10" type="number" />
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Quota generate/tuần</Label>
-                <Input value={addApiWeekly} onChange={event => setAddApiWeekly(event.target.value)} placeholder="Nhập số giới hạn" className="h-10" type="number" />
+                <Input value={addApiWeekly} readOnly placeholder="Tự tính từ quota 5h" className="h-10 bg-surface-muted" type="number" />
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Fine-tune models</Label>
@@ -660,23 +676,15 @@ export function AdminPlans() {
                 <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Kiểm tra đạo văn/tháng</Label>
                 <Input value={addPlagiarism} onChange={event => setAddPlagiarism(event.target.value)} placeholder="Nhập số giới hạn" className="h-10" type="number" />
               </div>
-              <div>
-                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Số ghế</Label>
-                <Input value={addSeats} onChange={event => setAddSeats(event.target.value)} placeholder="Nhập số giới hạn" className="h-10" type="number" />
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Lưu lịch sử (ngày)</Label>
-                <Input value={addHistoryDays} onChange={event => setAddHistoryDays(event.target.value)} placeholder="Nhập số giới hạn" className="h-10" type="number" />
-              </div>
             </div>
             <div className="grid gap-3 md:grid-cols-2">
               <div>
-                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Feature hiá»ƒn trÃªn pricing</Label>
-                <Textarea value={addFeatures} onChange={event => setAddFeatures(event.target.value)} placeholder="Má»—i dÃ²ng lÃ  má»™t feature" className="min-h-28" />
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Feature hiển thị trên pricing</Label>
+                <Textarea value={addFeatures} onChange={event => setAddFeatures(event.target.value)} placeholder="Mỗi dòng là một feature" className="min-h-28" />
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Feature khÃ´ng bao gá»“m</Label>
-                <Textarea value={addExcludedFeatures} onChange={event => setAddExcludedFeatures(event.target.value)} placeholder="Má»—i dÃ²ng lÃ  má»™t feature bá»‹ táº¯t" className="min-h-28" />
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Feature không bao gồm</Label>
+                <Textarea value={addExcludedFeatures} onChange={event => setAddExcludedFeatures(event.target.value)} placeholder="Mỗi dòng là một feature bị tắt" className="min-h-28" />
               </div>
             </div>
             <ModelAccessSelector allowedModels={addAllowedModels} onChange={setAddAllowedModels} />
@@ -713,11 +721,11 @@ export function AdminPlans() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Giá/tháng</Label>
-                  <Input value={editPrice} onChange={event => setEditPrice(event.target.value)} placeholder="Trống = Liên hệ" className="h-10" type="number" />
+                  <Input value={editPrice} onChange={event => handleEditPriceChange(event.target.value)} placeholder="Trống = Liên hệ" className="h-10" type="number" />
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Giá/năm</Label>
-                  <Input value={editYearlyPrice} onChange={event => setEditYearlyPrice(event.target.value)} placeholder="Trống = giữ nguyên" className="h-10" type="number" />
+                  <Input value={editYearlyPrice} readOnly placeholder="Tự tính = giá tháng x10" className="h-10 bg-surface-muted" type="number" />
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Copy/tháng</Label>
@@ -729,11 +737,11 @@ export function AdminPlans() {
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Quota generate/5h</Label>
-                  <Input value={editApiFiveHours} onChange={event => setEditApiFiveHours(event.target.value)} placeholder="Nhập số giới hạn" className="h-10" type="number" />
+                  <Input value={editApiFiveHours} onChange={event => handleEditFiveHourQuotaChange(event.target.value)} placeholder="Nhập số giới hạn" className="h-10" type="number" />
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Quota generate/tuần</Label>
-                  <Input value={editApiWeekly} onChange={event => setEditApiWeekly(event.target.value)} placeholder="Nhập số giới hạn" className="h-10" type="number" />
+                  <Input value={editApiWeekly} readOnly placeholder="Tự tính từ quota 5h" className="h-10 bg-surface-muted" type="number" />
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Fine-tune</Label>
@@ -743,23 +751,15 @@ export function AdminPlans() {
                   <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Kiểm tra đạo văn/tháng</Label>
                   <Input value={editPlagiarism} onChange={event => setEditPlagiarism(event.target.value)} placeholder="Nhập số giới hạn" className="h-10" type="number" />
                 </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Số ghế</Label>
-                  <Input value={editSeats} onChange={event => setEditSeats(event.target.value)} placeholder="Nhập số giới hạn" className="h-10" type="number" />
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Lưu lịch sử (ngày)</Label>
-                  <Input value={editHistoryDays} onChange={event => setEditHistoryDays(event.target.value)} placeholder="Nhập số giới hạn" className="h-10" type="number" />
-                </div>
               </div>
               <div className="grid gap-3 md:grid-cols-2">
                 <div>
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Feature hiá»ƒn trÃªn pricing</Label>
-                  <Textarea value={editFeatures} onChange={event => setEditFeatures(event.target.value)} placeholder="Má»—i dÃ²ng lÃ  má»™t feature" className="min-h-28" />
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Feature hiển thị trên pricing</Label>
+                  <Textarea value={editFeatures} onChange={event => setEditFeatures(event.target.value)} placeholder="Mỗi dòng là một feature" className="min-h-28" />
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Feature khÃ´ng bao gá»“m</Label>
-                  <Textarea value={editExcludedFeatures} onChange={event => setEditExcludedFeatures(event.target.value)} placeholder="Má»—i dÃ²ng lÃ  má»™t feature bá»‹ táº¯t" className="min-h-28" />
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-1.5 block">Feature không bao gồm</Label>
+                  <Textarea value={editExcludedFeatures} onChange={event => setEditExcludedFeatures(event.target.value)} placeholder="Mỗi dòng là một feature bị tắt" className="min-h-28" />
                 </div>
               </div>
               <ModelAccessSelector allowedModels={editAllowedModels} onChange={setEditAllowedModels} />

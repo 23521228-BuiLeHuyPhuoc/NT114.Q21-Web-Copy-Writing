@@ -165,7 +165,7 @@ export function ForgotPasswordPage() {
             <form onSubmit={emailForm.handleSubmit(handleSendOtp)} className="space-y-4">
               <div>
                 <Label className="text-foreground/80 mb-2 block">Email đã đăng ký</Label>
-                <Input type="email" placeholder="your@email.com" {...emailForm.register('email', { validate: validateEmail })} className="h-12 rounded-xl border-border focus:border-primary" />
+                <Input type="email" placeholder="Nhập email đã đăng ký" {...emailForm.register('email', { validate: validateEmail })} className="h-12 rounded-xl border-border focus:border-primary" />
                 {emailForm.formState.errors.email && <p className="text-xs text-red-600 mt-1">{emailForm.formState.errors.email.message}</p>}
               </div>
               <button type="submit" disabled={isLoading || emailForm.formState.isSubmitting} className="w-full h-12 bg-gradient-to-r from-emerald-600 via-green-600 to-green-600 hover:from-emerald-500 hover:via-green-500 hover:to-green-500 disabled:opacity-60 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-primary/20">

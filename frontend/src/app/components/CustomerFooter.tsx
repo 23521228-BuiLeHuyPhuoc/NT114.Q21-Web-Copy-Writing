@@ -2,7 +2,7 @@ import { Link } from '@/lib/next-router-compat';
 import { BrandLogo } from '@/app/components/BrandLogo';
 import {
   LifeBuoy, FileText, Wand2, Brain,
-  CreditCard, Key, BookOpen, MessageCircle,
+  CreditCard, MessageCircle,
   ExternalLink, Zap,
 } from 'lucide-react';
 
@@ -14,7 +14,6 @@ const FOOTER_COLS = [
       { label: 'Fine-tuning Studio',   href: '/fine-tune',        icon: Brain },
       { label: 'Mẫu Copy',             href: '/templates',        icon: FileText },
       { label: 'Kiểm tra đạo văn',     href: '/plagiarism-check', icon: Zap },
-      { label: 'API Keys',             href: '/api-keys',         icon: Key },
     ],
   },
   {
@@ -22,7 +21,7 @@ const FOOTER_COLS = [
     links: [
       { label: 'Hồ sơ',           href: '/profile',      icon: null },
       { label: 'Thanh toán',      href: '/billing',      icon: null },
-      { label: 'Gói dịch vụ',    href: '/subscription', icon: null },
+      { label: 'Gói dịch vụ',    href: '/billing',      icon: null },
       { label: 'Thông báo',      href: '/notifications', icon: null },
       { label: 'Dự án của tôi',  href: '/projects',     icon: null },
     ],
@@ -31,7 +30,6 @@ const FOOTER_COLS = [
     title: 'Hỗ trợ',
     links: [
       { label: 'Trung tâm hỗ trợ', href: '/blog',    icon: LifeBuoy, external: false },
-      { label: 'Tài liệu API',     href: '/api-keys', icon: BookOpen, external: false },
       { label: 'Cộng đồng',        href: '/blog',    icon: MessageCircle, external: false },
       { label: 'Liên hệ',          href: '/contact', icon: null, external: false },
     ],

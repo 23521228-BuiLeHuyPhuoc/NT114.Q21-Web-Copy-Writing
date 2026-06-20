@@ -1,10 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from '@/lib/next-router-compat';
 import { Button } from '@/app/components/ui/button';
 import { BrandLogo } from '@/app/components/BrandLogo';
+import { useAuth } from '@/app/contexts/AuthContext';
+import { Avatar, AvatarFallback, AvatarImage } from '@/app/components/ui/avatar';
 import {
   Sparkles, Menu, X, ChevronDown,
   Wand2, Brain, FileText, FolderOpen, FileCheck, ScrollText,
+  User, CreditCard, LogOut, LayoutDashboard, ShieldCheck,
 } from 'lucide-react';
 
 const FEATURE_LINKS = [
@@ -70,8 +73,11 @@ export function PublicNavbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const accountRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
   const navigate = useNavigate();
+  const { user, isLoading, logout } = useAuth();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -82,7 +88,19 @@ export function PublicNavbar() {
   useEffect(() => {
     setMobileOpen(false);
     setOpenDropdown(null);
+    setAccountOpen(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    const handler = (event: MouseEvent) => {
+      if (accountRef.current && !accountRef.current.contains(event.target as Node)) {
+        setAccountOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   const toggleDropdown = (key: string) =>
     setOpenDropdown(prev => (prev === key ? null : key));
@@ -93,6 +111,21 @@ export function PublicNavbar() {
     { label: 'Blog', href: '/blog' },
     { label: 'Liên hệ', href: '/contact' },
   ];
+
+  const userInitial = user?.name?.trim().charAt(0).toUpperCase() || 'U';
+  const firstName = user?.name?.split(' ')[0] || (user?.role === 'admin' ? 'Admin' : 'User');
+  const primaryAppPath = user?.role === 'admin' ? '/admin' : '/generate';
+  const profilePath = user?.role === 'admin' ? '/admin/profile' : '/profile';
+  const logoutPath = user?.role === 'admin' ? '/admin/login' : '/login';
+  const PrimaryIcon = user?.role === 'admin' ? LayoutDashboard : Wand2;
+  const primaryLabel = user?.role === 'admin' ? 'Quản trị' : 'Tạo copy';
+
+  const handleLogout = () => {
+    setAccountOpen(false);
+    setMobileOpen(false);
+    void logout();
+    navigate(logoutPath);
+  };
 
   return (
     <header
@@ -132,27 +165,137 @@ export function PublicNavbar() {
           </nav>
 
           <div className="hidden items-center gap-3 lg:flex">
-            <Button
-              variant="ghost"
-              className={`text-[0.9rem] font-semibold transition-colors ${scrolled ? 'text-muted-foreground hover:bg-accent hover:text-primary' : 'text-white/90 hover:bg-card/15 hover:text-white'}`}
-              onClick={() => navigate('/login')}
-            >
-              Đăng nhập
-            </Button>
-            <Button
-              className="rounded-lg bg-gradient-to-r from-primary to-success px-5 text-[0.9rem] text-primary-foreground shadow-md shadow-primary/20 hover:from-primary/90 hover:to-success/90"
-              onClick={() => navigate('/register')}
-            >
-              <Sparkles className="mr-1.5 h-4 w-4" />
-              Dùng thử miễn phí
-            </Button>
+            {isLoading ? (
+              <div className={`h-9 w-44 animate-pulse rounded-lg ${scrolled ? 'bg-muted' : 'bg-white/15'}`} />
+            ) : user ? (
+              <>
+                <Button
+                  className="rounded-lg bg-gradient-to-r from-primary to-success px-5 text-[0.9rem] text-primary-foreground shadow-md shadow-primary/20 hover:from-primary/90 hover:to-success/90"
+                  onClick={() => navigate(primaryAppPath)}
+                >
+                  <PrimaryIcon className="mr-1.5 h-4 w-4" />
+                  {primaryLabel}
+                </Button>
+
+                <div className="relative" ref={accountRef}>
+                  <button
+                    onClick={() => setAccountOpen((open) => !open)}
+                    className={`flex h-9 items-center gap-2 rounded-lg pl-1 pr-2 transition-colors ${scrolled ? 'text-foreground hover:bg-muted' : 'text-white hover:bg-card/15'}`}
+                    aria-label="Tài khoản"
+                  >
+                    <Avatar className="h-7 w-7">
+                      <AvatarImage src={user.avatar || undefined} alt={user.name || 'Avatar'} className="object-cover" />
+                      <AvatarFallback className="bg-gradient-to-br from-primary to-success text-xs font-bold text-primary-foreground">
+                        {userInitial}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="max-w-24 truncate text-sm font-semibold">{firstName}</span>
+                    <ChevronDown className={`h-3.5 w-3.5 transition-transform ${accountOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {accountOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setAccountOpen(false)} />
+                      <div className="absolute right-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-lg border border-border bg-card shadow-xl">
+                        <div className="border-b bg-gradient-to-br from-primary/10 to-success/10 px-4 py-4">
+                          <div className="flex min-w-0 items-center gap-3">
+                            <Avatar className="h-10 w-10 flex-shrink-0">
+                              <AvatarImage src={user.avatar || undefined} alt={user.name || 'Avatar'} className="object-cover" />
+                              <AvatarFallback className="bg-gradient-to-br from-primary to-success font-bold text-primary-foreground">
+                                {userInitial}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-bold text-foreground">{user.name}</p>
+                              <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+                              <span className="mt-1 inline-flex h-5 items-center gap-1 rounded bg-card/70 px-1.5 text-[10px] font-semibold text-primary">
+                                {user.role === 'admin' ? <ShieldCheck className="h-2.5 w-2.5" /> : <Sparkles className="h-2.5 w-2.5" />}
+                                {user.role === 'admin' ? 'Admin' : 'Khách hàng'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="p-2">
+                          <Link
+                            to={primaryAppPath}
+                            onClick={() => setAccountOpen(false)}
+                            className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-muted hover:text-foreground"
+                          >
+                            <PrimaryIcon className="h-4 w-4 text-muted-foreground" />
+                            {user.role === 'admin' ? 'Bảng điều khiển admin' : 'Tạo nội dung AI'}
+                          </Link>
+                          <Link
+                            to={profilePath}
+                            onClick={() => setAccountOpen(false)}
+                            className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-muted hover:text-foreground"
+                          >
+                            <User className="h-4 w-4 text-muted-foreground" />
+                            Hồ sơ
+                          </Link>
+                          {user.role === 'customer' && (
+                            <Link
+                              to="/billing"
+                              onClick={() => setAccountOpen(false)}
+                              className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-muted hover:text-foreground"
+                            >
+                              <CreditCard className="h-4 w-4 text-muted-foreground" />
+                              Gói & thanh toán
+                            </Link>
+                          )}
+                        </div>
+
+                        <div className="border-t p-2">
+                          <button
+                            onClick={handleLogout}
+                            className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-destructive/10 hover:text-destructive"
+                          >
+                            <LogOut className="h-4 w-4" />
+                            Đăng xuất
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant="ghost"
+                  className={`text-[0.9rem] font-semibold transition-colors ${scrolled ? 'text-muted-foreground hover:bg-accent hover:text-primary' : 'text-white/90 hover:bg-card/15 hover:text-white'}`}
+                  onClick={() => navigate('/login')}
+                >
+                  Đăng nhập
+                </Button>
+                <Button
+                  className="rounded-lg bg-gradient-to-r from-primary to-success px-5 text-[0.9rem] text-primary-foreground shadow-md shadow-primary/20 hover:from-primary/90 hover:to-success/90"
+                  onClick={() => navigate('/register')}
+                >
+                  <Sparkles className="mr-1.5 h-4 w-4" />
+                  Dùng thử miễn phí
+                </Button>
+              </>
+            )}
           </div>
 
           <button
             className={`rounded-lg p-2 transition-colors lg:hidden ${scrolled ? 'text-foreground hover:bg-muted' : 'text-white hover:bg-card/15'}`}
             onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label="Mở menu"
           >
-            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {mobileOpen ? (
+              <X className="h-5 w-5" />
+            ) : user ? (
+              <Avatar className="h-7 w-7">
+                <AvatarImage src={user.avatar || undefined} alt={user.name || 'Avatar'} className="object-cover" />
+                <AvatarFallback className="bg-gradient-to-br from-primary to-success text-xs font-bold text-primary-foreground">
+                  {userInitial}
+                </AvatarFallback>
+              </Avatar>
+            ) : (
+              <Menu className="h-5 w-5" />
+            )}
           </button>
         </div>
       </div>
@@ -178,10 +321,57 @@ export function PublicNavbar() {
                 {link.label}
               </Link>
             ))}
-            <div className="mt-3 grid grid-cols-2 gap-2 border-t border-border pt-4">
-              <Button variant="outline" className="w-full rounded-lg text-sm" onClick={() => navigate('/login')}>Đăng nhập</Button>
-              <Button className="w-full rounded-lg bg-gradient-to-r from-primary to-success text-sm text-primary-foreground" onClick={() => navigate('/register')}>Đăng ký</Button>
-            </div>
+            {isLoading ? (
+              <div className="mt-3 border-t border-border pt-4">
+                <div className="h-10 w-full animate-pulse rounded-lg bg-muted" />
+              </div>
+            ) : user ? (
+              <div className="mt-3 space-y-3 border-t border-border pt-4">
+                <div className="flex min-w-0 items-center gap-3 rounded-lg bg-surface-muted p-3">
+                  <Avatar className="h-10 w-10 flex-shrink-0">
+                    <AvatarImage src={user.avatar || undefined} alt={user.name || 'Avatar'} className="object-cover" />
+                    <AvatarFallback className="bg-gradient-to-br from-primary to-success font-bold text-primary-foreground">
+                      {userInitial}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-bold text-foreground">{user.name}</p>
+                    <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+                  </div>
+                </div>
+
+                <Button
+                  className="w-full rounded-lg bg-gradient-to-r from-primary to-success text-sm text-primary-foreground"
+                  onClick={() => navigate(primaryAppPath)}
+                >
+                  <PrimaryIcon className="mr-2 h-4 w-4" />
+                  {user.role === 'admin' ? 'Bảng điều khiển admin' : 'Tạo nội dung AI'}
+                </Button>
+
+                <div className={`grid gap-2 ${user.role === 'customer' ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                  <Button variant="outline" className="w-full rounded-lg text-sm" onClick={() => navigate(profilePath)}>
+                    <User className="mr-2 h-4 w-4" />
+                    Hồ sơ
+                  </Button>
+                  {user.role === 'customer' && (
+                    <Button variant="outline" className="w-full rounded-lg text-sm" onClick={() => navigate('/billing')}>
+                      <CreditCard className="mr-2 h-4 w-4" />
+                      Thanh toán
+                    </Button>
+                  )}
+                </div>
+
+                <Button variant="outline" className="w-full rounded-lg text-sm text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={handleLogout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Đăng xuất
+                </Button>
+              </div>
+            ) : (
+              <div className="mt-3 grid grid-cols-2 gap-2 border-t border-border pt-4">
+                <Button variant="outline" className="w-full rounded-lg text-sm" onClick={() => navigate('/login')}>Đăng nhập</Button>
+                <Button className="w-full rounded-lg bg-gradient-to-r from-primary to-success text-sm text-primary-foreground" onClick={() => navigate('/register')}>Đăng ký</Button>
+              </div>
+            )}
           </div>
         </div>
       )}

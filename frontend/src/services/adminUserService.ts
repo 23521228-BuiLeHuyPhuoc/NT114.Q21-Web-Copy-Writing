@@ -5,6 +5,7 @@ import type { AdminRole, CustomerRole } from '@/lib/permissions';
 export type AdminUserAccountType = 'user' | 'admin';
 
 export interface AdminUser extends User {
+  quotaResetAt?: string | null;
   deletedAt?: string | null;
 }
 

@@ -159,7 +159,7 @@ export function LoginPage() {
                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/80" />
                 <Input
                   type="email"
-                  placeholder="your@email.com"
+                  placeholder="Nhập email của bạn"
                   {...register('email', {
                     validate: validateEmail,
                   })}
@@ -177,7 +177,7 @@ export function LoginPage() {
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/80" />
                 <Input
                   type={showPass ? 'text' : 'password'}
-                  placeholder="••••••••"
+                  placeholder="Nhập mật khẩu"
                   {...register('password', { validate: validateLoginPassword })}
                   className="pl-10 pr-10 h-12 rounded-xl border-border focus:border-primary"
                 />

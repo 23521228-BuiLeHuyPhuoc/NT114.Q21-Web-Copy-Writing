@@ -171,7 +171,7 @@ export function ContactPage() {
                       <Label>Email *</Label>
                       <Input
                         type="email"
-                        placeholder="your@email.com"
+                        placeholder="Nhập email của bạn"
                         value={form.email}
                         onChange={e => setForm({ ...form, email: e.target.value })}
                         className="mt-2 h-12 rounded-xl border-border focus:border-primary"

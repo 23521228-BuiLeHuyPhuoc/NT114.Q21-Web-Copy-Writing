@@ -349,9 +349,9 @@ export function CustomerProfile() {
             <Card className="p-6 space-y-4">
               <h3 className="font-bold text-foreground">Đổi mật khẩu</h3>
               <div className="space-y-3 max-w-md">
-                <div><Label>Mật khẩu hiện tại</Label><Input type="password" placeholder="••••••••" className="mt-2" /></div>
-                <div><Label>Mật khẩu mới</Label><Input type="password" placeholder="••••••••" className="mt-2" /></div>
-                <div><Label>Xác nhận mật khẩu mới</Label><Input type="password" placeholder="••••••••" className="mt-2" /></div>
+                <div><Label>Mật khẩu hiện tại</Label><Input type="password" placeholder="Nhập mật khẩu hiện tại" className="mt-2" /></div>
+                <div><Label>Mật khẩu mới</Label><Input type="password" placeholder="Nhập mật khẩu mới" className="mt-2" /></div>
+                <div><Label>Xác nhận mật khẩu mới</Label><Input type="password" placeholder="Nhập lại mật khẩu mới" className="mt-2" /></div>
                 <Button className="bg-primary text-white" onClick={() => toast.success('Đã đổi mật khẩu!')}>
                   <Lock className="w-4 h-4 mr-2" /> Cập nhật mật khẩu
                 </Button>

@@ -2,21 +2,13 @@ const Joi = require('joi');
 
 const objectId = Joi.string().hex().length(24);
 const optionalObjectId = objectId.allow(null).empty('').optional();
-const generateTypes = ['headline', 'description', 'social', 'email', 'cta', 'landing', 'seo', 'review'];
-const generateTones = ['urgent', 'professional', 'friendly', 'luxury', 'humorous', 'emotional'];
-const generateIndustries = [
-  'ecommerce',
-  'realestate',
-  'technology',
-  'fnb',
-  'healthcare',
-  'education',
-  'finance',
-  'fashion',
-  'business',
-  'travel',
-];
 const MODEL_ID_MAX_LENGTH = 600;
+
+const generateOptionSlug = Joi.string()
+  .trim()
+  .lowercase()
+  .pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+  .max(80);
 
 const paramsWithId = Joi.object({
   id: objectId.required(),
@@ -67,9 +59,9 @@ const updateContentSchema = Joi.object({
 
 const generateContentSchema = Joi.object({
   prompt: Joi.string().trim().min(1).max(6000).required(),
-  type: Joi.string().valid(...generateTypes).required(),
-  industry: Joi.string().valid(...generateIndustries).optional(),
-  tone: Joi.string().valid(...generateTones).required(),
+  type: generateOptionSlug.required(),
+  industry: generateOptionSlug.optional(),
+  tone: generateOptionSlug.required(),
   language: Joi.string().trim().min(1).max(40).required(),
   model: Joi.string().trim().min(1).max(MODEL_ID_MAX_LENGTH).required(),
   modelMode: Joi.string().valid('base', 'fine-tuned').default('base'),
