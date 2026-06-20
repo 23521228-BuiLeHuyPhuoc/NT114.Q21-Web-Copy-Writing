@@ -98,7 +98,8 @@ Sửa nhanh `backend/.env` tối thiểu:
 ```env
 PORT=4000
 NODE_ENV=development
-MONGODB_URI=mongodb://127.0.0.1:27017/ai-copywriter
+MONGODB_URI=mongodb://admin:123@ac-r3mct8m-shard-00-00.o3r6tac.mongodb.net:27017,ac-r3mct8m-shard-00-01.o3r6tac.mongodb.net:27017,ac-r3mct8m-shard-00-02.o3r6tac.mongodb.net:27017/ai-copywriter?ssl=true&replicaSet=atlas-7hog99-shard-0&authSource=admin&retryWrites=true&w=majority
+
 FRONTEND_URL=http://localhost:3000
 PUBLIC_API_URL=http://localhost:4000
 JWT_SECRET=change_me_in_real_env
