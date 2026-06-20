@@ -30,7 +30,7 @@ export function AdminLoginPage() {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<AdminLoginFormData>({
-    defaultValues: { email: 'admin@copypro.vn', password: 'admin123' },
+    defaultValues: { email: '', password: '' },
   });
 
   const onSubmit = async (data: AdminLoginFormData) => {
@@ -219,14 +219,6 @@ export function AdminLoginPage() {
               )}
             </button>
           </form>
-
-          {/* Demo hint */}
-          <div className="mt-6 bg-green-950/30 border border-green-800/35 rounded-xl p-4">
-            <p className="text-primary text-xs font-bold mb-2 flex items-center gap-1.5">
-              <Shield className="w-3.5 h-3.5" /> Demo credentials
-            </p>
-            <p className="text-muted-foreground text-xs font-mono">admin@copypro.vn / admin123</p>
-          </div>
 
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">

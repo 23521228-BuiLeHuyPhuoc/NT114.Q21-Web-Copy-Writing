@@ -639,7 +639,7 @@ export function CustomerGenerator() {
                 disabled={projectsLoading}
                 className="w-full h-10 rounded border border-border bg-card px-3 text-sm text-foreground outline-none focus:border-primary"
               >
-                <option value="">{projectsLoading ? 'Dang tai du an...' : 'Khong gan du an'}</option>
+                <option value="">{projectsLoading ? 'Đang tải dự án...' : 'Không gắn dự án'}</option>
                 {projects.map((project) => (
                   <option key={project.id} value={project.id}>
                     {project.name}

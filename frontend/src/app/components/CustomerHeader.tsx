@@ -5,7 +5,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/app/components/ui/avatar'
 import { Badge } from '@/app/components/ui/badge';
 import {
   Bell,
-  Search,
   Wand2,
   ChevronDown,
   User,
@@ -14,7 +13,6 @@ import {
   LogOut,
   Crown,
   HelpCircle,
-  X,
 } from 'lucide-react';
 import { BREADCRUMB_MAP, QUICK_ACTIONS } from '@/lib/customerHeaderConfig';
 import { getCustomerRoleDef } from '@/lib/permissions';
@@ -35,8 +33,6 @@ export function CustomerHeader() {
   const markAllReadMutation = useMarkAllNotificationsRead();
   const notifications = headerNotifications || [];
 
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchVal, setSearchVal] = useState('');
   const [notiOpen, setNotiOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
 
@@ -62,7 +58,6 @@ export function CustomerHeader() {
   useEffect(() => {
     setNotiOpen(false);
     setUserOpen(false);
-    setSearchOpen(false);
   }, [location.pathname]);
 
   const markAllRead = () => {
@@ -103,30 +98,6 @@ export function CustomerHeader() {
       </div>
 
       <div className="flex items-center gap-1.5 flex-shrink-0">
-        {searchOpen ? (
-          <div className="flex items-center gap-2 bg-surface-muted border border-border rounded-lg px-3 h-9 w-64 transition-all">
-            <Search className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
-            <input
-              autoFocus
-              value={searchVal}
-              onChange={(event) => setSearchVal(event.target.value)}
-              placeholder="Tìm nội dung, template..."
-              className="flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground min-w-0"
-              onKeyDown={(event) => event.key === 'Escape' && setSearchOpen(false)}
-            />
-            <button onClick={() => { setSearchOpen(false); setSearchVal(''); }}>
-              <X className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground transition-colors" />
-            </button>
-          </div>
-        ) : (
-          <button
-            onClick={() => setSearchOpen(true)}
-            className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <Search className="w-4 h-4" />
-          </button>
-        )}
-
         <button
           onClick={() => navigate('/generate')}
           className="hidden sm:flex items-center gap-1.5 h-9 px-3.5 bg-gradient-to-r from-primary to-success hover:from-primary/90 hover:to-success/90 text-primary-foreground rounded-lg text-xs font-bold transition-all shadow-sm shadow-primary/20"

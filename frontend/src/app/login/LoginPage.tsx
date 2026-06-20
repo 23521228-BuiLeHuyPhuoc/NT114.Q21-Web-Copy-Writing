@@ -28,7 +28,6 @@ export function LoginPage() {
   const {
     register,
     handleSubmit,
-    setValue,
     formState: { errors, isSubmitting },
   } = useForm<LoginFormData>({ defaultValues: { email: '', password: '' } });
 
@@ -40,11 +39,6 @@ export function LoginPage() {
     } catch {
       toast.error('Email hoặc mật khẩu không đúng.');
     }
-  };
-
-  const fillDemo = () => {
-    setValue('email', 'customer@copypro.vn');
-    setValue('password', 'customer123');
   };
 
   return (
@@ -220,39 +214,10 @@ export function LoginPage() {
             </button>
           </form>
 
-          {/* Demo button */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border" />
-            </div>
-            <div className="relative flex justify-center">
-              <span className="bg-card px-3 text-xs text-muted-foreground/80 font-medium">Demo nhanh</span>
-            </div>
-          </div>
-
-          <button
-            onClick={fillDemo}
-            className="w-full flex items-center justify-between gap-2 p-4 border border-border rounded-xl bg-card/80 hover:border-primary/30 hover:bg-primary/5 transition-all group"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-primary/10 group-hover:bg-primary/10 flex items-center justify-center transition-colors flex-shrink-0">
-                <span className="text-base">👤</span>
-              </div>
-              <div className="text-left">
-                <p className="text-sm font-semibold text-foreground">Customer Demo</p>
-                <p className="text-xs text-muted-foreground/80">customer@copypro.vn · customer123</p>
-              </div>
-            </div>
-            <span className="text-xs text-primary font-semibold opacity-0 group-hover:opacity-100 transition-opacity">Điền →</span>
-          </button>
-
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border" />
-            </div>
-            <div className="relative flex justify-center">
-              <span className="bg-card px-3 text-xs text-muted-foreground/80 font-medium">Dành cho quản trị viên?</span>
-            </div>
+          <div className="my-6 flex items-center gap-3 text-xs font-medium text-muted-foreground/80">
+            <div className="h-px flex-1 bg-border" />
+            <span className="shrink-0">Dành cho quản trị viên?</span>
+            <div className="h-px flex-1 bg-border" />
           </div>
 
           <Link
