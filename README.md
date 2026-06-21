@@ -40,7 +40,7 @@ Website AI Copywriter tích hợp GPT-4/Llama, RESTful API backend và fine-tuni
 | Frontend | Next.js 14, React 18, TypeScript, Tailwind CSS, MUI, Radix UI, React Query, Zustand |
 | Backend | Node.js, Express.js, Mongoose, Joi, JWT, Cookie Auth, Multer, Nodemailer |
 | Database | MongoDB hoặc MongoDB Atlas |
-| AI/Fine-tuning | Gemini, Vertex AI, OpenAI-compatible API, Llama/Qwen tuning helper |
+| AI/Fine-tuning | Gemini, Vertex AI, Llama tuning helper |
 
 ## Cấu trúc ngắn gọn
 
