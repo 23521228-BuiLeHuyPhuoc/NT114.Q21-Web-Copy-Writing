@@ -40,7 +40,7 @@ Website AI Copywriter tích hợp GPT-4/Llama, RESTful API backend và fine-tuni
 | Frontend | Next.js 14, React 18, TypeScript, Tailwind CSS, MUI, Radix UI, React Query, Zustand |
 | Backend | Node.js, Express.js, Mongoose, Joi, JWT, Cookie Auth, Multer, Nodemailer |
 | Database | MongoDB hoặc MongoDB Atlas |
-| AI/Fine-tuning | Gemini, Vertex AI, OpenAI-compatible API, Llama/Qwen tuning helper |
+| AI/Fine-tuning | Gemini, Vertex AI, Llama tuning helper |
 
 ## Cấu trúc ngắn gọn
 
@@ -98,7 +98,8 @@ Sửa nhanh `backend/.env` tối thiểu:
 ```env
 PORT=4000
 NODE_ENV=development
-MONGODB_URI=mongodb://127.0.0.1:27017/ai-copywriter
+MONGODB_URI=mongodb://<username>:<password>@ac-r3mct8m-shard-00-00.o3r6tac.mongodb.net:27017,ac-r3mct8m-shard-00-01.o3r6tac.mongodb.net:27017,ac-r3mct8m-shard-00-02.o3r6tac.mongodb.net:27017/ai-copywriter?ssl=true&replicaSet=atlas-7hog99-shard-0&authSource=admin&retryWrites=true&w=majority
+
 FRONTEND_URL=http://localhost:3000
 PUBLIC_API_URL=http://localhost:4000
 JWT_SECRET=change_me_in_real_env
