@@ -1,4 +1,5 @@
 import { api } from '@/lib/axios';
+import { PUBLIC_FREEGPT4_BASE_URL, PUBLIC_OPENAI_BASE_URL, PUBLIC_SUPPORT_EMAIL } from '@/lib/publicEnv';
 
 export interface EmailTemplate {
   key: string;
@@ -135,8 +136,8 @@ const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
     provider: 'gemini',
     googleCloudProject: '',
     googleCloudLocation: 'us-central1',
-    openAiBaseUrl: 'https://api.openai.com/v1',
-    freeGpt4BaseUrl: 'http://127.0.0.1:5500',
+    openAiBaseUrl: PUBLIC_OPENAI_BASE_URL,
+    freeGpt4BaseUrl: PUBLIC_FREEGPT4_BASE_URL,
     vertexClaudeLocations: [],
     generatorModels: [],
     fineTuneBaseModels: [],
@@ -157,7 +158,7 @@ const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
 
 const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {
   siteName: 'CopyPro',
-  supportEmail: 'support@copypro.vn',
+  supportEmail: PUBLIC_SUPPORT_EMAIL,
   maintenanceMode: false,
   maintenanceMessage: 'He thong dang bao tri. Vui long quay lai sau.',
   registrationEnabled: true,

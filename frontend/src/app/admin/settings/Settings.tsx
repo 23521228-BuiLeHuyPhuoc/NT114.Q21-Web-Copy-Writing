@@ -22,6 +22,7 @@ import {
   useUpdateAdminEnvSettings,
   useUpdateAdminSystemSettings,
 } from '@/hooks/queries/useSystemSettings';
+import { PUBLIC_SUPPORT_EMAIL } from '@/lib/publicEnv';
 import { adminUserService, type AdminUser } from '@/services/adminUserService';
 import type { EmailTemplate, EnvSettingSection } from '@/services/systemSettingsService';
 
@@ -39,7 +40,7 @@ type SettingsForm = {
 
 const EMPTY_FORM: SettingsForm = {
   siteName: 'CopyPro',
-  supportEmail: 'support@copypro.vn',
+  supportEmail: PUBLIC_SUPPORT_EMAIL,
   maintenanceMode: false,
   maintenanceMessage: 'Hệ thống đang bảo trì. Vui lòng quay lại sau.',
   registrationEnabled: true,

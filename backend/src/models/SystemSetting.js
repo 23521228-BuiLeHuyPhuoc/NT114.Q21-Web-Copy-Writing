@@ -56,7 +56,7 @@ const systemSettingSchema = new mongoose.Schema(
       trim: true,
       lowercase: true,
       maxlength: 160,
-      default: 'support@copypro.vn',
+      default: () => process.env.SUPPORT_EMAIL || process.env.SMTP_FROM || 'support@example.com',
     },
     maintenanceMode: {
       type: Boolean,

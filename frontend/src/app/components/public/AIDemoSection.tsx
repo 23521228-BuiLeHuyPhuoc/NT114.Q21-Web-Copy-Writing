@@ -6,6 +6,7 @@ import {
   ShoppingCart, Search, Megaphone, RotateCcw,
   CheckCircle2, Copy, ThumbsUp, Zap,
 } from 'lucide-react';
+import { PUBLIC_SITE_HOST } from '@/lib/publicEnv';
 
 /* ─── Content types ─────────────────────────────────────── */
 
@@ -92,7 +93,7 @@ function buildResponse(type: string, input: string): string {
       `🔔 Notification Preview\n━━━━━━━━━━━━━━━\nTitle: "🎁 Quà tặng dành riêng cho bạn từ ${product}!"\nBody: "Nhấp để nhận ngay — Chỉ hôm nay thôi"\nBadge: 1  Sound: Default\n━━━━━━━━━━━━━━━\nDự đoán open rate: 23.1%`,
     ],
     google: [
-      `📢 GOOGLE ADS — ${product}\n\nHeadline 1: ${product} Uy Tín #1 VN\nHeadline 2: Giá Tốt Nhất - Đặt Ngay\nHeadline 3: Miễn Phí Tư Vấn 24/7\n\nDescription 1: ${product} chính hãng, bảo hành 24 tháng. Giao hàng toàn quốc. Đặt hàng ngay hôm nay!\nDescription 2: Hơn 10,000 khách hàng tin tưởng. Giá tốt nhất thị trường. Hỗ trợ 24/7.\n\nDisplay URL: copypro.vn/${product.toLowerCase().replace(/\s/g, '-')}`,
+      `📢 GOOGLE ADS — ${product}\n\nHeadline 1: ${product} Uy Tín #1 VN\nHeadline 2: Giá Tốt Nhất - Đặt Ngay\nHeadline 3: Miễn Phí Tư Vấn 24/7\n\nDescription 1: ${product} chính hãng, bảo hành 24 tháng. Giao hàng toàn quốc. Đặt hàng ngay hôm nay!\nDescription 2: Hơn 10,000 khách hàng tin tưởng. Giá tốt nhất thị trường. Hỗ trợ 24/7.\n\nDisplay URL: ${PUBLIC_SITE_HOST}/${product.toLowerCase().replace(/\s/g, '-')}`,
     ],
   };
 
@@ -208,7 +209,7 @@ export function AIDemoSection() {
               <div className="w-3 h-3 rounded-full bg-amber-400" />
               <div className="w-3 h-3 rounded-full bg-green-400" />
               <div className="flex-1 text-center">
-                <span className="text-xs text-muted-foreground/80 font-mono">copypro.vn/generator</span>
+                <span className="text-xs text-muted-foreground/80 font-mono">{PUBLIC_SITE_HOST}/generator</span>
               </div>
             </div>
 

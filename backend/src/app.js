@@ -50,7 +50,7 @@ function splitOrigins(value) {
 
 function getAllowedOrigins() {
   const origins = [
-    ...splitOrigins(process.env.FRONTEND_URL || 'http://localhost:3000'),
+    ...splitOrigins(process.env.FRONTEND_URL),
     ...splitOrigins(process.env.FRONTEND_ALLOWED_ORIGINS),
   ];
 

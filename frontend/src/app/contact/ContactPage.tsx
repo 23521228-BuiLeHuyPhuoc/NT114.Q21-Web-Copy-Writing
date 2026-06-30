@@ -9,6 +9,7 @@ import { Textarea } from '@/app/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select';
 import toast from 'react-hot-toast';
 import { getPublicText } from '@/lib/publicSiteDefaults';
+import { PUBLIC_SUPPORT_EMAIL } from '@/lib/publicEnv';
 import { publicSiteService, type PublicPageContent } from '@/services/publicSiteService';
 import { contactSubmissionService, type ContactTopic } from '@/services/contactSubmissionService';
 import {
@@ -57,7 +58,7 @@ export function ContactPage() {
   const contactHeroBadge = getPublicText(contactContent, 'heroBadge', '💬 Liên hệ với chúng tôi');
   const contactHeroTitle = getPublicText(contactContent, 'heroTitle', 'Chúng tôi luôn sẵn sàng lắng nghe');
   const contactHeroDescription = getPublicText(contactContent, 'heroDescription', 'Dù bạn có câu hỏi về sản phẩm, cần hỗ trợ kỹ thuật hay muốn thảo luận về hợp tác — đội ngũ của chúng tôi sẽ phản hồi trong vòng 24 giờ.');
-  const contactEmail = getPublicText(contactContent, 'email', 'hello@copypro.vn');
+  const contactEmail = getPublicText(contactContent, 'email', PUBLIC_SUPPORT_EMAIL);
   const contactPhone = getPublicText(contactContent, 'phone', '+84 901 234 567');
   const contactAddress = getPublicText(contactContent, 'address', 'Innovation Hub, Q.1, TP.HCM');
 

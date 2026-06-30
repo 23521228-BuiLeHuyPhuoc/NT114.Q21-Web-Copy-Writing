@@ -1,9 +1,11 @@
+import { API_DOCS_BASE_URL } from '@/lib/publicEnv';
+
 export const CODE_SAMPLES: Record<string, string> = {
   python: [
     'import requests',
     '',
     'API_KEY = "cpk_live_..."',
-    'BASE_URL = "https://api.copypro.vn/v1"',
+    `BASE_URL = "${API_DOCS_BASE_URL}"`,
     '',
     'def generate_copy(industry, copy_type, product_name, tone="professional"):',
     '    response = requests.post(',
@@ -25,7 +27,7 @@ export const CODE_SAMPLES: Record<string, string> = {
     "const axios = require('axios');",
     '',
     'const API_KEY = process.env.COPYPRO_API_KEY;',
-    "const BASE_URL = 'https://api.copypro.vn/v1';",
+    `const BASE_URL = '${API_DOCS_BASE_URL}';`,
     '',
     'async function generateCopy({ industry, type, productName, tone = \'professional\' }) {',
     '  const { data } = await axios.post(`${BASE_URL}/generate`, {',
@@ -42,7 +44,7 @@ export const CODE_SAMPLES: Record<string, string> = {
   ].join('\n'),
 
   curl: [
-    'curl -X POST https://api.copypro.vn/v1/generate \\',
+    `curl -X POST ${API_DOCS_BASE_URL}/generate \\`,
     '  -H "Authorization: Bearer cpk_live_..." \\',
     '  -H "Content-Type: application/json" \\',
     "  -d '{",
@@ -57,7 +59,7 @@ export const CODE_SAMPLES: Record<string, string> = {
   php: [
     '<?php',
     "$apiKey = getenv('COPYPRO_API_KEY');",
-    "$baseUrl = 'https://api.copypro.vn/v1';",
+    `$baseUrl = '${API_DOCS_BASE_URL}';`,
     '',
     '$payload = json_encode([',
     "    'industry' => 'ecommerce',",

@@ -17,7 +17,7 @@ const UsageLog = require('../models/UsageLog');
 const { ALL_GENERATOR_MODEL_ACCESS } = require('../config/generatorModels');
 
 async function upsertUser() {
-  const email = 'customer@copypro.vn';
+  const email = process.env.DEMO_CUSTOMER_EMAIL || 'customer@example.com';
   let account = await AccountUser.findOne({ email }).select('+password');
 
   if (!account) {
@@ -40,7 +40,7 @@ async function upsertUser() {
 }
 
 async function upsertAdmin() {
-  const email = 'admin@copypro.vn';
+  const email = process.env.DEMO_ADMIN_EMAIL || 'admin@example.com';
   let account = await AccountAdmin.findOne({ email }).select('+password');
 
   if (!account) {

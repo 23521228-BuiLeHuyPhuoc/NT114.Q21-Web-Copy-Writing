@@ -635,7 +635,7 @@ function getVertexClaudeModel(model) {
 }
 
 function getFreeGPT4BaseUrl() {
-  return (process.env.FREEGPT4_BASE_URL || 'http://127.0.0.1:5500').replace(/\/+$/, '');
+  return String(process.env.FREEGPT4_BASE_URL || '').trim().replace(/\/+$/, '');
 }
 
 function getFreeGPT4Model(model) {
@@ -647,7 +647,8 @@ function sleep(ms) {
 }
 
 function getFreeGPT4Url() {
-  return new URL(getFreeGPT4BaseUrl());
+  const baseUrl = getFreeGPT4BaseUrl();
+  return baseUrl ? new URL(baseUrl) : null;
 }
 
 function isLocalFreeGPT4Url(url) {
@@ -713,7 +714,10 @@ async function waitForFreeGPT4Server(baseUrl) {
 
 async function ensureFreeGPT4ServerRunning(model) {
   const baseUrl = getFreeGPT4BaseUrl();
+  if (!baseUrl) return false;
+
   const url = getFreeGPT4Url();
+  if (!url) return false;
 
   if (!isLocalFreeGPT4Url(url)) return true;
   if (await isFreeGPT4ServerReady(baseUrl)) return true;
@@ -1559,7 +1563,7 @@ async function callOpenRouter(payload) {
       headers: {
         Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
         'Content-Type': 'application/json',
-        'HTTP-Referer': process.env.OPENROUTER_SITE_URL || 'http://localhost:3000',
+        'HTTP-Referer': process.env.OPENROUTER_SITE_URL || process.env.FRONTEND_URL || '',
         'X-Title': process.env.OPENROUTER_APP_NAME || 'CopyPro AI',
       },
       signal: controller.signal,
@@ -1836,6 +1840,13 @@ async function callFreeGPT4(payload) {
     return null;
   }
 
+  const baseUrl = getFreeGPT4BaseUrl();
+  if (!baseUrl) {
+    const message = 'FREEGPT4_BASE_URL is not configured';
+    if (payload.requireProviderSuccess) throw createError(503, message);
+    return null;
+  }
+
   const model = getFreeGPT4Model(payload.model);
   const providerPrompt = getProviderPrompt(payload);
   let timeout;
@@ -1843,14 +1854,14 @@ async function callFreeGPT4(payload) {
   try {
     const serverReady = await ensureFreeGPT4ServerRunning(model);
     if (!serverReady) {
-      const message = `FreeGPT4 local server is not ready at ${getFreeGPT4BaseUrl()}`;
+      const message = `FreeGPT4 local server is not ready at ${baseUrl}`;
       if (payload.requireProviderSuccess) throw createError(503, message);
       return null;
     }
 
     const controller = new AbortController();
     timeout = setTimeout(() => controller.abort(), Number(process.env.FREEGPT4_TIMEOUT_MS || 90000));
-    const url = new URL(getFreeGPT4BaseUrl());
+    const url = new URL(baseUrl);
     url.searchParams.set(process.env.FREEGPT4_KEYWORD || 'text', providerPrompt);
     url.searchParams.set('model', model);
     if (process.env.FREEGPT4_PROVIDER) url.searchParams.set('provider', process.env.FREEGPT4_PROVIDER);

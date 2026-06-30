@@ -8,6 +8,7 @@ import {
   Star, ChevronDown, ChevronUp,
 } from 'lucide-react';
 import { billingService, type BillingPlan } from '@/services/billingService';
+import { PUBLIC_STATUS_PAGE_LABEL } from '@/lib/publicEnv';
 
 /* ─── Data ─────────────────────────────────────────────────── */
 
@@ -153,7 +154,7 @@ const COMPARE_ROWS = [
 const FAQ = [
   { q: 'Tôi có thể hủy gói bất kỳ lúc nào không?', a: 'Hoàn toàn có thể. Không hợp đồng ràng buộc. Hủy trong vài click từ trang Cài đặt. Bạn vẫn được dùng đến hết kỳ thanh toán hiện tại.' },
   { q: 'Fine-tuning mất bao lâu và khó không?', a: 'Không cần biết code. Bạn chỉ cần cung cấp 50-100 cặp ví dụ input/output. Training tự động mất khoảng 30-60 phút tùy dữ liệu.' },
-  { q: 'API có ổn định không? SLA như thế nào?', a: 'Chúng tôi cam kết 99.8% uptime với SLA rõ ràng. API có rate limiting thông minh và retry logic tự động. Xem status page tại status.copypro.vn.' },
+  { q: 'API có ổn định không? SLA như thế nào?', a: `Chúng tôi cam kết 99.8% uptime với SLA rõ ràng. API có rate limiting thông minh và retry logic tự động. Xem status page tại ${PUBLIC_STATUS_PAGE_LABEL}.` },
   { q: 'Có dùng thử gói Pro trước khi mua không?', a: 'Có. Tất cả tài khoản mới đều có 14 ngày dùng thử đầy đủ tính năng Pro, không cần thẻ tín dụng.' },
   { q: 'Dữ liệu của tôi có an toàn không?', a: 'Tuyệt đối. Chúng tôi không dùng nội dung của bạn để train model. Dữ liệu mã hóa AES-256, lưu trong datacenter Việt Nam, tuân thủ PDPA.' },
   { q: 'Gói Business có thể thêm thành viên không?', a: 'Gói Business hỗ trợ tối đa 10 user trong cùng workspace. Nếu cần nhiều hơn, liên hệ chúng tôi để được tư vấn giới hạn phù hợp trong 3 gói hiện có.' },

@@ -3,6 +3,7 @@ import {
   Sparkles, Wand2, Mail, FileText, ShoppingCart,
   Megaphone, CheckCircle2, Copy, RotateCcw, ChevronDown,
 } from 'lucide-react';
+import { PUBLIC_SITE_HOST } from '@/lib/publicEnv';
 
 /* ─────────────────────────────────────────────
    Scenarios — each loops automatically
@@ -298,7 +299,7 @@ export function HeroGeneratorDemo() {
           <div className="flex-1 flex justify-center">
             <div className="bg-[#0f1117] rounded-lg px-4 py-1 flex items-center gap-2 border border-white/8">
               <div className="w-3 h-3 rounded-full bg-primary/80" />
-              <span className="text-[11px] text-muted-foreground font-mono truncate">app.copypro.vn/generator</span>
+              <span className="text-[11px] text-muted-foreground font-mono truncate">{PUBLIC_SITE_HOST}/generator</span>
             </div>
           </div>
           <div className="w-16" />

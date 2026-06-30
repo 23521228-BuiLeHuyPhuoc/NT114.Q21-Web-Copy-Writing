@@ -9,12 +9,20 @@ function trimSlash(value) {
   return String(value || '').replace(/\/$/, '');
 }
 
+function getRequiredPublicUrl(name) {
+  const value = trimSlash(getEnv(name));
+  if (!value) {
+    throw createError(500, `${name} is not configured`);
+  }
+  return value;
+}
+
 function getApiBaseUrl() {
-  return trimSlash(getEnv('NGROK') || getEnv('PUBLIC_API_URL') || `http://localhost:${getEnv('PORT', '4000')}`);
+  return getRequiredPublicUrl('PUBLIC_API_URL');
 }
 
 function getFrontendBaseUrl() {
-  return trimSlash(getEnv('FRONTEND_URL') || 'http://localhost:3000');
+  return getRequiredPublicUrl('FRONTEND_URL');
 }
 
 function getTimeoutMs() {

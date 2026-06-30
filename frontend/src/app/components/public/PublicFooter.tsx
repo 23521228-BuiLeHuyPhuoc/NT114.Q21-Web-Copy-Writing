@@ -4,6 +4,7 @@ import { BrandLogo } from '@/app/components/BrandLogo';
 import { PublicRichText } from '@/app/components/public/PublicRichText';
 import { Sparkles, Mail, Phone, MapPin, Facebook, Youtube, Linkedin, Twitter, ArrowUpRight } from 'lucide-react';
 import { getPublicText } from '@/lib/publicSiteDefaults';
+import { PUBLIC_SUPPORT_EMAIL } from '@/lib/publicEnv';
 import { publicSiteService, type PublicPageContent } from '@/services/publicSiteService';
 
 const FOOTER_LINKS = {
@@ -71,7 +72,7 @@ export function PublicFooter() {
   const footerCtaTitle = getPublicText(footerContent, 'ctaTitle', 'Sẵn sàng tạo copy đỉnh cao?');
   const footerCtaDescription = getPublicText(footerContent, 'ctaDescription', 'Dùng thử miễn phí 14 ngày · Không cần thẻ tín dụng · Hủy bất kỳ lúc nào');
   const footerBrandDescription = getPublicText(footerContent, 'brandDescription', 'Nền tảng AI Copywriting hàng đầu Việt Nam — tích hợp GPT-4o, Llama 3.1 và Fine-tuning, giúp doanh nghiệp tạo nội dung marketing chuyên nghiệp trong vài giây.');
-  const footerEmail = getPublicText(footerContent, 'email', 'hello@copypro.vn');
+  const footerEmail = getPublicText(footerContent, 'email', PUBLIC_SUPPORT_EMAIL);
   const footerPhone = getPublicText(footerContent, 'phone', '+84 901 234 567');
   const footerAddress = getPublicText(footerContent, 'address', 'Tòa nhà Innovation Hub, 2 Nguyễn Thị Minh Khai, Q.1, TP.HCM');
   const footerCopyright = getPublicText(footerContent, 'copyright', '© 2026 CopyPro Vietnam Co., Ltd.');
