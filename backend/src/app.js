@@ -37,12 +37,36 @@ const templateRoutes = require('./routes/user/templateRoutes');
 
 const app = express();
 
-const allowedOrigin = process.env.FRONTEND_URL || 'http://localhost:3000';
+function normalizeOrigin(origin) {
+  return String(origin || '').trim().replace(/\/+$/, '');
+}
+
+function splitOrigins(value) {
+  return String(value || '')
+    .split(',')
+    .map(normalizeOrigin)
+    .filter(Boolean);
+}
+
+function getAllowedOrigins() {
+  const origins = [
+    ...splitOrigins(process.env.FRONTEND_URL || 'http://localhost:3000'),
+    ...splitOrigins(process.env.FRONTEND_ALLOWED_ORIGINS),
+  ];
+
+  if (process.env.VERCEL_URL) {
+    origins.push(normalizeOrigin(`https://${process.env.VERCEL_URL}`));
+  }
+
+  return new Set(origins);
+}
+
+const allowedOrigins = getAllowedOrigins();
 
 app.use(helmet());
 app.use(cors({
   origin(origin, callback) {
-    if (!origin || origin === allowedOrigin) {
+    if (!origin || allowedOrigins.has(normalizeOrigin(origin))) {
       return callback(null, true);
     }
     return callback(createError(403, 'CORS policy does not allow this origin'));

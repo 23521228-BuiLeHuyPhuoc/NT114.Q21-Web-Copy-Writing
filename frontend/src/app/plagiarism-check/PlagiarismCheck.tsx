@@ -520,7 +520,7 @@ function formatFileSize(size: number) {
 function reportPlagiarismScore(report: PlagiarismReport | null) {
   if (!report) return 0;
 
-  const sourceScore = Math.max(0, ...report.sources.map((source) => Number(source.plagiarismScore || source.similarity || 0)));
+  const sourceScore = Math.max(0, ...report.sources.map((source) => Number(source.plagiarismScore || 0)));
   return Math.min(100, Math.max(0, Math.round(report.analysis.plagiarismScore || report.similarityScore || sourceScore || 0)));
 }
 
