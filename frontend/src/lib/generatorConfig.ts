@@ -31,7 +31,7 @@ export const MODELS = [
   { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', badge: 'Google', color: 'text-emerald-600', desc: 'Preview Gemini model exposed by the configured provider.', latency: '~2s', tokens: '1M' },
   { id: 'gemma-4-26b', name: 'Gemma 4 26B', badge: 'Google', color: 'text-orange-600', desc: 'Gemma model through the configured Gemini API.', latency: '~30-90s', tokens: '262K' },
   { id: 'freegpt4-gpt-4', name: 'GPT-4 Free API', badge: 'FreeGPT4', color: 'text-indigo-600', desc: 'Online FreeGPT4 endpoint configured by FREEGPT4_BASE_URL.', latency: '~5-30s', tokens: 'provider' },
-  { id: 'freegpt4-gpt-4o', name: 'GPT-4o Free API', badge: 'FreeGPT4', color: 'text-violet-600', desc: 'Online FreeGPT4 GPT-4o compatible route.', latency: '~5-30s', tokens: 'provider' },
+  { id: 'freegpt4-gpt-4o', name: 'GPT-4o Free API', badge: 'FreeGPT4', color: 'text-violet-600', desc: 'Online FreeGPT4 GPT-4o route configured by FREEGPT4_BASE_URL.', latency: '~5-30s', tokens: 'provider' },
 ];
 
 export const COPY_TYPES = [

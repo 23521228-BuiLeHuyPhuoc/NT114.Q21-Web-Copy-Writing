@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Editor } from '@tinymce/tinymce-react';
 import { useNavigate, useParams } from '@/lib/next-router-compat';
 import {
   ArrowLeft,
@@ -20,10 +21,11 @@ import { Layout } from '@/app/components/Layout';
 import { Card } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
 import { Input } from '@/app/components/ui/input';
-import { Textarea } from '@/app/components/ui/textarea';
 import { Badge } from '@/app/components/ui/badge';
 import { useContent, useDeleteContent, useUpdateContent } from '@/hooks/queries/useContents';
 import { Markdown } from '@/app/components/common/Markdown';
+import { looksLikeHtml, sanitizeHtml } from '@/lib/richText';
+import { tinymceBaseInit, tinymceEditorProps } from '@/lib/tinymce';
 
 export function CustomerContentDetail() {
   const { id } = useParams();
@@ -64,6 +66,11 @@ export function CustomerContentDetail() {
 
     if (!title || !outputText) {
       toast.error('Tiêu đề và nội dung không được để trống');
+      return;
+    }
+
+    if (outputText.length > 60000) {
+      toast.error('Ná»™i dung tá»‘i Ä‘a 60.000 kÃ½ tá»±');
       return;
     }
 
@@ -206,15 +213,29 @@ export function CustomerContentDetail() {
                 </div>
               </div>
               {isEditing ? (
-                <Textarea
-                  value={editContent}
-                  onChange={event => setEditContent(event.target.value)}
-                  className="min-h-[360px] resize-y text-sm leading-relaxed"
-                  maxLength={60000}
-                />
+                <div className="overflow-hidden rounded-lg border border-border bg-card">
+                  <Editor
+                    {...tinymceEditorProps}
+                    value={editContent}
+                    init={{
+                      ...tinymceBaseInit,
+                      height: 420,
+                      menubar: 'edit insert view format table tools',
+                      statusbar: true,
+                      plugins: 'autolink lists link table code wordcount autoresize preview searchreplace visualblocks fullscreen',
+                      toolbar: 'undo redo | blocks | bold italic underline blockquote | alignleft aligncenter alignright | bullist numlist | link table | removeformat | preview fullscreen code',
+                      content_style: 'body { font-family: Inter, Arial, sans-serif; font-size: 14px; line-height: 1.7; color: #1f2937; } p { margin: 0 0 12px; } ul, ol { margin: 0 0 12px 22px; padding: 0; } li { margin: 4px 0; } h1, h2, h3 { margin: 18px 0 10px; line-height: 1.3; color: #111827; } blockquote { margin: 14px 0; padding-left: 14px; border-left: 3px solid #16a34a; color: #374151; } table { border-collapse: collapse; width: 100%; } td, th { border: 1px solid #d1d5db; padding: 8px; }',
+                    }}
+                    onEditorChange={(value: string) => setEditContent(value)}
+                  />
+                </div>
               ) : (
                 <div className="bg-surface-muted rounded-xl p-5 border text-sm text-foreground leading-relaxed">
-                  <Markdown>{content.content}</Markdown>
+                  {looksLikeHtml(content.content) ? (
+                    <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(content.content) }} />
+                  ) : (
+                    <Markdown>{content.content}</Markdown>
+                  )}
                 </div>
               )}
             </Card>

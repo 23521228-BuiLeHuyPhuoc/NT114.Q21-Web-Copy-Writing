@@ -10,7 +10,7 @@ const createError = require('../utils/createError');
 const { throwGoogleCredentialError } = require('../utils/googleCredentialError');
 
 const PROVIDER_ID = 'vertex-llama';
-const PROVIDER_NAME = 'Vertex AI Open-Model Fine-tuning';
+const PROVIDER_NAME = 'Vertex AI Llama Fine-tuning';
 const GOOGLE_CLOUD_SCOPE = 'https://www.googleapis.com/auth/cloud-platform';
 const DEFAULT_LOCATION = 'us-central1';
 const DEFAULT_TUNING_MODE = 'PEFT_ADAPTER';

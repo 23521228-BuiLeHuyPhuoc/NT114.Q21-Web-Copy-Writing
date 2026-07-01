@@ -233,7 +233,6 @@ const VERTEX_CLAUDE_MODEL_MAP = {
 const FREEGPT4_MODEL_MAP = {
   'freegpt4-gpt-4': 'gpt-4',
   'freegpt4-gpt-4o': 'gpt-4o',
-  'freegpt4-gpt-4o-mini': 'gpt-4o-mini',
 };
 
 const FORMAT_BOUNDARY_LABELS = [
@@ -682,7 +681,13 @@ function getFreeGPT4BaseUrl() {
 }
 
 function getFreeGPT4Model(model) {
-  return process.env.FREEGPT4_MODEL || FREEGPT4_MODEL_MAP[model] || model || 'gpt-4';
+  const configuredModel = String(process.env.FREEGPT4_MODEL || '').trim();
+  if (configuredModel) return configuredModel;
+
+  const value = String(model || '').trim();
+  if (FREEGPT4_MODEL_MAP[value]) return FREEGPT4_MODEL_MAP[value];
+  if (value.startsWith('freegpt4-')) return 'gpt-4';
+  return value || 'gpt-4';
 }
 
 function sleep(ms) {
