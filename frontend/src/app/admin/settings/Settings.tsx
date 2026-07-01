@@ -14,6 +14,7 @@ import { Switch } from '@/app/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs';
 import { Textarea } from '@/app/components/ui/textarea';
+import { tinymceBaseInit, tinymceEditorProps } from '@/lib/tinymce';
 import {
   useAdminEnvSettings,
   useAdminSystemSettings,
@@ -25,8 +26,6 @@ import {
 import { PUBLIC_SUPPORT_EMAIL } from '@/lib/publicEnv';
 import { adminUserService, type AdminUser } from '@/services/adminUserService';
 import type { EmailTemplate, EnvSettingSection } from '@/services/systemSettingsService';
-
-const tinymceApiKey = process.env.NEXT_PUBLIC_TINYMCE_API_KEY || 'no-api-key';
 
 type SettingsForm = {
   siteName: string;
@@ -532,9 +531,10 @@ export function AdminSettings() {
                     <div className="mt-2 overflow-hidden rounded-lg border border-border bg-card">
                       <Editor
                         key={selectedTemplate.key}
-                        apiKey={tinymceApiKey}
+                        {...tinymceEditorProps}
                         value={selectedTemplate.html}
                         init={{
+                          ...tinymceBaseInit,
                           height: 420,
                           menubar: 'edit insert view format table tools',
                           branding: false,

@@ -4,8 +4,9 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "build": "next build",
-    "dev": "next dev",
+    "build": "node scripts/copy-tinymce-assets.mjs && next build",
+    "dev": "node scripts/copy-tinymce-assets.mjs && next dev",
+    "postinstall": "node scripts/copy-tinymce-assets.mjs",
     "start": "next start"
   },
   "dependencies": {
@@ -69,6 +70,7 @@
     "react-responsive-masonry": "2.7.1",
     "react-slick": "0.31.0",
     "tailwind-merge": "3.2.0",
+    "tinymce": "^8.6.0",
     "tw-animate-css": "1.3.8",
     "vaul": "1.1.2",
     "xlsx": "^0.18.5",

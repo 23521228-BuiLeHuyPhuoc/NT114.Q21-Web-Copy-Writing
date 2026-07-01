@@ -24,8 +24,7 @@ import {
 import { publicSiteService, type PublicBlogPost, type PublicPageRecord } from '@/services/publicSiteService';
 import { ArrowLeft, Eye, Save, Upload } from 'lucide-react';
 import toast from 'react-hot-toast';
-
-const tinymceApiKey = process.env.NEXT_PUBLIC_TINYMCE_API_KEY || 'no-api-key';
+import { tinymceBaseInit, tinymceEditorProps } from '@/lib/tinymce';
 
 interface BlogPostEditorProps {
   slug?: string;
@@ -255,9 +254,10 @@ export function BlogPostEditor({ slug, mode }: BlogPostEditorProps) {
                 </div>
                 <div className="overflow-hidden rounded-lg border border-border bg-card">
                   <Editor
-                    apiKey={tinymceApiKey}
+                    {...tinymceEditorProps}
                     value={form.bodyHtml}
                     init={{
+                      ...tinymceBaseInit,
                       height: 560,
                       menubar: 'file edit view insert format tools table',
                       branding: false,

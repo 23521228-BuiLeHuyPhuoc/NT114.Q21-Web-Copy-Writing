@@ -123,8 +123,9 @@ Tạo `frontend/.env.local`:
 
 ```env
 NEXT_PUBLIC_API_BASE_URL=http://localhost:4000/api
-NEXT_PUBLIC_TINYMCE_API_KEY=
 ```
+
+TinyMCE is self-hosted from the frontend package. `yarn install`, `yarn dev`, and `yarn build` copy the required assets to `frontend/public/tinymce`, so no TinyMCE Cloud API key is required.
 
 ## Seed dữ liệu demo
 

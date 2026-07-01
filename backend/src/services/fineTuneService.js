@@ -109,6 +109,25 @@ function getOpenAIFineTuneBaseModelOptions() {
   }));
 }
 
+function getRawConfiguredAIProvider() {
+  return String(process.env.AI_PROVIDER || '').trim().toLowerCase();
+}
+
+function isVertexQwenFineTuneProviderConfigured() {
+  const provider = getRawConfiguredAIProvider();
+  return provider === VERTEX_QWEN_FINE_TUNE_PROVIDER.id
+    || provider === 'qwen'
+    || parseModelList(process.env.VERTEX_QWEN_TUNING_BASE_MODELS).length > 0
+    || Boolean(String(process.env.VERTEX_QWEN_TUNING_ENDPOINT || '').trim());
+}
+
+function isVertexClaudeBrandVoiceProviderConfigured() {
+  const provider = getRawConfiguredAIProvider();
+  return provider === VERTEX_CLAUDE_BRAND_VOICE_PROVIDER.id
+    || provider === 'claude'
+    || parseModelList(process.env.VERTEX_CLAUDE_BRAND_VOICE_MODELS || process.env.VERTEX_CLAUDE_MODELS).length > 0;
+}
+
 function getVertexClaudeBrandVoiceBaseModelOptions() {
   const configured = parseModelList(process.env.VERTEX_CLAUDE_BRAND_VOICE_MODELS || process.env.VERTEX_CLAUDE_MODELS);
   const models = configured.length > 0 ? configured : VERTEX_CLAUDE_BRAND_VOICE_MODEL_OPTIONS.map((model) => model.id);
@@ -233,7 +252,7 @@ function isOpenAIFineTuneProviderReady() {
 }
 
 function getConfiguredAIProvider() {
-  const provider = String(process.env.AI_PROVIDER || '').trim().toLowerCase();
+  const provider = getRawConfiguredAIProvider();
   if (provider === VERTEX_FINE_TUNE_PROVIDER.id) return provider;
   if (provider === VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id) return provider;
   if (provider === VERTEX_QWEN_FINE_TUNE_PROVIDER.id || provider === 'qwen') return VERTEX_QWEN_FINE_TUNE_PROVIDER.id;
@@ -247,14 +266,16 @@ function getSupportedTrainingProviderIds() {
 
 function getDefaultTrainingProvider() {
   const configuredProvider = getConfiguredAIProvider();
+  const qwenConfigured = isVertexQwenFineTuneProviderConfigured();
+  const claudeConfigured = isVertexClaudeBrandVoiceProviderConfigured();
   if (configuredProvider === VERTEX_FINE_TUNE_PROVIDER.id && isVertexFineTuneProviderReady()) return configuredProvider;
   if (configuredProvider === VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id && vertexOpenModelFineTuneService.isReady()) return configuredProvider;
-  if (configuredProvider === VERTEX_QWEN_FINE_TUNE_PROVIDER.id && vertexOpenModelFineTuneService.isReady()) return configuredProvider;
-  if (configuredProvider === VERTEX_CLAUDE_BRAND_VOICE_PROVIDER.id && isVertexClaudeBrandVoiceReady()) return configuredProvider;
+  if (configuredProvider === VERTEX_QWEN_FINE_TUNE_PROVIDER.id && qwenConfigured && vertexOpenModelFineTuneService.isReady()) return configuredProvider;
+  if (configuredProvider === VERTEX_CLAUDE_BRAND_VOICE_PROVIDER.id && claudeConfigured && isVertexClaudeBrandVoiceReady()) return configuredProvider;
   if (configuredProvider === 'openai' && isOpenAIFineTuneProviderReady()) return configuredProvider;
   if (isVertexFineTuneProviderReady()) return VERTEX_FINE_TUNE_PROVIDER.id;
   if (vertexOpenModelFineTuneService.isReady()) return VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id;
-  if (isVertexClaudeBrandVoiceReady()) return VERTEX_CLAUDE_BRAND_VOICE_PROVIDER.id;
+  if (claudeConfigured && isVertexClaudeBrandVoiceReady()) return VERTEX_CLAUDE_BRAND_VOICE_PROVIDER.id;
   if (isOpenAIFineTuneProviderReady()) return 'openai';
   return VERTEX_FINE_TUNE_PROVIDER.id;
 }
@@ -2566,8 +2587,10 @@ function listProviders() {
   const openAIReady = isOpenAIFineTuneProviderReady();
   const vertexReady = isVertexFineTuneProviderReady();
   const vertexLlamaReady = vertexOpenModelFineTuneService.isReady();
-  const qwenReady = vertexOpenModelFineTuneService.isReady();
-  const vertexClaudeReady = isVertexClaudeBrandVoiceReady();
+  const qwenProviderConfigured = isVertexQwenFineTuneProviderConfigured();
+  const vertexClaudeProviderConfigured = isVertexClaudeBrandVoiceProviderConfigured();
+  const qwenReady = qwenProviderConfigured && vertexOpenModelFineTuneService.isReady();
+  const vertexClaudeReady = vertexClaudeProviderConfigured && isVertexClaudeBrandVoiceReady();
   const vertexLlamaTuningLocation = (() => {
     try { return vertexOpenModelFineTuneService.getLocationForProvider(VERTEX_OPEN_MODEL_FINE_TUNE_PROVIDER.id, getVertexNonQwenOpenModelOptions()[0]?.id); } catch { return ''; }
   })();
@@ -2645,7 +2668,7 @@ function listProviders() {
         tuningEndpoint: vertexLlamaTuningEndpoint,
         baseModels: getVertexNonQwenOpenModelOptions(),
       },
-      {
+      qwenProviderConfigured ? {
         id: VERTEX_QWEN_FINE_TUNE_PROVIDER.id,
         name: VERTEX_QWEN_FINE_TUNE_PROVIDER.name,
         status: qwenReady ? 'active' : 'needs_config',
@@ -2660,8 +2683,8 @@ function listProviders() {
         tuningLocation: qwenTuningLocation || vertexOpenModelFineTuneService.getLocation(),
         tuningEndpoint: qwenTuningEndpoint,
         baseModels: getVertexQwenBaseModelOptions(),
-      },
-      {
+      } : null,
+      vertexClaudeProviderConfigured ? {
         id: VERTEX_CLAUDE_BRAND_VOICE_PROVIDER.id,
         name: VERTEX_CLAUDE_BRAND_VOICE_PROVIDER.name,
         status: vertexClaudeReady ? 'active' : 'needs_config',
@@ -2674,9 +2697,9 @@ function listProviders() {
           ? 'Creates a prompt-conditioned brand-voice model from your dataset and generates with Claude Haiku 4.5 on Vertex AI. This does not train Claude weights.'
           : 'Missing GOOGLE_CLOUD_PROJECT or Google ADC for Claude Haiku 4.5 on Vertex AI.',
         baseModels: getVertexClaudeBrandVoiceBaseModelOptions(),
-      },
+      } : null,
       ...apiProviders,
-    ],
+    ].filter(Boolean),
   };
 }
 

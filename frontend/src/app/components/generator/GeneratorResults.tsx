@@ -21,6 +21,7 @@ import {
 import toast from 'react-hot-toast';
 import { Markdown } from '@/app/components/common/Markdown';
 import { looksLikeHtml, sanitizeHtml } from '@/lib/richText';
+import { tinymceBaseInit, tinymceEditorProps } from '@/lib/tinymce';
 
 interface Props {
   isGenerating: boolean;
@@ -37,8 +38,6 @@ interface Props {
   onDownload: (text: string) => void;
   onRegenerate: () => void;
 }
-
-const tinymceApiKey = process.env.NEXT_PUBLIC_TINYMCE_API_KEY || 'no-api-key';
 
 function countWords(text: string) {
   return text
@@ -167,10 +166,11 @@ export function GeneratorResults({
                 {viewMode === 'edit' ? (
                   <div className="overflow-hidden rounded-md border bg-card">
                     <Editor
-                      apiKey={tinymceApiKey}
+                      {...tinymceEditorProps}
                       value={activeResult}
                       onEditorChange={(value: string) => onResultChange(selectedResult, value)}
                       init={{
+                        ...tinymceBaseInit,
                         height: 320,
                         menubar: false,
                         branding: false,

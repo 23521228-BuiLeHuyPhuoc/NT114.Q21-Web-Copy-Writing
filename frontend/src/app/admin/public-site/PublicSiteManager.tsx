@@ -14,11 +14,10 @@ import { StatTile } from '@/app/components/admin/StatTile';
 import { PUBLIC_PAGE_FIELD_DEFS, buildDefaultContent, getPublicPageDef } from '@/lib/publicSiteDefaults';
 import { normalizePosts } from '@/lib/publicBlog';
 import { matchesSearchRegex } from '@/lib/searchRegex';
+import { tinymceBaseInit, tinymceEditorProps } from '@/lib/tinymce';
 import { publicSiteService, type PublicBlogPost, type PublicPageRecord } from '@/services/publicSiteService';
 import { Edit2, Eye, FileText, Globe2, Newspaper, Plus, Save, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
-
-const tinymceApiKey = process.env.NEXT_PUBLIC_TINYMCE_API_KEY || 'no-api-key';
 
 type TabKey = 'pages' | 'blog';
 
@@ -206,9 +205,10 @@ export function PublicSiteManager() {
               {field.multiline ? (
                 <div className="mt-2 overflow-hidden rounded-lg border border-border bg-card">
                   <Editor
-                    apiKey={tinymceApiKey}
+                    {...tinymceEditorProps}
                     value={pageDraft[field.key] || ''}
                     init={{
+                      ...tinymceBaseInit,
                       height: 220,
                       menubar: false,
                       branding: false,

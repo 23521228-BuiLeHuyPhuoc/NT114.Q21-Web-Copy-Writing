@@ -462,6 +462,37 @@ function getProviderPrompt(payload) {
   return buildProviderPrompt(payload);
 }
 
+function limitFreeGPT4Prompt(text) {
+  const maxChars = Number(process.env.FREEGPT4_MAX_PROMPT_CHARS || 1400);
+  const limit = Number.isFinite(maxChars) ? Math.min(3000, Math.max(500, Math.floor(maxChars))) : 1400;
+  const value = String(text || '').trim();
+  if (value.length <= limit) return value;
+  return `${value.slice(0, limit).trim()}\n\n[Input was shortened for the FreeGPT4 GET endpoint.]`;
+}
+
+function buildFreeGPT4Prompt(payload) {
+  if (payload.useRawPrompt) return limitFreeGPT4Prompt(payload.prompt);
+
+  const language = payload.language === 'en' ? 'English' : 'Vietnamese with accents';
+  const type = labelFromMap(TYPE_LABELS, payload.type, 'marketing copy');
+  const tone = labelFromMap(TONE_LABELS, payload.tone, 'clear');
+  const industry = labelFromMap(INDUSTRY_LABELS, payload.industry, 'general');
+  const variations = getVariationCount(payload);
+  const sourcePrompt = limitFreeGPT4Prompt(payload.prompt);
+
+  return [
+    `Write ${variations} version(s) of ${type}.`,
+    `Language: ${language}.`,
+    `Industry: ${industry}.`,
+    `Tone: ${tone}.`,
+    `Length: ${getLengthLevel(payload.length)}.`,
+    variations > 1 ? 'Label each result as "Phien ban 1:", "Phien ban 2:" and so on.' : 'Return one complete result.',
+    'Return final copy only, no explanation, no markdown code block.',
+    'Original request:',
+    sourcePrompt,
+  ].filter(Boolean).join('\n');
+}
+
 function findVersionOneLabels(text) {
   const versionOnePattern = /(^|\n)\s*(?:#{1,4}\s*)?(?:[-*]\s*)?(?:\*\*)?\s*(?:[\u2600-\u27BF\u{1F300}-\u{1FAFF}]\uFE0F?\s*)*(?:Phiên\s*bản|Phien\s*ban|Version)\s*1\s*[:.\-]/giu;
   return [...String(text || '').matchAll(versionOnePattern)].map((match) => ({
@@ -1871,7 +1902,7 @@ async function callFreeGPT4(payload) {
   }
 
   const model = getFreeGPT4Model(payload.model);
-  const providerPrompt = getProviderPrompt(payload);
+  const providerPrompt = buildFreeGPT4Prompt(payload);
   let timeout;
 
   try {
@@ -1990,7 +2021,7 @@ async function generateCopy(payload) {
     auto: [callGemini, callGroq, callOpenRouter, callOpenAI, callFreeGPT4],
   }[provider] || [callGemini];
   const shouldUseVertexGeminiProvider = !forcedProvider && provider === 'vertex-gemini' && isGeminiFamilyModel;
-  const shouldUseConfiguredOpenRouterProvider = !forcedProvider && provider === 'openrouter';
+  const shouldUseConfiguredOpenRouterProvider = !forcedProvider && provider === 'openrouter' && !isFreeGPT4Model;
   const selectedProviders = providersBySelectedModel || [];
   const providers = forcedProvider || shouldUseVertexGeminiProvider || shouldUseConfiguredOpenRouterProvider
     ? providersByEnv

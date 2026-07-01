@@ -259,18 +259,18 @@ const AI_MODELS: AiModelInfo[] = [
   {
     id: 'freegpt4-gpt-4',
     apiModel: 'gpt-4',
-    name: 'GPT-4 Free Local API',
-    provider: 'Free-GPT4-WEB-API local wrapper',
-    kind: 'Local wrapper',
-    status: 'Local',
+    name: 'GPT-4 Free API',
+    provider: 'FreeGPT4 online endpoint',
+    kind: 'Online API',
+    status: 'Online',
     context: 'Phụ thuộc provider phía sau',
     output: 'Phụ thuộc provider phía sau',
     price: 'Miễn phí trong app; phụ thuộc upstream',
     route: 'callFreeGPT4 -> FREEGPT4_MODEL_MAP',
-    env: 'FREEGPT4_* optional, localhost:5500',
-    source: 'App local wrapper',
-    features: ['Local server wrapper', 'model=gpt-4', 'No direct OpenAI key required in app'],
-    note: 'Đây là model đại diện qua wrapper local. Benchmark hiển thị theo GPT-4 gốc, còn chất lượng thực tế phụ thuộc upstream provider.',
+    env: 'FREEGPT4_BASE_URL',
+    source: 'Configured FreeGPT4 endpoint',
+    features: ['Online FreeGPT4 endpoint', 'model=gpt-4', 'No direct OpenAI key required in app'],
+    note: 'Đây là model đại diện qua endpoint FreeGPT4 online. Benchmark hiển thị theo GPT-4 gốc, còn chất lượng thực tế phụ thuộc upstream provider.',
     benchmark: {
       primaryMetric: 'MMLU',
       primaryScore: 86.4,
@@ -285,18 +285,18 @@ const AI_MODELS: AiModelInfo[] = [
   {
     id: 'freegpt4-gpt-4o',
     apiModel: 'gpt-4o',
-    name: 'GPT-4o Free Local API',
-    provider: 'Free-GPT4-WEB-API local wrapper',
-    kind: 'Local wrapper',
-    status: 'Local',
+    name: 'GPT-4o Free API',
+    provider: 'FreeGPT4 online endpoint',
+    kind: 'Online API',
+    status: 'Online',
     context: 'Phụ thuộc provider phía sau',
     output: 'Phụ thuộc provider phía sau',
     price: 'Miễn phí trong app; phụ thuộc upstream',
     route: 'callFreeGPT4 -> FREEGPT4_MODEL_MAP',
-    env: 'FREEGPT4_* optional, localhost:5500',
-    source: 'App local wrapper',
-    features: ['Local server wrapper', 'model=gpt-4o', 'No direct OpenAI key required in app'],
-    note: 'Đây là model đại diện qua wrapper local. Benchmark hiển thị theo GPT-4o gốc, còn chất lượng thực tế phụ thuộc upstream provider.',
+    env: 'FREEGPT4_BASE_URL',
+    source: 'Configured FreeGPT4 endpoint',
+    features: ['Online FreeGPT4 endpoint', 'model=gpt-4o', 'No direct OpenAI key required in app'],
+    note: 'Đây là model đại diện qua endpoint FreeGPT4 online. Benchmark hiển thị theo GPT-4o gốc, còn chất lượng thực tế phụ thuộc upstream provider.',
     benchmark: {
       primaryMetric: 'MedQA USMLE 4 options',
       primaryScore: 89.4,
@@ -435,7 +435,7 @@ export function AdminModelManagement() {
             <Card className="p-5">
               <h3 className="font-semibold text-foreground mb-1">Điểm benchmark chính theo từng model</h3>
               <p className="text-xs text-muted-foreground mb-4">Biểu đồ chỉ vẽ các model có điểm cố định. Router động như OpenRouter/free được giữ trong bảng nhưng không đưa vào biểu đồ.</p>
-              <BarChart data={benchmarkedModels.map(model => ({ model: model.name.replace('Gemini ', '').replace(' Free Local API', ''), score: model.benchmark.primaryScore ?? 0 }))} xKey="model" height={300} yMin={0} yMax={100} series={[{ key: 'score', label: 'Primary benchmark score', color: '#16723a' }]} />
+              <BarChart data={benchmarkedModels.map(model => ({ model: model.name.replace('Gemini ', '').replace(' Free API', ''), score: model.benchmark.primaryScore ?? 0 }))} xKey="model" height={300} yMin={0} yMax={100} series={[{ key: 'score', label: 'Primary benchmark score', color: '#16723a' }]} />
             </Card>
 
             <Card className="p-5">
@@ -463,7 +463,7 @@ export function AdminModelManagement() {
             <Card className="p-5">
               <div className="flex items-center gap-2 mb-3"><Route className="h-5 w-5 text-primary" /><h3 className="font-semibold text-foreground">Ghi chú về model đại diện, router và wrapper</h3></div>
               <div className="space-y-2 text-sm text-foreground/75">
-                <p><span className="font-semibold text-foreground">FreeGPT4 GPT-4/GPT-4o:</span> app gọi local wrapper với model parameter tương ứng. Benchmark trong bảng là benchmark đại diện của GPT-4/GPT-4o gốc, không phải phép đo trực tiếp wrapper local.</p>
+                <p><span className="font-semibold text-foreground">FreeGPT4 GPT-4/GPT-4o:</span> app gọi endpoint FreeGPT4 online trong FREEGPT4_BASE_URL với model parameter tương ứng. Benchmark trong bảng là benchmark đại diện của GPT-4/GPT-4o gốc, không phải phép đo trực tiếp endpoint này.</p>
                 <p><span className="font-semibold text-foreground">OpenRouter Free Router:</span> đây là router chọn model free khả dụng, nên không có benchmark cố định. Muốn đo thật phải log model thực tế mà OpenRouter trả về từng request.</p>
                 <p><span className="font-semibold text-foreground">Preview/GA transition:</span> các model Gemini preview có thể thay đổi model ID, rate limit, giá hoặc benchmark theo thời gian.</p>
               </div>
