@@ -828,7 +828,7 @@ async function seedBillingPlans() {
       limits: { copyMonthly: 30, apiCallsMonthly: 200, apiCallsFiveHours: 25, apiCallsWeekly: 80, fineTuneModels: 0, plagiarismChecks: 0, seats: 1, historyDays: 7 },
       features: ['30 copy/tháng', '5 ngành nghề cơ bản', '20 template', 'GPT-3.5 Turbo'],
       excludedFeatures: ['GPT-4o', 'Fine-tuning Studio', 'API Access', 'Xuất file (.docx, .pdf)'],
-      allowedModels: ['gemini-flash', 'gemini-flash-lite'],
+      allowedModels: ['openrouter-free', 'openrouter-qwen-free'],
       isPopular: false,
       isActive: true,
       sortOrder: 1,

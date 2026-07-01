@@ -23,10 +23,11 @@ interface Props {
   estimatedQuotaUnits?: number;
 }
 
-const MODEL_GROUP_ORDER = ['Google', 'Groq', 'Local API', 'Fine-tuned', 'Other'];
+const MODEL_GROUP_ORDER = ['OpenRouter', 'Google', 'Groq', 'Local API', 'Fine-tuned', 'Other'];
 
 function resolveModelGroup(model: GeneratorModelOption) {
   if (model.group) return model.group;
+  if (model.id.startsWith('openrouter-') || model.badge.toLowerCase() === 'openrouter') return 'OpenRouter';
   if (model.id.startsWith('fine-tuned:') || model.badge.toLowerCase().includes('fine')) return 'Fine-tuned';
   if (model.id.startsWith('groq-') || model.name.toLowerCase().includes('groq')) return 'Groq';
   if (model.id.startsWith('freegpt4-') || model.badge.toLowerCase() === 'local') return 'Local API';

@@ -1,6 +1,10 @@
 const FINE_TUNED_MODEL_ACCESS = 'fine-tuned';
 
 const BASE_GENERATOR_MODELS = [
+  'openrouter-free',
+  'openrouter-qwen-free',
+  'openrouter-gemma-free',
+  'openrouter-nemotron-free',
   'gemini-flash',
   'gemini-flash-lite',
   'groq-llama-3-3-70b',

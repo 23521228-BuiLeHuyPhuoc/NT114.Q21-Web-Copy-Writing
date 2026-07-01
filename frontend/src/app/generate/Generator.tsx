@@ -225,7 +225,7 @@ export function CustomerGenerator() {
   const { data: billing } = useMyBilling();
   const [industry, setIndustry] = useState('ecommerce');
   const [copyType, setCopyType] = useState('headline');
-  const [model, setModel] = useState('gemini-flash');
+  const [model, setModel] = useState('openrouter-free');
   const [modelMode, setModelMode] = useState<ModelMode>('base');
   const [fineTunedModelId, setFineTunedModelId] = useState('');
   const [tone, setTone] = useState('urgent');
