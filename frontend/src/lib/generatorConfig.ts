@@ -20,10 +20,6 @@ import {
 } from 'lucide-react';
 
 export const MODELS = [
-  { id: 'openrouter-free', name: 'OpenRouter Free Router', badge: 'OpenRouter', color: 'text-sky-600', desc: 'Uses the configured OpenRouter free model router for production generation.', latency: '~2-20s', tokens: 'provider' },
-  { id: 'openrouter-qwen-free', name: 'Qwen Free (OpenRouter)', badge: 'OpenRouter', color: 'text-cyan-600', desc: 'Free Qwen model through OpenRouter, useful for Vietnamese marketing drafts.', latency: '~2-20s', tokens: 'provider' },
-  { id: 'openrouter-gemma-free', name: 'Gemma Free (OpenRouter)', badge: 'OpenRouter', color: 'text-blue-600', desc: 'Free Gemma model through OpenRouter for general copywriting.', latency: '~2-20s', tokens: 'provider' },
-  { id: 'openrouter-nemotron-free', name: 'Nemotron Free (OpenRouter)', badge: 'OpenRouter', color: 'text-indigo-600', desc: 'Free NVIDIA Nemotron model through OpenRouter.', latency: '~2-20s', tokens: 'provider' },
   { id: 'gemini-flash', name: 'Gemini 2.5 Flash', badge: 'Google', color: 'text-green-600', desc: 'Fast Google Gemini model for common marketing copy.', latency: '~2s', tokens: '1M' },
   { id: 'gemini-flash-lite', name: 'Gemini 2.5 Flash Lite', badge: 'Google', color: 'text-teal-600', desc: 'Lightweight Gemini model for quick requests.', latency: '~1s', tokens: '1M' },
   { id: 'groq-llama-3-3-70b', name: 'Llama 3.3 70B (Groq)', badge: 'Groq', color: 'text-orange-600', desc: 'Groq-hosted Llama for longer copy and stronger reasoning.', latency: '~1-3s', tokens: '128K' },

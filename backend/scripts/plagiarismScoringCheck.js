@@ -79,7 +79,7 @@ function fakeReport(overrides = {}) {
 }
 
 const selfWritten = '9Router giúp gom cấu hình AI coding tool về một endpoint nội bộ. Khi người dùng gửi request, gateway chọn provider phù hợp, áp chính sách khóa và ghi log để dễ kiểm soát chi phí.';
-const sameTopicSource = '9Router là proxy AI cho các công cụ code, hỗ trợ route request sang nhiều provider như OpenAI, Codex hoặc OpenRouter. Người dùng có thể trỏ tool vào gateway để quản lý model, api key và subscription.';
+  const sameTopicSource = '9Router là proxy AI cho các công cụ code, hỗ trợ route request sang nhiều provider AI. Người dùng có thể trỏ tool vào gateway để quản lý model, api key và subscription.';
 
 const topicScore = __test.scoreTexts(selfWritten, sameTopicSource, scoringOptions);
 const topicMatches = __test.findSegmentMatches(

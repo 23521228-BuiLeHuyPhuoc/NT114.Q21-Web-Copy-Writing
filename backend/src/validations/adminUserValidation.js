@@ -23,7 +23,7 @@ const createAdminUserSchema = Joi.object({
   }),
   customerRole: Joi.when('role', {
     is: 'customer',
-    then: customerRole.default('pro_customer'),
+    then: customerRole.default('free_customer'),
     otherwise: Joi.forbidden(),
   }),
   status,

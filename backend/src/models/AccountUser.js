@@ -42,7 +42,7 @@ const accountUserSchema = new mongoose.Schema(
     customerRole: {
       type: String,
       trim: true,
-      default: 'pro_customer',
+      default: 'free_customer',
     },
     avatar: {
       type: String,

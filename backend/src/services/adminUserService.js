@@ -18,7 +18,7 @@ function serializeUser(account) {
     name: account.name,
     email: account.email,
     role: 'customer',
-    customerRole: account.customerRole || 'pro_customer',
+    customerRole: account.customerRole || 'free_customer',
     status: account.status,
     avatar: account.avatar,
     isVerified: account.isVerified,
@@ -110,7 +110,7 @@ async function createUser(payload) {
     name: payload.name,
     email: payload.email,
     password: payload.password,
-    customerRole: payload.customerRole || 'pro_customer',
+    customerRole: payload.customerRole || 'free_customer',
     status: normalizeUserStatus(payload.status),
     isVerified: true,
   });

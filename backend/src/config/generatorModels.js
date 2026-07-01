@@ -1,10 +1,6 @@
 const FINE_TUNED_MODEL_ACCESS = 'fine-tuned';
 
 const BASE_GENERATOR_MODELS = [
-  'openrouter-free',
-  'openrouter-qwen-free',
-  'openrouter-gemma-free',
-  'openrouter-nemotron-free',
   'gemini-flash',
   'gemini-flash-lite',
   'groq-llama-3-3-70b',
@@ -19,13 +15,18 @@ const ALL_GENERATOR_MODEL_ACCESS = [
   FINE_TUNED_MODEL_ACCESS,
 ];
 
+function isGenerateModelAccessDisabled(value) {
+  const model = String(value || '').trim().toLowerCase();
+  return model.startsWith('openrouter-') || model.startsWith('openrouter/') || model.endsWith(':free');
+}
+
 function normalizeAllowedModels(value) {
   if (!Array.isArray(value)) return [];
 
   return Array.from(new Set(
     value
       .map((item) => String(item || '').trim())
-      .filter(Boolean),
+      .filter((item) => item && !isGenerateModelAccessDisabled(item)),
   ));
 }
 
@@ -43,5 +44,6 @@ module.exports = {
   BASE_GENERATOR_MODELS,
   FINE_TUNED_MODEL_ACCESS,
   getGenerateModelAccessId,
+  isGenerateModelAccessDisabled,
   normalizeAllowedModels,
 };

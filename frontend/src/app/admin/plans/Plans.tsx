@@ -70,7 +70,8 @@ function calculateWeeklyQuota(fiveHourQuota: string) {
 }
 
 const FINE_TUNED_MODEL_ACCESS = 'fine-tuned';
-const DEFAULT_LIMITED_MODELS = ['openrouter-free', 'openrouter-qwen-free'];
+const DEFAULT_LIMITED_MODELS = ['gemini-flash', 'gemini-flash-lite', 'freegpt4-gpt-4'];
+const isDisabledModelAccess = (modelId: string) => modelId.startsWith('openrouter-') || modelId.startsWith('openrouter/') || modelId.endsWith(':free');
 
 const MODEL_ACCESS_OPTIONS = [
   ...MODELS.map(model => ({ id: model.id, name: model.name, badge: model.badge })),
@@ -80,7 +81,7 @@ const MODEL_ACCESS_OPTIONS = [
 const MODEL_ACCESS_LABELS = new Map(MODEL_ACCESS_OPTIONS.map(model => [model.id, model.name]));
 
 function uniqueModels(models: string[]) {
-  return Array.from(new Set(models.map(model => model.trim()).filter(Boolean)));
+  return Array.from(new Set(models.map(model => model.trim()).filter(model => model && !isDisabledModelAccess(model))));
 }
 
 function formatAllowedModels(models: string[]) {
@@ -239,7 +240,7 @@ export function AdminPlans() {
 
   const planModelOptions = useMemo(() => {
     const ids = new Set(MODEL_ACCESS_OPTIONS.map(model => model.id));
-    plans.forEach(plan => plan.allowedModels.forEach(model => ids.add(model)));
+    plans.forEach(plan => plan.allowedModels.filter(model => !isDisabledModelAccess(model)).forEach(model => ids.add(model)));
     return Array.from(ids).map(id => ({ id, name: MODEL_ACCESS_LABELS.get(id) || id }));
   }, [plans]);
 

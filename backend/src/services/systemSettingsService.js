@@ -15,7 +15,7 @@ const ENV_SECTIONS = [
     title: 'AI Models',
     description: 'Các biến này được ghi trực tiếp vào backend/.env và process.env của server hiện tại.',
     keys: [
-      { key: 'AI_PROVIDER', label: 'Provider đang dùng', secret: false, placeholder: 'gemini | vertex-gemini | groq | openrouter | openai | freegpt4 | auto' },
+      { key: 'AI_PROVIDER', label: 'Provider đang dùng', secret: false, placeholder: 'gemini | vertex-gemini | groq | openai | freegpt4 | auto' },
       { key: 'GEMINI_API_KEY', label: 'Gemini API key', secret: true },
       { key: 'GOOGLE_API_KEY', label: 'Google API key', secret: true },
       { key: 'GEMINI_MODEL', label: 'Gemini model mặc định', secret: false, placeholder: 'Để trống để dùng model chọn trong UI' },
@@ -29,10 +29,6 @@ const ENV_SECTIONS = [
       { key: 'VERTEX_LLAMA_TUNING_ENDPOINT', label: 'Vertex Llama tuning endpoint', secret: false },
       { key: 'VERTEX_QWEN_TUNING_ENDPOINT', label: 'Vertex Qwen tuning endpoint', secret: false },
       { key: 'VERTEX_CLAUDE_LOCATIONS', label: 'Vertex Claude locations', secret: false },
-      { key: 'OPENROUTER_API_KEY', label: 'OpenRouter API key', secret: true },
-      { key: 'OPENROUTER_MODEL', label: 'OpenRouter model mặc định', secret: false },
-      { key: 'OPENROUTER_SITE_URL', label: 'OpenRouter site URL', secret: false },
-      { key: 'OPENROUTER_APP_NAME', label: 'OpenRouter app name', secret: false },
       { key: 'OPENAI_API_KEY', label: 'OpenAI-compatible API key', secret: true },
       { key: 'OPENAI_MODEL', label: 'OpenAI-compatible model mặc định', secret: false },
       { key: 'OPENAI_BASE_URL', label: 'OpenAI-compatible base URL', secret: false },
@@ -412,13 +408,6 @@ function getRuntimeAiConfig() {
       modelEnv: 'GROQ_MODEL',
       fallbackModel: 'UI selected model or llama-3.3-70b-versatile',
       keyEnv: ['GROQ_API_KEY'],
-    }),
-    providerStatus({
-      id: 'openrouter',
-      name: 'OpenRouter',
-      modelEnv: 'OPENROUTER_MODEL',
-      fallbackModel: 'UI selected model or openrouter/free',
-      keyEnv: ['OPENROUTER_API_KEY'],
     }),
     providerStatus({
       id: 'openai',

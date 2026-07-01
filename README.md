@@ -31,7 +31,7 @@ Website AI Copywriter tích hợp GPT-4/Llama, RESTful API backend và fine-tuni
 - Dashboard người dùng và dashboard admin.
 - Kiểm tra đạo văn nội dung AI.
 - Fine-tuning qua Vertex AI Gemini và Vertex AI Llama/Qwen open-model tuning.
-- Hỗ trợ nhiều provider: Gemini, Vertex AI, OpenAI-compatible API, Groq, OpenRouter, Free-GPT4 local wrapper.
+- Hỗ trợ nhiều provider: Gemini, Vertex AI, OpenAI-compatible API, Groq, Free-GPT4 local wrapper.
 
 ## Công nghệ
 
@@ -209,10 +209,6 @@ OPENAI_BASE_URL=https://api.openai.com/v1
 # Groq
 GROQ_API_KEY=<your-groq-api-key>
 
-# OpenRouter
-OPENROUTER_API_KEY=<your-openrouter-api-key>
-OPENROUTER_SITE_URL=http://localhost:3000
-OPENROUTER_APP_NAME=CopyPro AI
 ```
 
 </details>
@@ -253,6 +249,7 @@ python -m pip install -r training\vertex_open_model_tuning\requirements.txt
 VERTEX_OPEN_MODEL_TUNING_BASE_MODELS=meta/llama3-3@llama-3.3-70b-instruct,qwen/qwen3@qwen3-14b
 VERTEX_LLAMA_TUNING_BASE_MODELS=meta/llama3-3@llama-3.3-70b-instruct
 VERTEX_QWEN_TUNING_BASE_MODELS=qwen/qwen3@qwen3-14b
+VERTEX_LLAMA_TUNING_SCRIPT=training/vertex_open_model_tuning/submit_open_model_tuning.py
 VERTEX_OPEN_MODEL_TUNING_PYTHON=.venv/Scripts/python.exe
 VERTEX_OPEN_MODEL_TUNING_MODE=PEFT_ADAPTER
 VERTEX_QWEN_TUNING_MODE=FULL

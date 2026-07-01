@@ -206,15 +206,6 @@ const GEMINI_MODEL_MAP = {
   'finetuned-ec': 'gemini-2.5-flash',
 };
 
-const OPENROUTER_MODEL_MAP = {
-  'openrouter-free': 'openrouter/free',
-  // Legacy id kept routable even when the old DeepSeek free model is unavailable.
-  'openrouter-deepseek-free': 'openrouter/free',
-  'openrouter-qwen-free': 'qwen/qwen3-next-80b-a3b-instruct:free',
-  'openrouter-gemma-free': 'google/gemma-4-31b-it:free',
-  'openrouter-nemotron-free': 'nvidia/nemotron-3-super-120b-a12b:free',
-};
-
 const GROQ_MODEL_MAP = {
   'groq-llama-3-3-70b': 'llama-3.3-70b-versatile',
   'groq-llama-3-1-8b': 'llama-3.1-8b-instant',
@@ -651,17 +642,7 @@ function getOpenAIBaseUrl() {
 
 function isOpenRouterModel(model) {
   const value = String(model || '').trim();
-  return value.startsWith('openrouter-') || value === 'openrouter/free' || value.endsWith(':free');
-}
-
-function getOpenRouterModel(model) {
-  const configuredModel = String(process.env.OPENROUTER_MODEL || '').trim();
-  if (configuredModel) return configuredModel;
-
-  const value = String(model || '').trim();
-  if (OPENROUTER_MODEL_MAP[value]) return OPENROUTER_MODEL_MAP[value];
-  if (value === 'openrouter/free' || value.endsWith(':free')) return value;
-  return 'openrouter/free';
+  return value.startsWith('openrouter-') || value.startsWith('openrouter/') || value.endsWith(':free');
 }
 
 function getGroqModel(model) {
@@ -1592,94 +1573,6 @@ async function callOpenAI(payload) {
   }
 }
 
-async function callOpenRouter(payload) {
-  if (!process.env.OPENROUTER_API_KEY || typeof fetch !== 'function') {
-    if (payload.requireProviderSuccess) {
-      throw createError(502, 'OpenRouter API key is not configured');
-    }
-    return null;
-  }
-
-  const model = getOpenRouterModel(payload.model);
-  const providerPrompt = getProviderPrompt(payload);
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 60000);
-
-  try {
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': process.env.OPENROUTER_SITE_URL || process.env.FRONTEND_URL || '',
-        'X-Title': process.env.OPENROUTER_APP_NAME || 'CopyPro AI',
-      },
-      signal: controller.signal,
-      body: JSON.stringify({
-        model,
-        messages: [
-          {
-            role: 'system',
-            content: 'Bạn là chuyên gia copywriting. Trả lời đúng độ dài được yêu cầu, có cấu trúc, ưu tiên tiếng Việt tự nhiên và luôn dùng đầy đủ dấu tiếng Việt.',
-          },
-          {
-            role: 'user',
-            content: providerPrompt,
-          },
-        ],
-        temperature: 0.75,
-        top_p: 0.9,
-        max_tokens: getMaxOutputTokens(payload),
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      const message = errorData.error?.message || response.statusText;
-      console.warn('OpenRouter chat completion failed', {
-        status: response.status,
-        model,
-        message,
-      });
-      if (payload.requireProviderSuccess) {
-        throw createError(response.status, `OpenRouter request failed (${response.status}): ${String(message).slice(0, 300)}`);
-      }
-      return null;
-    }
-
-    const data = await response.json();
-    const outputText = cleanProviderOutput(data.choices?.[0]?.message?.content);
-    if (!outputText) return null;
-
-    const promptTokens = Number(data.usage?.prompt_tokens || estimateTokens(providerPrompt));
-    const completionTokens = Number(data.usage?.completion_tokens || estimateTokens(outputText));
-
-    return {
-      outputText,
-      modelUsed: model,
-      usage: {
-        promptTokens,
-        completionTokens,
-        totalTokens: Number(data.usage?.total_tokens || promptTokens + completionTokens),
-      },
-      status: 'success',
-      fallback: false,
-    };
-  } catch (error) {
-    if (payload.requireProviderSuccess) {
-      if (error.statusCode) throw error;
-      throw createError(502, `OpenRouter request failed: ${error.message}`);
-    }
-    console.warn('OpenRouter chat completion failed', {
-      model,
-      message: error.message,
-    });
-    return null;
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
 async function callGroq(payload) {
   if (!process.env.GROQ_API_KEY || typeof fetch !== 'function') {
     return null;
@@ -1975,7 +1868,8 @@ async function callFreeGPT4(payload) {
 
 async function generateCopy(payload) {
   const forcedProvider = String(payload.forceProvider || '').toLowerCase();
-  const provider = forcedProvider || (process.env.AI_PROVIDER || 'gemini').toLowerCase();
+  const configuredProvider = (process.env.AI_PROVIDER || 'gemini').toLowerCase();
+  const provider = forcedProvider || (configuredProvider === 'openrouter' ? 'gemini' : configuredProvider);
   const selectedModel = payload.model || '';
   const isMaaSModel = isVertexMaaSModel(selectedModel);
   const isVertexEndpointModel = isVertexEndpointResource(selectedModel);
@@ -1990,6 +1884,13 @@ async function generateCopy(payload) {
   const isVertexClaudeModel = selectedModel.startsWith('claude-') || selectedModel.startsWith('anthropic/') || selectedModel.startsWith('vertex-claude/');
   const isFreeGPT4Model = selectedModel.startsWith('freegpt4-');
   const isOpenRouterSelectedModel = isOpenRouterModel(selectedModel);
+  if (forcedProvider === 'openrouter' || isOpenRouterSelectedModel) {
+    throw createError(400, 'OpenRouter models are disabled for generation', undefined, {
+      code: 'OPENROUTER_DISABLED',
+      requestedModel: selectedModel,
+      forcedProvider,
+    });
+  }
   const providersBySelectedModel = isMaaSModel
     ? [callVertexMaaS]
     : isVertexEndpointModel
@@ -2002,8 +1903,6 @@ async function generateCopy(payload) {
     ? [callVertexClaude]
     : isFreeGPT4Model
       ? [callFreeGPT4]
-    : isOpenRouterSelectedModel
-    ? [callOpenRouter]
     : selectedModel.startsWith('gemma-') || selectedModel.includes('pro')
       ? [callGemini, callGeminiFlashBackup]
       : selectedModel.startsWith('gemini-')
@@ -2014,18 +1913,16 @@ async function generateCopy(payload) {
     'vertex-gemini': [callVertexGemini],
     'vertex-maas': [callVertexMaaS],
     'vertex-endpoint': [callVertexEndpointPredict],
-    openrouter: [callOpenRouter],
     openai: [callOpenAI],
     'vertex-claude': [callVertexClaude],
     anthropic: [callVertexClaude],
     groq: [callGroq],
     freegpt4: [callFreeGPT4],
-    auto: [callGemini, callGroq, callOpenRouter, callOpenAI, callFreeGPT4],
+    auto: [callGemini, callGroq, callOpenAI, callFreeGPT4],
   }[provider] || [callGemini];
   const shouldUseVertexGeminiProvider = !forcedProvider && provider === 'vertex-gemini' && isGeminiFamilyModel;
-  const shouldUseConfiguredOpenRouterProvider = !forcedProvider && provider === 'openrouter' && !isFreeGPT4Model;
   const selectedProviders = providersBySelectedModel || [];
-  const providers = forcedProvider || shouldUseVertexGeminiProvider || shouldUseConfiguredOpenRouterProvider
+  const providers = forcedProvider || shouldUseVertexGeminiProvider
     ? providersByEnv
     : Array.from(new Set([...selectedProviders, ...providersByEnv]));
   const shouldRequireSelectedProvider = payload.requireProviderSuccess
@@ -2037,8 +1934,6 @@ async function generateCopy(payload) {
     || forcedProvider === 'vertex-claude'
     || forcedProvider === 'anthropic'
     || forcedProvider === 'freegpt4'
-    || forcedProvider === 'openrouter'
-    || shouldUseConfiguredOpenRouterProvider
     || isFreeGPT4Model
     || isOpenRouterSelectedModel
     || shouldUseVertexGeminiProvider

@@ -230,33 +230,6 @@ const AI_MODELS: AiModelInfo[] = [
     },
   },
   {
-    id: 'openrouter-free',
-    apiModel: 'openrouter/free',
-    name: 'OpenRouter Free Router',
-    provider: 'OpenRouter',
-    kind: 'Router',
-    status: 'Dynamic',
-    context: 'Khoảng 200K theo OpenRouter',
-    output: 'Phụ thuộc model được route',
-    price: 'Free tier',
-    route: 'callOpenRouter -> OPENROUTER_MODEL_MAP',
-    env: 'OPENROUTER_API_KEY',
-    source: 'OpenRouter Free Models Router',
-    url: 'https://openrouter.ai/openrouter/free',
-    features: ['Free router', 'Chọn model free theo request', 'Model thay đổi theo availability'],
-    note: 'Đây là router, không phải một model cố định; app vẫn liệt kê vì người dùng có thể chọn trong Model AI.',
-    benchmark: {
-      primaryMetric: 'N/A',
-      primaryScore: null,
-      math: 'Không cố định',
-      code: 'Không cố định',
-      general: 'Không cố định',
-      note: 'OpenRouter/free chọn model free khả dụng nên không có benchmark cố định. Benchmark thực tế phải đọc model trả về trong response/activity.',
-      source: 'OpenRouter docs',
-      url: 'https://openrouter.ai/openrouter/free',
-    },
-  },
-  {
     id: 'freegpt4-gpt-4',
     apiModel: 'gpt-4',
     name: 'GPT-4 Free API',
@@ -293,7 +266,6 @@ const SOURCES = [
   ['Gemma 4 26B A4B IT model card', 'https://huggingface.co/google/gemma-4-26B-A4B-it'],
   ['Meta Llama 3.3 70B model card', 'https://huggingface.co/meta-llama/Llama-3.3-70B-Instruct'],
   ['Meta Llama 3.1 8B model card', 'https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct'],
-  ['OpenRouter Free Models Router', 'https://openrouter.ai/openrouter/free'],
   ['OpenAI GPT-4 Technical Report', 'https://cdn.openai.com/papers/gpt-4.pdf'],
 ] as const;
 
@@ -407,7 +379,7 @@ export function AdminModelManagement() {
           <TabsContent value="benchmark" className="space-y-6">
             <Card className="p-5">
               <h3 className="font-semibold text-foreground mb-1">Điểm benchmark chính theo từng model</h3>
-              <p className="text-xs text-muted-foreground mb-4">Biểu đồ chỉ vẽ các model có điểm cố định. Router động như OpenRouter/free được giữ trong bảng nhưng không đưa vào biểu đồ.</p>
+              <p className="text-xs text-muted-foreground mb-4">Biểu đồ chỉ vẽ các model có điểm cố định.</p>
               <BarChart data={benchmarkedModels.map(model => ({ model: model.name.replace('Gemini ', '').replace(' Free API', ''), score: model.benchmark.primaryScore ?? 0 }))} xKey="model" height={300} yMin={0} yMax={100} series={[{ key: 'score', label: 'Primary benchmark score', color: '#16723a' }]} />
             </Card>
 
@@ -437,7 +409,6 @@ export function AdminModelManagement() {
               <div className="flex items-center gap-2 mb-3"><Route className="h-5 w-5 text-primary" /><h3 className="font-semibold text-foreground">Ghi chú về model đại diện, router và wrapper</h3></div>
               <div className="space-y-2 text-sm text-foreground/75">
                 <p><span className="font-semibold text-foreground">FreeGPT4 GPT-4:</span> app gọi endpoint FreeGPT4 online trong FREEGPT4_BASE_URL với model parameter tương ứng. Benchmark trong bảng là benchmark đại diện của GPT-4 gốc, không phải phép đo trực tiếp endpoint này.</p>
-                <p><span className="font-semibold text-foreground">OpenRouter Free Router:</span> đây là router chọn model free khả dụng, nên không có benchmark cố định. Muốn đo thật phải log model thực tế mà OpenRouter trả về từng request.</p>
                 <p><span className="font-semibold text-foreground">Preview/GA transition:</span> các model Gemini preview có thể thay đổi model ID, rate limit, giá hoặc benchmark theo thời gian.</p>
               </div>
             </Card>

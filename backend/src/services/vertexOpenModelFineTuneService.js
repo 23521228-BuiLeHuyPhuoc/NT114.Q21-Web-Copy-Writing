@@ -16,6 +16,7 @@ const DEFAULT_LOCATION = 'us-central1';
 const DEFAULT_TUNING_MODE = 'PEFT_ADAPTER';
 const DEFAULT_MODEL_ID = 'meta/llama3-3@llama-3.3-70b-instruct';
 const DEFAULT_QWEN_MODEL_ID = 'qwen/qwen3@qwen3-14b';
+const SUBMIT_SCRIPT_RELATIVE_PATH = path.join('training', 'vertex_open_model_tuning', 'submit_open_model_tuning.py');
 const BASE_MODEL_OPTIONS = [
   { id: DEFAULT_MODEL_ID, name: 'Llama 3.3 70B Instruct', default: true },
   { id: DEFAULT_QWEN_MODEL_ID, name: 'Qwen 3 14B on Vertex AI' },
@@ -46,7 +47,28 @@ function slugify(value) {
 }
 
 function getRepoRoot() {
-  return path.resolve(__dirname, '..', '..', '..');
+  const monorepoRoot = path.resolve(__dirname, '..', '..', '..');
+  const backendRoot = getBackendRoot();
+  return fs.existsSync(path.join(monorepoRoot, 'backend')) ? monorepoRoot : backendRoot;
+}
+
+function getBackendRoot() {
+  return path.resolve(__dirname, '..', '..');
+}
+
+function uniquePaths(paths) {
+  return Array.from(new Set(paths.filter(Boolean).map((item) => path.resolve(item))));
+}
+
+function resolveConfiguredPath(value) {
+  const configured = String(value || '').trim();
+  if (!configured) return [];
+  if (path.isAbsolute(configured)) return [configured];
+  return uniquePaths([
+    path.resolve(process.cwd(), configured),
+    path.resolve(getBackendRoot(), configured),
+    path.resolve(getRepoRoot(), configured),
+  ]);
 }
 
 function getProject() {
@@ -128,8 +150,17 @@ function getPythonCommand() {
 }
 
 function getSubmitScriptPath() {
-  const configured = String(process.env.VERTEX_LLAMA_TUNING_SCRIPT || '').trim();
-  return configured || path.join(getRepoRoot(), 'training', 'vertex_open_model_tuning', 'submit_open_model_tuning.py');
+  const candidates = resolveConfiguredPath(process.env.VERTEX_LLAMA_TUNING_SCRIPT);
+  if (candidates.length === 0) {
+    candidates.push(...uniquePaths([
+      path.join(getRepoRoot(), SUBMIT_SCRIPT_RELATIVE_PATH),
+      path.join(getBackendRoot(), SUBMIT_SCRIPT_RELATIVE_PATH),
+      path.join(process.cwd(), SUBMIT_SCRIPT_RELATIVE_PATH),
+      path.resolve(process.cwd(), '..', SUBMIT_SCRIPT_RELATIVE_PATH),
+    ]));
+  }
+
+  return candidates.find((candidate) => fs.existsSync(candidate)) || candidates[0];
 }
 
 function hasSubmitScript() {

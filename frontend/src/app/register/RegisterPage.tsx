@@ -11,17 +11,10 @@ import {
 } from '@/lib/authValidation';
 import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
-import { Badge } from '@/app/components/ui/badge';
 import { BrandLogo } from '@/app/components/BrandLogo';
-import { Eye, EyeOff, User, Mail, Lock, ArrowLeft, CheckCircle2, ArrowRight, Crown, Zap, Building2, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, User, Mail, Lock, ArrowLeft, CheckCircle2, ArrowRight, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { usePublicSystemStatus } from '@/hooks/queries/useSystemSettings';
-
-const PLANS = [
-  { id: 'free',  name: 'Miễn Phí', price: '0₫',     icon: Zap,      desc: '30 copy/tháng',         color: 'border-border bg-card',      check: 'bg-muted text-muted-foreground',   badge: '' },
-  { id: 'pro',   name: 'Pro',       price: '299K₫',  icon: Crown,    desc: '500 copy · Fine-tuning', color: 'border-primary bg-primary/5',  check: 'bg-primary/10 text-primary', badge: 'Phổ biến' },
-  { id: 'biz',   name: 'Business',  price: '799K₫',  icon: Building2, desc: '3.000 copy · API 50K',  color: 'border-green-400 bg-primary/5', check: 'bg-primary/10 text-primary', badge: '' },
-];
 
 interface RegisterFormData { name: string; email: string; password: string; confirm: string }
 
@@ -31,7 +24,6 @@ export function RegisterPage() {
   const { data: systemStatus, isLoading: loadingSystemStatus } = usePublicSystemStatus();
   const [step, setStep] = useState(1);
   const [showPass, setShowPass] = useState(false);
-  const [plan, setPlan] = useState('pro');
   const [isLoading, setIsLoading] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
   const [pendingVerificationEmail, setPendingVerificationEmail] = useState('');
@@ -48,12 +40,12 @@ export function RegisterPage() {
   const passwordValue = watch('password', '');
   const registrationClosed = systemStatus?.registrationEnabled === false;
 
-  const handleStep1 = (_data: RegisterFormData) => {
+  const handleStep1 = async (_data: RegisterFormData) => {
     if (registrationClosed) {
       toast.error('Hệ thống đang tạm ngừng nhận đăng ký mới');
       return;
     }
-    setStep(2);
+    await handleFinalSubmit();
   };
 
   const handleFinalSubmit = async () => {
@@ -68,7 +60,7 @@ export function RegisterPage() {
       if (result.requiresEmailVerification) {
         setPendingVerificationEmail(values.email.trim().toLowerCase());
         setVerificationCode('');
-        setStep(3);
+        setStep(2);
         toast.success('Đã gửi mã xác thực đến email của bạn');
         return;
       }
@@ -137,14 +129,14 @@ export function RegisterPage() {
             <span className="bg-gradient-to-r from-emerald-300 via-green-300 to-green-300 bg-clip-text text-transparent">doanh nghiệp Việt</span>
           </h2>
           <p className="text-muted-foreground/80 text-base leading-relaxed mb-10">
-            Dùng thử 14 ngày với đầy đủ tính năng Pro. Không cần thẻ tín dụng.
+            Tạo tài khoản với gói Free mặc định. Bạn có thể nâng cấp sau khi cần thêm quota hoặc fine-tuning.
           </p>
 
           {/* Steps preview */}
           <div className="space-y-5">
             {[
               { n: '01', label: 'Tạo tài khoản', desc: 'Tên, email và mật khẩu', done: step >= 1 },
-              { n: '02', label: 'Chọn gói phù hợp', desc: 'Miễn phí, Pro hoặc Business', done: step >= 2 },
+              { n: '02', label: 'Gói Free mặc định', desc: 'Không cần chọn gói khi đăng ký', done: step >= 1 },
               { n: '03', label: 'Bắt đầu tạo copy', desc: 'AI Generator sẵn sàng ngay lập tức', done: false },
             ].map((s) => (
               <div key={s.n} className="flex items-start gap-4">
@@ -181,7 +173,7 @@ export function RegisterPage() {
                   {step > s ? <CheckCircle2 className="w-4 h-4" /> : s}
                 </div>
                 <span className={`text-xs font-semibold ${step >= s ? 'text-primary' : 'text-muted-foreground/80'}`}>
-                  {s === 1 ? 'Thông tin' : 'Chọn gói'}
+                  {s === 1 ? 'Thông tin' : 'Xác thực'}
                 </span>
                 {s < 2 && <div className={`flex-1 h-px ${step > s ? 'bg-green-400' : 'bg-gray-200'}`} />}
               </div>
@@ -208,7 +200,7 @@ export function RegisterPage() {
             <>
               <div className="mb-7">
                 <h2 className="text-foreground mb-1">Tạo tài khoản</h2>
-                <p className="text-muted-foreground text-sm">14 ngày dùng thử Pro miễn phí</p>
+                <p className="text-muted-foreground text-sm">Tài khoản mới sẽ dùng gói Free mặc định</p>
               </div>
               <form onSubmit={rhfHandleSubmit(handleStep1)} className="space-y-4">
                 <div>
@@ -258,10 +250,10 @@ export function RegisterPage() {
                 </div>
                 <button
                   type="submit"
-                  disabled={loadingSystemStatus}
+                  disabled={loadingSystemStatus || isLoading}
                   className="w-full h-12 bg-gradient-to-r from-emerald-600 via-green-600 to-green-600 hover:from-emerald-500 hover:via-green-500 hover:to-green-500 disabled:opacity-60 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2 mt-2"
                 >
-                  {loadingSystemStatus ? 'Đang kiểm tra hệ thống...' : 'Tiếp theo'} {!loadingSystemStatus && <ArrowRight className="w-4 h-4" />}
+                  {loadingSystemStatus ? 'Đang kiểm tra hệ thống...' : isLoading ? 'Đang tạo tài khoản...' : 'Tạo tài khoản Free'} {!loadingSystemStatus && !isLoading && <ArrowRight className="w-4 h-4" />}
                 </button>
               </form>
             </>
@@ -269,66 +261,6 @@ export function RegisterPage() {
 
           {/* ─── STEP 2 ─── */}
           {!registrationClosed && step === 2 && (
-            <>
-              <div className="mb-7">
-                <h2 className="text-foreground mb-1">Chọn gói của bạn</h2>
-                <p className="text-muted-foreground text-sm">Bắt đầu với 14 ngày dùng thử Pro miễn phí</p>
-              </div>
-              <div className="space-y-3 mb-7">
-                {PLANS.map(p => {
-                  const Icon = p.icon;
-                  const isSelected = plan === p.id;
-                  return (
-                    <button
-                      key={p.id}
-                      onClick={() => setPlan(p.id)}
-                      className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 text-left transition-all ${isSelected ? p.color + ' shadow-md' : 'border-border bg-card hover:border-border'}`}
-                    >
-                      <div className={`p-2.5 rounded-xl flex-shrink-0 ${isSelected ? p.check : 'bg-muted text-muted-foreground'}`}>
-                        <Icon className="w-4 h-4" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-sm text-foreground">{p.name}</span>
-                          {p.badge && <Badge className="bg-warning/15 text-amber-800 border-0 text-xs px-2 py-0">{p.badge}</Badge>}
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-0.5">{p.desc}</p>
-                      </div>
-                      <div className="text-right flex-shrink-0">
-                        <span className="font-bold text-sm text-foreground">{p.price}</span>
-                        {p.id !== 'free' && <p className="text-xs text-muted-foreground/80">/ tháng</p>}
-                      </div>
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${isSelected ? 'border-primary bg-primary/50' : 'border-gray-300'}`}>
-                        {isSelected && <div className="w-2 h-2 bg-card rounded-full" />}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="flex gap-3">
-                <button onClick={() => setStep(1)} className="px-5 h-12 rounded-xl border border-border text-foreground/80 font-semibold text-sm hover:bg-surface-muted transition-colors flex-shrink-0">
-                  ← Quay lại
-                </button>
-                <button
-                  onClick={handleFinalSubmit}
-                  disabled={isLoading}
-                  className="flex-1 h-12 bg-gradient-to-r from-emerald-600 via-green-600 to-green-600 hover:from-emerald-500 hover:via-green-500 hover:to-green-500 disabled:opacity-60 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-primary/20"
-                >
-                  {isLoading ? 'Đang tạo tài khoản...' : 'Tạo tài khoản →'}
-                </button>
-              </div>
-
-              <p className="text-center text-xs text-muted-foreground/80 mt-5">
-                Bằng cách đăng ký, bạn đồng ý với{' '}
-                <a href="#" className="text-primary hover:underline">Điều khoản sử dụng</a>{' '}và{' '}
-                <a href="#" className="text-primary hover:underline">Chính sách bảo mật</a>.
-              </p>
-            </>
-          )}
-
-          {/* ─── STEP 3 ─── */}
-          {!registrationClosed && step === 3 && (
             <>
               <div className="mb-7">
                 <h2 className="text-foreground mb-1">Xác thực email</h2>

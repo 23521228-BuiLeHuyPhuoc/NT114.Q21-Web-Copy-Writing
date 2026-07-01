@@ -54,7 +54,7 @@ export type CustomerRoleDef = AdminRoleDef;
 const ROLE_STORAGE_KEY = 'admin_role_defs';
 const CUSTOMER_ROLE_STORAGE_KEY = 'customer_role_defs';
 const PERMISSION_STORAGE_KEY = 'admin_permission_defs';
-const DEFAULT_CUSTOMER_ROLE: CustomerRole = 'pro_customer';
+const DEFAULT_CUSTOMER_ROLE: CustomerRole = 'free_customer';
 
 export const PERMISSION_ROUTE_OPTIONS: PermissionRouteOption[] = [
   { scope: 'admin', route: '/admin', label: 'Bảng điều khiển admin', group: 'Tổng quan' },

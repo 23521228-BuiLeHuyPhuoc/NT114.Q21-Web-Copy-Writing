@@ -2,6 +2,7 @@ const AccountAdmin = require('../models/AccountAdmin');
 const AccountUser = require('../models/AccountUser');
 const EmailVerification = require('../models/EmailVerification');
 const ForgotPassword = require('../models/ForgotPassword');
+const Subscription = require('../models/Subscription');
 const createError = require('../utils/createError');
 const { signToken } = require('../utils/jwt');
 const {
@@ -15,6 +16,7 @@ const {
   getOtpExpiresAt,
   hashOtp,
 } = require('../utils/otp');
+const billingService = require('./billingService');
 
 const MAX_OTP_ATTEMPTS = 5;
 
@@ -42,7 +44,7 @@ function serializeAccount(account, accountType) {
   if (accountType === 'admin') {
     data.adminRole = account.adminRole;
   } else {
-    data.customerRole = account.customerRole || 'pro_customer';
+    data.customerRole = account.customerRole || 'free_customer';
     data.isVerified = account.isVerified;
     data.notificationPreferences = {
       quotaLow: account.notificationPreferences?.quotaLow !== false,
@@ -72,6 +74,14 @@ async function ensureEmailAvailable(accountType, email) {
   if (existing) {
     throw createError(409, 'Email is already in use');
   }
+}
+
+async function deleteUserRegistrationArtifacts(accountId) {
+  await Promise.allSettled([
+    AccountUser.findByIdAndDelete(accountId),
+    Subscription.deleteMany({ userId: accountId }),
+    EmailVerification.deleteMany({ accountId }),
+  ]);
 }
 
 async function findActiveEmailVerification(email) {
@@ -160,15 +170,23 @@ async function registerUser(payload) {
     email: payload.email,
     password: payload.password,
     status: 'active',
+    customerRole: 'free_customer',
     isVerified: !requiresEmailVerification,
   });
+
+  try {
+    await billingService.ensureFreeSubscriptionForUser(account._id);
+  } catch (error) {
+    await deleteUserRegistrationArtifacts(account._id);
+    throw error;
+  }
 
   let verification = null;
   if (requiresEmailVerification) {
     try {
       verification = await sendUserEmailVerification(account);
     } catch (error) {
-      await AccountUser.findByIdAndDelete(account._id);
+      await deleteUserRegistrationArtifacts(account._id);
       throw error;
     }
   }

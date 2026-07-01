@@ -6,7 +6,9 @@ const Plan = require('../models/Plan');
 const Subscription = require('../models/Subscription');
 const UsageLog = require('../models/UsageLog');
 const {
+  ALL_GENERATOR_MODEL_ACCESS,
   getGenerateModelAccessId,
+  isGenerateModelAccessDisabled,
   normalizeAllowedModels,
 } = require('../config/generatorModels');
 const createError = require('../utils/createError');
@@ -102,6 +104,20 @@ function toId(value) {
   if (!value) return null;
   if (value._id) return value._id.toString();
   return value.toString();
+}
+
+const DEFAULT_PLAN_MODEL_ACCESS = {
+  free: ['gemini-flash-lite'],
+  pro: ALL_GENERATOR_MODEL_ACCESS,
+  business: ALL_GENERATOR_MODEL_ACCESS,
+};
+
+function getPlanAllowedModels(plan) {
+  const allowedModels = normalizeAllowedModels(plan?.allowedModels || []);
+  if (allowedModels.length > 0) return allowedModels;
+
+  const slug = String(plan?.slug || '').trim().toLowerCase();
+  return normalizeAllowedModels(DEFAULT_PLAN_MODEL_ACCESS[slug] || []);
 }
 
 function slugify(value) {
@@ -313,7 +329,7 @@ function serializePlan(plan, subscriberCount = 0) {
     },
     features: plan.features || [],
     excludedFeatures: plan.excludedFeatures || [],
-    allowedModels: normalizeAllowedModels(plan.allowedModels || []),
+    allowedModels: getPlanAllowedModels(plan),
     isPopular: Boolean(plan.isPopular),
     popular: Boolean(plan.isPopular),
     isActive: Boolean(plan.isActive),
@@ -485,6 +501,34 @@ async function getFallbackPlan() {
     .sort({ sortOrder: 1, priceMonthly: 1 });
 }
 
+async function ensureFreeSubscriptionForUser(userId) {
+  const freePlan = await Plan.findOne({ slug: 'free', isDeleted: { $ne: true }, isActive: true });
+
+  await AccountUser.updateOne(
+    { _id: userId },
+    { $set: { customerRole: CUSTOMER_ROLE_BY_PLAN_SLUG.free } },
+  );
+
+  if (!freePlan) return null;
+
+  const existingSubscription = await getCurrentSubscription(userId);
+  if (existingSubscription) {
+    await syncCustomerRoleForPlan(userId, existingSubscription.planId);
+    return existingSubscription;
+  }
+
+  return Subscription.create({
+    userId,
+    planId: freePlan._id,
+    status: 'active',
+    billingCycle: 'monthly',
+    currentPeriodStart: new Date(),
+    currentPeriodEnd: null,
+    provider: 'manual',
+    providerSubscriptionId: '',
+  });
+}
+
 async function getEffectivePlanForUser(userId) {
   const subscription = await getCurrentSubscription(userId);
   return subscription?.planId || await getFallbackPlan();
@@ -494,10 +538,20 @@ async function ensureGenerateModelAllowed(userId, payload = {}) {
   const plan = await getEffectivePlanForUser(userId);
   if (!plan) return null;
 
-  const allowedModels = normalizeAllowedModels(plan.allowedModels || []);
+  const allowedModels = getPlanAllowedModels(plan);
+  const requestedAccess = getGenerateModelAccessId(payload);
+  if (isGenerateModelAccessDisabled(requestedAccess)) {
+    throw createError(403, 'Model nay da bi tat va khong con nam trong cac goi dich vu', undefined, {
+      code: 'MODEL_DISABLED',
+      requestedModel: String(payload.model || ''),
+      requestedAccess,
+      allowedModels,
+      plan: serializePlan(plan),
+    });
+  }
+
   if (allowedModels.length === 0) return plan;
 
-  const requestedAccess = getGenerateModelAccessId(payload);
   if (requestedAccess && allowedModels.includes(requestedAccess)) return plan;
 
   throw createError(403, 'Model nay khong nam trong goi dich vu hien tai', undefined, {
@@ -1518,6 +1572,7 @@ module.exports = {
   calculateGenerateQuotaUnits,
   estimateGenerateQuotaUnits,
   getEffectivePlanForUser,
+  ensureFreeSubscriptionForUser,
   getGenerateUsageSummary,
   getMyBilling,
   createCheckout,

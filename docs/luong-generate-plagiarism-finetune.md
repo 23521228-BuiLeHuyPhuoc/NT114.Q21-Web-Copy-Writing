@@ -1,4 +1,4 @@
-﻿# Giải thích 3 luồng chính kèm file code phụ trách
+# Giải thích 3 luồng chính kèm file code phụ trách
 
 Tài liệu này dùng để báo cáo đồ án. Nội dung được viết cho người chưa biết code vẫn hiểu được luồng, nhưng mỗi bước đều có thêm file/hàm code đang đảm nhiệm để dễ chỉ vào source.
 
@@ -17,7 +17,7 @@ Ba luồng chính:
 | API | Đường gửi yêu cầu từ frontend xuống backend | Ví dụ `POST /api/contents/generate` |
 | Database | Kho lưu dữ liệu | MongoDB models như `Content`, `UsageLog`, `PlagiarismReport`, `FineTuneJob` |
 | Prompt | Câu yêu cầu gửi cho AI | Frontend build prompt từ brief người dùng |
-| Provider AI | Nơi cung cấp AI thật sự | Gemini, OpenAI, Groq, OpenRouter, Vertex AI, Claude |
+| Provider AI | Nơi cung cấp AI thật sự | Gemini, OpenAI, Groq, Vertex AI, Claude |
 | Quota | Giới hạn sử dụng theo gói | Số lượt generate, token, model được phép dùng, quyền fine-tune |
 
 Backend mount các API chính trong `backend/src/app.js`:
@@ -157,7 +157,7 @@ Database = kho lưu bài viết
 | 13 | Kiểm tra gói có được dùng model không | `backend/src/services/billingService.js` - `ensureGenerateModelAllowed()` | Nếu model không nằm trong plan thì trả lỗi. |
 | 14 | Kiểm tra còn quota không | `billingService.js` - `ensureGenerateQuotaAvailable()` | Kiểm tra lượt, token tháng, tuần, 5 giờ. |
 | 15 | Nếu dùng fine-tuned model thì tìm model riêng | `contentService.js` - `resolveFineTunedModelForGenerate()` | Tìm `FineTunedModel`, job gốc, provider, endpoint/model id. |
-| 16 | Backend gọi AI | `backend/src/services/aiService.js` - `generateCopy()` | Chọn Gemini/OpenAI/Groq/OpenRouter/Vertex/Claude/FreeGPT4 hoặc fallback. |
+| 16 | Backend gọi AI | `backend/src/services/aiService.js` - `generateCopy()` | Chọn Gemini/OpenAI/Groq/Vertex/Claude/FreeGPT4 hoặc fallback. |
 | 17 | Lưu bài viết | `contentService.js` - `Content.create()`; `backend/src/models/Content.js` | Lưu prompt, outputText, type, tone, modelUsed, projectId, templateId. |
 | 18 | Lưu lịch sử token/quota | `contentService.js` - `UsageLog.create()`; `backend/src/models/UsageLog.js` | Lưu token đã dùng, quotaUnits, model, trạng thái. |
 | 19 | Frontend hiển thị kết quả | `Generator.tsx` - `splitGeneratedVariations()`, `setResults()` | Tách nhiều phiên bản và hiển thị trên UI. |
