@@ -282,32 +282,7 @@ const AI_MODELS: AiModelInfo[] = [
       url: 'https://cdn.openai.com/papers/gpt-4.pdf',
     },
   },
-  {
-    id: 'freegpt4-gpt-4o',
-    apiModel: 'gpt-4o',
-    name: 'GPT-4o Free API',
-    provider: 'FreeGPT4 online endpoint',
-    kind: 'Online API',
-    status: 'Online',
-    context: 'Provider dependent',
-    output: 'Provider dependent',
-    price: 'Free in app; upstream dependent',
-    route: 'callFreeGPT4 -> FREEGPT4_MODEL_MAP',
-    env: 'FREEGPT4_BASE_URL',
-    source: 'Configured FreeGPT4 endpoint',
-    features: ['Online FreeGPT4 endpoint', 'model=gpt-4o', 'No direct OpenAI key required in app'],
-    note: 'Representative GPT-4o route through the configured FreeGPT4 endpoint. Real quality depends on the upstream provider.',
-    benchmark: {
-      primaryMetric: 'MedQA USMLE 4 options',
-      primaryScore: 89.4,
-      math: 'No general GPQA/MATH value in this app',
-      code: 'No direct wrapper benchmark',
-      general: 'MMLU Clinical Knowledge: 92%',
-      note: 'Public GPT-4o reference benchmark; not a direct measurement of this FreeGPT4 endpoint.',
-      source: 'OpenAI GPT-4o System Card',
-      url: 'https://openai.com/index/gpt-4o-system-card/',
-    },
-  },];
+];
 
 const SOURCES = [
   ['Google Gemini model docs', 'https://ai.google.dev/gemini-api/docs/models'],
@@ -320,7 +295,6 @@ const SOURCES = [
   ['Meta Llama 3.1 8B model card', 'https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct'],
   ['OpenRouter Free Models Router', 'https://openrouter.ai/openrouter/free'],
   ['OpenAI GPT-4 Technical Report', 'https://cdn.openai.com/papers/gpt-4.pdf'],
-  ['OpenAI GPT-4o System Card', 'https://openai.com/index/gpt-4o-system-card/'],
 ] as const;
 
 function SourceLink({ label, url }: { label: string; url?: string }) {
@@ -462,7 +436,7 @@ export function AdminModelManagement() {
             <Card className="p-5">
               <div className="flex items-center gap-2 mb-3"><Route className="h-5 w-5 text-primary" /><h3 className="font-semibold text-foreground">Ghi chú về model đại diện, router và wrapper</h3></div>
               <div className="space-y-2 text-sm text-foreground/75">
-                <p><span className="font-semibold text-foreground">FreeGPT4 GPT-4/GPT-4o:</span> app gọi endpoint FreeGPT4 online trong FREEGPT4_BASE_URL với model parameter tương ứng. Benchmark trong bảng là benchmark đại diện của GPT-4 gốc, không phải phép đo trực tiếp endpoint này.</p>
+                <p><span className="font-semibold text-foreground">FreeGPT4 GPT-4:</span> app gọi endpoint FreeGPT4 online trong FREEGPT4_BASE_URL với model parameter tương ứng. Benchmark trong bảng là benchmark đại diện của GPT-4 gốc, không phải phép đo trực tiếp endpoint này.</p>
                 <p><span className="font-semibold text-foreground">OpenRouter Free Router:</span> đây là router chọn model free khả dụng, nên không có benchmark cố định. Muốn đo thật phải log model thực tế mà OpenRouter trả về từng request.</p>
                 <p><span className="font-semibold text-foreground">Preview/GA transition:</span> các model Gemini preview có thể thay đổi model ID, rate limit, giá hoặc benchmark theo thời gian.</p>
               </div>

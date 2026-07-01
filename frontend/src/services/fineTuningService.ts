@@ -283,8 +283,6 @@ interface BackendMetric {
 }
 
 const MODEL_LABELS: Record<string, string> = {
-  gpt4o: 'GPT-4o',
-  'gpt-4o': 'GPT-4o',
   gpt35: 'GPT-3.5 Turbo',
   'gpt-3.5-turbo': 'GPT-3.5 Turbo',
   llama3: 'Llama 3.1 70B',

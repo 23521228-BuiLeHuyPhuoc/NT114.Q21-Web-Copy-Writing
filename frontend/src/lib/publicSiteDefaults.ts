@@ -65,7 +65,7 @@ export const PUBLIC_PAGE_FIELD_DEFS = [
     fields: [
       { key: 'ctaTitle', label: 'Tiêu đề CTA', multiline: false, fallback: 'Sẵn sàng tạo copy đỉnh cao?' },
       { key: 'ctaDescription', label: 'Mô tả CTA', multiline: true, fallback: 'Dùng thử miễn phí 14 ngày · Không cần thẻ tín dụng · Hủy bất kỳ lúc nào' },
-      { key: 'brandDescription', label: 'Mô tả thương hiệu', multiline: true, fallback: 'Nền tảng AI Copywriting hàng đầu Việt Nam — tích hợp GPT-4o, Llama 3.1 và Fine-tuning, giúp doanh nghiệp tạo nội dung marketing chuyên nghiệp trong vài giây.' },
+      { key: 'brandDescription', label: 'Mô tả thương hiệu', multiline: true, fallback: 'Nền tảng AI Copywriting hàng đầu Việt Nam — tích hợp GPT-4, Llama 3.1 và Fine-tuning, giúp doanh nghiệp tạo nội dung marketing chuyên nghiệp trong vài giây.' },
       { key: 'email', label: 'Email footer', multiline: false, fallback: PUBLIC_SUPPORT_EMAIL },
       { key: 'phone', label: 'Điện thoại footer', multiline: false, fallback: '+84 901 234 567' },
       { key: 'address', label: 'Địa chỉ footer', multiline: true, fallback: 'Tòa nhà Innovation Hub, 2 Nguyễn Thị Minh Khai, Q.1, TP.HCM' },

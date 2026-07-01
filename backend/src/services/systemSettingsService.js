@@ -424,7 +424,7 @@ function getRuntimeAiConfig() {
       id: 'openai',
       name: 'OpenAI-compatible API',
       modelEnv: 'OPENAI_MODEL',
-      fallbackModel: 'gpt-4o-mini',
+      fallbackModel: 'gpt-4',
       keyEnv: ['OPENAI_API_KEY'],
     }),
     providerStatus({

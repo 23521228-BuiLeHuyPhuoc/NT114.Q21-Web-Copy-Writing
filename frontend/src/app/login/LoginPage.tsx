@@ -13,7 +13,7 @@ import {
 import toast from 'react-hot-toast';
 
 const BENEFITS = [
-  'GPT-4o + Llama 3.1 70B',
+  'GPT-4 + Llama 3.1 70B',
   'Fine-tuning theo thương hiệu',
   '100+ template chuyên ngành',
   'RESTful API tích hợp',
@@ -76,7 +76,7 @@ export function LoginPage() {
             </span>
           </h1>
           <p className="text-muted-foreground/80 text-lg leading-relaxed mb-10">
-            Tích hợp GPT-4o, Llama 3.1 và Fine-tuning theo thương hiệu — nền tảng AI copywriting số 1 Việt Nam.
+            Tích hợp GPT-4, Llama 3.1 và Fine-tuning theo thương hiệu — nền tảng AI copywriting số 1 Việt Nam.
           </p>
 
           <ul className="space-y-4 mb-12">
@@ -95,7 +95,7 @@ export function LoginPage() {
               <div className="w-2 h-2 bg-green-300 rounded-full animate-pulse" />
               <span className="text-primary text-xs font-semibold">AI đang tạo...</span>
               <span className="ml-auto bg-green-950/50 text-green-200 border border-green-700/30 rounded-md px-2 py-0.5 text-xs">
-                GPT-4o
+                GPT-4
               </span>
             </div>
             <p className="text-muted-foreground/60 text-sm leading-relaxed italic">

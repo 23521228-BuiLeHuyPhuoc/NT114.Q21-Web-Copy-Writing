@@ -593,13 +593,13 @@ function estimateTokens(text) {
 }
 
 function estimateCost(exampleCount, baseModel) {
-  const modelRate = baseModel === 'gpt-4o' ? 0.006 : 0.002;
+  const modelRate = baseModel === 'gpt-4' ? 0.006 : 0.002;
   return Number((Math.max(1, exampleCount) * modelRate).toFixed(4));
 }
 
 function estimateTrainingCostFromTokens(tokens, baseModel) {
   if (!tokens) return 0;
-  const modelRatePerThousand = baseModel === 'gpt-4o' ? 0.006 : 0.002;
+  const modelRatePerThousand = baseModel === 'gpt-4' ? 0.006 : 0.002;
   return Number(((Number(tokens) / 1000) * modelRatePerThousand).toFixed(4));
 }
 

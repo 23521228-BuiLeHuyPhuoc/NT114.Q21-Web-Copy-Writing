@@ -37,7 +37,7 @@ const FOOTER_COLS = [
 ];
 
 const STATUS_SERVICES = [
-  { name: 'GPT-4o',          status: 'online' },
+  { name: 'GPT-4',          status: 'online' },
   { name: 'Llama 3.1',       status: 'online' },
   { name: 'Fine-tune Engine', status: 'busy'  },
 ];
@@ -54,7 +54,7 @@ export function CustomerFooter() {
               <BrandLogo size="md" />
             </Link>
             <p className="text-xs text-muted-foreground leading-relaxed mb-4">
-              Nền tảng AI Copywriting hàng đầu Việt Nam, tích hợp GPT-4o, Llama 3.1 & Fine-tuning.
+              Nền tảng AI Copywriting hàng đầu Việt Nam, tích hợp GPT-4, Llama 3.1 & Fine-tuning.
             </p>
 
             {/* System status */}

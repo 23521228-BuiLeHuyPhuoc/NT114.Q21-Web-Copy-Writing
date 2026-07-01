@@ -105,7 +105,7 @@ export function AdminLoginPage() {
             </div>
             <div className="space-y-2">
               {[
-                { name: 'GPT-4o API', status: 'Online', dot: 'bg-green-400' },
+                { name: 'GPT-4 API', status: 'Online', dot: 'bg-green-400' },
                 { name: 'Llama 3.1 Server', status: 'Online', dot: 'bg-green-400' },
                 { name: 'Fine-tuning Engine', status: 'Đang xử lý 2 jobs', dot: 'bg-amber-400' },
               ].map(item => (

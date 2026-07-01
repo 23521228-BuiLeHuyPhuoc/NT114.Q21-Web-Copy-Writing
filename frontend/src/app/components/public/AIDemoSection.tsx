@@ -28,14 +28,14 @@ const CONTENT_TYPES: ContentType[] = [
     hint: 'Quảng cáo Facebook siêu chuyển đổi',
     inputLabel: 'Tên sản phẩm / dịch vụ',
     placeholder: 'Ví dụ: Khóa học tiếng Anh online',
-    model: 'GPT-4o', badge: 'Phổ biến nhất', badgeColor: 'bg-warning/15 text-amber-800',
+    model: 'GPT-4', badge: 'Phổ biến nhất', badgeColor: 'bg-warning/15 text-amber-800',
   },
   {
     id: 'email', icon: Mail,          label: 'Email Marketing',
     hint: 'Subject line & body email tỷ lệ mở cao',
     inputLabel: 'Chủ đề email',
     placeholder: 'Ví dụ: Flash sale cuối tháng',
-    model: 'GPT-4o', badge: 'Email', badgeColor: 'bg-primary/10 text-primary',
+    model: 'GPT-4', badge: 'Email', badgeColor: 'bg-primary/10 text-primary',
   },
   {
     id: 'product', icon: ShoppingCart, label: 'Mô tả sản phẩm',
@@ -49,7 +49,7 @@ const CONTENT_TYPES: ContentType[] = [
     hint: 'Headline & subheadline tối ưu chuyển đổi',
     inputLabel: 'Sản phẩm / dịch vụ',
     placeholder: 'Ví dụ: Phần mềm kế toán doanh nghiệp',
-    model: 'GPT-4o', badge: 'Conversion', badgeColor: 'bg-primary/10 text-primary',
+    model: 'GPT-4', badge: 'Conversion', badgeColor: 'bg-primary/10 text-primary',
   },
   {
     id: 'push', icon: BellRing,      label: 'Push Notification',
@@ -63,7 +63,7 @@ const CONTENT_TYPES: ContentType[] = [
     hint: 'Headline + description theo chuẩn Google Ads',
     inputLabel: 'Từ khóa / dịch vụ',
     placeholder: 'Ví dụ: Dịch vụ sửa điện lạnh tại nhà',
-    model: 'GPT-4o', badge: 'SEM', badgeColor: 'bg-warning/15 text-amber-800',
+    model: 'GPT-4', badge: 'SEM', badgeColor: 'bg-warning/15 text-amber-800',
   },
 ];
 

@@ -71,7 +71,7 @@ export function PublicFooter() {
 
   const footerCtaTitle = getPublicText(footerContent, 'ctaTitle', 'Sẵn sàng tạo copy đỉnh cao?');
   const footerCtaDescription = getPublicText(footerContent, 'ctaDescription', 'Dùng thử miễn phí 14 ngày · Không cần thẻ tín dụng · Hủy bất kỳ lúc nào');
-  const footerBrandDescription = getPublicText(footerContent, 'brandDescription', 'Nền tảng AI Copywriting hàng đầu Việt Nam — tích hợp GPT-4o, Llama 3.1 và Fine-tuning, giúp doanh nghiệp tạo nội dung marketing chuyên nghiệp trong vài giây.');
+  const footerBrandDescription = getPublicText(footerContent, 'brandDescription', 'Nền tảng AI Copywriting hàng đầu Việt Nam — tích hợp GPT-4, Llama 3.1 và Fine-tuning, giúp doanh nghiệp tạo nội dung marketing chuyên nghiệp trong vài giây.');
   const footerEmail = getPublicText(footerContent, 'email', PUBLIC_SUPPORT_EMAIL);
   const footerPhone = getPublicText(footerContent, 'phone', '+84 901 234 567');
   const footerAddress = getPublicText(footerContent, 'address', 'Tòa nhà Innovation Hub, 2 Nguyễn Thị Minh Khai, Q.1, TP.HCM');

@@ -25,14 +25,14 @@ const TEAM = [
 const VALUES = [
   { icon: Target, title: 'Sứ mệnh rõ ràng', desc: 'Dân chủ hóa copywriting chuyên nghiệp — giúp mọi doanh nghiệp Việt Nam tiếp cận AI tiên tiến với chi phí hợp lý.', color: 'bg-primary/10 text-primary' },
   { icon: Eye, title: 'Minh bạch tuyệt đối', desc: 'Không chi phí ẩn, không hứa hẹn viển vông. Chúng tôi cam kết kết quả đo lường được và được kiểm chứng bởi hàng nghìn khách hàng thực.', color: 'bg-emerald-100 text-emerald-700' },
-  { icon: Zap, title: 'Đổi mới liên tục', desc: 'Cập nhật model mới nhất (GPT-4o, Llama 3.1), tính năng mới mỗi tháng, luôn đi trước xu hướng công nghệ AI toàn cầu.', color: 'bg-primary/10 text-primary' },
+  { icon: Zap, title: 'Đổi mới liên tục', desc: 'Cập nhật model mới nhất (GPT-4, Llama 3.1), tính năng mới mỗi tháng, luôn đi trước xu hướng công nghệ AI toàn cầu.', color: 'bg-primary/10 text-primary' },
   { icon: Heart, title: 'Khách hàng là trung tâm', desc: 'Mỗi tính năng được xây dựng dựa trên phản hồi thực tế. Hỗ trợ tận tâm 24/7, không bao giờ để khách hàng bị bỏ lại phía sau.', color: 'bg-primary/10 text-primary' },
 ];
 
 const MILESTONES = [
   { year: '2023', title: 'Thành lập CopyPro', desc: 'Ra mắt phiên bản beta với 50 người dùng đầu tiên, tích hợp GPT-3.5.' },
   { year: 'Q1 2024', title: 'Series A Funding', desc: 'Gọi vốn thành công 2 triệu USD, mở rộng team lên 20 nhân sự.' },
-  { year: 'Q3 2024', title: '1,000 khách hàng', desc: 'Đạt mốc 1,000 khách hàng trả phí, ra mắt GPT-4o integration.' },
+  { year: 'Q3 2024', title: '1,000 khách hàng', desc: 'Đạt mốc 1,000 khách hàng trả phí, ra mắt GPT-4 integration.' },
   { year: 'Q1 2025', title: 'Fine-tuning Studio', desc: 'Tính năng fine-tuning độc quyền — lần đầu tiên tại Việt Nam.' },
   { year: 'Q3 2025', title: 'Llama 3.1 & API', desc: 'Tích hợp Llama 3.1 self-hosted và mở RESTful API cho developers.' },
   { year: '2026', title: '2,000+ doanh nghiệp', desc: 'Hiện phục vụ 2,000+ doanh nghiệp Việt Nam, 500K+ copy đã tạo.' },

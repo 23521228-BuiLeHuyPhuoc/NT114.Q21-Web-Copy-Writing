@@ -200,7 +200,6 @@ const GEMINI_MODEL_MAP = {
   'gemini-3-5-flash': 'gemini-3.5-flash',
   'gemma-4-26b': 'gemma-4-26b-a4b-it',
   'gemma-4-31b': 'gemma-4-31b-it',
-  gpt4o: 'gemini-2.5-flash',
   gpt35: 'gemini-2.5-flash-lite',
   llama3: 'gemini-2.5-flash',
   'llama3-8b': 'gemini-2.5-flash-lite',
@@ -232,7 +231,6 @@ const VERTEX_CLAUDE_MODEL_MAP = {
 
 const FREEGPT4_MODEL_MAP = {
   'freegpt4-gpt-4': 'gpt-4',
-  'freegpt4-gpt-4o': 'gpt-4o',
 };
 
 const FORMAT_BOUNDARY_LABELS = [
@@ -641,11 +639,10 @@ function appendApiKey(url, apiKey) {
 
 function getOpenAIModel(model) {
   const modelMap = {
-    gpt4o: 'gpt-4o-mini',
-    gpt35: 'gpt-4o-mini',
+    gpt35: 'gpt-3.5-turbo',
   };
 
-  return modelMap[model] || model || process.env.OPENAI_MODEL || 'gpt-4o-mini';
+  return modelMap[model] || model || process.env.OPENAI_MODEL || 'gpt-4';
 }
 
 function getOpenAIBaseUrl() {

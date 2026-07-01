@@ -18,7 +18,7 @@ const FEATURES = [
   {
     icon: Wand2,
     title: 'AI Generator đa model',
-    desc: 'Tạo headline, email, mô tả sản phẩm và social post bằng GPT-4o hoặc Llama 3.1.',
+    desc: 'Tạo headline, email, mô tả sản phẩm và social post bằng GPT-4 hoặc Llama 3.1.',
     accent: 'bg-primary/10 text-primary',
   },
   {

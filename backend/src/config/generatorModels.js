@@ -12,7 +12,6 @@ const BASE_GENERATOR_MODELS = [
   'gemini-3-flash-preview',
   'gemma-4-26b',
   'freegpt4-gpt-4',
-  'freegpt4-gpt-4o',
 ];
 
 const ALL_GENERATOR_MODEL_ACCESS = [
