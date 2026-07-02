@@ -998,6 +998,9 @@ function extractGeminiText(data) {
 async function callGemini(payload) {
   const apiKey = getGeminiApiKey();
   if (!apiKey || typeof fetch !== 'function') {
+    if (payload.requireProviderSuccess) {
+      throw createError(503, 'GEMINI_API_KEY or GOOGLE_API_KEY is not configured');
+    }
     return null;
   }
 
@@ -1042,11 +1045,15 @@ async function callGemini(payload) {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
+      const message = errorData.error?.message || response.statusText;
       console.warn('Gemini generateContent failed', {
         status: response.status,
         model,
-        message: errorData.error?.message || response.statusText,
+        message,
       });
+      if (payload.requireProviderSuccess) {
+        throw createError(response.status, `Gemini generateContent failed: ${message}`);
+      }
       return null;
     }
 
@@ -1073,6 +1080,10 @@ async function callGemini(payload) {
       model,
       message: error.message,
     });
+    if (payload.requireProviderSuccess) {
+      if (error.statusCode) throw error;
+      throw createError(502, `Gemini generateContent failed: ${error.message}`);
+    }
     return null;
   } finally {
     clearTimeout(timeout);
@@ -1575,6 +1586,9 @@ async function callOpenAI(payload) {
 
 async function callGroq(payload) {
   if (!process.env.GROQ_API_KEY || typeof fetch !== 'function') {
+    if (payload.requireProviderSuccess) {
+      throw createError(503, 'GROQ_API_KEY is not configured');
+    }
     return null;
   }
 
@@ -1611,11 +1625,15 @@ async function callGroq(payload) {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
+      const message = errorData.error?.message || response.statusText;
       console.warn('Groq chat completion failed', {
         status: response.status,
         model,
-        message: errorData.error?.message || response.statusText,
+        message,
       });
+      if (payload.requireProviderSuccess) {
+        throw createError(response.status, `Groq request failed: ${message}`);
+      }
       return null;
     }
 
@@ -1642,6 +1660,10 @@ async function callGroq(payload) {
       model,
       message: error.message,
     });
+    if (payload.requireProviderSuccess) {
+      if (error.statusCode) throw error;
+      throw createError(502, `Groq request failed: ${error.message}`);
+    }
     return null;
   } finally {
     clearTimeout(timeout);
@@ -1918,14 +1940,18 @@ async function generateCopy(payload) {
     anthropic: [callVertexClaude],
     groq: [callGroq],
     freegpt4: [callFreeGPT4],
-    auto: [callGemini, callGroq, callOpenAI, callFreeGPT4],
+    auto: [callGemini, callGroq, callFreeGPT4],
   }[provider] || [callGemini];
   const shouldUseVertexGeminiProvider = !forcedProvider && provider === 'vertex-gemini' && isGeminiFamilyModel;
   const selectedProviders = providersBySelectedModel || [];
+  const shouldUseSelectedModelProvider = !forcedProvider && Boolean(providersBySelectedModel);
   const providers = forcedProvider || shouldUseVertexGeminiProvider
     ? providersByEnv
+    : shouldUseSelectedModelProvider
+      ? selectedProviders
     : Array.from(new Set([...selectedProviders, ...providersByEnv]));
   const shouldRequireSelectedProvider = payload.requireProviderSuccess
+    || shouldUseSelectedModelProvider
     || isMaaSModel
     || isVertexEndpointModel
     || isVertexGeminiModel

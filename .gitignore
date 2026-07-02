@@ -37,3 +37,5 @@ training/llama/.cache/
 training/llama/**/*.log
 training/llama/**/*.safetensors
 training/llama/**/*.bin
+
+.vercel
