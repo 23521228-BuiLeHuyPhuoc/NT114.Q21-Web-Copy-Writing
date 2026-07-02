@@ -57,14 +57,29 @@ function hmacSha256(secret, data) {
 }
 
 function formatVnpayDate(date = new Date()) {
-  const pad = (value) => String(value).padStart(2, '0');
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Ho_Chi_Minh',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  });
+  const parts = Object.fromEntries(
+    formatter.formatToParts(date)
+      .filter((part) => part.type !== 'literal')
+      .map((part) => [part.type, part.value]),
+  );
+
   return [
-    date.getFullYear(),
-    pad(date.getMonth() + 1),
-    pad(date.getDate()),
-    pad(date.getHours()),
-    pad(date.getMinutes()),
-    pad(date.getSeconds()),
+    parts.year,
+    parts.month,
+    parts.day,
+    parts.hour === '24' ? '00' : parts.hour,
+    parts.minute,
+    parts.second,
   ].join('');
 }
 
