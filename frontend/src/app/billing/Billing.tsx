@@ -124,6 +124,7 @@ const PAYMENT_METHODS = [
 ];
 
 interface BillingMeResponse {
+  customerRole?: CustomerRole;
   currentPlan?: {
     name?: string;
     slug?: string;
@@ -312,7 +313,7 @@ export function CustomerBilling() {
 
       const currentPlanData = data.currentPlan;
       if (currentPlanData) {
-        const nextCustomerRole = getCustomerRoleForPlanSlug(currentPlanData.slug);
+        const nextCustomerRole = data.customerRole || getCustomerRoleForPlanSlug(currentPlanData.slug);
         if (user?.role === 'customer' && nextCustomerRole && user.customerRole !== nextCustomerRole) {
           updateUser({ ...user, customerRole: nextCustomerRole });
         }

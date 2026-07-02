@@ -1,6 +1,7 @@
 const AccountAdmin = require('../models/AccountAdmin');
 const AccountUser = require('../models/AccountUser');
 const createError = require('../utils/createError');
+const billingService = require('./billingService');
 
 function toAccountType(value) {
   if (value === 'admin') return 'admin';
@@ -114,6 +115,16 @@ async function createUser(payload) {
     status: normalizeUserStatus(payload.status),
     isVerified: true,
   });
+
+  try {
+    await billingService.syncSubscriptionForCustomerRole(account._id, account.customerRole, {
+      updateAccountRole: false,
+    });
+  } catch (error) {
+    await AccountUser.findByIdAndDelete(account._id);
+    throw error;
+  }
+
   return serializeUser(account);
 }
 
@@ -129,6 +140,7 @@ async function updateUser(accountType, id, payload) {
   const type = toAccountType(accountType);
   const account = await findAccountOrThrow(type, id);
   const Model = getModel(type);
+  const previousCustomerRole = account.customerRole;
 
   if (payload.email) {
     await ensureEmailAvailable(Model, payload.email, id);
@@ -145,6 +157,13 @@ async function updateUser(accountType, id, payload) {
   }
 
   await account.save();
+
+  if (type !== 'admin' && payload.customerRole && payload.customerRole !== previousCustomerRole) {
+    await billingService.syncSubscriptionForCustomerRole(account._id, account.customerRole, {
+      updateAccountRole: false,
+    });
+  }
+
   return serializeAccount(account, type);
 }
 

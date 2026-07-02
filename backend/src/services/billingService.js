@@ -33,6 +33,9 @@ const CUSTOMER_ROLE_BY_PLAN_SLUG = {
   pro: 'pro_customer',
   business: 'business_customer',
 };
+const PLAN_SLUG_BY_CUSTOMER_ROLE = Object.fromEntries(
+  Object.entries(CUSTOMER_ROLE_BY_PLAN_SLUG).map(([slug, role]) => [role, slug]),
+);
 
 function getPlanRank(plan) {
   const slug = String(plan?.slug || '').toLowerCase();
@@ -65,6 +68,10 @@ function getCustomerRoleForPlan(plan) {
   return CUSTOMER_ROLE_BY_PLAN_SLUG[String(plan?.slug || '').toLowerCase()] || null;
 }
 
+function getPlanSlugForCustomerRole(customerRole) {
+  return PLAN_SLUG_BY_CUSTOMER_ROLE[String(customerRole || '').trim().toLowerCase()] || null;
+}
+
 async function syncCustomerRoleForPlan(userId, plan) {
   const customerRole = getCustomerRoleForPlan(plan);
   if (!customerRole) return;
@@ -73,6 +80,73 @@ async function syncCustomerRoleForPlan(userId, plan) {
     { _id: userId },
     { $set: { customerRole } },
   );
+}
+
+async function syncSubscriptionForCustomerRole(userId, customerRole, options = {}) {
+  const planSlug = getPlanSlugForCustomerRole(customerRole);
+  if (!planSlug) return null;
+
+  const plan = await Plan.findOne({
+    slug: planSlug,
+    isDeleted: { $ne: true },
+    isActive: true,
+  });
+  if (!plan) throw createError(404, `Plan for customer role ${customerRole} not found`);
+
+  const normalizedCustomerRole = CUSTOMER_ROLE_BY_PLAN_SLUG[planSlug];
+  let subscription = await getCurrentSubscription(userId);
+  const alreadyOnPlan = subscription && toId(subscription.planId) === plan._id.toString();
+
+  if (alreadyOnPlan && isSubscriptionCurrentlyUsable(subscription)) {
+    if (options.updateAccountRole !== false) {
+      await AccountUser.updateOne(
+        { _id: userId },
+        { $set: { customerRole: normalizedCustomerRole } },
+      );
+    }
+    return subscription;
+  }
+
+  const now = new Date();
+  const currentPeriodEnd = Object.prototype.hasOwnProperty.call(options, 'currentPeriodEnd')
+    ? options.currentPeriodEnd
+    : null;
+  const billingCycle = options.billingCycle || 'monthly';
+  const providerSubscriptionId = options.providerSubscriptionId || '';
+
+  if (!subscription) {
+    subscription = await Subscription.create({
+      userId,
+      planId: plan._id,
+      status: 'active',
+      billingCycle,
+      currentPeriodStart: now,
+      currentPeriodEnd,
+      cancelAtPeriodEnd: false,
+      provider: 'manual',
+      providerSubscriptionId,
+    });
+  } else {
+    subscription.planId = plan._id;
+    subscription.status = 'active';
+    subscription.billingCycle = billingCycle;
+    subscription.currentPeriodStart = now;
+    subscription.currentPeriodEnd = currentPeriodEnd;
+    subscription.cancelAtPeriodEnd = false;
+    subscription.provider = 'manual';
+    subscription.providerSubscriptionId = providerSubscriptionId;
+    await subscription.save();
+  }
+
+  if (options.updateAccountRole !== false) {
+    await AccountUser.updateOne(
+      { _id: userId },
+      { $set: { customerRole: normalizedCustomerRole } },
+    );
+  }
+
+  await subscription.populate('planId');
+  return subscription;
 }
 
 async function assertCheckoutPlanChangeAllowed(userId, targetPlan) {
@@ -511,25 +585,25 @@ async function ensureFreeSubscriptionForUser(userId) {
 
   if (!freePlan) return null;
 
-  const existingSubscription = await getCurrentSubscription(userId);
-  if (existingSubscription) {
-    await syncCustomerRoleForPlan(userId, existingSubscription.planId);
-    return existingSubscription;
-  }
-
-  return Subscription.create({
-    userId,
-    planId: freePlan._id,
-    status: 'active',
+  return syncSubscriptionForCustomerRole(userId, CUSTOMER_ROLE_BY_PLAN_SLUG.free, {
     billingCycle: 'monthly',
-    currentPeriodStart: new Date(),
     currentPeriodEnd: null,
-    provider: 'manual',
-    providerSubscriptionId: '',
+    updateAccountRole: false,
   });
 }
 
 async function getEffectivePlanForUser(userId) {
+  const user = await AccountUser.findById(userId).select('customerRole');
+  const planSlug = getPlanSlugForCustomerRole(user?.customerRole);
+  if (planSlug) {
+    const rolePlan = await Plan.findOne({
+      slug: planSlug,
+      isDeleted: { $ne: true },
+      isActive: true,
+    });
+    if (rolePlan) return rolePlan;
+  }
+
   const subscription = await getCurrentSubscription(userId);
   return subscription?.planId || await getFallbackPlan();
 }
@@ -722,8 +796,12 @@ async function listUserPayments(userId, limit = 10) {
 }
 
 async function getMyBilling(userId) {
+  const user = await AccountUser.findById(userId).select('customerRole');
+  const subscriptionPromise = getPlanSlugForCustomerRole(user?.customerRole)
+    ? syncSubscriptionForCustomerRole(userId, user.customerRole, { updateAccountRole: false })
+    : getCurrentSubscription(userId);
   const [subscription, usage, invoices] = await Promise.all([
-    getCurrentSubscription(userId),
+    subscriptionPromise,
     getGenerateUsageSummary(userId),
     listUserPayments(userId, 10),
   ]);
@@ -734,6 +812,7 @@ async function getMyBilling(userId) {
   const limits = serializedPlan?.limits || {};
 
   return {
+    customerRole: user?.customerRole || getCustomerRoleForPlan(plan) || CUSTOMER_ROLE_BY_PLAN_SLUG.free,
     currentPlan: {
       name: serializedPlan?.name || 'Free',
       slug: serializedPlan?.slug || 'free',
@@ -1573,6 +1652,7 @@ module.exports = {
   estimateGenerateQuotaUnits,
   getEffectivePlanForUser,
   ensureFreeSubscriptionForUser,
+  syncSubscriptionForCustomerRole,
   getGenerateUsageSummary,
   getMyBilling,
   createCheckout,
