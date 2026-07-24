@@ -29,5 +29,5 @@ Website: [https://nt-114-q21-web-copy-writing.vercel.app](https://nt-114-q21-web
 
 | Vai trò | Trang đăng nhập | Email | Mật khẩu |
 | --- | --- | --- | --- |
-| Customer | [Customer Login](https://nt-114-q21-web-copy-writing.vercel.app/login) | `customer@example.com` | `customer123` |
-| Super Admin | [Admin Login](https://nt-114-q21-web-copy-writing.vercel.app/admin/login) | `admin@example.com` | `admin123` |
+| Customer | [Customer Login](https://nt-114-q21-web-copy-writing.vercel.app/login) | `customer@copypro.vn` | `customer123` |
+| Super Admin | [Admin Login](https://nt-114-q21-web-copy-writing.vercel.app/admin/login) | `admin@copypro.vn` | `admin123` |
