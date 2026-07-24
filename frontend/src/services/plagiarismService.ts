@@ -5,7 +5,7 @@ const PLAGIARISM_REQUEST_TIMEOUT_MS = 180000;
 export type PlagiarismRiskLevel = 'safe' | 'review' | 'high' | 'critical';
 export type PlagiarismSourceType = 'database' | 'reference' | 'web' | 'uploads';
 export type PlagiarismSensitivity = 'lenient' | 'balanced' | 'strict';
-export type PlagiarismScoreBasis = 'exact' | 'phrase' | 'word' | 'none';
+export type PlagiarismScoreBasis = 'exact' | 'phrase' | 'embedding' | 'word' | 'none';
 
 export interface PlagiarismSourceConfig {
   database: boolean;
@@ -64,6 +64,8 @@ export interface PlagiarismSource {
   exactMatchScore: number;
   phraseOverlapScore: number;
   wordOverlapScore: number;
+  embeddingSimilarityScore: number;
+  embeddingPlagiarismScore: number;
   scoreBasis: PlagiarismScoreBasis;
   matchedPhrases: number;
   totalPhrases: number;
@@ -81,6 +83,8 @@ export interface PlagiarismMatch {
   exactMatchScore: number;
   phraseOverlapScore: number;
   wordOverlapScore: number;
+  embeddingSimilarityScore: number;
+  embeddingPlagiarismScore: number;
   scoreBasis: PlagiarismScoreBasis;
   matchedWords: number;
   totalWords: number;
@@ -102,6 +106,22 @@ export interface PlagiarismAnalysis {
   exactMatchScore: number;
   phraseOverlapScore: number;
   wordOverlapScore: number;
+  embeddingSimilarityScore: number;
+  embeddingPlagiarismScore: number;
+  embedding: {
+    enabled: boolean;
+    status: 'disabled' | 'empty' | 'ok' | 'fallback' | 'error';
+    provider: string;
+    model: string;
+    requestedProvider: string;
+    requestedModel: string;
+    candidateCount: number;
+    comparedCount: number;
+    maxSimilarityScore: number;
+    maxPlagiarismScore: number;
+    minSimilarity: number;
+    error: string;
+  };
   commonCrawl: {
     enabled: boolean;
     allowLiveFallback: boolean;
@@ -225,6 +245,8 @@ interface BackendPlagiarismSource {
   exactMatchScore?: number;
   phraseOverlapScore?: number;
   wordOverlapScore?: number;
+  embeddingSimilarityScore?: number;
+  embeddingPlagiarismScore?: number;
   scoreBasis?: PlagiarismScoreBasis;
   matchedPhrases?: number;
   totalPhrases?: number;
@@ -242,6 +264,8 @@ interface BackendPlagiarismMatch {
   exactMatchScore?: number;
   phraseOverlapScore?: number;
   wordOverlapScore?: number;
+  embeddingSimilarityScore?: number;
+  embeddingPlagiarismScore?: number;
   scoreBasis?: PlagiarismScoreBasis;
   matchedWords?: number;
   totalWords?: number;
@@ -303,6 +327,22 @@ const DEFAULT_ANALYSIS: PlagiarismAnalysis = {
   exactMatchScore: 0,
   phraseOverlapScore: 0,
   wordOverlapScore: 0,
+  embeddingSimilarityScore: 0,
+  embeddingPlagiarismScore: 0,
+  embedding: {
+    enabled: false,
+    status: 'empty',
+    provider: 'none',
+    model: 'none',
+    requestedProvider: '',
+    requestedModel: '',
+    candidateCount: 0,
+    comparedCount: 0,
+    maxSimilarityScore: 0,
+    maxPlagiarismScore: 0,
+    minSimilarity: 82,
+    error: '',
+  },
   commonCrawl: {
     enabled: false,
     allowLiveFallback: false,
@@ -367,6 +407,8 @@ function normalizeSource(source: BackendPlagiarismSource): PlagiarismSource {
     exactMatchScore: asNumber(source.exactMatchScore),
     phraseOverlapScore: asNumber(source.phraseOverlapScore),
     wordOverlapScore: asNumber(source.wordOverlapScore),
+    embeddingSimilarityScore: asNumber(source.embeddingSimilarityScore),
+    embeddingPlagiarismScore: asNumber(source.embeddingPlagiarismScore),
     scoreBasis: source.scoreBasis || 'none',
     matchedPhrases: asNumber(source.matchedPhrases),
     totalPhrases: asNumber(source.totalPhrases),
@@ -386,6 +428,8 @@ function normalizeMatch(match: BackendPlagiarismMatch): PlagiarismMatch {
     exactMatchScore: asNumber(match.exactMatchScore),
     phraseOverlapScore: asNumber(match.phraseOverlapScore),
     wordOverlapScore: asNumber(match.wordOverlapScore),
+    embeddingSimilarityScore: asNumber(match.embeddingSimilarityScore),
+    embeddingPlagiarismScore: asNumber(match.embeddingPlagiarismScore),
     scoreBasis: match.scoreBasis || 'none',
     matchedWords: asNumber(match.matchedWords),
     totalWords: asNumber(match.totalWords),
@@ -405,6 +449,10 @@ function normalizeReport(report: BackendPlagiarismReport): PlagiarismReport {
     ...DEFAULT_ANALYSIS,
     ...backendAnalysis,
     unavailableSourceTypes,
+    embedding: {
+      ...DEFAULT_ANALYSIS.embedding,
+      ...(backendAnalysis.embedding || {}),
+    },
     commonCrawl: {
       ...DEFAULT_ANALYSIS.commonCrawl,
       ...(backendAnalysis.commonCrawl || {}),
@@ -440,7 +488,7 @@ function normalizeReport(report: BackendPlagiarismReport): PlagiarismReport {
     matches,
     topicMatches,
     sources,
-    modelUsed: report.modelUsed || 'local-ngram-v1',
+    modelUsed: report.modelUsed || 'hybrid-ngram-embedding-v1',
     threshold: asNumber(report.threshold, 35),
     sensitivity: report.sensitivity || 'balanced',
     ignoreCommonPhrases: report.ignoreCommonPhrases !== false,

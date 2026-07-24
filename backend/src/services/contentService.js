@@ -4,6 +4,7 @@ const FineTuneExample = require('../models/FineTuneExample');
 const FineTuneJob = require('../models/FineTuneJob');
 const UsageLog = require('../models/UsageLog');
 const aiService = require('./aiService');
+const plagiarismService = require('./plagiarismService');
 const billingService = require('./billingService');
 const notificationService = require('./notificationService');
 const projectService = require('./projectService');
@@ -219,6 +220,12 @@ function serializeContent(content, modelDisplayNames = new Map()) {
     isFavorite: Boolean(content.isFavorite),
     isProjectCompleted: Boolean(content.isProjectCompleted),
     wordCount: content.wordCount || 0,
+    plagiarismScore: Number(content.plagiarismScore || 0),
+    originalityScore: Number(content.originalityScore ?? 100),
+    plagiarismRiskLevel: content.plagiarismRiskLevel || 'safe',
+    plagiarismCheckStatus: content.plagiarismCheckStatus || 'not_checked',
+    plagiarismReportId: toId(content.plagiarismReportId),
+    plagiarismCheckedAt: content.plagiarismCheckedAt,
     isDeleted: Boolean(content.isDeleted),
     deletedAt: content.deletedAt,
     createdAt: content.createdAt,
@@ -403,7 +410,15 @@ async function updateContent(userId, id, payload) {
 
   if (payload.title !== undefined) content.title = payload.title;
   if (payload.prompt !== undefined) content.prompt = payload.prompt;
-  if (payload.outputText !== undefined) content.outputText = payload.outputText;
+  if (payload.outputText !== undefined) {
+    content.outputText = payload.outputText;
+    content.plagiarismScore = 0;
+    content.originalityScore = 100;
+    content.plagiarismRiskLevel = 'safe';
+    content.plagiarismCheckStatus = 'not_checked';
+    content.plagiarismReportId = null;
+    content.plagiarismCheckedAt = null;
+  }
   if (payload.type !== undefined) content.type = payload.type;
   if (payload.tone !== undefined) content.tone = payload.tone;
   if (payload.language !== undefined) content.language = payload.language;
@@ -661,6 +676,63 @@ async function resolveFineTunedModelForGenerate(userId, payload) {
   throw createError(409, `Provider ${provider || 'unknown'} does not expose a real fine-tuned inference endpoint in this app yet`);
 }
 
+function envBoolean(name, fallback = false) {
+  const value = process.env[name];
+  if (value === undefined || value === '') return fallback;
+  return String(value).toLowerCase() === 'true';
+}
+
+function serializeGeneratedPlagiarism(report) {
+  if (!report) return null;
+  return {
+    reportId: report.id || report._id || null,
+    similarityScore: Number(report.similarityScore || 0),
+    originalityScore: Number(report.originalityScore ?? 100),
+    riskLevel: report.riskLevel || 'safe',
+    summary: report.summary || '',
+    checkedAt: report.updatedAt || report.createdAt || new Date(),
+    embedding: report.analysis?.embedding || null,
+  };
+}
+
+async function checkGeneratedContentPlagiarism(userId, content) {
+  try {
+    const report = await plagiarismService.checkPlagiarism(userId, {
+      contentId: content._id,
+      threshold: Number(process.env.GENERATED_CONTENT_PLAGIARISM_THRESHOLD || 35),
+      sensitivity: process.env.GENERATED_CONTENT_PLAGIARISM_SENSITIVITY || 'balanced',
+      ignoreCommonPhrases: true,
+      ignoredPhrases: [],
+      sources: {
+        database: true,
+        references: true,
+        web: envBoolean('GENERATED_CONTENT_PLAGIARISM_WEB_CHECK', false),
+        uploads: false,
+      },
+      uploadedSources: [],
+    });
+
+    content.plagiarismScore = Number(report.similarityScore || 0);
+    content.originalityScore = Number(report.originalityScore ?? 100);
+    content.plagiarismRiskLevel = report.riskLevel || 'safe';
+    content.plagiarismCheckStatus = 'completed';
+    content.plagiarismReportId = report.id || report._id || null;
+    content.plagiarismCheckedAt = new Date();
+    await content.save();
+    return serializeGeneratedPlagiarism(report);
+  } catch (error) {
+    content.plagiarismCheckStatus = 'failed';
+    content.plagiarismCheckedAt = new Date();
+    try {
+      await content.save();
+    } catch (saveError) {
+      console.warn(`Failed to persist plagiarism check failure: ${saveError.message}`);
+    }
+    console.warn(`Generated content plagiarism check failed: ${error.message}`);
+    return null;
+  }
+}
+
 async function generateContent(userId, payload) {
   await ensureActiveGenerateOptions(payload);
   await projectService.ensureProjectBelongsToUser(userId, payload.projectId);
@@ -701,6 +773,7 @@ async function generateContent(userId, payload) {
     language: payload.language,
     modelUsed,
     tags: generatedTags,
+    plagiarismCheckStatus: 'processing',
   });
 
   const usage = await UsageLog.create({
@@ -714,6 +787,8 @@ async function generateContent(userId, payload) {
     action: 'generate',
     status: aiResult.status,
   });
+
+  const plagiarism = await checkGeneratedContentPlagiarism(userId, content);
 
   await templateService.incrementTemplateUsage(template?._id);
   try {
@@ -732,6 +807,7 @@ async function generateContent(userId, payload) {
     usage: serializeUsage(usage),
     template: template ? templateService.serializeTemplate(template) : null,
     fallback: aiResult.fallback,
+    plagiarism,
   };
 }
 

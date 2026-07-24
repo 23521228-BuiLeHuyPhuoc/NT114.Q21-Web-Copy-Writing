@@ -88,6 +88,38 @@ const contentSchema = new mongoose.Schema(
       min: 0,
       default: 0,
     },
+    plagiarismScore: {
+      type: Number,
+      min: 0,
+      max: 100,
+      default: 0,
+    },
+    originalityScore: {
+      type: Number,
+      min: 0,
+      max: 100,
+      default: 100,
+    },
+    plagiarismRiskLevel: {
+      type: String,
+      enum: ['safe', 'review', 'high', 'critical'],
+      default: 'safe',
+    },
+    plagiarismCheckStatus: {
+      type: String,
+      enum: ['not_checked', 'processing', 'completed', 'failed'],
+      default: 'not_checked',
+    },
+    plagiarismReportId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'PlagiarismReport',
+      default: null,
+      index: true,
+    },
+    plagiarismCheckedAt: {
+      type: Date,
+      default: null,
+    },
     isDeleted: {
       type: Boolean,
       default: false,

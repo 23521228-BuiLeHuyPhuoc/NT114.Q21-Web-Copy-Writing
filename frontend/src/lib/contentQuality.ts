@@ -8,6 +8,7 @@ export interface ContentQualityInput {
   tone?: string;
   industry?: string;
   length?: ContentQualityLength;
+  plagiarismSimilarity?: number;
 }
 
 const STOPWORDS = new Set([
@@ -264,6 +265,16 @@ function scoreSpecificity(text: string, input: ContentQualityInput) {
   return clamp(score, 0, 12);
 }
 
+export function applyPlagiarismPenalty(baseScore: number, similarityScore?: number) {
+  const base = clamp(Number(baseScore) || 0);
+  const similarity = clamp(Number(similarityScore) || 0);
+  if (similarity < 20) return Math.round(base);
+
+  const penaltyRate = similarity >= 70 ? 0.75 : similarity >= 45 ? 0.55 : 0.35;
+  const originalityCap = 100 - similarity;
+  return Math.round(clamp(Math.min(base - similarity * penaltyRate, originalityCap)));
+}
+
 export function scoreGeneratedContent(input: ContentQualityInput) {
   const text = input.text || '';
   if (hasInvalidGeneratedText(text)) return 0;
@@ -277,5 +288,5 @@ export function scoreGeneratedContent(input: ContentQualityInput) {
     - promptEchoPenalty(text, input)
     - genericContentPenalty(text);
 
-  return Math.round(clamp(score, 0, 100));
+  return applyPlagiarismPenalty(clamp(score, 0, 100), input.plagiarismSimilarity);
 }

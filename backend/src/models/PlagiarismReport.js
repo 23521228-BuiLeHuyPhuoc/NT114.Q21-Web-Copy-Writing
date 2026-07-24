@@ -77,9 +77,11 @@ const matchSchema = new mongoose.Schema(
       max: 100,
       default: 0,
     },
+    embeddingSimilarityScore: { type: Number, min: 0, max: 100, default: 0 },
+    embeddingPlagiarismScore: { type: Number, min: 0, max: 100, default: 0 },
     scoreBasis: {
       type: String,
-      enum: ['exact', 'phrase', 'word', 'none'],
+      enum: ['exact', 'phrase', 'embedding', 'word', 'none'],
       default: 'none',
     },
     matchedWords: {
@@ -199,9 +201,11 @@ const sourceSchema = new mongoose.Schema(
       max: 100,
       default: 0,
     },
+    embeddingSimilarityScore: { type: Number, min: 0, max: 100, default: 0 },
+    embeddingPlagiarismScore: { type: Number, min: 0, max: 100, default: 0 },
     scoreBasis: {
       type: String,
-      enum: ['exact', 'phrase', 'word', 'none'],
+      enum: ['exact', 'phrase', 'embedding', 'word', 'none'],
       default: 'none',
     },
     matchedPhrases: {
@@ -242,6 +246,26 @@ const analysisSchema = new mongoose.Schema(
     exactMatchScore: { type: Number, min: 0, max: 100, default: 0 },
     phraseOverlapScore: { type: Number, min: 0, max: 100, default: 0 },
     wordOverlapScore: { type: Number, min: 0, max: 100, default: 0 },
+    embeddingSimilarityScore: { type: Number, min: 0, max: 100, default: 0 },
+    embeddingPlagiarismScore: { type: Number, min: 0, max: 100, default: 0 },
+    embedding: {
+      enabled: { type: Boolean, default: false },
+      status: {
+        type: String,
+        enum: ['disabled', 'empty', 'ok', 'fallback', 'error'],
+        default: 'empty',
+      },
+      provider: { type: String, trim: true, maxlength: 40, default: 'none' },
+      model: { type: String, trim: true, maxlength: 120, default: 'none' },
+      requestedProvider: { type: String, trim: true, maxlength: 40, default: '' },
+      requestedModel: { type: String, trim: true, maxlength: 120, default: '' },
+      candidateCount: { type: Number, min: 0, default: 0 },
+      comparedCount: { type: Number, min: 0, default: 0 },
+      maxSimilarityScore: { type: Number, min: 0, max: 100, default: 0 },
+      maxPlagiarismScore: { type: Number, min: 0, max: 100, default: 0 },
+      minSimilarity: { type: Number, min: 0, max: 100, default: 82 },
+      error: { type: String, trim: true, maxlength: 500, default: '' },
+    },
     commonCrawl: {
       enabled: { type: Boolean, default: false },
       allowLiveFallback: { type: Boolean, default: false },
@@ -399,7 +423,7 @@ const plagiarismReportSchema = new mongoose.Schema(
       type: String,
       trim: true,
       maxlength: 80,
-      default: 'local-ngram-v1',
+      default: 'hybrid-ngram-embedding-v1',
     },
     threshold: {
       type: Number,

@@ -34,6 +34,7 @@ import { useMyBilling } from '@/hooks/queries/useBilling';
 import { scoreGeneratedContent } from '@/lib/contentQuality';
 import { resolveGeneratorIcon, resolveToneIcon } from '@/lib/generatorOptionIcons';
 import { formatGeneratedCopyForTinyMce, htmlToPlainText } from '@/lib/richText';
+import type { GeneratedPlagiarism } from '@/services/contentService';
 
 const VERSION_ICON_PREFIX = String.raw`(?:[\u2600-\u27BF\u{1F300}-\u{1FAFF}]\uFE0F?\s*)*`;
 const VERSION_HEADER_PREFIX = String.raw`(?:#{1,4}\s*)?(?:[-*]\s*)?(?:\*\*)?\s*${VERSION_ICON_PREFIX}`;
@@ -243,6 +244,7 @@ export function CustomerGenerator() {
   const [results, setResults] = useState<string[]>([]);
   const [selectedResult, setSelectedResult] = useState(0);
   const [qualityScores, setQualityScores] = useState<number[]>([]);
+  const [plagiarism, setPlagiarism] = useState<GeneratedPlagiarism | null>(null);
   const [tokensUsed, setTokensUsed] = useState(0);
   const [latency, setLatency] = useState(0);
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -451,6 +453,7 @@ export function CustomerGenerator() {
 
     setIsGenerating(true);
     setResults([]);
+    setPlagiarism(null);
     setStreamText('');
     setSavedContentId(null);
 
@@ -477,6 +480,7 @@ export function CustomerGenerator() {
 
       const splitResults = splitGeneratedVariations(result.content.content, variations)
         .map(formatGeneratedCopyForTinyMce);
+      const plagiarismSimilarity = result.plagiarism?.similarityScore ?? result.content.plagiarismScore;
       setResults(splitResults);
       setQualityScores(splitResults.map((text) => scoreGeneratedContent({
         text,
@@ -486,12 +490,18 @@ export function CustomerGenerator() {
         tone,
         industry,
         length: contentLength,
+        plagiarismSimilarity,
       })));
+      setPlagiarism(result.plagiarism);
       setSelectedResult(0);
       setTokensUsed(result.usage?.totalTokens || result.content.tokens || 0);
       setLatency(Math.round((Date.now() - startTime) / 100) / 10);
       setSavedContentId(result.content.id || null);
-      toast.success(result.fallback ? 'Đã tạo nội dung bằng fallback MVP!' : 'Tạo copy thành công!');
+      if (plagiarismSimilarity >= 35) {
+        toast.error(`Nội dung có nguy cơ đạo văn ${Math.round(plagiarismSimilarity)}%, điểm chất lượng đã bị giảm.`);
+      } else {
+        toast.success(result.fallback ? 'Đã tạo nội dung bằng fallback MVP!' : 'Tạo copy thành công!');
+      }
     } catch (error) {
       toast.error(getErrorMessage(error, 'Không thể tạo nội dung'));
     } finally {
@@ -580,6 +590,7 @@ export function CustomerGenerator() {
         tone,
         industry,
         length: contentLength,
+        plagiarismSimilarity: plagiarism?.similarityScore,
       })
       : score)));
   };
@@ -784,6 +795,7 @@ export function CustomerGenerator() {
                 results={results}
                 selectedResult={selectedResult}
                 qualityScores={qualityScores}
+                plagiarism={plagiarism}
                 variations={variations}
                 onSelectResult={setSelectedResult}
                 onResultChange={handleResultChange}

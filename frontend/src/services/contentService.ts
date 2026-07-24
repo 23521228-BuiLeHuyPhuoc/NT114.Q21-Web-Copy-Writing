@@ -71,6 +71,12 @@ interface BackendContent {
   isProjectCompleted?: boolean;
   wordCount?: number;
   words?: number;
+  plagiarismScore?: number;
+  originalityScore?: number;
+  plagiarismRiskLevel?: GeneratedPlagiarism['riskLevel'];
+  plagiarismCheckStatus?: UiContent['plagiarismCheckStatus'];
+  plagiarismReportId?: string | null;
+  plagiarismCheckedAt?: string | null;
   isDeleted?: boolean;
   deletedAt?: string | null;
   projectId?: string | null;
@@ -116,6 +122,12 @@ export interface UiContent {
   model: string;
   quality: number;
   words: number;
+  plagiarismScore: number;
+  originalityScore: number;
+  plagiarismRiskLevel: GeneratedPlagiarism['riskLevel'];
+  plagiarismCheckStatus: 'not_checked' | 'processing' | 'completed' | 'failed';
+  plagiarismReportId: string | null;
+  plagiarismCheckedAt: string | null;
   tokens: number;
   latency: string;
   tone: string;
@@ -135,10 +147,26 @@ export interface UiContent {
   versions: ContentVersion[];
 }
 
+export interface GeneratedPlagiarism {
+  reportId: string | null;
+  similarityScore: number;
+  originalityScore: number;
+  riskLevel: 'safe' | 'review' | 'high' | 'critical';
+  summary: string;
+  checkedAt: string;
+  embedding: {
+    enabled?: boolean;
+    status?: string;
+    provider?: string;
+    model?: string;
+  } | null;
+}
+
 export interface GenerateContentResult {
   content: UiContent;
   usage: UsageLog | null;
   fallback: boolean;
+  plagiarism: GeneratedPlagiarism | null;
 }
 
 const INDUSTRY_LABELS: Record<string, string> = {
@@ -188,6 +216,7 @@ function normalizeContent(item: BackendContent): UiContent {
     type: item.type,
     tone: item.tone,
     industry: item.tags?.[0],
+    plagiarismSimilarity: item.plagiarismScore,
   });
 
   return {
@@ -198,6 +227,12 @@ function normalizeContent(item: BackendContent): UiContent {
     model: formatContentModelDisplayName(item.modelDisplayName, item.modelUsed, item.model),
     quality,
     words: item.wordCount || item.words || countWords(content),
+    plagiarismScore: Number(item.plagiarismScore || 0),
+    originalityScore: Number(item.originalityScore ?? 100),
+    plagiarismRiskLevel: item.plagiarismRiskLevel || 'safe',
+    plagiarismCheckStatus: item.plagiarismCheckStatus || 'not_checked',
+    plagiarismReportId: item.plagiarismReportId || null,
+    plagiarismCheckedAt: item.plagiarismCheckedAt || null,
     tokens: 0,
     latency: '0s',
     tone: item.tone || '',
@@ -321,8 +356,9 @@ export const contentService = {
         item?: BackendContent;
         usage?: UsageLog;
         fallback?: boolean;
+        plagiarism?: GeneratedPlagiarism;
       };
-    }>('/contents/generate', payload, { timeout: 120000 });
+    }>('/contents/generate', payload, { timeout: 180000 });
 
     const content = normalizeContent(response.data.data?.item || {});
     const usage = response.data.data?.usage || null;
@@ -334,6 +370,7 @@ export const contentService = {
       },
       usage,
       fallback: Boolean(response.data.data?.fallback),
+      plagiarism: response.data.data?.plagiarism || null,
     };
   },
 };

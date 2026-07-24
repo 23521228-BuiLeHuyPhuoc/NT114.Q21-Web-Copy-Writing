@@ -49,6 +49,7 @@ const PLAGIARISM_FILE_ACCEPT = '.txt,.md,.markdown,.csv,.tsv,.json,.html,.htm,.x
 const SCORE_BASIS_LABELS: Record<PlagiarismScoreBasis, string> = {
   exact: 'Trùng nguyên văn',
   phrase: 'Trùng cụm từ',
+  embedding: 'Tương đồng ngữ nghĩa',
   word: 'Trùng từ khóa',
   none: 'Không có tín hiệu rõ',
 };
@@ -56,6 +57,7 @@ const SCORE_BASIS_LABELS: Record<PlagiarismScoreBasis, string> = {
 const SCORE_BASIS_DESCRIPTIONS: Record<PlagiarismScoreBasis, string> = {
   exact: 'Đoạn sau khi chuẩn hóa xuất hiện gần như nguyên văn trong nguồn.',
   phrase: 'Nhiều cụm 3-5 từ liên tiếp trùng với nguồn được so sánh.',
+  embedding: 'Cosine similarity trên embeddings cho thấy hai nội dung gần nhau về ngữ nghĩa.',
   word: 'Tỷ lệ từ quan trọng trùng cao sau khi bỏ cụm CTA/câu mẫu phổ biến.',
   none: 'Điểm chưa vượt một tín hiệu cụ thể.',
 };
@@ -897,7 +899,7 @@ export function CustomerPlagiarismCheck() {
             <div className='mt-4 grid gap-3'>
               <div className='min-w-0 rounded-lg border bg-muted/30 p-4'>
                 <h3 className='text-sm font-semibold text-foreground'>Căn cứ chấm điểm</h3>
-                <div className='mt-3 grid gap-2 sm:grid-cols-3'>
+                <div className='mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4'>
                   <div className='rounded-md border bg-background p-3'>
                     <p className='text-[11px] font-semibold uppercase text-muted-foreground'>Exact match</p>
                     <p className='mt-1 text-lg font-bold text-foreground'>{result.analysis.exactMatchScore}%</p>
@@ -913,8 +915,13 @@ export function CustomerPlagiarismCheck() {
                     <p className='mt-1 text-lg font-bold text-foreground'>{result.analysis.wordOverlapScore}%</p>
                     <p className='mt-1 text-xs text-muted-foreground'>Tỷ lệ từ quan trọng cùng xuất hiện.</p>
                   </div>
+                  <div className='rounded-md border bg-background p-3'>
+                    <p className='text-[11px] font-semibold uppercase text-muted-foreground'>Embedding cosine</p>
+                    <p className='mt-1 text-lg font-bold text-foreground'>{result.analysis.embeddingSimilarityScore}%</p>
+                    <p className='mt-1 text-xs text-muted-foreground'>Độ gần ngữ nghĩa giữa vector nội dung và nguồn.</p>
+                  </div>
                 </div>
-                <p className='mt-3 text-xs text-muted-foreground'>Điểm đạo văn dùng Exact match và N-gram; Overlap từ chỉ đo tương đồng chủ đề/từ khóa. Chỉ đoạn có điểm đạo văn vượt ngưỡng {result.analysis.effectiveThreshold}% mới được bôi đỏ.</p>
+                <p className='mt-3 text-xs text-muted-foreground'>Điểm đạo văn kết hợp Exact match, N-gram và cosine similarity trên embeddings; Overlap từ vẫn chỉ đo tương đồng chủ đề/từ khóa. Chỉ tín hiệu vượt ngưỡng {result.analysis.effectiveThreshold}% mới được đánh dấu.</p>
               </div>
               <div className='min-w-0 rounded-lg border bg-muted/30 p-4 text-sm'>
                 <h3 className='font-semibold text-foreground'>Thông số lần kiểm tra</h3>
@@ -922,6 +929,8 @@ export function CustomerPlagiarismCheck() {
                   <p>Đã so khớp {visibleComparedSourceCount} nguồn; {visibleSignalSourceCount} nguồn có tín hiệu tương đồng: {result.analysis.checkedSourceTypes.map(sourceTypeLabel).join(', ') || 'không có nguồn'}.</p>
                   <p>Tìm thấy {displayMatches.length} đoạn vượt ngưỡng và {displayTopicMatches.length} đoạn tương đồng chủ đề trong {result.wordCount} từ kiểm tra.</p>
                   <p>Chế độ: {SENSITIVITY[result.sensitivity].label}; {result.ignoreCommonPhrases ? 'đã bỏ qua cụm CTA/câu mẫu phổ biến' : 'không bỏ qua cụm phổ biến'}.</p>
+                  <p>Embeddings: {result.analysis.embedding.provider}/{result.analysis.embedding.model}; đã so cosine {result.analysis.embedding.comparedCount}/{result.analysis.embedding.candidateCount} nguồn, điểm ngữ nghĩa cao nhất {result.analysis.embedding.maxSimilarityScore}%.</p>
+                  {result.analysis.embedding.error && <p className='text-amber-700'>Embedding fallback/lỗi: {result.analysis.embedding.error}.</p>}
                   {result.ignoredPhrases.length > 0 && <p>Đoạn/cụm tự bỏ qua: {breakableShortList(result.ignoredPhrases, 3)}</p>}
                   {result.analysis.commonCrawl.enabled && (
                     <div className='space-y-2'>
@@ -995,10 +1004,11 @@ export function CustomerPlagiarismCheck() {
                       <Badge className={scoreBadgeClass(match.score)}>{match.score}%</Badge>
                     </div>
                     <p className='mt-3 whitespace-pre-wrap rounded-md bg-background p-3 text-sm text-foreground'>{renderTextWithIgnoredPhrases(match.matchedText, result.ignoredPhrases)}</p>
-                    <div className='mt-3 grid gap-2 sm:grid-cols-3'>
+                    <div className='mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4'>
                       <div className='rounded-md border bg-background p-2 text-xs'><span className='text-muted-foreground'>Exact</span><p className='font-semibold text-foreground'>{match.exactMatchScore}%</p></div>
                       <div className='rounded-md border bg-background p-2 text-xs'><span className='text-muted-foreground'>N-gram</span><p className='font-semibold text-foreground'>{match.phraseOverlapScore}%</p></div>
                       <div className='rounded-md border bg-background p-2 text-xs'><span className='text-muted-foreground'>Overlap từ</span><p className='font-semibold text-foreground'>{match.wordOverlapScore}%</p></div>
+                      <div className='rounded-md border bg-background p-2 text-xs'><span className='text-muted-foreground'>Embedding</span><p className='font-semibold text-foreground'>{match.embeddingSimilarityScore}%</p></div>
                     </div>
                     <p className='mt-3 text-xs text-muted-foreground'>Trùng {ratioLabel(match.matchedWords, match.totalWords, 'từ')} và {ratioLabel(match.matchedPhrases, match.totalPhrases, 'cụm')} {match.phraseSize ? `(${match.phraseSize} từ/cụm)` : ''}.</p>
                     <div className='mt-3 rounded-md border bg-background p-3'>
@@ -1019,15 +1029,16 @@ export function CustomerPlagiarismCheck() {
                     <div className='flex flex-wrap items-center justify-between gap-2'>
                       <div>
                         <p className='text-sm font-semibold text-amber-950'>Đoạn {index + 1}: {basisLabel(match.scoreBasis)}</p>
-                        <p className='mt-1 text-xs text-amber-800'>Đoạn này có nhiều từ khóa/chủ đề giống nguồn, nhưng chưa đủ exact/n-gram để kết luận đạo văn.</p>
+                        <p className='mt-1 text-xs text-amber-800'>Đoạn này có nhiều từ khóa/chủ đề giống nguồn, nhưng chưa đủ exact/n-gram/embedding để kết luận đạo văn.</p>
                       </div>
                       <Badge className={scoreBadgeClass(match.score)}>{match.score}%</Badge>
                     </div>
                     <p className='mt-3 whitespace-pre-wrap rounded-md bg-background p-3 text-sm text-foreground'>{renderTextWithIgnoredPhrases(match.matchedText, result.ignoredPhrases)}</p>
-                    <div className='mt-3 grid gap-2 sm:grid-cols-3'>
+                    <div className='mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4'>
                       <div className='rounded-md border bg-background p-2 text-xs'><span className='text-muted-foreground'>Exact</span><p className='font-semibold text-foreground'>{match.exactMatchScore}%</p></div>
                       <div className='rounded-md border bg-background p-2 text-xs'><span className='text-muted-foreground'>N-gram</span><p className='font-semibold text-foreground'>{match.phraseOverlapScore}%</p></div>
                       <div className='rounded-md border bg-background p-2 text-xs'><span className='text-muted-foreground'>Overlap từ</span><p className='font-semibold text-foreground'>{match.wordOverlapScore}%</p></div>
+                      <div className='rounded-md border bg-background p-2 text-xs'><span className='text-muted-foreground'>Embedding</span><p className='font-semibold text-foreground'>{match.embeddingSimilarityScore}%</p></div>
                     </div>
                     <p className='mt-3 text-xs text-muted-foreground'>Trùng {ratioLabel(match.matchedWords, match.totalWords, 'từ')} và {ratioLabel(match.matchedPhrases, match.totalPhrases, 'cụm')} trong đoạn so khớp.</p>
                     <div className='mt-3 rounded-md border bg-background p-3'>
@@ -1070,10 +1081,11 @@ export function CustomerPlagiarismCheck() {
                       </Button>
                     )}
                   </div>
-                  <div className='mt-3 grid gap-2 sm:grid-cols-3'>
+                  <div className='mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4'>
                     <div className='rounded-md border bg-muted/20 p-2 text-xs'><span className='text-muted-foreground'>Exact</span><p className='font-semibold text-foreground'>{source.exactMatchScore}%</p></div>
                     <div className='rounded-md border bg-muted/20 p-2 text-xs'><span className='text-muted-foreground'>N-gram</span><p className='font-semibold text-foreground'>{source.phraseOverlapScore}%</p></div>
                     <div className='rounded-md border bg-muted/20 p-2 text-xs'><span className='text-muted-foreground'>Overlap từ</span><p className='font-semibold text-foreground'>{source.wordOverlapScore}%</p></div>
+                    <div className='rounded-md border bg-muted/20 p-2 text-xs'><span className='text-muted-foreground'>Embedding</span><p className='font-semibold text-foreground'>{source.embeddingSimilarityScore}%</p></div>
                   </div>
                   <p className='mt-2 text-xs text-muted-foreground'>Trùng {ratioLabel(source.matchedWords, source.totalWords, 'từ')} và {ratioLabel(source.matchedPhrases, source.totalPhrases, 'cụm')} trong phép so khớp toàn văn.</p>
                 </div>

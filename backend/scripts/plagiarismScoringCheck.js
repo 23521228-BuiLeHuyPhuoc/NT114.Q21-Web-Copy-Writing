@@ -1,9 +1,15 @@
 const assert = require('assert');
 const { serializeReport, __test } = require('../src/services/plagiarismService');
+const embeddingService = require('../src/services/embeddingService');
 
 const scoringOptions = { ignoreCommonPhrases: true };
 const threshold = 35;
 const specialCases = [];
+
+const cosineIdentical = embeddingService.cosineSimilarity([1, 2, 3], [1, 2, 3]);
+const cosineOrthogonal = embeddingService.cosineSimilarity([1, 0], [0, 1]);
+assert(Math.abs(cosineIdentical - 1) < 1e-9, 'identical embeddings should have cosine similarity 1');
+assert.strictEqual(cosineOrthogonal, 0, 'orthogonal embeddings should have cosine similarity 0');
 
 function normalizeForAssert(value) {
   return String(value || '')
@@ -113,6 +119,77 @@ assert(keywordScore.topicSimilarityScore >= 50, 'keyword-heavy text should exerc
 assert(keywordScore.plagiarismScore < threshold, 'high word overlap without n-gram/exact should not be plagiarism');
 assert.strictEqual(keywordMatches.length, 0, 'high word overlap alone should not create highlighted matches');
 assert(keywordTopicMatches.length > 0, 'high word overlap should create topic-similarity matches');
+
+const semanticOnlyScore = __test.applyEmbeddingScore({
+  ...__test.scoreTexts(
+    'nen tang giup doanh nghiep tu dong hoa quy trinh cham soc khach hang',
+    'he thong ho tro cong ty van hanh dich vu khach hang mot cach tu dong',
+    scoringOptions,
+  ),
+  exactMatchScore: 0,
+  phraseOverlapScore: 0,
+  wordOverlapScore: 18,
+  plagiarismScore: 0,
+}, 0.95, 'gemini');
+
+assert(semanticOnlyScore.embeddingSimilarityScore === 95, 'cosine similarity should be exposed as a percentage');
+assert(semanticOnlyScore.embeddingPlagiarismScore >= threshold, 'strong semantic similarity should contribute to plagiarism score');
+assert.strictEqual(semanticOnlyScore.scoreBasis, 'embedding', 'embedding should be the score basis when it is the strongest signal');
+
+const semanticInput = 'nen tang giup doanh nghiep tu dong hoa quy trinh cham soc khach hang';
+const semanticSource = 'he thong ho tro cong ty van hanh dich vu khach hang mot cach tu dong';
+const serializedSemanticReport = serializeReport(fakeReport({
+  id: 'semantic-embedding-report',
+  checkText: semanticInput,
+  similarityScore: semanticOnlyScore.plagiarismScore,
+  originalityScore: 100 - semanticOnlyScore.plagiarismScore,
+  matches: [{
+    start: 0,
+    end: semanticInput.length,
+    matchedText: semanticInput,
+    sourceText: semanticSource,
+    sourceUrl: '',
+    sourceTitle: 'Semantic source',
+    sourceType: 'database',
+    score: semanticOnlyScore.plagiarismScore,
+    ...semanticOnlyScore,
+  }],
+  sources: [{
+    source: 'semantic-source',
+    sourceTitle: 'Semantic source',
+    sourceUrl: '',
+    sourceType: 'database',
+    similarity: semanticOnlyScore.score,
+    ...semanticOnlyScore,
+    snippet: semanticSource,
+    sourceText: semanticSource,
+  }],
+  analysis: {
+    effectiveThreshold: threshold,
+    candidateCount: 1,
+    sourceCount: 1,
+    matchCount: 1,
+    topicMatchCount: 0,
+    checkedSourceTypes: ['database'],
+    unavailableSourceTypes: [],
+    ...semanticOnlyScore,
+    embedding: {
+      enabled: true,
+      status: 'ok',
+      provider: 'gemini',
+      model: 'gemini-embedding-001',
+      candidateCount: 1,
+      comparedCount: 1,
+      maxSimilarityScore: semanticOnlyScore.embeddingSimilarityScore,
+      maxPlagiarismScore: semanticOnlyScore.embeddingPlagiarismScore,
+      minSimilarity: 82,
+    },
+    commonCrawl: { enabled: false, status: 'skipped' },
+  },
+}));
+
+assert(serializedSemanticReport.similarityScore >= threshold, 'serialized report should retain embedding plagiarism evidence');
+assert.strictEqual(serializedSemanticReport.matches[0]?.scoreBasis, 'embedding', 'serialized semantic match should retain embedding basis');
 
 const copied = '9Router hoạt động bằng cách trỏ tool vào gateway rồi route request sang provider phù hợp, giúp quản lý model, khóa truy cập và chi phí tập trung.';
 const copiedSource = `Phần hướng dẫn ghi rằng ${copied} Nội dung này được dùng làm ví dụ kiểm tra copy nguyên văn.`;
@@ -592,6 +669,14 @@ console.log(JSON.stringify({
     topicSimilarityScore: keywordScore.topicSimilarityScore,
     matches: keywordMatches.length,
     topicMatches: keywordTopicMatches.length,
+  },
+  embedding: {
+    cosineIdentical,
+    cosineOrthogonal,
+    semanticSimilarityScore: semanticOnlyScore.embeddingSimilarityScore,
+    semanticPlagiarismScore: semanticOnlyScore.embeddingPlagiarismScore,
+    scoreBasis: semanticOnlyScore.scoreBasis,
+    serializedSimilarityScore: serializedSemanticReport.similarityScore,
   },
   copied: {
     plagiarismScore: copiedScore.plagiarismScore,

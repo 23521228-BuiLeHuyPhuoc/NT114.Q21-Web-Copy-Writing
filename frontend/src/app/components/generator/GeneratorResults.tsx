@@ -22,6 +22,7 @@ import toast from 'react-hot-toast';
 import { Markdown } from '@/app/components/common/Markdown';
 import { looksLikeHtml, sanitizeHtml } from '@/lib/richText';
 import { tinymceBaseInit, tinymceEditorProps } from '@/lib/tinymce';
+import type { GeneratedPlagiarism } from '@/services/contentService';
 
 interface Props {
   isGenerating: boolean;
@@ -30,6 +31,7 @@ interface Props {
   results: string[];
   selectedResult: number;
   qualityScores: number[];
+  plagiarism?: GeneratedPlagiarism | null;
   variations: number;
   onSelectResult: (i: number) => void;
   onResultChange: (i: number, value: string) => void;
@@ -54,6 +56,7 @@ export function GeneratorResults({
   results,
   selectedResult,
   qualityScores,
+  plagiarism = null,
   variations,
   onSelectResult,
   onResultChange,
@@ -129,6 +132,17 @@ export function GeneratorResults({
                     <div className="px-3 py-1 rounded-full text-sm font-bold bg-primary/10 text-primary">
                       Chất lượng: {activeQuality}%
                     </div>
+                    {plagiarism && (
+                      <div className={`px-3 py-1 rounded-full text-sm font-bold ${
+                        plagiarism.similarityScore >= 45
+                          ? 'bg-red-100 text-red-700'
+                          : plagiarism.similarityScore >= 20
+                            ? 'bg-amber-100 text-amber-700'
+                            : 'bg-emerald-100 text-emerald-700'
+                      }`}>
+                        Đạo văn: {Math.round(plagiarism.similarityScore)}%
+                      </div>
+                    )}
                     <span className="text-xs text-muted-foreground">{countWords(activeResult)} từ</span>
                   </div>
                   <div className="flex gap-1 items-center">

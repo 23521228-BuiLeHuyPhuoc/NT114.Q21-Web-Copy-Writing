@@ -1,4 +1,4 @@
-# Giải thích 3 luồng chính kèm file code phụ trách
+﻿# Giải thích 3 luồng chính kèm file code phụ trách
 
 Tài liệu này dùng để báo cáo đồ án. Nội dung được viết cho người chưa biết code vẫn hiểu được luồng, nhưng mỗi bước đều có thêm file/hàm code đang đảm nhiệm để dễ chỉ vào source.
 
@@ -123,6 +123,237 @@ AI provider = người viết bài
 Database = kho lưu bài viết
 ```
 
+## Đoạn nói cô đọng cho Generate: gọi API và gọi AI như nào?
+
+Đoạn này dùng để nói nhanh với cô trong khoảng 45 giây:
+
+```text
+Ở chức năng Generate, frontend không gọi trực tiếp Gemini hay OpenAI. Người dùng nhập brief trên màn hình `Generator.tsx`, sau đó hàm `buildPrompt()` ghép brief thành prompt hoàn chỉnh. Khi bấm Generate, `handleGenerate()` gọi hook `useGenerateContent()`, hook này gọi `contentService.generate()`. File service frontend gửi request `POST /contents/generate` xuống backend; nếu tính cả base `/api` thì API đầy đủ là `POST /api/contents/generate`.
+
+Backend nhận request ở `contentRoutes.js`, validate dữ liệu, rồi controller `contentController.generateContent()` chuyển sang `contentService.generateContent()`. Service này kiểm tra option, project, template, gói sử dụng và quota. Sau khi hợp lệ, backend mới gọi AI qua `aiService.generateCopy()`. Kết quả AI trả về được lưu vào `Content`, còn token/quota được lưu vào `UsageLog`.
+```
+
+Đường đi API cần nhớ:
+
+```text
+Bấm Generate
+-> `Generator.tsx` / `handleGenerate()`
+-> `useContents.ts` / `useGenerateContent()`
+-> `contentService.ts` / `contentService.generate()`
+-> `POST /contents/generate` ở frontend, tương ứng `/api/contents/generate` trên backend
+-> `contentRoutes.js` / `router.post('/generate', ...)`
+-> `contentController.js` / `generateContent()`
+-> `contentService.js` / `generateContent()`
+-> `aiService.js` / `generateCopy()`
+-> lưu `Content` và `UsageLog`
+```
+
+Nếu cô hỏi "vì sao frontend không gọi AI trực tiếp?", trả lời:
+
+| Ý cần nói | Giải thích ngắn |
+| --- | --- |
+| Bảo mật API key | API key của Gemini/OpenAI/Vertex nằm ở backend, không để lộ trên trình duyệt. |
+| Kiểm soát quyền | Backend kiểm tra user đăng nhập, gói sử dụng và model được phép dùng. |
+| Kiểm soát quota | Backend tính token/lượt dùng trước và sau khi generate. |
+| Lưu lịch sử | Backend lưu bài viết vào `Content` và lưu lượt dùng vào `UsageLog`. |
+
+Payload frontend gửi xuống backend thường có các thông tin chính:
+
+| Trường | Nghĩa đơn giản |
+| --- | --- |
+| `prompt` | Yêu cầu đã được ghép từ brief người dùng. |
+| `type` | Loại nội dung muốn tạo, ví dụ social/email/ads. |
+| `industry` | Ngành hàng. |
+| `tone` | Giọng văn. |
+| `language` | Ngôn ngữ đầu ra. |
+| `model` | Model AI được chọn. |
+| `modelMode`, `fineTunedModelId` | Cho biết dùng model thường hay model đã fine-tune. |
+| `templateId`, `projectId` | Gắn bài viết với template/project nếu có. |
+
+Pseudo-code dễ hiểu:
+
+```text
+function generate() {
+  prompt = buildPrompt(brief)
+  gửi prompt xuống backend
+  backend kiểm tra quyền + quota
+  backend chọn model AI
+  output = gọi AI tạo bài viết
+  lưu output vào Content
+  lưu token/quota vào UsageLog
+  trả output về màn hình
+}
+```
+
+## Đoạn nói cô đọng cho thuật toán chấm chất lượng nội dung Generate
+
+Đoạn này dùng để nói nhanh với cô trong khoảng 60 giây:
+
+```text
+Sau khi AI generate xong, hệ thống còn tính thêm điểm chất lượng cho nội dung. Điểm này không phải do Gemini/OpenAI tự chấm, mà do frontend tự tính bằng hàm `scoreGeneratedContent()` trong `frontend/src/lib/contentQuality.ts`.
+
+Ở màn hình Generate, sau khi backend trả bài viết về, `Generator.tsx` tách các phiên bản kết quả rồi gọi `scoreGeneratedContent()` cho từng phiên bản để hiển thị điểm CL %. Khi xem lại content đã lưu, `contentService.ts` cũng gọi lại hàm này trong `normalizeContent()` để tính điểm hiển thị trên danh sách/dashboard.
+
+Thuật toán chấm theo thang 0-100: cộng điểm nếu nội dung bám brief, đúng format theo loại bài, có CTA/lợi ích, dễ đọc, đúng độ dài và đủ cụ thể; sau đó trừ điểm nếu nội dung chỉ lặp lại prompt hoặc quá chung chung.
+```
+
+Công thức tổng quát trong code:
+
+```text
+qualityScore =
+  relevance
++ format
++ actionability
++ readability
++ length
++ specificity
+- promptEchoPenalty
+- genericContentPenalty
+
+Sau đó clamp về khoảng 0-100 và làm tròn.
+```
+
+Bảng điểm chính trong `scoreGeneratedContent()`:
+
+| Nhóm điểm | Điểm tối đa | Hàm xử lý | Hiểu đơn giản |
+| --- | --- | --- | --- |
+| Bám brief/keyword | 20 | `scoreRelevance()` | Bài viết có nhắc đúng từ khóa, sản phẩm, khách hàng, ngữ cảnh người dùng nhập không. |
+| Đúng format loại bài | 20 | `scoreFormat()` | Ví dụ social nên có hook/caption/hashtag/CTA, email nên có subject/preview/body/CTA. |
+| Có hành động/lợi ích | 15 | `scoreActionability()` | Có CTA như mua ngay, đăng ký, liên hệ, nhận ưu đãi; có lợi ích như tiết kiệm, miễn phí, tăng/giảm. |
+| Dễ đọc | 18 | `scoreReadability()` | Không quá ngắn, câu vừa phải, có xuống dòng/bullet, tiếng Việt có dấu, không bị lỗi ký tự. |
+| Đúng độ dài | 15 | `scoreLength()` | So số từ với khoảng mong đợi theo loại bài và lựa chọn short/medium/long. |
+| Cụ thể | 12 | `scoreSpecificity()` | Có số liệu, %, giá, miễn phí, bullet, từ khóa cụ thể, không lặp từ quá nhiều. |
+| Trừ vì lặp prompt | Trừ tối đa 45 | `promptEchoPenalty()` | Nếu AI gần như copy lại prompt/yêu cầu thay vì viết nội dung thật thì bị trừ mạnh. |
+| Trừ vì chung chung | Trừ tùy lỗi | `genericContentPenalty()` | Nếu bài có nhiều câu mơ hồ như "chất lượng cao", "giá cả hợp lý", "phù hợp mọi nhu cầu" thì bị trừ. |
+
+Nếu cô hỏi "điểm chất lượng này dựa vào AI hay công thức?", trả lời:
+
+```text
+Điểm này là heuristic scoring, tức là công thức chấm điểm do project tự viết, không phải gọi AI lần hai để chấm. Hàm chính là `scoreGeneratedContent()` trong `frontend/src/lib/contentQuality.ts`. Nó kiểm tra nội dung bằng xử lý chuỗi: chuẩn hóa text, tách từ, so keyword, đếm số từ, nhận diện format, nhận diện CTA/lợi ích và trừ các lỗi thường gặp.
+```
+
+Pseudo-code dễ hiểu:
+
+```text
+function chamChatLuong(noiDung, brief) {
+  nếu nội dung rỗng hoặc là lỗi hệ thống:
+    trả 0
+
+  điểm = 0
+  điểm += bám từ khóa trong brief
+  điểm += đúng cấu trúc loại bài
+  điểm += có CTA và lợi ích
+  điểm += dễ đọc, câu không quá dài, có format rõ
+  điểm += đúng độ dài short/medium/long
+  điểm += có chi tiết cụ thể như số liệu, %, ưu đãi
+
+  điểm -= nếu nội dung chỉ nhắc lại prompt
+  điểm -= nếu nội dung quá chung chung
+
+  trả điểm từ 0 đến 100
+}
+```
+
+Ví dụ để giải thích với cô:
+
+```text
+Nếu người dùng yêu cầu viết bài social cho son dưỡng môi, bài tốt sẽ được điểm cao khi có hook mở đầu, caption rõ, nhắc đúng sản phẩm/khách hàng, có lợi ích cụ thể, có CTA và độ dài vừa phải.
+Nếu AI chỉ trả lại kiểu "hãy viết bài quảng cáo cho son dưỡng môi" hoặc viết toàn câu chung chung như "sản phẩm chất lượng cao, phù hợp mọi nhu cầu", hệ thống sẽ trừ điểm.
+```
+
+File/hàm liên quan:
+
+| Việc | File/hàm |
+| --- | --- |
+| Hàm chấm điểm chính | `frontend/src/lib/contentQuality.ts` - `scoreGeneratedContent()` |
+| Tính điểm ngay sau khi generate | `frontend/src/app/generate/Generator.tsx` - `handleGenerate()` |
+| Tính lại điểm khi user sửa nội dung | `Generator.tsx` - `handleResultChange()` |
+| Tính điểm khi load content đã lưu | `frontend/src/services/contentService.ts` - `normalizeContent()` |
+| Hiển thị điểm CL trên kết quả | `frontend/src/app/components/generator/GeneratorResults.tsx` |
+
+## Dùng mẫu copy/template khác gì Generate thường?
+
+Đoạn này dùng để trả lời nếu cô hỏi "dùng mẫu copy khác gì với generate bình thường?":
+
+```text
+Dùng mẫu copy không phải là một luồng generate khác. Nó vẫn đi qua API generate bình thường: `POST /api/contents/generate`. Điểm khác là frontend gửi thêm `templateId`. Backend dùng `templateId` để lấy template trong database, rồi ghép `systemPrompt` của template vào prompt trước khi gọi AI.
+
+Nói đơn giản: generate thường là đưa brief trực tiếp cho AI; generate với template là đưa brief cộng thêm một khung hướng dẫn/công thức viết có sẵn. Template giúp AI viết đúng cấu trúc, đúng loại bài và đúng phong cách hơn.
+```
+
+So sánh nhanh:
+
+| Trường hợp | Frontend gửi gì? | Backend gửi prompt sang AI như nào? | Kết quả |
+| --- | --- | --- | --- |
+| Không dùng template | Gửi `prompt`, `type`, `tone`, `model`, ... và `templateId = null` | Gửi gần như prompt mà `Generator.tsx` đã build. | AI viết theo brief thủ công. |
+| Có dùng template | Gửi các field generate như thường, nhưng thêm `templateId` | Backend lấy `template.systemPrompt`, rồi bọc cùng `User input`. | AI viết theo brief nhưng bị ràng buộc bởi mẫu/cấu trúc template. |
+
+Prompt thường, hiểu đơn giản:
+
+```text
+Bạn là chuyên gia copywriting cho ngành mỹ phẩm.
+Loại nội dung: social.
+Tone: sang trọng.
+Sản phẩm: son dưỡng môi.
+Khách hàng: nữ 18-25 tuổi.
+...
+```
+
+Prompt khi có template sẽ được backend bọc lại bằng `buildPromptWithTemplate()`:
+
+```text
+Template: <tên template>
+
+System prompt:
+<nội dung systemPrompt của template>
+
+User input:
+<prompt gốc được build từ brief người dùng>
+```
+
+Code phụ trách:
+
+| Việc | File/hàm |
+| --- | --- |
+| Người dùng chọn template trên màn hình Generate | `frontend/src/app/generate/Generator.tsx` - `selectedTemplateId` |
+| Frontend gửi thêm `templateId` khi generate | `Generator.tsx` - `handleGenerate()` |
+| Service frontend gửi request generate | `frontend/src/services/contentService.ts` - `contentService.generate()` |
+| Backend lấy template theo user | `backend/src/services/templateService.js` - `getTemplateForGenerate()` |
+| Backend ghép template vào prompt | `backend/src/services/contentService.js` - `buildPromptWithTemplate()` |
+| Backend tạo prompt cuối cùng gửi AI | `contentService.js` - `generateContent()` tạo `effectivePrompt` |
+| Lưu bài viết có gắn template | `Content.create()` lưu `templateId` và `prompt: effectivePrompt` |
+| Tăng số lần dùng template | `templateService.incrementTemplateUsage()` |
+
+Điểm quan trọng khi báo cáo:
+
+```text
+Template không thay AI provider, không thay API generate, cũng không tự sinh nội dung riêng. Template chỉ thay cách đóng gói prompt trước khi gọi AI. Vì vậy nó giống như một khuôn hướng dẫn: cùng một brief nhưng nếu chọn template khác, prompt cuối cùng gửi sang AI sẽ khác, nên output có cấu trúc/phong cách khác.
+```
+
+Lưu ý nếu cô hỏi sâu về fine-tuned model:
+
+```text
+Trong code hiện tại, với generate thường/base model thì template được ghép bằng `buildPromptWithTemplate()`. Nhưng nếu dùng một số fine-tuned model, `resolveFineTunedModelForGenerate()` trả về `useRawPrompt`, lúc đó backend ưu tiên prompt raw/fine-tuned và không bọc thêm `systemPrompt` của template theo hàm `buildPromptWithTemplate()`. Nói ngắn gọn: template áp dụng rõ nhất cho generate thường; fine-tuned model có cơ chế prompt riêng.
+```
+
+Pseudo-code dễ hiểu:
+
+```text
+function generateCoTemplate(payload) {
+  promptGoc = payload.prompt
+  template = lấy_template(payload.templateId)
+
+  nếu có template:
+    promptGuiAI = "Template: " + template.name
+               + "System prompt: " + template.systemPrompt
+               + "User input: " + promptGoc
+  nếu không có template:
+    promptGuiAI = promptGoc
+
+  output = gọi AI với promptGuiAI
+  lưu Content gồm output, promptGuiAI, templateId
+}
+```
 ## Mở code Generate theo thứ tự khi báo cáo
 
 | Thứ tự mở | File/hàm cần chỉ | Nói với cô bằng lời dễ hiểu |
@@ -227,6 +458,74 @@ Nói bằng ví dụ đời thường:
 ```text
 Người dùng đưa bài cho người soát trùng lặp.
 Người soát bài mở bài ra, so với các nguồn khác, gạch chỗ giống, rồi ghi báo cáo.
+```
+
+## Đoạn nói cô đọng cho Check đạo văn: thuật toán hoạt động như nào?
+
+Đoạn này dùng để nói nhanh với cô trong khoảng 60 giây:
+
+```text
+Luồng Check đạo văn không dùng AI để đoán cảm tính. Backend tự tính độ giống bằng thuật toán so sánh văn bản trong `plagiarismService.js`. Đầu tiên hệ thống lấy bài cần kiểm tra, bỏ qua các cụm quá phổ biến như CTA marketing nếu được bật, rồi gom các nguồn so sánh: bài cũ trong database, nguồn mẫu, file upload và nguồn web nếu bật web check.
+
+Với mỗi nguồn, hàm `scoreTexts()` tính 3 loại điểm: giống nguyên văn, giống cụm từ và giống từ khóa/chủ đề. Sau đó hệ thống tìm các đoạn giống cụ thể bằng `findSegmentMatches()`, tìm các đoạn chỉ giống chủ đề bằng `findTopicSegmentMatches()`, tổng hợp điểm cao nhất thành `similarityScore`, tính `originalityScore = 100 - similarityScore`, phân loại rủi ro, rồi lưu báo cáo vào `PlagiarismReport`.
+```
+
+Thuật toán theo từng bước:
+
+```text
+1. Lấy text cần kiểm tra.
+2. Bỏ qua các cụm phổ biến nếu bật ignore common phrases.
+3. Gom nguồn so sánh từ database, nguồn mẫu, web, file upload.
+4. Với từng nguồn:
+   - chuẩn hóa văn bản
+   - tính điểm giống nguyên văn
+   - tính điểm giống cụm từ 3-gram hoặc 5-gram
+   - tính điểm giống từ khóa/chủ đề
+   - tìm đoạn match cụ thể
+5. Sắp xếp nguồn theo điểm giống.
+6. Lấy điểm đạo văn cao nhất làm similarityScore.
+7. Tính originalityScore = 100 - similarityScore.
+8. Lưu report vào database.
+```
+
+3 loại điểm quan trọng trong `scoreTexts()`:
+
+| Điểm | Code | Hiểu đơn giản | Dùng để kết luận gì? |
+| --- | --- | --- | --- |
+| `exactMatchScore` | `scoreTexts()` | Một đoạn gần như nằm nguyên văn trong nguồn khác. | Nghi đạo văn mạnh. |
+| `phraseOverlapScore` | `scoreTexts()` dùng n-gram 3 hoặc 5 từ | Nhiều cụm từ liên tiếp bị trùng. | Nghi đạo văn khá rõ. |
+| `wordOverlapScore` | `scoreTexts()` dùng tập từ khóa/Jaccard | Hai bài có nhiều từ giống nhau. | Chủ yếu báo giống chủ đề, chưa chắc đạo văn. |
+
+Điểm rất quan trọng khi cô hỏi sâu:
+
+```text
+Trong code, `similarityScore` cuối cùng ưu tiên `plagiarismScore`, mà `plagiarismScore` lấy từ exact match và phrase overlap. Nghĩa là hệ thống tránh kết luận đạo văn chỉ vì hai bài cùng chủ đề. Nếu chỉ giống nhiều từ khóa, hệ thống đưa vào `topicMatches` để cảnh báo giống chủ đề, chứ không xem là copy rõ ràng như exact/phrase match.
+```
+
+Pseudo-code dễ hiểu:
+
+```text
+function checkDaoVan(inputText) {
+  text = bỏ_cụm_phổ_biến(inputText)
+  sources = lấy_nguồn_database + nguồn_web + nguồn_file_upload
+
+  for từng source in sources:
+    exact = điểm_giống_nguyên_văn(text, source)
+    phrase = điểm_trùng_cụm_từ(text, source)
+    topic = điểm_trùng_từ_khóa(text, source)
+    matches = tìm_đoạn_bị_trùng(text, source)
+
+  similarityScore = điểm đạo văn cao nhất từ exact/phrase
+  originalityScore = 100 - similarityScore
+  lưu PlagiarismReport
+}
+```
+
+Ví dụ để giải thích với cô:
+
+```text
+Nếu bài A và bài B cùng nói về son dưỡng môi, có nhiều từ như "môi", "dưỡng", "mềm mịn", thì hệ thống chỉ xem là giống chủ đề.
+Nhưng nếu có cả cụm dài như "giúp đôi môi mềm mịn tự nhiên chỉ sau vài lần sử dụng" xuất hiện gần như y nguyên, thì phrase/exact score tăng và hệ thống đánh dấu là nghi đạo văn.
 ```
 
 ## Mở code Check đạo văn theo thứ tự khi báo cáo
@@ -366,6 +665,84 @@ Dataset = giáo trình
 Job = buổi đào tạo
 FineTunedModel = nhân viên đã được đào tạo xong
 Generate = giao việc mới cho nhân viên đó viết
+```
+
+## Đoạn nói cô đọng cho Fine-tuning: fine-tuning là gì và train như nào?
+
+Đoạn này dùng để nói nhanh với cô trong khoảng 60 giây:
+
+```text
+Fine-tuning trong project là luồng cho người dùng đưa nhiều ví dụ input/output để dạy model viết theo phong cách mong muốn. Người dùng nhập hoặc import các ví dụ ở `FineTuningStudio.tsx`. Khi bấm Start Training, frontend gọi `fineTuningService.createJob()` gửi `POST /fine-tune/jobs` xuống backend.
+
+Backend xử lý ở `fineTuneService.createFineTuneJob()`: chọn provider, kiểm tra provider đã cấu hình chưa, tạo dataset nếu user gửi examples trực tiếp, validate từng example, bắt buộc có ít nhất 10 example hợp lệ, kiểm tra quota theo gói, rồi tạo `FineTuneJob`. Sau đó backend submit job sang provider như OpenAI, Vertex Gemini, Vertex Llama/Qwen. Khi job hoàn thành, hệ thống promote job thành `FineTunedModel` để Generator có thể chọn và dùng lại khi generate nội dung.
+```
+
+Hiểu đơn giản theo 4 đối tượng:
+
+| Đối tượng | Hiểu như đời thường | Trong code/database |
+| --- | --- | --- |
+| Example | Một bài mẫu gồm đề bài và câu trả lời mẫu. | `FineTuneExample` |
+| Dataset | Bộ giáo trình gồm nhiều example. | `FineTuneDataset` |
+| Job | Một lần đem giáo trình đi huấn luyện. | `FineTuneJob` |
+| FineTunedModel | Model/giọng viết đã huấn luyện xong và đăng ký để dùng. | `FineTunedModel` |
+
+Luồng train theo thứ tự:
+
+```text
+Nhập/import examples
+-> validate examples
+-> tạo Dataset
+-> kiểm tra đủ tối thiểu 10 valid examples
+-> kiểm tra provider và quota
+-> tạo FineTuneJob trạng thái pending
+-> submit job sang provider
+-> provider train hoặc tạo brand voice
+-> sync trạng thái job
+-> job completed
+-> promote thành FineTunedModel
+-> Generate dùng FineTunedModel
+```
+
+Các kiểu fine-tuning trong project:
+
+| Provider | Cách hoạt động | Nói ngắn gọn khi báo cáo |
+| --- | --- | --- |
+| OpenAI | Backend upload dữ liệu dạng JSONL và tạo fine-tuning job. | Train model thật trên OpenAI. |
+| Vertex Gemini | Backend upload dataset lên Google Cloud Storage rồi tạo tuning job. | Train/tune model trên Vertex AI. |
+| Vertex Llama/Qwen | Backend gọi service và script Python để submit open-model tuning. | Train open model qua Vertex. |
+| Vertex Claude | Không train weight thật; tạo brand voice từ examples. | Claude học phong cách bằng brand voice/prompt, không phải fine-tune trọng số. |
+
+Điểm cần nhấn mạnh khi cô hỏi "fine-tuning xong dùng ở đâu?":
+
+```text
+Job train xong chưa đủ để dùng ngay. Backend phải promote job thành bản ghi `FineTunedModel`. Khi user chọn model này trong Generate, frontend gửi `modelMode = fine-tuned` hoặc `fineTunedModelId`. Backend dùng `resolveFineTunedModelForGenerate()` trong `contentService.js` để tìm model đã train, lấy provider/model id/endpoint phù hợp, rồi mới gọi AI qua `aiService.generateCopy()`.
+```
+
+Pseudo-code dễ hiểu:
+
+```text
+function fineTune(examples) {
+  kiểm_tra_provider()
+  dataset = tạo_dataset(examples)
+  validExamples = lọc_example_hợp_lệ(dataset)
+
+  nếu validExamples < 10:
+    báo lỗi không đủ dữ liệu train
+
+  kiểm_tra_quota()
+  job = tạo FineTuneJob(status = pending)
+  submit job sang provider
+
+  khi provider báo completed:
+    model = tạo FineTunedModel từ job
+    bật model để Generator dùng
+}
+```
+
+Ví dụ để nói với cô:
+
+```text
+Nếu doanh nghiệp muốn AI viết theo giọng thương hiệu trẻ trung, họ đưa vào nhiều cặp input/output mẫu. Dataset giống như giáo trình, job giống như buổi huấn luyện, còn FineTunedModel là model đã học xong phong cách đó. Sau này khi Generate, hệ thống không chỉ dùng model gốc mà dùng model/brand voice đã được huấn luyện để viết đúng style hơn.
 ```
 
 ## Mở code Fine-tuning theo thứ tự khi báo cáo
