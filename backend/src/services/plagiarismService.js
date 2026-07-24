@@ -30,6 +30,30 @@ const MAX_EMBEDDING_SOURCES = Math.max(
   1,
   Number(process.env.PLAGIARISM_MAX_EMBEDDING_SOURCES || 40) || 40,
 );
+const MAX_CHUNKED_EMBEDDING_SOURCES = Math.max(
+  1,
+  Number(process.env.PLAGIARISM_MAX_CHUNKED_EMBEDDING_SOURCES || 8) || 8,
+);
+const MAX_EMBEDDING_SOURCE_CHUNKS = Math.max(
+  2,
+  Number(process.env.PLAGIARISM_MAX_EMBEDDING_SOURCE_CHUNKS || 20) || 20,
+);
+const MAX_EMBEDDING_QUERY_CHUNKS = Math.max(
+  1,
+  Number(process.env.PLAGIARISM_MAX_EMBEDDING_QUERY_CHUNKS || 4) || 4,
+);
+const EMBEDDING_CHUNK_WORDS = Math.max(
+  60,
+  Number(process.env.PLAGIARISM_EMBEDDING_CHUNK_WORDS || 120) || 120,
+);
+const EMBEDDING_CHUNK_OVERLAP_WORDS = Math.max(
+  0,
+  Math.min(EMBEDDING_CHUNK_WORDS - 1, Number(process.env.PLAGIARISM_EMBEDDING_CHUNK_OVERLAP_WORDS || 30) || 30),
+);
+const EMBEDDING_CHUNK_SCAN_MAX_CHARS = Math.max(
+  12000,
+  Number(process.env.PLAGIARISM_EMBEDDING_CHUNK_SCAN_MAX_CHARS || 60000) || 60000,
+);
 const DEFAULT_EMBEDDING_MIN_SIMILARITY = 82;
 const MAX_IGNORED_PHRASES = 30;
 const MAX_IGNORED_PHRASE_LENGTH = 10000;
@@ -1244,12 +1268,45 @@ function emptyCommonCrawlResult({ enabled = false, allowLiveFallback = false, st
       allowLiveFallback,
       searchProvider: enabled ? 'serpapi' : 'none',
       serpApiStatus: enabled ? 'skipped' : 'skipped',
+      bilingualSearchEnabled: enabled,
+      detectedLanguage: 'unknown',
+      translatedLanguage: 'none',
+      translationStatus: enabled ? 'skipped' : 'disabled',
+      translationQueryCount: 0,
+      translationModel: '',
+      translationError: '',
     },
   };
 }
 
 function buildWebSearchText(checkText, options = {}) {
   return stripIgnoredSegments(checkText, options);
+}
+
+function buildEmbeddingChunks(text, maxChunks) {
+  const compact = String(text || '')
+    .slice(0, EMBEDDING_CHUNK_SCAN_MAX_CHARS)
+    .replace(/\s+/g, ' ')
+    .trim();
+  const words = compact.split(' ').filter(Boolean);
+  if (words.length === 0) return [];
+  if (words.length <= EMBEDDING_CHUNK_WORDS || maxChunks <= 1) return [compact];
+
+  const chunkCount = Math.max(1, maxChunks);
+  const coveringChunkWords = Math.ceil(
+    (words.length + EMBEDDING_CHUNK_OVERLAP_WORDS * (chunkCount - 1)) / chunkCount,
+  );
+  const chunkWords = Math.max(EMBEDDING_CHUNK_WORDS, coveringChunkWords);
+  const step = Math.max(1, chunkWords - EMBEDDING_CHUNK_OVERLAP_WORDS);
+  const chunks = [];
+
+  for (let start = 0; start < words.length && chunks.length < chunkCount; start += step) {
+    const chunk = words.slice(start, start + chunkWords).join(' ').trim();
+    if (chunk) chunks.push(chunk);
+    if (start + chunkWords >= words.length) break;
+  }
+
+  return unique(chunks);
 }
 
 function getEmbeddingCandidatePriority(item = {}) {
@@ -1262,7 +1319,7 @@ function getEmbeddingCandidatePriority(item = {}) {
   return Number(item.textScore?.score || 0) * 10 + (sourcePriority[item.candidate?.sourceType] || 0);
 }
 
-async function scoreCandidateEmbeddings(checkText, lexicalCandidates = []) {
+async function scoreCandidateEmbeddings(checkText, lexicalCandidates = [], threshold = 35) {
   const selected = lexicalCandidates
     .map((item, index) => ({ ...item, originalIndex: index }))
     .filter((item) => hasAtLeastWords(item.comparisonCandidateText, 3))
@@ -1288,22 +1345,86 @@ async function scoreCandidateEmbeddings(checkText, lexicalCandidates = []) {
   }
 
   try {
-    const result = await embeddingService.embedTexts([
-      checkText,
-      ...selected.map((item) => item.comparisonCandidateText),
-    ]);
+    const result = await embeddingService.embedTexts(
+      [checkText, ...selected.map((item) => item.comparisonCandidateText)],
+      { allowLocalFallback: false },
+    );
     const checkVector = result.vectors[0] || [];
     const scores = new Map();
-    let maxSimilarityScore = 0;
-    let maxPlagiarismScore = 0;
+    let chunkError = '';
 
     selected.forEach((item, index) => {
       const cosine = embeddingService.cosineSimilarity(checkVector, result.vectors[index + 1] || []);
-      const scored = applyEmbeddingScore(item.textScore, cosine, result.provider);
+      const scored = {
+        ...applyEmbeddingScore(item.textScore, cosine, result.provider),
+        embeddingQueryText: checkText,
+        embeddingSourceText: item.comparisonCandidateText,
+      };
       scores.set(item.originalIndex, scored);
-      maxSimilarityScore = Math.max(maxSimilarityScore, scored.embeddingSimilarityScore || 0);
-      maxPlagiarismScore = Math.max(maxPlagiarismScore, scored.embeddingPlagiarismScore || 0);
     });
+
+    const hasDocumentLevelSignal = Array.from(scores.values())
+      .some((score) => score.plagiarismScore >= threshold);
+
+    if (!hasDocumentLevelSignal) {
+      const queryVariants = buildEmbeddingChunks(checkText, MAX_EMBEDDING_QUERY_CHUNKS);
+      const candidatePlans = selected
+        .slice(0, MAX_CHUNKED_EMBEDDING_SOURCES)
+        .map((item) => ({
+          item,
+          variants: buildEmbeddingChunks(item.comparisonCandidateText, MAX_EMBEDDING_SOURCE_CHUNKS),
+        }))
+        .filter((plan) => plan.variants.length > 1 || queryVariants.length > 1);
+
+      if (candidatePlans.length > 0) {
+        try {
+          const chunkResult = await embeddingService.embedTexts([
+            ...queryVariants,
+            ...candidatePlans.flatMap((plan) => plan.variants),
+          ], {
+            provider: result.provider,
+            model: result.model,
+            allowLocalFallback: false,
+          });
+          const queryVectors = chunkResult.vectors.slice(0, queryVariants.length);
+          let vectorOffset = queryVariants.length;
+
+          candidatePlans.forEach((plan) => {
+            const candidateVectors = chunkResult.vectors.slice(vectorOffset, vectorOffset + plan.variants.length);
+            vectorOffset += plan.variants.length;
+            let bestCosine = 0;
+            let bestQueryText = queryVariants[0] || checkText;
+            let bestSourceText = plan.variants[0] || plan.item.comparisonCandidateText;
+
+            queryVectors.forEach((queryVector, queryIndex) => {
+              candidateVectors.forEach((candidateVector, candidateIndex) => {
+                const cosine = embeddingService.cosineSimilarity(queryVector, candidateVector);
+                if (cosine <= bestCosine) return;
+                bestCosine = cosine;
+                bestQueryText = queryVariants[queryIndex] || bestQueryText;
+                bestSourceText = plan.variants[candidateIndex] || bestSourceText;
+              });
+            });
+
+            const chunkScore = {
+              ...applyEmbeddingScore(plan.item.textScore, bestCosine, chunkResult.provider),
+              embeddingQueryText: bestQueryText,
+              embeddingSourceText: bestSourceText,
+            };
+            const fullScore = scores.get(plan.item.originalIndex);
+            if (!fullScore || chunkScore.plagiarismScore > fullScore.plagiarismScore) {
+              scores.set(plan.item.originalIndex, chunkScore);
+            }
+          });
+        } catch (error) {
+          chunkError = `Chunk embedding failed: ${error instanceof Error ? error.message : String(error || 'unknown error')}`;
+        }
+      }
+    }
+
+    const scoreValues = Array.from(scores.values());
+    const maxSimilarityScore = maxScore(scoreValues.map((score) => score.embeddingSimilarityScore));
+    const maxPlagiarismScore = maxScore(scoreValues.map((score) => score.embeddingPlagiarismScore));
 
     return {
       scores,
@@ -1319,7 +1440,7 @@ async function scoreCandidateEmbeddings(checkText, lexicalCandidates = []) {
         maxSimilarityScore,
         maxPlagiarismScore,
         minSimilarity: getEmbeddingMinSimilarity(result.provider),
-        error: truncateText(result.error || '', 500),
+        error: truncateText(chunkError || result.error || '', 500),
       },
     };
   } catch (error) {
@@ -1399,6 +1520,19 @@ function buildAnalysis(
       serpApiResultCount: commonCrawlStats.serpApiResultCount || 0,
       serpApiUrlCount: commonCrawlStats.serpApiUrlCount || 0,
       serpApiError: schemaText(commonCrawlStats.serpApiError, MAX_COMMON_CRAWL_ERROR_LENGTH),
+      bilingualSearchEnabled: Boolean(commonCrawlStats.bilingualSearchEnabled),
+      detectedLanguage: ['vi', 'en'].includes(commonCrawlStats.detectedLanguage)
+        ? commonCrawlStats.detectedLanguage
+        : 'unknown',
+      translatedLanguage: ['vi', 'en'].includes(commonCrawlStats.translatedLanguage)
+        ? commonCrawlStats.translatedLanguage
+        : 'none',
+      translationStatus: ['disabled', 'skipped', 'ok', 'error', 'missing_api_key', 'unsupported'].includes(commonCrawlStats.translationStatus)
+        ? commonCrawlStats.translationStatus
+        : 'skipped',
+      translationQueryCount: Math.max(0, Number(commonCrawlStats.translationQueryCount) || 0),
+      translationModel: schemaText(commonCrawlStats.translationModel, 120),
+      translationError: schemaText(commonCrawlStats.translationError, MAX_COMMON_CRAWL_ERROR_LENGTH),
       serpApiResults: sanitizeSerpApiResults(commonCrawlStats.serpApiResults),
       explicitUrls: sanitizeTextList(commonCrawlStats.explicitUrls, MAX_SOURCE_URL_LENGTH),
       indexes: sanitizeTextList(commonCrawlStats.indexes, 120, 10),
@@ -1478,7 +1612,7 @@ async function checkPlagiarism(userId, payload) {
         textScore,
       };
     });
-  const embeddingResult = await scoreCandidateEmbeddings(comparisonCheckText, lexicalCandidates);
+  const embeddingResult = await scoreCandidateEmbeddings(comparisonCheckText, lexicalCandidates, effectiveThreshold);
 
   const scoredSources = lexicalCandidates
     .map((item, index) => {
@@ -1490,8 +1624,13 @@ async function checkPlagiarism(userId, payload) {
       const textScore = embeddingResult.scores.get(index) || item.textScore;
       const useDirectExactMatch = shouldUseDirectExactMatch(checkText, candidate, textScore, effectiveThreshold, scoringOptions);
       const useDocumentLevelMatch = useDirectExactMatch || shouldUseDocumentLevelMatch(textScore, effectiveThreshold);
+      const evidenceCandidate = !useDirectExactMatch
+        && textScore.scoreBasis === 'embedding'
+        && textScore.embeddingSourceText
+        ? { ...candidate, text: textScore.embeddingSourceText }
+        : candidate;
       const matches = useDocumentLevelMatch
-        ? [buildDirectExactMatch(checkText, candidate, textScore, scoringOptions)]
+        ? [buildDirectExactMatch(checkText, evidenceCandidate, textScore, scoringOptions)]
         : isLargeSource
           ? []
           : findSegmentMatches(checkText, candidate, effectiveThreshold, scoringOptions);
@@ -1529,8 +1668,12 @@ async function checkPlagiarism(userId, payload) {
         }),
         matchedPhrases: textScore.matchedPhrases,
         totalPhrases: textScore.totalPhrases,
-        comparisonText: comparisonCandidateText,
-        snippet: snippet(comparisonCandidateText),
+        comparisonText: textScore.scoreBasis === 'embedding' && textScore.embeddingSourceText
+          ? textScore.embeddingSourceText
+          : comparisonCandidateText,
+        snippet: snippet(textScore.scoreBasis === 'embedding' && textScore.embeddingSourceText
+          ? textScore.embeddingSourceText
+          : comparisonCandidateText),
         matches,
         topicMatches,
       };
@@ -1687,6 +1830,11 @@ module.exports = {
     getTopicSimilarityScore,
     getEmbeddingPlagiarismScore,
     applyEmbeddingScore,
+    getEffectiveThreshold,
+    shouldUseDocumentLevelMatch,
+    topicMatchThreshold,
+    buildEmbeddingChunks,
+    scoreCandidateEmbeddings,
     sanitizeSerpApiResults,
     sanitizeCheckedUrls,
   },

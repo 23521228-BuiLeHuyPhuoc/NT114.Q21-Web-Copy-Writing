@@ -382,6 +382,21 @@ function serpApiStatusLabel(status: string) {
   return 'không chạy';
 }
 
+function languageLabel(language: string) {
+  if (language === 'vi') return 'Tiếng Việt';
+  if (language === 'en') return 'Tiếng Anh';
+  return 'chưa xác định';
+}
+
+function translationStatusLabel(status: string) {
+  if (status === 'ok') return 'đã tạo query dịch';
+  if (status === 'missing_api_key') return 'thiếu Gemini API key';
+  if (status === 'unsupported') return 'không phải Việt/Anh';
+  if (status === 'error') return 'dịch query lỗi';
+  if (status === 'disabled') return 'đang tắt';
+  return 'không cần dịch';
+}
+
 function sourceModeLabel(mode: string) {
   if (mode === 'commoncrawl') return 'Common Crawl snapshot';
   if (mode === 'live') return 'tải trực tiếp URL';
@@ -975,6 +990,14 @@ export function CustomerPlagiarismCheck() {
                       <p>
                         SerpApi: {serpApiStatusLabel(result.analysis.commonCrawl.serpApiStatus)}; {result.analysis.commonCrawl.serpApiQueryCount} query, {result.analysis.commonCrawl.serpApiResultCount} kết quả, {result.analysis.commonCrawl.serpApiUrlCount} URL ứng viên.
                       </p>
+                      {result.analysis.commonCrawl.bilingualSearchEnabled && (
+                        <p>
+                          Tìm kiếm Việt–Anh: {languageLabel(result.analysis.commonCrawl.detectedLanguage)} → {languageLabel(result.analysis.commonCrawl.translatedLanguage)}; {translationStatusLabel(result.analysis.commonCrawl.translationStatus)}, {result.analysis.commonCrawl.translationQueryCount} query dịch{result.analysis.commonCrawl.translationModel ? ` bằng ${result.analysis.commonCrawl.translationModel}` : ''}.
+                        </p>
+                      )}
+                      {result.analysis.commonCrawl.translationError && (
+                        <p className='text-amber-700'>Dịch query lỗi: {result.analysis.commonCrawl.translationError}.</p>
+                      )}
                       {result.analysis.commonCrawl.serpApiError && (
                         <p className='text-amber-700'>SerpApi lỗi: {result.analysis.commonCrawl.serpApiError}.</p>
                       )}

@@ -133,6 +133,13 @@ export interface PlagiarismAnalysis {
     serpApiResultCount: number;
     serpApiUrlCount: number;
     serpApiError: string;
+    bilingualSearchEnabled: boolean;
+    detectedLanguage: 'vi' | 'en' | 'unknown';
+    translatedLanguage: 'vi' | 'en' | 'none';
+    translationStatus: 'disabled' | 'skipped' | 'ok' | 'error' | 'missing_api_key' | 'unsupported';
+    translationQueryCount: number;
+    translationModel: string;
+    translationError: string;
     serpApiResults: Array<{
       url: string;
       title: string;
@@ -354,6 +361,13 @@ const DEFAULT_ANALYSIS: PlagiarismAnalysis = {
     serpApiResultCount: 0,
     serpApiUrlCount: 0,
     serpApiError: '',
+    bilingualSearchEnabled: false,
+    detectedLanguage: 'unknown',
+    translatedLanguage: 'none',
+    translationStatus: 'skipped',
+    translationQueryCount: 0,
+    translationModel: '',
+    translationError: '',
     serpApiResults: [],
     explicitUrls: [],
     indexes: [],

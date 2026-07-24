@@ -1,5 +1,6 @@
 ﻿const zlib = require('zlib');
 const { promisify } = require('util');
+const crossLanguageSearchService = require('./crossLanguageSearchService');
 
 const gunzip = promisify(zlib.gunzip);
 const inflate = promisify(zlib.inflate);
@@ -21,6 +22,7 @@ const MAX_QUERY_PATTERNS = Number(process.env.COMMON_CRAWL_MAX_QUERY_PATTERNS ||
 const MAX_RECORDS_PER_QUERY = Number(process.env.COMMON_CRAWL_MAX_RECORDS_PER_QUERY || 3);
 const MAX_FETCHES = Number(process.env.COMMON_CRAWL_MAX_FETCHES || 8);
 const MAX_SEARCH_QUERIES = Number(process.env.WEB_CRAWL_MAX_SEARCH_QUERIES || 6);
+const BILINGUAL_QUERIES_PER_LANGUAGE = Number(process.env.PLAGIARISM_BILINGUAL_QUERIES_PER_LANGUAGE || 1);
 const MAX_DISCOVERED_URLS = Number(process.env.WEB_CRAWL_MAX_DISCOVERED_URLS || 5);
 const MAX_SERPAPI_RESULTS = Number(process.env.SERPAPI_MAX_RESULTS || MAX_DISCOVERED_URLS);
 const MAX_CDX_ATTEMPTS_PER_URL = Number(process.env.COMMON_CRAWL_MAX_CDX_ATTEMPTS_PER_URL || 2);
@@ -541,18 +543,63 @@ function extractSerpApiResults(data, query) {
   return results;
 }
 
-function dedupeSerpApiResults(results) {
+function interleaveSearchResultGroups(groups, limit) {
   const seen = new Set();
-  const deduped = [];
+  const interleaved = [];
+  const maxGroupLength = Math.max(0, ...groups.map((group) => group.length));
 
-  results.forEach((item) => {
-    const key = canonicalUrlKey(item.url);
-    if (seen.has(key)) return;
-    seen.add(key);
-    deduped.push(item);
+  for (let resultIndex = 0; resultIndex < maxGroupLength && interleaved.length < limit; resultIndex += 1) {
+    for (const group of groups) {
+      const item = group[resultIndex];
+      if (!item) continue;
+      const key = canonicalUrlKey(item.url);
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      interleaved.push(item);
+      if (interleaved.length >= limit) break;
+    }
+  }
+
+  return interleaved;
+}
+
+function interleaveQueryPlans(originalQueries, translatedQueries, sourceLanguage, targetLanguage) {
+  const plans = [];
+  const length = Math.max(originalQueries.length, translatedQueries.length);
+
+  for (let index = 0; index < length; index += 1) {
+    if (originalQueries[index]) {
+      plans.push({ query: originalQueries[index], language: sourceLanguage, translated: false });
+    }
+    if (translatedQueries[index]) {
+      plans.push({ query: translatedQueries[index], language: targetLanguage, translated: true });
+    }
+  }
+
+  return plans;
+}
+
+async function buildBilingualSearchPlan(text, options = {}) {
+  const translation = await crossLanguageSearchService.translateForSearch(text, {
+    timeoutMs: requestTimeoutMs(options.startedAt, options.budgetMs),
   });
+  const perLanguage = clampNumber(BILINGUAL_QUERIES_PER_LANGUAGE, 1, 3);
+  const translatedQueries = translation.status === 'ok'
+    ? buildSearchQueries(translation.translatedText).slice(0, perLanguage)
+    : [];
+  const originalLimit = translatedQueries.length > 0 ? perLanguage : MAX_SEARCH_QUERIES;
+  const originalQueries = buildSearchQueries(text).slice(0, originalLimit);
 
-  return deduped;
+  return {
+    plans: interleaveQueryPlans(
+      originalQueries,
+      translatedQueries,
+      translation.sourceLanguage,
+      translation.targetLanguage,
+    ),
+    translation,
+    translatedQueryCount: translatedQueries.length,
+  };
 }
 
 async function searchSerpApiQuery(query, options = {}) {
@@ -568,8 +615,8 @@ async function searchSerpApiQuery(query, options = {}) {
   if (SERPAPI_NO_CACHE) endpoint.searchParams.set('no_cache', 'true');
   if (SERPAPI_ENGINE === 'google') {
     endpoint.searchParams.set('google_domain', SERPAPI_GOOGLE_DOMAIN);
-    endpoint.searchParams.set('gl', SERPAPI_GL);
-    endpoint.searchParams.set('hl', SERPAPI_HL);
+    endpoint.searchParams.set('gl', options.language === 'en' ? 'us' : options.language === 'vi' ? 'vn' : SERPAPI_GL);
+    endpoint.searchParams.set('hl', options.language === 'en' ? 'en' : options.language === 'vi' ? 'vi' : SERPAPI_HL);
   }
 
   const timeoutMs = requestTimeoutMs(options.startedAt, options.budgetMs);
@@ -590,8 +637,8 @@ async function searchSerpApiQuery(query, options = {}) {
 }
 
 async function searchCandidateUrls(text, options = {}) {
-  const queries = buildSearchQueries(text);
   const results = [];
+  const resultGroups = [];
   const stats = {
     provider: 'serpapi',
     status: 'skipped',
@@ -599,32 +646,54 @@ async function searchCandidateUrls(text, options = {}) {
     resultCount: 0,
     urlCount: 0,
     error: '',
+    bilingualSearchEnabled: false,
+    detectedLanguage: 'unknown',
+    translatedLanguage: 'none',
+    translationStatus: 'skipped',
+    translationQueryCount: 0,
+    translationModel: '',
+    translationError: '',
   };
 
   if (!getSerpApiKey()) {
     stats.status = 'missing_api_key';
     stats.error = 'SERPAPI_API_KEY is not configured';
-    return { queries, urls: [], results: [], ...stats };
+    return { queries: buildSearchQueries(text), urls: [], results: [], ...stats };
   }
 
-  for (const query of queries) {
+  const searchPlan = await buildBilingualSearchPlan(text, options);
+  const { translation } = searchPlan;
+  const queryPlans = searchPlan.plans;
+  stats.bilingualSearchEnabled = Boolean(translation.enabled);
+  stats.detectedLanguage = translation.sourceLanguage || 'unknown';
+  stats.translatedLanguage = translation.targetLanguage || 'none';
+  stats.translationStatus = translation.status || 'skipped';
+  stats.translationQueryCount = searchPlan.translatedQueryCount;
+  stats.translationModel = translation.model || '';
+  stats.translationError = translation.error || '';
+  const minimumQueryCount = searchPlan.translatedQueryCount > 0 ? Math.min(2, queryPlans.length) : 1;
+  const resultLimit = clampNumber(MAX_SERPAPI_RESULTS, 1, MAX_DISCOVERED_URLS);
+
+  for (const plan of queryPlans) {
     if (!canSpendBudget(options.startedAt, options.budgetMs, options.stats)) break;
 
     try {
       stats.queryCount += 1;
-      results.push(...await searchSerpApiQuery(query, {
+      const group = await searchSerpApiQuery(plan.query, {
         startedAt: options.startedAt,
         budgetMs: options.budgetMs,
         stats: options.stats,
-      }));
-      if (dedupeSerpApiResults(results).length >= MAX_DISCOVERED_URLS) break;
+        language: plan.language,
+      });
+      resultGroups.push(group);
+      results.push(...group);
+      if (stats.queryCount >= minimumQueryCount && interleaveSearchResultGroups(resultGroups, resultLimit).length >= resultLimit) break;
     } catch (error) {
       stats.error = error instanceof Error ? error.message : 'SerpApi lookup failed';
-      if (results.length > 0) break;
     }
   }
 
-  const deduped = dedupeSerpApiResults(results).slice(0, clampNumber(MAX_SERPAPI_RESULTS, 1, MAX_DISCOVERED_URLS));
+  const deduped = interleaveSearchResultGroups(resultGroups, resultLimit);
   stats.resultCount = results.length;
   stats.urlCount = deduped.length;
   if (deduped.length > 0) stats.status = 'ok';
@@ -632,7 +701,7 @@ async function searchCandidateUrls(text, options = {}) {
   else stats.status = 'empty';
 
   return {
-    queries,
+    queries: queryPlans.slice(0, stats.queryCount).map((plan) => plan.query),
     urls: deduped.map((item) => item.url),
     results: deduped,
     ...stats,
@@ -869,6 +938,13 @@ async function fetchCommonCrawlCandidates(text, options = {}) {
     serpApiUrlCount: 0,
     serpApiError: '',
     serpApiResults: [],
+    bilingualSearchEnabled: false,
+    detectedLanguage: 'unknown',
+    translatedLanguage: 'none',
+    translationStatus: 'skipped',
+    translationQueryCount: 0,
+    translationModel: '',
+    translationError: '',
     explicitUrls: [],
     indexes: [],
     queryCount: 0,
@@ -908,6 +984,13 @@ async function fetchCommonCrawlCandidates(text, options = {}) {
     stats.serpApiUrlCount = discovered.urlCount || 0;
     stats.serpApiError = discovered.error || '';
     stats.serpApiResults = discovered.results || [];
+    stats.bilingualSearchEnabled = Boolean(discovered.bilingualSearchEnabled);
+    stats.detectedLanguage = discovered.detectedLanguage || 'unknown';
+    stats.translatedLanguage = discovered.translatedLanguage || 'none';
+    stats.translationStatus = discovered.translationStatus || 'skipped';
+    stats.translationQueryCount = discovered.translationQueryCount || 0;
+    stats.translationModel = discovered.translationModel || '';
+    stats.translationError = discovered.translationError || '';
     stats.explicitUrls = explicitUrls;
     stats.searchQueries = discovered.queries;
     stats.discoveredUrls = discovered.urls;
@@ -960,4 +1043,9 @@ async function fetchCommonCrawlCandidates(text, options = {}) {
 
 module.exports = {
   fetchCommonCrawlCandidates,
+  __test: {
+    buildSearchQueries,
+    interleaveQueryPlans,
+    interleaveSearchResultGroups,
+  },
 };

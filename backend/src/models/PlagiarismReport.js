@@ -293,6 +293,25 @@ const analysisSchema = new mongoose.Schema(
       serpApiResultCount: { type: Number, min: 0, default: 0 },
       serpApiUrlCount: { type: Number, min: 0, default: 0 },
       serpApiError: { type: String, trim: true, maxlength: 500, default: '' },
+      bilingualSearchEnabled: { type: Boolean, default: false },
+      detectedLanguage: {
+        type: String,
+        enum: ['vi', 'en', 'unknown'],
+        default: 'unknown',
+      },
+      translatedLanguage: {
+        type: String,
+        enum: ['vi', 'en', 'none'],
+        default: 'none',
+      },
+      translationStatus: {
+        type: String,
+        enum: ['disabled', 'skipped', 'ok', 'error', 'missing_api_key', 'unsupported'],
+        default: 'skipped',
+      },
+      translationQueryCount: { type: Number, min: 0, default: 0 },
+      translationModel: { type: String, trim: true, maxlength: 120, default: '' },
+      translationError: { type: String, trim: true, maxlength: 500, default: '' },
       serpApiResults: {
         type: [{
           url: { type: String, trim: true, maxlength: 500, default: '' },

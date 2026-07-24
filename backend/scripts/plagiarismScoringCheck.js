@@ -1,6 +1,8 @@
 const assert = require('assert');
 const { serializeReport, __test } = require('../src/services/plagiarismService');
 const embeddingService = require('../src/services/embeddingService');
+const commonCrawlService = require('../src/services/commonCrawlService');
+const crossLanguageSearchService = require('../src/services/crossLanguageSearchService');
 
 const scoringOptions = { ignoreCommonPhrases: true };
 const threshold = 35;
@@ -36,6 +38,38 @@ assert.strictEqual(sanitizedCheckedUrls[0].url.length, 500, 'checked URL should 
 assert.strictEqual(sanitizedCheckedUrls[0].patterns[0].length, 500, 'CDX pattern should be bounded');
 assert.strictEqual(sanitizedCheckedUrls[0].mode, 'none', 'unknown source mode should use the schema default');
 assert.strictEqual(sanitizedCheckedUrls[0].error.length, 500, 'checked URL error should fit the report schema');
+
+const vietnameseLanguage = crossLanguageSearchService.__test.detectLanguage('Trí tuệ nhân tạo đang thay đổi cách sinh viên học tập và tiếp cận kiến thức.');
+const englishLanguage = crossLanguageSearchService.__test.detectLanguage('Artificial intelligence is changing how students learn and access knowledge.');
+const bilingualQueryPlans = commonCrawlService.__test.interleaveQueryPlans(
+  ['english original query'],
+  ['truy van tieng viet'],
+  'en',
+  'vi',
+);
+const bilingualSearchResults = commonCrawlService.__test.interleaveSearchResultGroups([
+  [
+    { url: 'https://english.example/one' },
+    { url: 'https://english.example/two' },
+  ],
+  [
+    { url: 'https://vietnamese.example/one' },
+    { url: 'https://english.example/one' },
+  ],
+], 3);
+
+assert.strictEqual(vietnameseLanguage, 'vi', 'Vietnamese text should be detected for bilingual retrieval');
+assert.strictEqual(englishLanguage, 'en', 'English text should be detected for bilingual retrieval');
+assert.deepStrictEqual(
+  bilingualQueryPlans.map((plan) => [plan.language, plan.translated]),
+  [['en', false], ['vi', true]],
+  'original and translated search queries should be interleaved',
+);
+assert.deepStrictEqual(
+  bilingualSearchResults.map((item) => item.url),
+  ['https://english.example/one', 'https://vietnamese.example/one', 'https://english.example/two'],
+  'SerpApi results should be balanced across both query languages',
+);
 
 function normalizeForAssert(value) {
   return String(value || '')
@@ -708,6 +742,12 @@ console.log(JSON.stringify({
     serpApiUrlLength: sanitizedSerpApiResults[0].url.length,
     checkedUrlLength: sanitizedCheckedUrls[0].url.length,
     checkedUrlMode: sanitizedCheckedUrls[0].mode,
+  },
+  bilingualRetrieval: {
+    vietnameseLanguage,
+    englishLanguage,
+    queryLanguages: bilingualQueryPlans.map((plan) => plan.language),
+    resultUrls: bilingualSearchResults.map((item) => item.url),
   },
   copied: {
     plagiarismScore: copiedScore.plagiarismScore,
