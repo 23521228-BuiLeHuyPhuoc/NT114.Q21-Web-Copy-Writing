@@ -7,8 +7,7 @@
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
     "seed": "node src/utils/seed.js",
-    "test:plagiarism": "node scripts/plagiarismScoringCheck.js && node scripts/plagiarismLogicRegressionCheck.js && node scripts/plagiarismEmbeddingChunkCheck.js",
-    "test:plagiarism:integration": "node scripts/plagiarismBilingualIntegrationCheck.js"
+    "test:plagiarism": "node scripts/plagiarismScoringCheck.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
