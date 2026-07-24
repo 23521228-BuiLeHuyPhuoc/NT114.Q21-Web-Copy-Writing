@@ -2,14 +2,15 @@
 
 # CopyPro AI Copywriter
 
-**Đồ án chuyên ngành NT114.Q21**
+**Đồ án chuyên ngành NT114.Q21 - Website tạo nội dung marketing bằng AI**
 
 ![Next.js](https://img.shields.io/badge/Next.js-14-black?style=for-the-badge&logo=nextdotjs)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
 ![Node.js](https://img.shields.io/badge/Node.js-Express-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
 ![MongoDB](https://img.shields.io/badge/MongoDB-Mongoose-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
 ![Vertex AI](https://img.shields.io/badge/Vertex_AI-Fine--tuning-4285F4?style=for-the-badge&logo=googlecloud&logoColor=white)
 
-Website AI Copywriter tích hợp GPT-4/Llama, RESTful API backend và fine-tuning model theo ngành nghề cụ thể.
+CopyPro hỗ trợ tạo, quản lý và đánh giá nội dung marketing, kiểm tra đạo văn, fine-tuning mô hình và quản trị hệ thống trên cùng một nền tảng.
 
 </div>
 
@@ -20,50 +21,83 @@ Website AI Copywriter tích hợp GPT-4/Llama, RESTful API backend và fine-tuni
 | Mục | Nội dung |
 | --- | --- |
 | Mã môn | `NT114.Q21` |
-| Tên đề tài | Xây dựng Website AI Copywriter tích hợp GPT-4/Llama, RESTful API xử lý trên backend và Fine-tuning để tinh chỉnh mô hình với ngành nghề cụ thể |
+| Tên đề tài | Xây dựng Website AI Copywriter tích hợp GPT-4/Llama, RESTful API xử lý trên backend và fine-tuning mô hình theo ngành nghề cụ thể |
 | Sinh viên | Bùi Lê Huy Phước |
 | MSSV | `23521228` |
 
+## Giới thiệu project
+
+CopyPro là ứng dụng web full-stack dành cho người dùng cần tạo nội dung marketing và quản trị quy trình sản xuất nội dung. Người dùng có thể chọn loại bài viết, ngành nghề, giọng điệu, độ dài, từ khóa và mô hình AI để tạo nhiều phiên bản copy.
+
+Sau khi tạo nội dung, hệ thống tự động:
+
+1. Lưu nội dung và thông tin token vào MongoDB.
+2. Kiểm tra đạo văn với các nội dung trong database và nguồn tham khảo.
+3. Tính `% đạo văn`, `% độc đáo` và mức độ rủi ro.
+4. Chấm điểm chất lượng dựa trên brief, format, CTA, độ dễ đọc, độ dài, tính cụ thể và `% đạo văn`.
+5. Cho phép chỉnh sửa, lưu, tải xuống và quản lý nội dung theo project.
+
+Hệ thống có hai khu vực riêng:
+
+- **Customer workspace:** tạo nội dung, quản lý project/template, kiểm tra đạo văn, fine-tuning, billing và thông báo.
+- **Admin console:** quản lý người dùng, nội dung, template, gói dịch vụ, thanh toán, mô hình AI, cấu hình hệ thống và audit log.
+
 ## Tính năng chính
 
-- Sinh nội dung marketing bằng AI theo ngành nghề, tone, loại nội dung.
-- Quản lý contents, projects, templates, notifications, billing.
-- Dashboard người dùng và dashboard admin.
-- Kiểm tra đạo văn nội dung AI.
-- Fine-tuning qua Vertex AI Gemini và Vertex AI Llama/Qwen open-model tuning.
-- Hỗ trợ nhiều provider: Gemini, Vertex AI, OpenAI-compatible API, Groq, Free-GPT4 local wrapper.
+- Tạo copy marketing bằng nhiều AI provider theo ngành nghề, tone, loại nội dung và độ dài.
+- Chấm điểm chất lượng nội dung bằng heuristic scoring; điểm bị giảm khi tỷ lệ đạo văn từ 20% trở lên.
+- Kiểm tra đạo văn bằng Exact match, N-gram, word overlap và cosine similarity trên embeddings.
+- So sánh với nội dung trong database, nguồn tham khảo, file upload và nguồn web tùy cấu hình.
+- Hỗ trợ đọc file `TXT`, `MD`, `CSV`, `JSON`, `HTML`, `RTF`, `DOCX` và `PDF` khi kiểm tra đạo văn.
+- Quản lý content, project, template, notification, API key và lịch sử sử dụng.
+- Quản lý gói dịch vụ và thanh toán qua VNPay, ZaloPay hoặc VietQR.
+- Fine-tuning qua OpenAI, Vertex AI Gemini và Vertex AI open-model tuning cho Llama/Qwen.
+- Xác thực User/Admin bằng JWT trong HTTP-only cookie, hỗ trợ OTP xác minh và đặt lại mật khẩu.
+- Dashboard và khu vực quản trị riêng cho customer và administrator.
 
-## Công nghệ
+## Công nghệ sử dụng
 
-| Phần | Stack |
+| Thành phần | Công nghệ |
 | --- | --- |
-| Frontend | Next.js 14, React 18, TypeScript, Tailwind CSS, MUI, Radix UI, React Query, Zustand |
-| Backend | Node.js, Express.js, Mongoose, Joi, JWT, Cookie Auth, Multer, Nodemailer |
-| Database | MongoDB hoặc MongoDB Atlas |
-| AI/Fine-tuning | Gemini, Vertex AI, Llama tuning helper |
+| Frontend | Next.js 14 App Router, React 18, TypeScript 5, Tailwind CSS 4 |
+| UI | Material UI 7, Radix UI, Lucide Icons, Motion, Chart.js |
+| State và data fetching | TanStack React Query 5, Zustand 5, Axios, React Hook Form |
+| Rich-text và export | TinyMCE 8, React Markdown, SheetJS `xlsx` |
+| Backend | Node.js, Express.js 4, RESTful API |
+| Database | MongoDB/MongoDB Atlas, Mongoose 8 |
+| Authentication | JWT, HTTP-only cookie, bcrypt, OTP email |
+| Validation và security | Joi, Helmet, CORS, Express Rate Limit |
+| Upload và document parsing | Multer, Cloudinary, Mammoth, PDF Parse |
+| AI generation | Google Gemini, Vertex AI, OpenAI-compatible API, Groq, Free-GPT4 wrapper |
+| Fine-tuning | OpenAI Fine-tuning, Vertex AI Gemini, Vertex AI Llama/Qwen helper bằng Python |
+| Plagiarism | Exact match, N-gram, Jaccard/word overlap, embeddings, SerpApi, Common Crawl |
+| Payment | VNPay sandbox, ZaloPay sandbox, VietQR |
+| Email | Nodemailer/SMTP |
 
-## Cấu trúc ngắn gọn
+## Kiến trúc thư mục
 
-```txt
+```text
 NT114.Q21-Web-Copy-Writing/
-├── backend/                         # Express REST API
-├── frontend/                        # Next.js App Router
-├── training/vertex_open_model_tuning # Python helper cho Vertex Llama/Qwen
-├── scripts/                         # Script setup bucket/IAM Vertex
-├── shared/
-└── README.md
+|-- backend/                          # Express REST API, MongoDB models, services và seed
+|-- frontend/                         # Next.js App Router cho Customer và Admin
+|-- training/vertex_open_model_tuning # Python helper cho Vertex AI Llama/Qwen
+|-- scripts/                          # Script hỗ trợ Google Cloud bucket/IAM
+|-- shared/                           # Tài nguyên dùng chung
+|-- docs/                             # Tài liệu luồng xử lý của project
+|-- Free-GPT4-WEB-API/                # Provider wrapper tùy chọn
+`-- README.md
 ```
 
-## Chuẩn bị môi trường
+## Yêu cầu môi trường
 
-Cần có:
+- Git.
+- Node.js 20 trở lên.
+- Yarn Classic 1.x hoặc Corepack.
+- MongoDB local hoặc MongoDB Atlas.
+- Python 3.10 trở lên nếu dùng Vertex AI Llama/Qwen tuning.
+- Google Cloud CLI nếu dùng Vertex AI.
 
-- Git
-- Node.js 20+
-- Yarn Classic 1.x hoặc Corepack
-- MongoDB local hoặc MongoDB Atlas
-- Python 3.10+ nếu dùng Vertex Llama/Qwen
-- Google Cloud CLI nếu dùng Vertex AI
+Kiểm tra các công cụ:
 
 ```powershell
 node -v
@@ -72,7 +106,9 @@ git --version
 python --version
 ```
 
-## Clone project
+## Cài đặt project
+
+### 1. Clone repository
 
 ```powershell
 git clone --recurse-submodules <URL_REPOSITORY>
@@ -85,7 +121,7 @@ Nếu clone thiếu submodule:
 git submodule update --init --recursive
 ```
 
-## Cài Backend
+### 2. Cài đặt Backend
 
 ```powershell
 cd backend
@@ -93,29 +129,30 @@ yarn install
 Copy-Item .env.example .env
 ```
 
-Sửa nhanh `backend/.env` tối thiểu:
+Cấu hình tối thiểu trong `backend/.env`:
 
 ```env
 PORT=4000
 NODE_ENV=development
-MONGODB_URI=mongodb://<username>:<password>@ac-r3mct8m-shard-00-00.o3r6tac.mongodb.net:27017,ac-r3mct8m-shard-00-01.o3r6tac.mongodb.net:27017,ac-r3mct8m-shard-00-02.o3r6tac.mongodb.net:27017/ai-copywriter?ssl=true&replicaSet=atlas-7hog99-shard-0&authSource=admin&retryWrites=true&w=majority
-
+MONGODB_URI=mongodb://127.0.0.1:27017/ai-copywriter
 FRONTEND_URL=http://localhost:3000
-PUBLIC_API_URL=http://localhost:4000
-JWT_SECRET=change_me_in_real_env
+JWT_SECRET=replace_with_a_long_random_secret
 JWT_EXPIRES_IN=7d
 ADMIN_INVITE_CODE=ADMIN2026
-AI_PROVIDER=gemini
+
+# Chọn provider và thêm API key tương ứng nếu cần generate bằng AI thật
+AI_PROVIDER=auto
 GEMINI_API_KEY=
-GOOGLE_CLOUD_PROJECT=
-GOOGLE_CLOUD_LOCATION=us-central1
-VERTEX_TUNING_BUCKET=
+OPENAI_API_KEY=
+GROQ_API_KEY=
 ```
 
-## Cài Frontend
+Không commit file `.env` hoặc API key thật lên Git.
+
+### 3. Cài đặt Frontend
 
 ```powershell
-cd frontend
+cd ..\frontend
 yarn install
 ```
 
@@ -125,27 +162,36 @@ Tạo `frontend/.env.local`:
 NEXT_PUBLIC_API_BASE_URL=http://localhost:4000/api
 ```
 
-TinyMCE is self-hosted from the frontend package. `yarn install`, `yarn dev`, and `yarn build` copy the required assets to `frontend/public/tinymce`, so no TinyMCE Cloud API key is required.
+TinyMCE được self-host trong frontend. Các lệnh `yarn install`, `yarn dev` và `yarn build` sẽ tự động copy asset cần thiết vào `frontend/public/tinymce`; không cần TinyMCE Cloud API key.
 
-## Seed dữ liệu demo
+## Tài khoản mock để đăng nhập
 
-MongoDB phải chạy trước khi seed.
+Trước tiên, khởi động MongoDB và chạy seed:
 
 ```powershell
 cd backend
 yarn seed
 ```
 
-Tài khoản demo:
+Lệnh seed tạo hoặc cập nhật hai tài khoản demo sau:
 
-| Vai trò | Email | Mật khẩu |
-| --- | --- | --- |
-| User | `customer@copypro.vn` | `customer123` |
-| Admin | `admin@copypro.vn` | `admin123` |
+| Vai trò | Trang đăng nhập | Email | Mật khẩu |
+| --- | --- | --- | --- |
+| Customer | `http://localhost:3000/login` | `customer@example.com` | `customer123` |
+| Super Admin | `http://localhost:3000/admin/login` | `admin@example.com` | `admin123` |
+
+Có thể đổi email demo trước khi chạy seed bằng hai biến môi trường:
+
+```env
+DEMO_CUSTOMER_EMAIL=customer@example.com
+DEMO_ADMIN_EMAIL=admin@example.com
+```
+
+> Lưu ý: `yarn seed` sẽ đặt lại mật khẩu của hai tài khoản demo về giá trị trong bảng trên. Các tài khoản này chỉ dùng cho môi trường local/demo, không dùng trong production.
 
 ## Chạy project
 
-Mở 2 terminal.
+Mở hai terminal tại thư mục gốc của project.
 
 **Terminal 1 - Backend**
 
@@ -154,10 +200,10 @@ cd backend
 yarn dev
 ```
 
-API chạy tại `http://localhost:4000`.
+Backend chạy tại `http://localhost:4000`. Kiểm tra health endpoint:
 
 ```powershell
-curl http://localhost:4000/api/health
+Invoke-RestMethod http://localhost:4000/api/health
 ```
 
 **Terminal 2 - Frontend**
@@ -167,56 +213,86 @@ cd frontend
 yarn dev
 ```
 
-Web chạy tại `http://localhost:3000`.
+Mở `http://localhost:3000` và đăng nhập bằng một trong hai tài khoản mock.
 
 ## Route chính
 
 | Nhóm | Route |
 | --- | --- |
 | Public | `/`, `/pricing`, `/about`, `/blog`, `/contact` |
-| Auth | `/login`, `/register`, `/forgot-password`, `/reset-password` |
-| User | `/dashboard`, `/generate`, `/contents`, `/projects`, `/templates`, `/fine-tune`, `/plagiarism-check`, `/billing` |
-| Admin | `/admin`, `/admin/users`, `/admin/contents`, `/admin/templates`, `/admin/plans`, `/admin/payments`, `/admin/models`, `/admin/settings` |
+| Customer authentication | `/login`, `/register`, `/forgot-password`, `/reset-password` |
+| Customer workspace | `/dashboard`, `/generate`, `/contents`, `/projects`, `/templates`, `/fine-tune`, `/plagiarism-check`, `/billing` |
+| Admin authentication | `/admin/login`, `/admin/forgot-password` |
+| Admin console | `/admin`, `/admin/users`, `/admin/contents`, `/admin/templates`, `/admin/plans`, `/admin/payments`, `/admin/models`, `/admin/settings` |
 
 ## API chính
 
-| API | Chức năng |
+| Endpoint | Chức năng |
 | --- | --- |
-| `/api/health` | Kiểm tra server |
-| `/api/auth/user` | Auth user |
-| `/api/auth/admin` | Auth admin |
-| `/api/contents` | Nội dung AI |
-| `/api/projects` | Dự án |
-| `/api/templates` | Template |
-| `/api/fine-tune` | Fine-tuning |
-| `/api/plagiarism` | Kiểm tra đạo văn |
-| `/api/billing` | Thanh toán |
-| `/api/admin/*` | Quản trị |
+| `GET /api/health` | Kiểm tra trạng thái backend |
+| `/api/auth/user` | Đăng ký, đăng nhập và quản lý tài khoản customer |
+| `/api/auth/admin` | Đăng nhập và quản lý tài khoản admin |
+| `/api/contents` | Tạo và quản lý nội dung AI |
+| `/api/projects` | Quản lý project |
+| `/api/templates` | Quản lý template |
+| `/api/fine-tune` | Dataset, job và fine-tuning model |
+| `/api/plagiarism` | Kiểm tra đạo văn, upload file và lịch sử report |
+| `/api/billing` | Gói dịch vụ, subscription và thanh toán |
+| `/api/notifications` | Thông báo người dùng |
+| `/api/admin/*` | API quản trị hệ thống |
 
-<details>
-<summary><strong>Cấu hình AI provider</strong></summary>
+## Cấu hình AI provider
+
+Ví dụ một số provider phổ biến trong `backend/.env`:
 
 ```env
 # Gemini
 AI_PROVIDER=gemini
 GEMINI_API_KEY=<your-gemini-api-key>
+GEMINI_MODEL=<optional-model-name>
 
 # OpenAI-compatible
+AI_PROVIDER=openai
 OPENAI_API_KEY=<your-openai-api-key>
 OPENAI_MODEL=gpt-4o-mini
 OPENAI_BASE_URL=https://api.openai.com/v1
 
 # Groq
+AI_PROVIDER=groq
 GROQ_API_KEY=<your-groq-api-key>
-
+GROQ_MODEL=<optional-model-name>
 ```
 
-</details>
+## Kiểm tra đạo văn
 
-<details>
-<summary><strong>Vertex AI fine-tuning</strong></summary>
+Hệ thống sử dụng scoring hybrid gồm Exact match, N-gram, word overlap và embedding similarity. Sau khi generate, backend tự động kiểm tra nội dung với database và reference source, lưu `plagiarismScore`, `originalityScore` và `riskLevel`.
 
-### Vertex Gemini
+Cấu hình mặc định:
+
+```env
+GENERATED_CONTENT_PLAGIARISM_THRESHOLD=35
+GENERATED_CONTENT_PLAGIARISM_SENSITIVITY=balanced
+GENERATED_CONTENT_PLAGIARISM_WEB_CHECK=false
+```
+
+Để bật tìm nguồn web, cấu hình thêm SerpApi và chuyển web check thành `true`:
+
+```env
+SERPAPI_API_KEY=<your-serpapi-key>
+GENERATED_CONTENT_PLAGIARISM_WEB_CHECK=true
+```
+
+Điểm chất lượng trên frontend bị điều chỉnh theo `% đạo văn`:
+
+- Dưới 20%: không trừ điểm.
+- Từ 20% đến dưới 45%: trừ theo hệ số `0.35`.
+- Từ 45% đến dưới 70%: trừ theo hệ số `0.55`.
+- Từ 70% trở lên: trừ theo hệ số `0.75`.
+- Điểm cuối cùng không vượt quá `% độc đáo = 100 - % đạo văn`.
+
+## Vertex AI fine-tuning
+
+Vertex Gemini cần Google Cloud project, location, bucket và Application Default Credentials:
 
 ```env
 GOOGLE_CLOUD_PROJECT=<your-gcp-project-id>
@@ -230,13 +306,7 @@ gcloud auth application-default login
 gcloud config set project <your-gcp-project-id>
 ```
 
-### Vertex Llama/Qwen
-
-Backend dùng Python helper:
-
-```txt
-training/vertex_open_model_tuning/submit_open_model_tuning.py
-```
+Vertex Llama/Qwen dùng Python helper trong `training/vertex_open_model_tuning`:
 
 ```powershell
 python -m venv .venv
@@ -245,73 +315,28 @@ python -m pip install --upgrade pip
 python -m pip install -r training\vertex_open_model_tuning\requirements.txt
 ```
 
-```env
-VERTEX_OPEN_MODEL_TUNING_BASE_MODELS=meta/llama3-3@llama-3.3-70b-instruct,qwen/qwen3@qwen3-14b
-VERTEX_LLAMA_TUNING_BASE_MODELS=meta/llama3-3@llama-3.3-70b-instruct
-VERTEX_QWEN_TUNING_BASE_MODELS=qwen/qwen3@qwen3-14b
-VERTEX_LLAMA_TUNING_SCRIPT=training/vertex_open_model_tuning/submit_open_model_tuning.py
-VERTEX_OPEN_MODEL_TUNING_PYTHON=.venv/Scripts/python.exe
-VERTEX_OPEN_MODEL_TUNING_MODE=PEFT_ADAPTER
-VERTEX_QWEN_TUNING_MODE=FULL
-```
+Fine-tuning trên Vertex AI có thể phát sinh chi phí thật trên Google Cloud project.
 
-Setup bucket/IAM nếu cần:
+## Test và build
+
+Chạy regression test cho plagiarism scoring:
 
 ```powershell
-.\scripts\setup_vertex_tuning_bucket.ps1 -ProjectId <your-gcp-project-id> -Location us-central1 -Bucket <your-gcs-bucket-name>
-```
-
-Lưu ý: Vertex AI fine-tuning có thể phát sinh chi phí thật.
-
-</details>
-
-<details>
-<summary><strong>Thanh toán và kiểm tra đạo văn</strong></summary>
-
-```env
-# Plagiarism web check
-SERPAPI_API_KEY=<your-serpapi-key>
-SERPAPI_NUM_RESULTS=10
-SERPAPI_MAX_RESULTS=12
-
-# VNPay sandbox
-VNPAY_PAYMENT_URL=https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
-VNPAY_TMN_CODE=<sandbox-tmn-code>
-VNPAY_HASH_SECRET=<sandbox-secret>
-
-# ZaloPay sandbox
-ZALOPAY_ENDPOINT=https://sb-openapi.zalopay.vn/v2/create
-ZALOPAY_QUERY_ENDPOINT=https://sb-openapi.zalopay.vn/v2/query
-ZALOPAY_APP_ID=<sandbox-app-id>
-ZALOPAY_KEY1=<sandbox-key1>
-ZALOPAY_KEY2=<sandbox-key2>
-```
-
-</details>
-
-## Chạy nhanh từ đầu tới cuối
-
-```powershell
-git clone --recurse-submodules <URL_REPOSITORY>
-cd NT114.Q21-Web-Copy-Writing
-
 cd backend
-yarn install
-Copy-Item .env.example .env
-yarn seed
-yarn dev
-
-# Mở terminal mới
-cd frontend
-yarn install
-yarn dev
+yarn test:plagiarism
 ```
 
-Mở `http://localhost:3000` và đăng nhập bằng tài khoản demo.
+Build frontend:
 
-## Ghi chú nộp đồ án
+```powershell
+cd frontend
+yarn build
+```
 
-- Không commit `node_modules/`, `.next/`, `.venv/`, `.env` hoặc credential thật.
-- Nếu demo AI thật, chuẩn bị key provider trong `backend/.env`.
-- Nếu demo Vertex Llama/Qwen, chuẩn bị trước Google Cloud project, bucket, IAM và Python venv.
-- Nếu chỉ demo giao diện và CRUD, có thể dùng dữ liệu seed mà không cần key AI thật.
+## Ghi chú bảo mật
+
+- Không commit `.env`, `.env.local`, credential, API key hoặc payment secret.
+- Thay `JWT_SECRET`, `ADMIN_INVITE_CODE` và credential demo khi deploy production.
+- Chỉ bật CORS cho các frontend origin được phép.
+- Tài khoản mock và payment sandbox chỉ phục vụ phát triển/demo.
+- Kiểm tra chi phí và quota trước khi chạy fine-tuning trên Vertex AI.
