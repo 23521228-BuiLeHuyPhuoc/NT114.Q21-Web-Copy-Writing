@@ -13,6 +13,12 @@ const MAX_SOURCE_LENGTH = 500;
 const MAX_SOURCE_URL_LENGTH = 500;
 const MAX_SNIPPET_LENGTH = 600;
 const MAX_SOURCE_TEXT_LENGTH = 30000;
+const MAX_COMMON_CRAWL_ERROR_LENGTH = 500;
+const MAX_COMMON_CRAWL_LIST_ITEMS = 40;
+const MAX_SERPAPI_RESULTS = 20;
+const MAX_SERPAPI_TITLE_LENGTH = 250;
+const MAX_SERPAPI_QUERY_LENGTH = 300;
+const MAX_SERPAPI_GROUP_LENGTH = 40;
 const DEFAULT_MAX_COMPARISON_SOURCE_TEXT_LENGTH = 100000000;
 const MAX_COMPARISON_SOURCE_TEXT_LENGTH = Math.max(
   60000,
@@ -553,6 +559,46 @@ function truncateText(value, maxLength) {
 
 function schemaText(value, maxLength) {
   return truncateText(value, maxLength);
+}
+
+function sanitizeTextList(values, maxLength, maxItems = MAX_COMMON_CRAWL_LIST_ITEMS) {
+  if (!Array.isArray(values)) return [];
+  return values
+    .slice(0, maxItems)
+    .map((value) => schemaText(value, maxLength))
+    .filter(Boolean);
+}
+
+function sanitizeSerpApiResults(results) {
+  if (!Array.isArray(results)) return [];
+
+  return results
+    .slice(0, MAX_SERPAPI_RESULTS)
+    .map((item = {}) => ({
+      url: schemaText(item.url, MAX_SOURCE_URL_LENGTH),
+      title: schemaText(item.title, MAX_SERPAPI_TITLE_LENGTH),
+      snippet: schemaText(item.snippet, MAX_SNIPPET_LENGTH),
+      position: Math.max(0, Number(item.position) || 0),
+      query: schemaText(item.query, MAX_SERPAPI_QUERY_LENGTH),
+      group: schemaText(item.group, MAX_SERPAPI_GROUP_LENGTH),
+    }))
+    .filter((item) => item.url);
+}
+
+function sanitizeCheckedUrls(items) {
+  if (!Array.isArray(items)) return [];
+
+  return items.slice(0, MAX_COMMON_CRAWL_LIST_ITEMS).map((item = {}) => ({
+    url: schemaText(item.url, MAX_SOURCE_URL_LENGTH),
+    patterns: sanitizeTextList(item.patterns, MAX_SOURCE_URL_LENGTH, 12),
+    cdxRecords: Math.max(0, Number(item.cdxRecords) || 0),
+    warcFetched: Boolean(item.warcFetched),
+    warcFetches: Math.max(0, Number(item.warcFetches) || 0),
+    liveFetched: Boolean(item.liveFetched),
+    candidates: Math.max(0, Number(item.candidates) || 0),
+    mode: ['none', 'commoncrawl', 'live'].includes(item.mode) ? item.mode : 'none',
+    error: schemaText(item.error, MAX_COMMON_CRAWL_ERROR_LENGTH),
+  }));
 }
 
 function tokenizeWithRanges(text) {
@@ -1331,16 +1377,16 @@ function buildAnalysis(
     embedding: {
       enabled: Boolean(embeddingStats.enabled),
       status: embeddingStats.status || 'empty',
-      provider: embeddingStats.provider || 'none',
-      model: embeddingStats.model || 'none',
-      requestedProvider: embeddingStats.requestedProvider || '',
-      requestedModel: embeddingStats.requestedModel || '',
+      provider: schemaText(embeddingStats.provider || 'none', 40),
+      model: schemaText(embeddingStats.model || 'none', 120),
+      requestedProvider: schemaText(embeddingStats.requestedProvider, 40),
+      requestedModel: schemaText(embeddingStats.requestedModel, 120),
       candidateCount: embeddingStats.candidateCount || 0,
       comparedCount: embeddingStats.comparedCount || 0,
       maxSimilarityScore: embeddingStats.maxSimilarityScore || 0,
       maxPlagiarismScore: embeddingStats.maxPlagiarismScore || 0,
       minSimilarity: embeddingStats.minSimilarity || DEFAULT_EMBEDDING_MIN_SIMILARITY,
-      error: embeddingStats.error || '',
+      error: schemaText(embeddingStats.error, MAX_COMMON_CRAWL_ERROR_LENGTH),
     },
     commonCrawl: {
       enabled: Boolean(commonCrawlStats.enabled),
@@ -1352,10 +1398,10 @@ function buildAnalysis(
       serpApiQueryCount: commonCrawlStats.serpApiQueryCount || 0,
       serpApiResultCount: commonCrawlStats.serpApiResultCount || 0,
       serpApiUrlCount: commonCrawlStats.serpApiUrlCount || 0,
-      serpApiError: commonCrawlStats.serpApiError || '',
-      serpApiResults: commonCrawlStats.serpApiResults || [],
-      explicitUrls: commonCrawlStats.explicitUrls || [],
-      indexes: commonCrawlStats.indexes || [],
+      serpApiError: schemaText(commonCrawlStats.serpApiError, MAX_COMMON_CRAWL_ERROR_LENGTH),
+      serpApiResults: sanitizeSerpApiResults(commonCrawlStats.serpApiResults),
+      explicitUrls: sanitizeTextList(commonCrawlStats.explicitUrls, MAX_SOURCE_URL_LENGTH),
+      indexes: sanitizeTextList(commonCrawlStats.indexes, 120, 10),
       queryCount: commonCrawlStats.queryCount || 0,
       recordCount: commonCrawlStats.recordCount || 0,
       cdxHitCount: commonCrawlStats.cdxHitCount || 0,
@@ -1375,12 +1421,12 @@ function buildAnalysis(
       budgetExhausted: Boolean(commonCrawlStats.budgetExhausted),
       maxSnapshots: commonCrawlStats.maxSnapshots || 0,
       maxUrlCandidates: commonCrawlStats.maxUrlCandidates || 0,
-      patterns: commonCrawlStats.patterns || [],
-      searchQueries: commonCrawlStats.searchQueries || [],
-      discoveredUrls: commonCrawlStats.discoveredUrls || [],
-      checkedUrls: commonCrawlStats.checkedUrls || [],
-      error: commonCrawlStats.error || '',
-      lastCdxError: commonCrawlStats.lastCdxError || '',
+      patterns: sanitizeTextList(commonCrawlStats.patterns, MAX_SOURCE_URL_LENGTH),
+      searchQueries: sanitizeTextList(commonCrawlStats.searchQueries, MAX_SERPAPI_QUERY_LENGTH),
+      discoveredUrls: sanitizeTextList(commonCrawlStats.discoveredUrls, MAX_SOURCE_URL_LENGTH),
+      checkedUrls: sanitizeCheckedUrls(commonCrawlStats.checkedUrls),
+      error: schemaText(commonCrawlStats.error, MAX_COMMON_CRAWL_ERROR_LENGTH),
+      lastCdxError: schemaText(commonCrawlStats.lastCdxError, MAX_COMMON_CRAWL_ERROR_LENGTH),
     },
   };
 }
@@ -1641,5 +1687,7 @@ module.exports = {
     getTopicSimilarityScore,
     getEmbeddingPlagiarismScore,
     applyEmbeddingScore,
+    sanitizeSerpApiResults,
+    sanitizeCheckedUrls,
   },
 };

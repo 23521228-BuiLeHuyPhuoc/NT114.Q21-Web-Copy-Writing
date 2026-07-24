@@ -11,6 +11,32 @@ const cosineOrthogonal = embeddingService.cosineSimilarity([1, 0], [0, 1]);
 assert(Math.abs(cosineIdentical - 1) < 1e-9, 'identical embeddings should have cosine similarity 1');
 assert.strictEqual(cosineOrthogonal, 0, 'orthogonal embeddings should have cosine similarity 0');
 
+const sanitizedSerpApiResults = __test.sanitizeSerpApiResults([{
+  url: `https://example.com/${'u'.repeat(700)}`,
+  title: 't'.repeat(400),
+  snippet: 's'.repeat(900),
+  position: -2,
+  query: 'q'.repeat(500),
+  group: 'g'.repeat(80),
+}]);
+const sanitizedCheckedUrls = __test.sanitizeCheckedUrls([{
+  url: `https://example.com/${'u'.repeat(700)}`,
+  patterns: [`example.com/${'p'.repeat(700)}`],
+  mode: 'unexpected',
+  error: 'e'.repeat(800),
+}]);
+
+assert.strictEqual(sanitizedSerpApiResults[0].url.length, 500, 'SerpApi URL should fit the report schema');
+assert.strictEqual(sanitizedSerpApiResults[0].title.length, 250, 'SerpApi title should fit the report schema');
+assert.strictEqual(sanitizedSerpApiResults[0].snippet.length, 600, 'SerpApi snippet should fit the report schema');
+assert.strictEqual(sanitizedSerpApiResults[0].query.length, 300, 'SerpApi query should fit the report schema');
+assert.strictEqual(sanitizedSerpApiResults[0].group.length, 40, 'SerpApi group should fit the report schema');
+assert.strictEqual(sanitizedSerpApiResults[0].position, 0, 'SerpApi position should not be negative');
+assert.strictEqual(sanitizedCheckedUrls[0].url.length, 500, 'checked URL should fit the report schema');
+assert.strictEqual(sanitizedCheckedUrls[0].patterns[0].length, 500, 'CDX pattern should be bounded');
+assert.strictEqual(sanitizedCheckedUrls[0].mode, 'none', 'unknown source mode should use the schema default');
+assert.strictEqual(sanitizedCheckedUrls[0].error.length, 500, 'checked URL error should fit the report schema');
+
 function normalizeForAssert(value) {
   return String(value || '')
     .toLowerCase()
@@ -677,6 +703,11 @@ console.log(JSON.stringify({
     semanticPlagiarismScore: semanticOnlyScore.embeddingPlagiarismScore,
     scoreBasis: semanticOnlyScore.scoreBasis,
     serializedSimilarityScore: serializedSemanticReport.similarityScore,
+  },
+  webMetadataSanitization: {
+    serpApiUrlLength: sanitizedSerpApiResults[0].url.length,
+    checkedUrlLength: sanitizedCheckedUrls[0].url.length,
+    checkedUrlMode: sanitizedCheckedUrls[0].mode,
   },
   copied: {
     plagiarismScore: copiedScore.plagiarismScore,

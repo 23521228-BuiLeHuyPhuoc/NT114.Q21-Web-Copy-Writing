@@ -6,6 +6,24 @@ function errorHandler(err, req, res, next) {
     message = 'Invalid JSON payload';
   }
 
+  if (statusCode >= 500) {
+    const validationErrors = err.errors
+      ? Object.entries(err.errors).map(([path, detail]) => ({
+        path,
+        kind: detail?.kind || detail?.name || 'validation',
+      }))
+      : [];
+
+    console.error('Unhandled API error', {
+      method: req.method,
+      path: req.originalUrl || req.url,
+      statusCode,
+      name: err.name || 'Error',
+      message: err.name === 'ValidationError' ? 'Database validation failed' : message,
+      validationErrors,
+    });
+  }
+
   const response = {
     success: false,
     message,

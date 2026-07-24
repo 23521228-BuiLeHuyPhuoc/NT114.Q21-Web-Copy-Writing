@@ -117,6 +117,7 @@ async function fetchText(url, options = {}) {
     headers: { accept: 'application/json,text/plain,*/*' },
     timeoutMs: options.timeoutMs,
   });
+  if (response.status === 404 && options.notFoundAsEmpty) return '';
   if (!response.ok) throw new Error(`Common Crawl index request failed: HTTP ${response.status}`);
   return response.text();
 }
@@ -294,7 +295,7 @@ async function queryCollection(collection, pattern, options = {}) {
       markBudgetExhausted(options.stats, options.startedAt);
       return [];
     }
-    const text = await fetchText(endpoint.toString(), { timeoutMs });
+    const text = await fetchText(endpoint.toString(), { timeoutMs, notFoundAsEmpty: true });
     return parseJsonLines(text).map((record) => ({ ...record, indexId: collection.id, pattern }));
   } catch (error) {
     if (options.stats) {
