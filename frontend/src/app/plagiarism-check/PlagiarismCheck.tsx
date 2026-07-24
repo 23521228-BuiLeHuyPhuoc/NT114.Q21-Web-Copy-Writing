@@ -1,4 +1,4 @@
-import { useState, type ChangeEvent, type ReactNode } from 'react';
+import { useRef, useState, type ChangeEvent, type ReactNode } from 'react';
 import { Layout } from '@/app/components/Layout';
 import { Badge } from '@/app/components/ui/badge';
 import { Button } from '@/app/components/ui/button';
@@ -26,6 +26,10 @@ function riskLevelFromScore(score: number): PlagiarismRiskLevel {
   if (score >= 45) return 'high';
   if (score >= 20) return 'review';
   return 'safe';
+}
+
+function normalizeCheckText(text: string) {
+  return text.replace(/\r\n?/g, '\n').trim();
 }
 
 const SENSITIVITY: Record<PlagiarismSensitivity, { label: string; threshold: number }> = {
@@ -548,6 +552,7 @@ export function CustomerPlagiarismCheck() {
   const [referenceFiles, setReferenceFiles] = useState<File[]>([]);
   const [result, setResult] = useState<PlagiarismReport | null>(null);
   const [expandedSources, setExpandedSources] = useState<Record<string, boolean>>({});
+  const requestVersionRef = useRef(0);
   const [sensitivity, setSensitivity] = useState<PlagiarismSensitivity>('balanced');
   const [sourceConfig, setSourceConfig] = useState<PlagiarismSourceConfig>({
     database: true,
@@ -578,12 +583,26 @@ export function CustomerPlagiarismCheck() {
     : result?.summary || '';
   const conclusion = result ? plagiarismConclusion(result, displayMatches.length, displayTopicMatches.length, visiblePlagiarismScore) : null;
 
+  const invalidateDisplayedResult = () => {
+    requestVersionRef.current += 1;
+    setResult(null);
+    setExpandedSources({});
+  };
+
+  const handleTextChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
+    setText(event.target.value);
+    setCheckFile(null);
+    setCheckFileName('');
+    invalidateDisplayedResult();
+  };
+
   const updateSource = (key: keyof PlagiarismSourceConfig, value: boolean) => {
     if (key === 'uploads' && value && referenceFiles.length === 0) {
       toast.error('Tải lên ít nhất một file nguồn để bật phạm vi file tải lên');
       return;
     }
 
+    invalidateDisplayedResult();
     setSourceConfig(prev => ({ ...prev, [key]: value }));
   };
 
@@ -604,17 +623,20 @@ export function CustomerPlagiarismCheck() {
       toast.error(`Chỉ lưu tối đa ${MAX_IGNORED_PHRASES} cụm bỏ qua`);
     }
 
+    invalidateDisplayedResult();
     setIgnoredPhrases(next);
     setIgnoredPhraseInput('');
   };
 
   const updateIgnoredPhrase = (index: number, value: string) => {
+    invalidateDisplayedResult();
     setIgnoredPhrases(prev => prev.map((phrase, phraseIndex) => (
       phraseIndex === index ? value.slice(0, MAX_IGNORED_PHRASE_LENGTH) : phrase
     )));
   };
 
   const removeIgnoredPhrase = (index: number) => {
+    invalidateDisplayedResult();
     setIgnoredPhrases(prev => prev.filter((_, phraseIndex) => phraseIndex !== index));
   };
 
@@ -627,6 +649,7 @@ export function CustomerPlagiarismCheck() {
     event.currentTarget.value = '';
     if (!file) return;
 
+    invalidateDisplayedResult();
     setExtractingFile(true);
     setCheckFile(null);
     setCheckFileName(file.name);
@@ -634,7 +657,6 @@ export function CustomerPlagiarismCheck() {
       const extracted = await plagiarismService.extractText(file);
       setText(extracted.text);
       setCheckFile(file);
-      setResult(null);
       toast.success(`Đã chuyển ${extracted.fileName} sang văn bản (${extracted.wordCount} từ)`);
     } catch (error) {
       setCheckFile(null);
@@ -650,6 +672,7 @@ export function CustomerPlagiarismCheck() {
     event.currentTarget.value = '';
     if (incoming.length === 0) return;
 
+    invalidateDisplayedResult();
     const next = mergeReferenceFiles(referenceFiles, incoming);
     if (next.length < referenceFiles.length + incoming.length) {
       toast.error(`Chỉ dùng tối đa ${MAX_REFERENCE_FILES} file nguồn và bỏ qua file trùng`);
@@ -662,6 +685,7 @@ export function CustomerPlagiarismCheck() {
   };
 
   const removeReferenceFile = (index: number) => {
+    invalidateDisplayedResult();
     const next = referenceFiles.filter((_, fileIndex) => fileIndex !== index);
     setReferenceFiles(next);
     if (next.length === 0) {
@@ -694,6 +718,9 @@ export function CustomerPlagiarismCheck() {
     }
     setIgnoredPhrases(normalizedIgnoredPhrases);
     setIgnoredPhraseInput('');
+    const requestVersion = ++requestVersionRef.current;
+    setResult(null);
+    setExpandedSources({});
     check.mutate({
       text: trimmed,
       threshold: SENSITIVITY[sensitivity].threshold,
@@ -704,8 +731,19 @@ export function CustomerPlagiarismCheck() {
       sources: effectiveSourceConfig,
       referenceFiles: effectiveReferenceFiles,
     }, {
-      onSuccess: (report) => { setResult(report); setExpandedSources({}); toast.success('Kiểm tra đạo văn hoàn tất'); },
-      onError: (error) => toast.error(errorMessage(error)),
+      onSuccess: (report) => {
+        if (requestVersion !== requestVersionRef.current) return;
+        if (normalizeCheckText(report.checkText) !== normalizeCheckText(trimmed)) {
+          toast.error('Kết quả không khớp nội dung vừa kiểm tra. Vui lòng thử lại.');
+          return;
+        }
+        setResult(report);
+        setExpandedSources({});
+        toast.success('Kiểm tra đạo văn hoàn tất');
+      },
+      onError: (error) => {
+        if (requestVersion === requestVersionRef.current) toast.error(errorMessage(error));
+      },
     });
   };
 
@@ -718,7 +756,7 @@ export function CustomerPlagiarismCheck() {
             <div><h2 className='font-semibold text-foreground'>Nội dung cần kiểm tra</h2><p className='text-xs text-muted-foreground'>Dán đoạn cần kiểm tra; file nguồn so khớp nằm ở khung riêng bên dưới.</p></div>
             <Badge variant='outline'>{words} từ</Badge>
           </div>
-          <Textarea className='min-h-[220px] text-sm leading-6' placeholder='Dán nội dung AI hoặc bản nháp quảng cáo vào đây...' value={text} onChange={(event) => setText(event.target.value)} />
+          <Textarea className='min-h-[220px] text-sm leading-6' placeholder='Dán nội dung AI hoặc bản nháp quảng cáo vào đây...' value={text} onChange={handleTextChange} />
           <div className='mt-3 grid gap-3 lg:grid-cols-2'>
             <div className='rounded-md border bg-background p-3'>
               <div className='flex items-start justify-between gap-3'>
@@ -787,7 +825,7 @@ export function CustomerPlagiarismCheck() {
           <div className='mt-4 grid gap-4 border-t pt-4 lg:grid-cols-[220px_1fr]'>
             <div>
               <p className='mb-2 text-xs font-semibold uppercase text-muted-foreground'>Độ nhạy</p>
-              <Select value={sensitivity} onValueChange={(value) => setSensitivity(value as PlagiarismSensitivity)}>
+              <Select value={sensitivity} onValueChange={(value) => { invalidateDisplayedResult(); setSensitivity(value as PlagiarismSensitivity); }}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {Object.entries(SENSITIVITY).map(([value, item]) => (
@@ -812,7 +850,7 @@ export function CustomerPlagiarismCheck() {
               </div>
               <label className='mt-3 flex items-center justify-between gap-3 rounded-md border px-3 py-2 text-sm'>
                 <span>Bỏ qua cụm CTA/câu mẫu phổ biến</span>
-                <Switch checked={ignoreCommonPhrases} onCheckedChange={(value) => setIgnoreCommonPhrases(Boolean(value))} />
+                <Switch checked={ignoreCommonPhrases} onCheckedChange={(value) => { invalidateDisplayedResult(); setIgnoreCommonPhrases(Boolean(value)); }} />
               </label>
               <div className='mt-3 rounded-md border bg-background p-3'>
                 <div className='flex items-center justify-between gap-3'>
@@ -869,7 +907,7 @@ export function CustomerPlagiarismCheck() {
           </div>
           <div className='mt-4 flex gap-3'>
             <Button className='h-11 flex-1 text-white' onClick={handleCheck} disabled={check.isPending}>{check.isPending ? <><RefreshCw className='mr-2 h-4 w-4 animate-spin' /> Đang kiểm tra...</> : <><FileCheck className='mr-2 h-4 w-4' /> Kiểm tra đạo văn</>}</Button>
-            <Button variant='outline' onClick={() => { setText(''); setCheckFile(null); setCheckFileName(''); setReferenceFiles([]); setSourceConfig(prev => ({ ...prev, uploads: false })); setResult(null); setExpandedSources({}); }}>Xóa</Button>
+            <Button variant='outline' onClick={() => { invalidateDisplayedResult(); setText(''); setCheckFile(null); setCheckFileName(''); setReferenceFiles([]); setSourceConfig(prev => ({ ...prev, uploads: false })); }}>Xóa</Button>
           </div>
         </Card>
         {result && (
@@ -1097,7 +1135,7 @@ export function CustomerPlagiarismCheck() {
         <Card className='p-5'>
           <h2 className='mb-4 flex items-center gap-2 font-semibold text-foreground'><Clock className='h-4 w-4 text-primary' /> Lịch sử gần đây</h2>
           <div className='mb-4 grid gap-3 sm:grid-cols-3'><div className='flex items-center gap-2 text-sm'><Search className='h-4 w-4 text-primary' /> {history?.pagination.totalItems || historyItems.length} lượt kiểm tra</div><div className='flex items-center gap-2 text-sm'><Shield className='h-4 w-4 text-primary' /> local-ngram-v1</div><div className='flex items-center gap-2 text-sm'><CheckCircle2 className='h-4 w-4 text-primary' /> ngưỡng 35%</div></div>
-          {historyItems.length === 0 ? <p className='text-sm text-muted-foreground'>Chưa có report nào.</p> : <div className='space-y-3'>{historyItems.map((item) => <button key={item.id} type='button' onClick={() => { setResult(item); setExpandedSources({}); }} className='w-full rounded-lg border p-3 text-left hover:border-primary/50'><div className='mb-2 flex items-center justify-between gap-2'><span className='text-sm font-semibold text-foreground'>{item.originalityScore}% độc đáo</span><Badge variant='outline' className={RISK[item.riskLevel].cls}>{RISK[item.riskLevel].label}</Badge></div><p className='line-clamp-2 text-xs text-muted-foreground'>{item.checkText}</p><p className='mt-2 text-[11px] text-muted-foreground'>{dateLabel(item.createdAt)}</p></button>)}</div>}
+          {historyItems.length === 0 ? <p className='text-sm text-muted-foreground'>Chưa có report nào.</p> : <div className='space-y-3'>{historyItems.map((item) => <button key={item.id} type='button' onClick={() => { requestVersionRef.current += 1; setText(item.checkText); setCheckFile(null); setCheckFileName(''); setResult(item); setExpandedSources({}); }} className='w-full rounded-lg border p-3 text-left hover:border-primary/50'><div className='mb-2 flex items-center justify-between gap-2'><span className='text-sm font-semibold text-foreground'>{item.originalityScore}% độc đáo</span><Badge variant='outline' className={RISK[item.riskLevel].cls}>{RISK[item.riskLevel].label}</Badge></div><p className='line-clamp-2 text-xs text-muted-foreground'>{item.checkText}</p><p className='mt-2 text-[11px] text-muted-foreground'>{dateLabel(item.createdAt)}</p></button>)}</div>}
         </Card>
       </div>
     </Layout>
