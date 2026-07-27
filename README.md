@@ -14,7 +14,7 @@ CopyPro là website AI Copywriter hỗ trợ tạo và quản lý nội dung mar
 
 | Thành phần | Công nghệ |
 | --- | --- |
-| Frontend | Next.js 14, React 18, TypeScript, Tailwind CSS, Radix UI |
+| Frontend | Next.js 14, React 18, TypeScript, Tailwind CSS |
 | Backend | Node.js, Express.js, RESTful API, Joi, JWT, HTTP-only Cookie |
 | Database | MongoDB, Mongoose |
 | AI | Gemini, Vertex AI, GPT-4 free, Groq, Llama |
