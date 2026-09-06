@@ -206,8 +206,8 @@ export function CustomerProfile() {
   return (
     <Layout>
       <div className="mx-auto max-w-6xl p-4 md:p-7 lg:p-9">
-        <div className="mb-8 border-b-2 border-foreground pb-7">
-          <p className="editorial-kicker mb-4 text-primary">Tài khoản / hồ sơ</p>
+        <div className="mb-6 border-b-2 border-foreground pb-5">
+          <p className="editorial-kicker mb-3 text-primary">Tài khoản / hồ sơ</p>
           <h1 className="studio-page-title text-foreground">Hồ sơ cá nhân</h1>
           <p className="mt-3 text-sm leading-7 text-muted-foreground">Cập nhật thông tin hiển thị, ảnh đại diện và tùy chọn tài khoản.</p>
         </div>
@@ -218,7 +218,7 @@ export function CustomerProfile() {
             <div className="relative mb-4">
               <Avatar className="w-24 h-24">
                 <AvatarImage src={user?.avatar || undefined} alt={user?.name || 'Avatar'} className="object-cover" />
-                <AvatarFallback className="bg-gradient-to-r from-green-600 to-emerald-600 text-white text-3xl">
+                <AvatarFallback className="bg-primary text-3xl text-primary-foreground">
                   {userInitial}
                 </AvatarFallback>
               </Avatar>
@@ -231,7 +231,7 @@ export function CustomerProfile() {
               />
               <button
                 type="button"
-                className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white shadow-md hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-70"
+                className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-70"
                 disabled={avatarBusy}
                 title="Cập nhật avatar"
                 onClick={() => avatarInputRef.current?.click()}

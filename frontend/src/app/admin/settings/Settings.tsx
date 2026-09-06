@@ -273,7 +273,7 @@ export function AdminSettings() {
     }
 
     return (
-      <Card className="space-y-4 p-6">
+      <Card className="gap-0 space-y-4 p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h3 className="flex items-center gap-2 font-semibold text-foreground"><KeyRound className="h-4 w-4" /> {section.title} trong .env</h3>
@@ -321,10 +321,10 @@ export function AdminSettings() {
 
   return (
     <Layout>
-      <div className="mx-auto max-w-6xl p-6">
-        <div className="mb-8 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+      <div className="mx-auto max-w-6xl p-4 sm:p-6">
+        <div className="page-header flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Cài đặt hệ thống</h1>
+            <h1 className="studio-page-title text-foreground">Cài đặt hệ thống</h1>
             <p className="text-foreground/70">Quản lý cấu hình vận hành, AI model, email và quota của CopyPro.</p>
           </div>
           {(isLoading || envLoading) && <Badge variant="neutral">Đang tải</Badge>}
@@ -339,7 +339,7 @@ export function AdminSettings() {
           </TabsList>
 
           <TabsContent value="general" className="space-y-4">
-            <Card className="space-y-4 p-6">
+            <Card className="gap-0 space-y-4 p-6">
               <h3 className="font-semibold text-foreground">Thông tin cơ bản</h3>
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
@@ -353,7 +353,7 @@ export function AdminSettings() {
               </div>
             </Card>
 
-            <Card className="space-y-4 p-6">
+            <Card className="gap-0 space-y-4 p-6">
               <h3 className="font-semibold text-foreground">Chế độ hoạt động</h3>
               <div className="space-y-3">
                 <div className="flex items-center justify-between gap-4 rounded-lg border p-4">
@@ -394,7 +394,7 @@ export function AdminSettings() {
           <TabsContent value="ai" className="space-y-4">
             {renderEnvSection(envAiSection)}
 
-            <Card className="space-y-4 p-6">
+            <Card className="gap-0 space-y-4 p-6">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h3 className="font-semibold text-foreground">Trạng thái provider từ runtime</h3>
@@ -427,7 +427,7 @@ export function AdminSettings() {
               </div>
             </Card>
 
-            <Card className="space-y-4 p-6">
+            <Card className="gap-0 space-y-4 p-6">
               <h3 className="font-semibold text-foreground">Models hiện có</h3>
               <div className="grid gap-4 lg:grid-cols-3">
                 <div>
@@ -455,7 +455,7 @@ export function AdminSettings() {
           <TabsContent value="email" className="space-y-4">
             {renderEnvSection(envEmailSection)}
 
-            <Card className="space-y-4 p-6">
+            <Card className="gap-0 space-y-4 p-6">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <h3 className="font-semibold text-foreground">Trạng thái SMTP từ runtime</h3>
                 <Badge variant={runtime?.smtp.configured ? 'success' : 'warning'}>
@@ -470,7 +470,7 @@ export function AdminSettings() {
               </div>
             </Card>
 
-            <Card className="space-y-4 p-6">
+            <Card className="gap-0 space-y-4 p-6">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div>
                   <h3 className="font-semibold text-foreground">Email templates</h3>
@@ -541,7 +541,7 @@ export function AdminSettings() {
                           statusbar: true,
                           plugins: 'autolink lists link table code wordcount autoresize preview searchreplace visualblocks fullscreen',
                           toolbar: 'undo redo | blocks | bold italic underline forecolor backcolor | alignleft aligncenter alignright | bullist numlist | link table | removeformat | preview fullscreen code',
-                          content_style: 'body { font-family: Inter, Arial, sans-serif; font-size: 14px; line-height: 1.7; color: #111827; } p { margin: 0 0 12px; } .token { font-family: monospace; background: #f3f4f6; padding: 2px 4px; border-radius: 4px; } table { border-collapse: collapse; width: 100%; } td, th { border: 1px solid #d1d5db; padding: 8px; }',
+                          content_style: 'body { font-family: "Segoe UI", Arial, sans-serif; font-size: 14px; line-height: 1.7; color: #111827; } p { margin: 0 0 12px; } .token { font-family: "Cascadia Mono", Consolas, monospace; background: #f3f4f6; padding: 2px 4px; border-radius: 4px; } table { border-collapse: collapse; width: 100%; } td, th { border: 1px solid #d1d5db; padding: 8px; }',
                         }}
                         onEditorChange={(value: string) => updateTemplate('html', value)}
                       />
@@ -558,7 +558,7 @@ export function AdminSettings() {
           </TabsContent>
 
           <TabsContent value="quota" className="space-y-4">
-            <Card className="space-y-4 p-6">
+            <Card className="gap-0 space-y-4 p-6">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <h3 className="font-semibold text-foreground">Reset quota người dùng</h3>
@@ -582,7 +582,7 @@ export function AdminSettings() {
               </Button>
             </Card>
 
-            <Card className="space-y-4 p-6">
+            <Card className="gap-0 space-y-4 p-6">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <h3 className="flex items-center gap-2 font-semibold text-foreground"><UserRound className="h-4 w-4" />Reset quota một người dùng</h3>

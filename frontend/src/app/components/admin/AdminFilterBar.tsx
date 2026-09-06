@@ -31,8 +31,8 @@ export function AdminFilterBar({
   className = '',
 }: AdminFilterBarProps) {
   return (
-    <Card className={`mb-6 overflow-hidden border-2 border-foreground ${className}`}>
-      <div className="border-b border-foreground bg-foreground px-4 py-2 font-mono-editorial text-[10px] font-bold uppercase tracking-[.14em] text-background">Bộ lọc dữ liệu</div>
+    <Card className={`mb-6 gap-0 overflow-hidden border border-foreground/55 ${className}`}>
+      <div className="border-b border-foreground/55 bg-foreground px-4 py-2 text-xs font-bold uppercase tracking-[.06em] text-background">Bộ lọc dữ liệu</div>
       <div className="flex flex-wrap items-center gap-3 p-4">
         <div className="relative flex-1 min-w-48">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/80" />

@@ -84,7 +84,7 @@ export function CustomerHeader() {
   return (
     <header className="sticky top-0 z-30 flex h-[68px] flex-shrink-0 items-center gap-3 border-b border-border bg-card/95 px-5 backdrop-blur-xl lg:px-8">
       <div className="hidden min-w-0 flex-1 flex-wrap items-center gap-2 md:flex">
-        <Link to="/dashboard" className="editorial-kicker shrink-0 text-[9px] text-primary transition-colors hover:text-foreground">
+        <Link to="/dashboard" className="editorial-kicker shrink-0 text-xs text-primary transition-colors hover:text-foreground">
           Workspace
         </Link>
         <span className="text-border text-xs">/</span>
@@ -165,7 +165,7 @@ export function CustomerHeader() {
                           {notification.title}
                         </p>
                         <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{notification.desc}</p>
-                        <p className="text-[10px] text-muted-foreground/80 mt-1">{notification.time}</p>
+                        <p className="mt-1 text-xs text-muted-foreground">{notification.time}</p>
                       </div>
                       {!notification.read && <span className="w-2 h-2 bg-destructive rounded-full flex-shrink-0 mt-1.5" />}
                     </button>
@@ -222,10 +222,10 @@ export function CustomerHeader() {
               </div>
 
               <div className="p-2">
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-2 mb-1.5">
+                <p className="mb-1.5 px-2 text-xs font-bold uppercase tracking-[.06em] text-muted-foreground">
                   Truy cập nhanh
                 </p>
-                <div className="grid grid-cols-5 gap-1 mb-2">
+                <div className="mb-2 grid grid-cols-2 gap-1">
                   {QUICK_ACTIONS.map((action) => {
                     const Icon = action.icon;
                     return (
@@ -233,12 +233,12 @@ export function CustomerHeader() {
                         key={action.path}
                         to={action.path}
                         onClick={() => setUserOpen(false)}
-                        className="flex flex-col items-center gap-1 p-1.5 rounded-lg hover:bg-surface-muted transition-colors group"
+                        className="group flex min-w-0 items-center gap-2 rounded-md p-2 transition-colors hover:bg-surface-muted"
                       >
                         <div className={`w-7 h-7 ${action.color} rounded-lg flex items-center justify-center`}>
                           <Icon className="w-3.5 h-3.5 text-white" />
                         </div>
-                        <span className="text-[9px] text-muted-foreground text-center leading-tight">{action.label}</span>
+                        <span className="min-w-0 text-left text-xs leading-4 text-muted-foreground">{action.label}</span>
                       </Link>
                     );
                   })}

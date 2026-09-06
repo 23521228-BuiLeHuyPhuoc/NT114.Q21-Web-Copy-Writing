@@ -191,7 +191,7 @@ export function AIDemoSection() {
           <Badge className="mb-5 bg-primary/10 text-primary border-0 px-4 py-1.5 text-sm">
             ✨ Demo tương tác
           </Badge>
-          <h2 className="text-foreground mb-5">
+          <h2 className="type-public-title mb-5 text-foreground">
             Thử tạo copy AI ngay — không cần đăng ký
           </h2>
           <p className="text-muted-foreground text-lg leading-relaxed">
@@ -280,7 +280,7 @@ export function AIDemoSection() {
                   className={`relative w-full py-3.5 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 overflow-hidden ${
                     isGenerating
                       ? 'bg-primary/10 text-primary cursor-not-allowed'
-                      : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white shadow-lg shadow-primary/20 hover:shadow-green-300 hover:-translate-y-0.5 active:translate-y-0'
+                      : 'bg-primary text-primary-foreground shadow-[3px_3px_0_rgba(23,32,51,.16)] hover:-translate-y-0.5 hover:bg-primary/90 active:translate-y-0'
                   }`}
                 >
                   {isGenerating ? (

@@ -59,7 +59,7 @@ export function ModelPicker({ value, onChange, models = MODELS, estimatedQuotaUn
   const groupedModels = groupModels(models);
 
   return (
-    <Card className="p-4">
+    <Card className="gap-0 p-4">
       <Label className="text-sm font-semibold text-foreground/80 mb-3 block flex items-center gap-2">
         <Cpu className="w-4 h-4 text-primary" /> Model AI
       </Label>

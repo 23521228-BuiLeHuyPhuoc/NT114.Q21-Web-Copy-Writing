@@ -41,7 +41,7 @@ export function PublicFooter() {
         <div className="grid gap-10 border-b border-background/20 pb-12 lg:grid-cols-[1.25fr_.75fr] lg:items-end">
           <div>
             <p className="editorial-kicker mb-5 text-accent">Bắt đầu một bản thảo</p>
-            <h2 className="max-w-3xl text-background">{footerCtaTitle}</h2>
+            <h2 className="type-public-title max-w-3xl text-background">{footerCtaTitle}</h2>
             <PublicRichText
               content={footerContent}
               field="ctaDescription"
@@ -70,7 +70,7 @@ export function PublicFooter() {
             />
           </div>
           <div>
-            <p className="font-mono-editorial text-[10px] font-bold uppercase tracking-[.18em] text-background/45">Điều hướng</p>
+            <p className="text-xs font-bold uppercase tracking-[.06em] text-background/65">Điều hướng</p>
             <div className="mt-4 grid grid-cols-2 gap-x-5 gap-y-3">
               {FOOTER_LINKS.map((link) => (
                 <Link key={link.href} to={link.href} className="text-sm text-background/70 hover:text-accent">{link.label}</Link>
@@ -78,14 +78,14 @@ export function PublicFooter() {
             </div>
           </div>
           <div>
-            <p className="font-mono-editorial text-[10px] font-bold uppercase tracking-[.18em] text-background/45">Hỗ trợ</p>
+            <p className="text-xs font-bold uppercase tracking-[.06em] text-background/65">Hỗ trợ</p>
             <a href={`mailto:${footerEmail}`} className="mt-4 inline-flex items-center gap-2 text-sm text-background/70 hover:text-accent">
               <Mail className="h-4 w-4" /> {footerEmail}
             </a>
           </div>
         </div>
 
-        <div className="mt-10 flex flex-col gap-2 border-t border-background/20 pt-5 font-mono-editorial text-[10px] uppercase tracking-[.13em] text-background/45 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-10 flex flex-col gap-2 border-t border-background/20 pt-5 text-xs text-background/60 sm:flex-row sm:items-center sm:justify-between">
           <span>{footerCopyright}</span>
           <span>Creative editorial studio · Vietnamese first</span>
         </div>

@@ -183,18 +183,18 @@ export function CustomerDashboard() {
   ];
 
   const quickActions = [
-    { title: 'AI Generator', desc: 'Tạo copy mới và lưu trực tiếp vào thư viện nội dung.', icon: Wand2, path: '/generate', color: 'from-green-500 to-emerald-600', cta: 'Tạo ngay' },
-    { title: 'Fine-tuning Studio', desc: 'Theo dõi dataset, job huấn luyện và model tùy chỉnh của bạn.', icon: Brain, path: '/fine-tune', color: 'from-green-500 to-green-600', cta: 'Mở studio' },
+    { title: 'AI Generator', desc: 'Tạo copy mới và lưu trực tiếp vào thư viện nội dung.', icon: Wand2, path: '/generate', color: 'from-primary to-red-700', cta: 'Tạo ngay' },
+    { title: 'Fine-tuning Studio', desc: 'Theo dõi dataset, job huấn luyện và model tùy chỉnh của bạn.', icon: Brain, path: '/fine-tune', color: 'from-info to-cyan-900', cta: 'Mở studio' },
     { title: 'Thư viện nội dung', desc: 'Xem, lọc và chỉnh sửa toàn bộ nội dung đã tạo.', icon: FileText, path: '/contents', color: 'from-amber-500 to-amber-600', cta: 'Xem nội dung' },
-    { title: 'Kiểm tra đạo văn', desc: 'Kiểm tra tính độc đáo trước khi xuất bản nội dung.', icon: Key, path: '/plagiarism-check', color: 'from-green-500 to-green-600', cta: 'Kiểm tra' },
+    { title: 'Kiểm tra đạo văn', desc: 'Kiểm tra tính độc đáo trước khi xuất bản nội dung.', icon: Key, path: '/plagiarism-check', color: 'from-slate-700 to-slate-900', cta: 'Kiểm tra' },
   ];
 
   return (
     <Layout>
       <div className="mx-auto max-w-[1450px] p-4 md:p-7 lg:p-9">
-        <header className="mb-8 grid gap-5 border-b-2 border-foreground pb-7 lg:grid-cols-[1fr_auto] lg:items-end">
+        <header className="mb-6 grid gap-4 border-b-2 border-foreground pb-5 lg:grid-cols-[1fr_auto] lg:items-end">
           <div>
-            <p className="editorial-kicker mb-4 text-primary">Bàn làm việc hôm nay</p>
+            <p className="editorial-kicker mb-3 text-primary">Bàn làm việc hôm nay</p>
             <h1 className="studio-page-title text-foreground">Chào {user?.name?.split(' ').pop() || user?.name || 'bạn'}.</h1>
             <p className="mt-3 text-sm leading-7 text-muted-foreground">Nội dung gần đây, quota và các công cụ đang dùng được đặt theo đúng thứ tự công việc.</p>
           </div>
@@ -243,7 +243,7 @@ export function CustomerDashboard() {
                 <button key={copy.id} className="grid w-full gap-3 bg-card p-4 text-left transition-colors hover:bg-accent/15 md:grid-cols-[36px_minmax(0,1fr)_auto] md:items-center" onClick={() => navigate(`/contents/${copy.id}`)}>
                   <span className="flex h-9 w-9 items-center justify-center border border-foreground bg-accent"><Sparkles className="h-4 w-4 text-foreground" /></span>
                   <div className="min-w-0"><p className="truncate text-sm font-bold text-foreground">{copy.title}</p><div className="mt-1 flex flex-wrap items-center gap-2"><span className="text-xs text-muted-foreground">{formatRelativeTime(copy.createdAtRaw) || copy.createdAt}</span><Badge variant="outline" className="text-[10px]">{copy.model}</Badge></div></div>
-                  <div className="text-left md:text-right"><p className="font-display text-xl font-bold text-primary">{copy.quality}%</p><p className="text-[10px] uppercase tracking-wide text-muted-foreground">chất lượng</p></div>
+                  <div className="text-left md:text-right"><p className="font-display text-xl font-bold text-primary">{copy.quality}%</p><p className="text-xs text-muted-foreground">chất lượng</p></div>
                 </button>
               ))}
               </div>
@@ -260,7 +260,7 @@ export function CustomerDashboard() {
               <div className="mb-4 flex items-start justify-between gap-4"><div><p className="text-sm font-bold text-foreground">Quota gói {planName}</p><p className="mt-1 text-xs text-muted-foreground">{copyLimit < 0 ? `${formatNumber(copyUsed)} copy đã dùng` : `${formatNumber(copyUsed)} / ${quotaLimitLabel} copy đã dùng`}</p></div><span className="font-display text-2xl font-bold text-primary">{copyLimit < 0 ? '∞' : `${quotaPercent}%`}</span></div>
               <Progress value={copyLimit < 0 ? 100 : quotaPercent} className="h-3 border border-foreground" />
               <div className="mt-3 flex justify-between text-xs text-muted-foreground"><span>Còn {quotaRemaining}</span><span>{planPrice}</span></div>
-              <p className="mt-4 border-t border-foreground/20 pt-3 text-[10px] uppercase tracking-wide text-muted-foreground">Hết hạn: {expiresLabel}</p>
+              <p className="mt-4 border-t border-foreground/20 pt-3 text-xs text-muted-foreground">Hết hạn: {expiresLabel}</p>
             </Card>
 
             <div className="border-2 border-foreground bg-card">

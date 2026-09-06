@@ -206,12 +206,12 @@ export function AdminProfile() {
 
   return (
     <Layout>
-      <div className="p-6 max-w-5xl mx-auto">
-        <div className="mb-8">
+      <div className="mx-auto max-w-5xl p-4 sm:p-6">
+        <div className="page-header">
           <Badge className="bg-primary/10 text-primary border-0 mb-3">
             <ShieldCheck className="w-3.5 h-3.5 mr-1" /> Tài khoản đang đăng nhập
           </Badge>
-          <h1 className="text-3xl font-bold text-foreground mb-1">Tài khoản Admin</h1>
+          <h1 className="studio-page-title mb-1 text-foreground">Tài khoản Admin</h1>
           <p className="text-foreground/70">Cập nhật hồ sơ, avatar và bảo mật cho tài khoản quản trị hiện tại.</p>
         </div>
 

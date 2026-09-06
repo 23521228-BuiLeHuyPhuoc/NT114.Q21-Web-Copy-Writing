@@ -164,7 +164,7 @@ export function AdminForgotPasswordPage() {
   };
 
   return (
-    <div className="auth-page dark min-h-screen bg-gray-950 text-white flex items-center justify-center px-5 py-10">
+    <div className="auth-page dark flex min-h-screen items-center justify-center bg-sidebar px-5 py-10 text-sidebar-foreground">
       <div className="fixed inset-0 bg-[radial-gradient(ellipse_70%_60%_at_20%_30%,rgba(20,184,166,0.12),transparent)] pointer-events-none" />
       <div className="fixed inset-0 bg-[radial-gradient(ellipse_60%_50%_at_90%_80%,rgba(245,158,11,0.08),transparent)] pointer-events-none" />
 
@@ -183,7 +183,7 @@ export function AdminForgotPasswordPage() {
             </Link>
           </div>
 
-          <div className="w-16 h-16 rounded-2xl bg-green-950/70 border border-green-800/50 flex items-center justify-center mx-auto mb-5">
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-md border border-primary/35 bg-primary/10">
             <Icon className="w-8 h-8 text-primary" />
           </div>
 
@@ -192,7 +192,7 @@ export function AdminForgotPasswordPage() {
               <Shield className="w-3.5 h-3.5 text-amber-400" />
               <span className="text-amber-300 text-xs font-semibold">Admin Console</span>
             </div>
-            <h1 className="text-2xl font-bold text-white mb-2">{meta.title}</h1>
+            <h1 className="type-auth-title mb-2 text-sidebar-foreground">{meta.title}</h1>
             <p className="text-muted-foreground text-sm leading-relaxed">{meta.subtitle}</p>
           </div>
 
@@ -206,7 +206,7 @@ export function AdminForgotPasswordPage() {
                   type="email"
                   placeholder="Nhập email admin"
                   {...emailForm.register('email', { validate: validateEmail })}
-                  className="h-12 rounded-xl bg-gray-950 border-gray-700 text-white placeholder:text-foreground/70 focus:border-primary"
+                  className="h-12 rounded-md border-input bg-input-background text-foreground placeholder:text-muted-foreground focus:border-primary"
                 />
                 {emailForm.formState.errors.email && (
                   <p className="text-xs text-red-400 mt-1">{emailForm.formState.errors.email.message}</p>
@@ -216,7 +216,7 @@ export function AdminForgotPasswordPage() {
               <button
                 type="submit"
                 disabled={isLoading || emailForm.formState.isSubmitting}
-                className="w-full h-12 bg-gradient-to-r from-emerald-600 via-green-600 to-green-600 hover:from-emerald-500 hover:via-green-500 hover:to-green-500 disabled:opacity-60 text-white rounded-xl font-bold text-sm transition-all shadow-xl shadow-primary/25"
+                className="h-12 w-full rounded-md bg-primary text-sm font-bold text-primary-foreground shadow-[4px_4px_0_rgba(0,0,0,.28)] transition-colors hover:bg-primary/90 disabled:opacity-60"
               >
                 {isLoading ? 'Đang gửi OTP...' : 'Gửi mã OTP admin'}
               </button>
@@ -245,7 +245,7 @@ export function AdminForgotPasswordPage() {
                         document.getElementById(`admin-otp-${index - 1}`)?.focus();
                       }
                     }}
-                    className="w-11 h-12 rounded-xl bg-gray-950 border border-gray-700 text-center text-xl font-bold text-white focus:border-primary focus:outline-none transition-colors"
+                    className="h-12 w-11 rounded-md border border-input bg-input-background text-center text-xl font-bold text-foreground transition-colors focus:border-primary focus:outline-none"
                   />
                 ))}
               </div>
@@ -254,7 +254,7 @@ export function AdminForgotPasswordPage() {
                 type="button"
                 onClick={handleVerifyOtp}
                 disabled={isLoading}
-                className="w-full h-12 bg-gradient-to-r from-emerald-600 via-green-600 to-green-600 hover:from-emerald-500 hover:via-green-500 hover:to-green-500 disabled:opacity-60 text-white rounded-xl font-bold text-sm transition-all shadow-xl shadow-primary/25"
+                className="h-12 w-full rounded-md bg-primary text-sm font-bold text-primary-foreground shadow-[4px_4px_0_rgba(0,0,0,.28)] transition-colors hover:bg-primary/90 disabled:opacity-60"
               >
                 {isLoading ? 'Đang xác nhận...' : 'Xác nhận OTP'}
               </button>
@@ -263,7 +263,7 @@ export function AdminForgotPasswordPage() {
                 type="button"
                 onClick={resendOtp}
                 disabled={isLoading || resendSeconds > 0}
-                className="w-full h-10 text-sm text-primary hover:text-green-200 disabled:text-foreground/70 transition-colors inline-flex items-center justify-center gap-2"
+                className="inline-flex h-10 w-full items-center justify-center gap-2 text-sm text-primary transition-colors hover:text-sidebar-foreground disabled:text-sidebar-foreground/45"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
                 {resendSeconds > 0 ? `Gửi lại mã sau ${formatCountdown(resendSeconds)}` : 'Gửi lại mã OTP'}
@@ -281,7 +281,7 @@ export function AdminForgotPasswordPage() {
                   type="password"
                   placeholder="Tối thiểu 8 ký tự"
                   {...resetForm.register('newPass', { validate: validateStrongPassword })}
-                  className="h-12 rounded-xl bg-gray-950 border-gray-700 text-white placeholder:text-foreground/70 focus:border-primary"
+                  className="h-12 rounded-md border-input bg-input-background text-foreground placeholder:text-muted-foreground focus:border-primary"
                 />
                 {resetForm.formState.errors.newPass && (
                   <p className="text-xs text-red-400 mt-1">{resetForm.formState.errors.newPass.message}</p>
@@ -306,7 +306,7 @@ export function AdminForgotPasswordPage() {
                   type="password"
                   placeholder="Nhập lại mật khẩu"
                   {...resetForm.register('confirmPass', { validate: (value) => validateConfirmPassword(value, resetForm.watch('newPass')) })}
-                  className="h-12 rounded-xl bg-gray-950 border-gray-700 text-white placeholder:text-foreground/70 focus:border-primary"
+                  className="h-12 rounded-md border-input bg-input-background text-foreground placeholder:text-muted-foreground focus:border-primary"
                 />
                 {resetForm.formState.errors.confirmPass && (
                   <p className="text-xs text-red-400 mt-1">{resetForm.formState.errors.confirmPass.message}</p>
@@ -316,7 +316,7 @@ export function AdminForgotPasswordPage() {
               <button
                 type="submit"
                 disabled={isLoading || resetForm.formState.isSubmitting}
-                className="w-full h-12 bg-gradient-to-r from-emerald-600 via-green-600 to-green-600 hover:from-emerald-500 hover:via-green-500 hover:to-green-500 disabled:opacity-60 text-white rounded-xl font-bold text-sm transition-all shadow-xl shadow-primary/25"
+                className="h-12 w-full rounded-md bg-primary text-sm font-bold text-primary-foreground shadow-[4px_4px_0_rgba(0,0,0,.28)] transition-colors hover:bg-primary/90 disabled:opacity-60"
               >
                 {isLoading ? 'Đang đặt lại...' : 'Đặt lại mật khẩu admin'}
               </button>
@@ -331,7 +331,7 @@ export function AdminForgotPasswordPage() {
               <button
                 type="button"
                 onClick={() => navigate('/admin/login')}
-                className="w-full h-12 bg-gradient-to-r from-emerald-600 via-green-600 to-green-600 hover:from-emerald-500 hover:via-green-500 hover:to-green-500 text-white rounded-xl font-bold text-sm transition-all shadow-xl shadow-primary/25"
+                className="h-12 w-full rounded-md bg-primary text-sm font-bold text-primary-foreground shadow-[4px_4px_0_rgba(0,0,0,.28)] transition-colors hover:bg-primary/90"
               >
                 Về trang đăng nhập Admin
               </button>

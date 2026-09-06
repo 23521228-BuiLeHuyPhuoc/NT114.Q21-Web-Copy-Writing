@@ -77,7 +77,7 @@ export function LandingPage() {
           <div className="relative mx-auto grid max-w-7xl gap-10 px-5 pb-14 lg:grid-cols-[.92fr_1.08fr] lg:items-center lg:px-8 lg:pb-20">
             <div className="editorial-reveal relative z-10 py-4 lg:py-12">
               <p className="editorial-kicker mb-7 text-primary">{homeHeroBadge}</p>
-              <h1 className="max-w-3xl text-foreground">{homeHeroTitle}</h1>
+              <h1 className="type-hero max-w-3xl text-foreground">{homeHeroTitle}</h1>
               <div className="my-7 h-2 w-32 -rotate-1 bg-accent" />
               <PublicRichText
                 content={homeContent}
@@ -101,7 +101,7 @@ export function LandingPage() {
                 </button>
               </div>
 
-              <div className="mt-9 flex flex-wrap gap-x-6 gap-y-2 font-mono-editorial text-[10px] font-bold uppercase tracking-[.13em] text-muted-foreground">
+              <div className="mt-9 flex flex-wrap gap-x-6 gap-y-2 text-xs font-bold uppercase tracking-[.06em] text-muted-foreground">
                 <span>Tiếng Việt có dấu</span><span>•</span><span>Nhiều model AI</span><span>•</span><span>Rich text editor</span>
               </div>
             </div>
@@ -113,7 +113,7 @@ export function LandingPage() {
 
           <div className="border-t-2 border-foreground bg-foreground text-background">
             <div className="mx-auto flex max-w-7xl flex-wrap items-center px-5 py-3 lg:px-8">
-              <span className="mr-6 font-mono-editorial text-[10px] font-bold uppercase tracking-[.18em] text-accent">Bàn biên tập cho</span>
+              <span className="mr-6 text-xs font-bold uppercase tracking-[.08em] text-accent">Bàn biên tập cho</span>
               {USE_CASES.map((item) => <span key={item} className="border-l border-background/25 px-4 py-1 text-xs font-semibold text-background/75">{item}</span>)}
             </div>
           </div>
@@ -124,7 +124,7 @@ export function LandingPage() {
             <div className="grid gap-10 lg:grid-cols-[.72fr_1.28fr] lg:items-start">
               <div className="lg:sticky lg:top-28">
                 <p className="editorial-kicker text-primary">Năng lực cốt lõi</p>
-                <h2 className="mt-5 max-w-md text-foreground">Không chỉ tạo chữ. Tạo một quy trình biên tập.</h2>
+                <h2 className="type-public-title mt-5 max-w-md text-foreground">Không chỉ tạo chữ. Tạo một quy trình biên tập.</h2>
                 <p className="mt-5 max-w-md text-sm leading-7 text-muted-foreground">Mỗi công cụ nằm đúng vị trí trong vòng đời nội dung: chuẩn bị brief, tạo phương án, biên tập và đưa vào kho làm việc.</p>
               </div>
 
@@ -150,7 +150,7 @@ export function LandingPage() {
             <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
               <div>
                 <p className="editorial-kicker text-foreground">Luồng làm việc</p>
-                <h2 className="mt-5 max-w-2xl text-foreground">Một đường thẳng từ ý tưởng đến nội dung có thể dùng.</h2>
+                <h2 className="type-public-title mt-5 max-w-2xl text-foreground">Một đường thẳng từ ý tưởng đến nội dung có thể dùng.</h2>
               </div>
               <p className="max-w-md text-sm leading-7 text-foreground/70">Giữ đầy đủ tùy chọn chuyên sâu, nhưng trình bày theo thứ tự ra quyết định để người dùng không phải dò từng card rời rạc.</p>
             </div>
@@ -162,7 +162,7 @@ export function LandingPage() {
                   <div key={item.step} className="relative border-b border-foreground p-5 last:border-b-0 md:border-b-0 md:border-r md:last:border-r-0">
                     <div className="flex items-center justify-between">
                       <Icon className="h-5 w-5 text-primary" />
-                      <span className="font-mono-editorial text-[10px] font-bold text-muted-foreground">0{index + 1}</span>
+                      <span className="text-xs font-bold text-muted-foreground">0{index + 1}</span>
                     </div>
                     <p className="mt-8 font-display text-2xl font-bold text-foreground">{item.step}</p>
                     <p className="mt-2 text-xs leading-5 text-muted-foreground">{item.note}</p>

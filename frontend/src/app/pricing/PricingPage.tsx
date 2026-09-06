@@ -162,33 +162,31 @@ export function PricingPage() {
       <PublicNavbar />
 
       {/* ─── HERO ─── */}
-      <section className="pt-32 pb-20 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-green-950 to-slate-950" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_50%_-5%,rgba(34,197,94,0.15),transparent)]" />
-        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.9) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.9) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+      <section className="paper-grid relative overflow-hidden border-b-2 border-foreground bg-background pb-16 pt-28 md:pb-20 md:pt-32">
+        <div className="pointer-events-none absolute -right-16 top-24 h-40 w-40 rotate-12 border-[26px] border-primary/10" />
 
         <div className="relative max-w-3xl mx-auto px-5 text-center">
-          <Badge className="mb-6 bg-green-950/50 text-green-200 border border-green-700/40 px-4 py-1.5 text-sm">
+          <Badge className="mb-6 border border-foreground/30 bg-accent/35 px-4 py-1.5 text-sm text-foreground">
             💳 Bảng giá minh bạch
           </Badge>
-          <h1 className="text-white mb-5">
+          <h1 className="type-hero mb-5 text-foreground">
             Chọn đúng không gian cho nhịp sản xuất nội dung.
           </h1>
-          <p className="text-gray-300 text-xl leading-relaxed mb-10">
+          <p className="mb-9 text-lg leading-8 text-muted-foreground md:text-xl">
             Giá, quota và quyền truy cập bên dưới được lấy trực tiếp từ cấu hình gói hiện hành.
           </p>
 
           {/* Toggle billing */}
-          <div className="inline-flex items-center gap-4 bg-card/8 border border-white/15 rounded-2xl p-1.5 backdrop-blur">
+          <div className="inline-flex items-center gap-2 rounded-md border-2 border-foreground bg-card p-1.5 shadow-[4px_4px_0_rgba(23,32,51,.12)]">
             <button
               onClick={() => setYearly(false)}
-              className={`px-6 py-2.5 rounded-xl text-sm font-semibold transition-all ${!yearly ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-300 hover:text-white'}`}
+              className={`rounded-sm px-6 py-2.5 text-sm font-semibold transition-all ${!yearly ? 'bg-foreground text-background' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
             >
               Hàng tháng
             </button>
             <button
               onClick={() => setYearly(true)}
-              className={`px-6 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 ${yearly ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-300 hover:text-white'}`}
+              className={`flex items-center gap-2 rounded-sm px-6 py-2.5 text-sm font-semibold transition-all ${yearly ? 'bg-foreground text-background' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
             >
               Hàng năm
               {yearlyDiscountPercent > 0 && yearly && <Badge className="bg-primary/10 text-primary border-0 text-xs">-{yearlyDiscountPercent}%</Badge>}
@@ -196,7 +194,7 @@ export function PricingPage() {
             </button>
           </div>
 
-          <div className="mx-auto mt-6 max-w-2xl rounded-xl border border-amber-300/30 bg-amber-950/25 px-4 py-3 text-sm leading-relaxed text-amber-100">
+          <div className="mx-auto mt-6 max-w-2xl rounded-md border border-warning/45 bg-warning/10 px-4 py-3 text-sm leading-relaxed text-foreground/80">
             Thông tin gói được lấy từ cấu hình hiện hành trong hệ thống. Thanh toán đang chạy qua VNPAY, ZaloPay và VietQR ở môi trường kiểm thử.
           </div>
         </div>
@@ -224,7 +222,7 @@ export function PricingPage() {
                 >
                   {plan.badge && (
                     <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                      <Badge className="bg-gradient-to-r from-green-600 to-emerald-600 text-white border-0 px-4 py-1.5 text-xs shadow-lg">
+                      <Badge className="border-0 bg-primary px-4 py-1.5 text-xs text-primary-foreground shadow-sm">
                         ⭐ {plan.badge}
                       </Badge>
                     </div>
@@ -274,7 +272,7 @@ export function PricingPage() {
                     onClick={() => navigate(plan.monthlyPrice === -1 ? '/contact' : '/register')}
                     className={`w-full py-3.5 rounded-2xl font-bold text-sm mb-7 transition-all ${
                       plan.highlight
-                        ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white shadow-lg shadow-primary/20'
+                        ? 'bg-primary text-primary-foreground shadow-[3px_3px_0_rgba(23,32,51,.16)] hover:bg-primary/90'
                         : 'bg-gray-900 hover:bg-gray-700 text-white'
                     }`}
                   >
@@ -306,7 +304,7 @@ export function PricingPage() {
         <div className="max-w-5xl mx-auto px-5 lg:px-8">
           <div className="text-center mb-14">
             <Badge className="mb-5 bg-primary/10 text-primary border-0 px-4 py-1.5">So sánh chi tiết</Badge>
-            <h2 className="text-foreground">Tính năng đầy đủ theo từng gói</h2>
+            <h2 className="type-public-title text-foreground">Tính năng đầy đủ theo từng gói</h2>
           </div>
 
           <div className="overflow-x-auto rounded-3xl border border-border shadow-sm">
@@ -345,7 +343,7 @@ export function PricingPage() {
         <div className="max-w-3xl mx-auto px-5 lg:px-8">
           <div className="text-center mb-14">
             <Badge className="mb-5 bg-primary/10 text-primary border-0 px-4 py-1.5">FAQ</Badge>
-            <h2 className="text-foreground mb-3">Câu hỏi thường gặp</h2>
+            <h2 className="type-public-title mb-3 text-foreground">Câu hỏi thường gặp</h2>
             <p className="text-muted-foreground">Không tìm thấy câu trả lời?{' '}
               <Link to="/contact" className="text-primary hover:underline font-semibold">Liên hệ chúng tôi.</Link>
             </p>
@@ -354,7 +352,7 @@ export function PricingPage() {
             {FAQ.map((item, i) => (
               <div
                 key={i}
-                className={`rounded-2xl border transition-all overflow-hidden ${openFaq === i ? 'border-green-300 shadow-md shadow-green-50' : 'border-border hover:border-primary/30'}`}
+                className={`overflow-hidden rounded-md border transition-all ${openFaq === i ? 'border-primary/50 shadow-sm' : 'border-border hover:border-primary/30'}`}
               >
                 <button
                   className="w-full flex items-center justify-between px-6 py-5 text-left gap-4"

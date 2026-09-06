@@ -45,9 +45,8 @@ export function LoginPage() {
     <div className="auth-page min-h-screen flex">
 
       {/* ── LEFT PANEL ── */}
-      <div className="dark hidden lg:flex lg:w-1/2 xl:w-[55%] flex-col relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-950" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_70%_at_30%_40%,rgba(20,184,166,0.18),transparent)]" />
+      <div className="dark relative hidden flex-col overflow-hidden bg-sidebar lg:flex lg:w-1/2 xl:w-[55%]">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_70%_at_30%_40%,rgba(255,118,92,0.16),transparent)]" />
         <div
           className="absolute inset-0 opacity-[0.035]"
           style={{
@@ -69,7 +68,7 @@ export function LoginPage() {
           <p className="text-primary text-sm font-semibold uppercase tracking-widest mb-4">
             Creative Editorial Studio
           </p>
-          <h1 className="text-white mb-6 leading-tight">
+          <h1 className="type-public-title mb-6 text-sidebar-foreground">
             Trở lại bàn viết.<br />
             <span className="text-accent">Tiếp tục bản thảo.</span>
           </h1>
@@ -80,7 +79,7 @@ export function LoginPage() {
           <ul className="space-y-4 mb-12">
             {BENEFITS.map(b => (
               <li key={b} className="flex items-center gap-3 text-muted-foreground/60">
-                <div className="w-6 h-6 rounded-full bg-green-400/15 border border-green-300/30 flex items-center justify-center flex-shrink-0">
+                <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border border-primary/35 bg-primary/15">
                   <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
                 </div>
                 <span className="text-sm">{b}</span>
@@ -113,7 +112,7 @@ export function LoginPage() {
           </Link>
 
           <div className="mb-8">
-            <h2 className="text-foreground mb-1.5">Chào mừng trở lại</h2>
+            <h2 className="type-auth-title mb-1.5 text-foreground">Chào mừng trở lại</h2>
             <p className="text-muted-foreground text-sm">Đăng nhập vào tài khoản CopyPro của bạn</p>
           </div>
 
@@ -168,7 +167,7 @@ export function LoginPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full h-12 bg-gradient-to-r from-emerald-600 via-green-600 to-green-600 hover:from-emerald-500 hover:via-green-500 hover:to-green-500 disabled:opacity-60 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-primary/20"
+              className="h-12 w-full rounded-md bg-primary text-sm font-bold text-primary-foreground shadow-[4px_4px_0_rgba(23,32,51,.18)] transition-colors hover:bg-primary/90 disabled:opacity-60"
             >
               {isSubmitting ? (
                 <span className="flex items-center justify-center gap-2">

@@ -223,13 +223,13 @@ export function GenerateOptionsManager({ group, title, description, noun, iconHi
 
   return (
     <Layout>
-      <div className="p-6 max-w-6xl mx-auto">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
+      <div className="mx-auto max-w-6xl p-4 sm:p-6">
+        <div className="page-header flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground mb-1">{title}</h1>
+            <h1 className="studio-page-title mb-1 text-foreground">{title}</h1>
             <p className="text-muted-foreground text-sm">{description}</p>
           </div>
-          <Button onClick={() => setAddOpen(true)} className="bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl gap-2">
+          <Button onClick={() => setAddOpen(true)} className="gap-2 rounded-md">
             <Plus className="w-4 h-4" /> Thêm {noun}
           </Button>
         </div>

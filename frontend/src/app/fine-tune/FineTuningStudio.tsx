@@ -593,8 +593,8 @@ export function CustomerFineTuningStudio() {
   return (
     <Layout>
       <div className="mx-auto max-w-[1450px] p-4 md:p-7 lg:p-9">
-        <div className="mb-8 border-b-2 border-foreground pb-7">
-          <p className="editorial-kicker mb-4 text-primary">AI nâng cao / huấn luyện</p>
+        <div className="mb-6 border-b-2 border-foreground pb-5">
+          <p className="editorial-kicker mb-3 text-primary">AI nâng cao / huấn luyện</p>
           <h1 className="studio-page-title text-foreground">Fine-tuning Studio</h1>
           <p className="mt-3 text-sm leading-7 text-muted-foreground">Quản lý dataset, job huấn luyện và model tùy chỉnh theo quyền truy cập hiện tại.</p>
         </div>
@@ -614,7 +614,7 @@ export function CustomerFineTuningStudio() {
         </Card>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-6">
+          <TabsList className="mb-6 max-w-full justify-start overflow-x-auto">
             <TabsTrigger value="models"><Brain className="w-4 h-4 mr-2" />Models của tôi</TabsTrigger>
             <TabsTrigger value="create"><Plus className="w-4 h-4 mr-2" />Tạo Model Mới</TabsTrigger>
             <TabsTrigger value="training"><BarChart3 className="w-4 h-4 mr-2" />Tiến Trình Training</TabsTrigger>
@@ -649,7 +649,7 @@ export function CustomerFineTuningStudio() {
                   </div>
                   <div className="flex flex-col gap-2 flex-shrink-0">
                     {m.status === 'ready' && (
-                      <Button size="sm" className="bg-primary hover:bg-green-700 text-white" onClick={() => applyModel(m)} disabled={isApplyingFineTunedModel}>
+                      <Button size="sm" onClick={() => applyModel(m)} disabled={isApplyingFineTunedModel}>
                         <Zap className="w-4 h-4 mr-1" /> Dùng trong Generator
                       </Button>
                     )}
@@ -841,7 +841,7 @@ export function CustomerFineTuningStudio() {
                     <Button size="sm" variant="outline" className="flex-1" onClick={() => trainingFileInputRef.current?.click()}>
                       <Upload className="w-4 h-4 mr-1" /> Import CSV/Excel
                     </Button>
-                    <Button size="sm" className="flex-1 bg-primary hover:bg-green-700 text-white" onClick={addExample}>
+                    <Button size="sm" className="flex-1" onClick={addExample}>
                       <Plus className="w-4 h-4 mr-1" /> Thêm ví dụ
                     </Button>
                   </div>
@@ -851,7 +851,7 @@ export function CustomerFineTuningStudio() {
 
             {/* Start training */}
             <div className="flex justify-end">
-              <Button size="lg" className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-10" onClick={startTraining} disabled={createFineTuneJob.isPending || !activeProvider || activeProvider.status !== 'active' || !selectedProviderCanCreateTrainingJob}>
+              <Button size="lg" className="px-10" onClick={startTraining} disabled={createFineTuneJob.isPending || !activeProvider || activeProvider.status !== 'active' || !selectedProviderCanCreateTrainingJob}>
                 <Play className="w-5 h-5 mr-2" /> {activeProvider?.mode === 'brand_voice' ? 'Tạo model brand voice' : activeProvider?.supportsFineTuning ? 'Bắt đầu Fine-tuning' : 'Provider chưa hỗ trợ fine-tuning'}
               </Button>
             </div>
@@ -980,7 +980,7 @@ export function CustomerFineTuningStudio() {
                         {job.status === 'ready' && (
                           <Button
                             size="sm"
-                            className="bg-primary hover:bg-green-700 text-white"
+                            className="bg-primary text-primary-foreground hover:bg-primary/90"
                             onClick={() => useCompletedJobInGenerator(job)}
                             disabled={isApplyingFineTunedModel}
                           >
@@ -990,7 +990,7 @@ export function CustomerFineTuningStudio() {
                         <Button
                           size="sm"
                           variant={activeTrainingJob?.id === job.id ? 'default' : 'outline'}
-                          className={activeTrainingJob?.id === job.id ? 'bg-primary hover:bg-green-700 text-white' : ''}
+                          className={activeTrainingJob?.id === job.id ? 'bg-primary text-primary-foreground hover:bg-primary/90' : ''}
                           onClick={() => setSelectedTrainingJobId(job.id)}
                         >
                           <BarChart3 className="w-4 h-4 mr-1" /> Xem tiến trình
@@ -1081,7 +1081,7 @@ export function CustomerFineTuningStudio() {
                     <BarChart3 className="w-4 h-4 mr-1" /> Xem tiến trình
                   </Button>
                   {detailModel.status === 'ready' && (
-                    <Button className="bg-primary hover:bg-green-700 text-white" onClick={() => applyModel(detailModel)} disabled={isApplyingFineTunedModel}>
+                    <Button onClick={() => applyModel(detailModel)} disabled={isApplyingFineTunedModel}>
                       <Zap className="w-4 h-4 mr-1" /> Dùng trong Generator
                     </Button>
                   )}

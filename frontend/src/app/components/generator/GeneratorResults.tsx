@@ -17,6 +17,7 @@ import toast from 'react-hot-toast';
 import { Markdown } from '@/app/components/common/Markdown';
 import { looksLikeHtml, sanitizeHtml } from '@/lib/richText';
 import { tinymceBaseInit, tinymceEditorProps } from '@/lib/tinymce';
+import { EDITORIAL_EDITOR_CONTENT_STYLE } from '@/lib/editorialContentStyles';
 import type { GeneratedPlagiarism } from '@/services/contentService';
 import { EditorialEmptyState } from '@/app/components/EditorialArtwork';
 
@@ -75,7 +76,7 @@ export function GeneratorResults({
     return (
       <div className="space-y-4">
         {isGenerating && !streamText && (
-          <Card className="paper-noise border-2 border-foreground bg-card p-6">
+          <Card className="paper-noise gap-0 border-2 border-foreground bg-card p-6">
             <div className="flex items-center gap-2 mb-2">
               <RefreshCw className="w-4 h-4 text-primary animate-spin" />
               <span className="text-sm font-medium text-primary">Đang gửi prompt đến model...</span>
@@ -87,7 +88,7 @@ export function GeneratorResults({
         )}
 
         {isGenerating && streamText && (
-          <Card className="paper-noise border-2 border-foreground bg-card p-6">
+          <Card className="paper-noise gap-0 border-2 border-foreground bg-card p-6">
             <div className="flex items-center gap-2 mb-3">
               <RefreshCw className="w-4 h-4 text-primary animate-spin" />
               <span className="text-sm font-medium text-primary">Đang tạo phiên bản 1/{variations}...</span>
@@ -122,9 +123,9 @@ export function GeneratorResults({
             </div>
 
             {activeResult && (
-              <Card className="manuscript-results paper-noise border-2 border-foreground p-5 shadow-[7px_7px_0_rgba(23,32,51,.12)] md:p-6">
-                <div className="flex flex-col gap-3 mb-4 md:flex-row md:items-center md:justify-between">
-                  <div className="flex items-center gap-3">
+              <Card className="manuscript-results paper-noise gap-0 border-2 border-foreground p-5 shadow-[7px_7px_0_rgba(23,32,51,.12)] md:p-6">
+                <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div className="flex flex-wrap items-center gap-2">
                     <div className="border border-primary bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
                       Chất lượng: {activeQuality}%
                     </div>
@@ -141,8 +142,8 @@ export function GeneratorResults({
                     )}
                     <span className="text-xs text-muted-foreground">{countWords(activeResult)} từ</span>
                   </div>
-                  <div className="flex gap-1 items-center">
-                    <div className="mr-2 flex items-center gap-1 border border-border bg-muted p-0.5">
+                  <div className="flex flex-wrap items-center gap-1">
+                    <div className="mr-1 flex flex-wrap items-center gap-1 border border-border bg-muted p-0.5">
                       <button
                         onClick={() => setViewMode('preview')}
                         className={`px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1 transition-colors ${
@@ -187,15 +188,14 @@ export function GeneratorResults({
                         plugins: 'lists link table code wordcount autoresize',
                         toolbar:
                           'undo redo | blocks | bold italic underline | bullist numlist | link table | removeformat | code',
-                        content_style:
-                          'body { font-family: Georgia, serif; font-size: 15px; line-height: 1.75; color: #172033; background: #fffdf7; padding: 14px; } p { margin: 0 0 12px; } ul, ol { margin: 0 0 12px 22px; padding: 0; } li { margin: 4px 0; } h1, h2, h3 { margin: 0 0 12px; line-height: 1.2; }',
+                        content_style: EDITORIAL_EDITOR_CONTENT_STYLE,
                       }}
                     />
                   </div>
                 ) : (
-                  <div className="min-h-52 border-l-2 border-primary bg-card p-5 text-[15px] leading-8">
+                  <div className="min-h-52 border-l-2 border-primary bg-card p-4 sm:p-5">
                     {looksLikeHtml(activeResult) ? (
-                      <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(activeResult) }} />
+                      <div className="rich-text" dangerouslySetInnerHTML={{ __html: sanitizeHtml(activeResult) }} />
                     ) : (
                       <Markdown>{activeResult}</Markdown>
                     )}

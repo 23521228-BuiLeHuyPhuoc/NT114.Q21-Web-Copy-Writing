@@ -213,10 +213,10 @@ export function AdminContacts() {
 
   return (
     <Layout>
-      <div className="mx-auto max-w-7xl p-6">
-        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mx-auto max-w-7xl p-4 sm:p-6">
+        <div className="page-header flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Quản lý liên hệ</h1>
+            <h1 className="studio-page-title text-foreground">Quản lý liên hệ</h1>
             <p className="text-sm text-muted-foreground">Theo dõi tin nhắn gửi từ trang contact và ghi nhận trạng thái xử lý.</p>
           </div>
           <Button variant="outline" size="sm" onClick={() => void loadSubmissions()} disabled={loading}>
@@ -225,7 +225,7 @@ export function AdminContacts() {
           </Button>
         </div>
 
-        <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-5">
+        <div className="mb-6 grid grid-cols-2 gap-4 min-[1100px]:grid-cols-5">
           {statCards.map((item) => (
             <StatTile key={item.label} icon={item.icon} label={item.label} value={item.value.toLocaleString('vi-VN')} color={item.color} />
           ))}

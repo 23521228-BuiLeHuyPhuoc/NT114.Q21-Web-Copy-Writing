@@ -471,10 +471,10 @@ export function AdminPlans() {
 
   return (
     <Layout>
-      <div className="p-6 max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
+      <div className="mx-auto max-w-7xl p-4 sm:p-6">
+        <div className="page-header flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground mb-1">Quản lý gói dịch vụ</h1>
+            <h1 className="studio-page-title mb-1 text-foreground">Quản lý gói dịch vụ</h1>
             <p className="text-muted-foreground text-sm">Dữ liệu được đọc trực tiếp từ MongoDB qua API admin.</p>
           </div>
           <div className="flex items-center gap-2">
@@ -488,13 +488,13 @@ export function AdminPlans() {
                 <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-destructive/100 text-white text-[10px] font-bold rounded-full flex items-center justify-center">{trashPlans.length}</span>
               )}
             </button>
-            <Button className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl" onClick={() => setShowAdd(true)}>
+            <Button className="rounded-md" onClick={() => setShowAdd(true)}>
               <Plus className="w-4 h-4 mr-2" /> Tạo gói mới
             </Button>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="mb-6 grid grid-cols-2 gap-4 min-[1100px]:grid-cols-4">
           {[
             { label: 'Tổng gói', value: plans.length, icon: Crown, color: 'text-primary bg-primary/5' },
             { label: 'Tổng subscribers', value: plans.reduce((total, plan) => total + plan.users, 0).toLocaleString('vi-VN'), icon: Users, color: 'text-primary bg-primary/5' },
@@ -691,7 +691,7 @@ export function AdminPlans() {
             <ModelAccessSelector allowedModels={addAllowedModels} onChange={setAddAllowedModels} />
             <div className="flex gap-2 pt-1">
               <button onClick={() => setShowAdd(false)} className="flex-1 h-10 border border-border rounded-xl text-sm font-semibold text-foreground/70 hover:bg-surface-muted transition-colors">Hủy</button>
-              <button onClick={() => void handleAdd()} disabled={!addName.trim() || createPlan.isPending} className="flex-1 h-10 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:opacity-40 text-white rounded-xl text-sm font-bold transition-all flex items-center justify-center">
+              <button onClick={() => void handleAdd()} disabled={!addName.trim() || createPlan.isPending} className="flex h-10 flex-1 items-center justify-center rounded-md bg-primary text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-40">
                 {createPlan.isPending ? <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : 'Tạo gói'}
               </button>
             </div>
@@ -770,7 +770,7 @@ export function AdminPlans() {
               </div>
               <div className="flex gap-2 pt-1">
                 <button onClick={() => setEditItem(null)} className="flex-1 h-10 border border-border rounded-xl text-sm font-semibold text-foreground/70 hover:bg-surface-muted transition-colors">Hủy</button>
-                <button onClick={() => void handleSaveEdit()} disabled={updatePlan.isPending} className="flex-1 h-10 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center">
+                <button onClick={() => void handleSaveEdit()} disabled={updatePlan.isPending} className="flex h-10 flex-1 items-center justify-center rounded-md bg-primary text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50">
                   {updatePlan.isPending ? <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : 'Lưu thay đổi'}
                 </button>
               </div>

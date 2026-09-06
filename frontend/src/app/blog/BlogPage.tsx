@@ -72,15 +72,15 @@ export function BlogPage() {
     <div className="public-page min-h-screen bg-card">
       <PublicNavbar />
 
-      <section className="bg-gradient-to-br from-slate-950 via-green-950 to-slate-950 pb-16 pt-32">
+      <section className="paper-grid border-b-2 border-foreground bg-foreground pb-16 pt-28 text-background md:pt-32">
         <div className="mx-auto max-w-4xl px-5 text-center">
-          <Badge className="mb-5 border border-green-700/40 bg-green-950/50 px-4 py-1.5 text-green-200">
+          <Badge className="mb-5 border border-background/25 bg-accent px-4 py-1.5 text-foreground">
             Kiến thức & góc nhìn
           </Badge>
-          <h1 className="mb-4 text-white">
+          <h1 className="type-hero mb-4 text-background">
             Blog CopyPro
           </h1>
-          <p className="mb-8 text-base text-muted-foreground/80">
+          <p className="mb-8 text-base text-background/70">
             Hướng dẫn chuyên sâu về AI copywriting, chiến lược marketing và case study thực tế từ đội ngũ chuyên gia.
           </p>
           <div className="relative mx-auto max-w-lg">
@@ -89,7 +89,7 @@ export function BlogPage() {
               placeholder="Tìm kiếm bài viết..."
               value={search}
               onChange={event => setSearch(event.target.value)}
-              className="h-12 rounded-lg border-white/20 bg-card/10 pl-11 text-white backdrop-blur placeholder:text-muted-foreground"
+              className="h-12 rounded-sm border-background/30 bg-card pl-11 text-foreground placeholder:text-muted-foreground"
             />
           </div>
         </div>
@@ -235,7 +235,7 @@ export function BlogPage() {
               </div>
             </div>
 
-            <div className="rounded-lg bg-gradient-to-br from-green-600 to-emerald-700 p-6 text-white">
+            <div className="rounded-md border-2 border-foreground bg-primary p-6 text-primary-foreground shadow-[5px_5px_0_#172033]">
               <Wand2 className="mb-4 h-8 w-8 opacity-80" />
               <h3 className="mb-2 text-white" style={{ fontSize: '1.1rem' }}>Nhận bài viết mới nhất</h3>
               <p className="mb-4 text-sm leading-relaxed text-green-100">
@@ -243,7 +243,7 @@ export function BlogPage() {
               </p>
               <Input
                 placeholder="Email của bạn"
-                className="mb-3 rounded-lg border-white/30 bg-card/20 text-white placeholder:text-green-200"
+                className="mb-3 rounded-sm border-primary-foreground/30 bg-card text-foreground placeholder:text-muted-foreground"
               />
               <button className="w-full rounded-lg bg-card py-2.5 text-sm font-bold text-primary transition-colors hover:bg-primary/5">
                 Đăng ký ngay

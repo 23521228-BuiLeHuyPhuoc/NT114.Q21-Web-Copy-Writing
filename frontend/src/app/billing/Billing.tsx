@@ -516,14 +516,14 @@ export function CustomerBilling() {
   return (
     <Layout>
       <div className="mx-auto max-w-[1350px] p-4 md:p-7 lg:p-9">
-        <div className="mb-8 border-b-2 border-foreground pb-7">
-          <p className="editorial-kicker mb-4 text-primary">Tài khoản / tài chính</p>
+        <div className="mb-6 border-b-2 border-foreground pb-5">
+          <p className="editorial-kicker mb-3 text-primary">Tài khoản / tài chính</p>
           <h1 className="studio-page-title text-foreground">Gói & thanh toán</h1>
           <p className="mt-3 text-sm leading-7 text-muted-foreground">Quản lý gói hiện tại, quota, nâng cấp và lịch sử hóa đơn.</p>
         </div>
 
         <Tabs defaultValue="plan">
-          <TabsList className="mb-6">
+          <TabsList className="mb-6 max-w-full justify-start overflow-x-auto">
             <TabsTrigger value="plan">Gói hiện tại</TabsTrigger>
             <TabsTrigger value="plans">Nâng cấp</TabsTrigger>
             <TabsTrigger value="invoices">Hóa đơn</TabsTrigger>
@@ -533,7 +533,7 @@ export function CustomerBilling() {
             <Card className="mb-6 border-2 border-foreground bg-accent/25 p-6">
               <div className="mb-4 flex items-start justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="rounded-lg bg-gradient-to-br from-green-600 to-emerald-700 p-3">
+                  <div className="rounded-md bg-primary p-3">
                     <CurrentPlanIcon className="h-6 w-6 text-white" />
                   </div>
                   <div>
@@ -549,7 +549,7 @@ export function CustomerBilling() {
                 </div>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 lg:grid-cols-2">
                 <div>
                   <div className="mb-1 flex justify-between text-sm">
                     <span className="text-foreground/70">Copy đã tạo</span>
@@ -594,7 +594,7 @@ export function CustomerBilling() {
                 <p className="text-sm text-muted-foreground">Chưa có gói dịch vụ khả dụng.</p>
               </Card>
             ) : (
-              <div className="grid items-stretch gap-5 lg:grid-cols-3">
+              <div className="grid items-stretch gap-5 min-[1100px]:grid-cols-2 min-[1400px]:grid-cols-3">
                 {plans.map((plan) => {
                   const Icon = plan.icon;
                   const current = isCurrentPlan(plan);
@@ -608,7 +608,7 @@ export function CustomerBilling() {
                     : 'bg-muted text-foreground/70';
 
                   return (
-                    <Card key={plan.id} className={`relative flex h-full min-h-[520px] flex-col rounded-xl border bg-card p-5 transition-all ${cardStyle}`}>
+                    <Card key={plan.id} className={`relative flex h-full flex-col gap-0 rounded-md border bg-card p-5 transition-all ${cardStyle}`}>
                       {current && (
                         <Badge className="absolute right-4 top-4 border-0 bg-primary px-3 text-primary-foreground">Đang dùng</Badge>
                       )}

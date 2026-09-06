@@ -80,8 +80,8 @@ export function AdminDashboard() {
   return (
     <Layout>
       <div className="mx-auto max-w-[1500px] p-4 md:p-7 lg:p-9">
-        <div className="mb-8 border-b-2 border-foreground pb-7">
-          <p className="editorial-kicker mb-4 text-primary">Editorial Operations</p>
+        <div className="mb-6 border-b-2 border-foreground pb-5">
+          <p className="editorial-kicker mb-3 text-primary">Editorial Operations</p>
           <h1 className="studio-page-title text-foreground">Tổng quan hệ thống</h1>
           <p className="mt-3 text-sm leading-7 text-muted-foreground">Dữ liệu vận hành, sử dụng model và nội dung gần đây từ hệ thống CopyPro.</p>
         </div>
@@ -150,7 +150,7 @@ export function AdminDashboard() {
                 <span className="text-xs text-muted-foreground">Cập nhật cuối: {formatDate(usageTotals?.lastUsedAt || undefined)}</span>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-4">
+              <div className="grid grid-cols-2 gap-4 min-[1100px]:grid-cols-4">
                 {[
                   { label: 'Tổng lượt generate', value: formatNumber(usageTotals?.count || 0), icon: Zap, color: 'bg-amber-100 text-amber-700' },
                   { label: 'Tổng token', value: formatNumber(usageTotals?.totalTokens || 0), icon: Database, color: 'bg-primary/10 text-primary' },

@@ -78,17 +78,17 @@ export function AdminAuditLogs() {
 
   return (
     <Layout>
-      <div className="p-6 max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
+      <div className="mx-auto max-w-7xl p-4 sm:p-6">
+        <div className="page-header flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-1">Nhật Ký Hệ Thống</h1>
+            <h1 className="studio-page-title mb-1 text-foreground">Nhật Ký Hệ Thống</h1>
             <p className="text-foreground/70">Audit logs — theo dõi mọi hoạt động trên hệ thống</p>
           </div>
           <Button variant="outline"><Download className="w-4 h-4 mr-2" /> Xuất logs</Button>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="mb-6 grid gap-4 sm:grid-cols-3">
           {[
             { label: 'Tổng events', value: summary.total.toLocaleString('vi-VN'), color: 'text-primary bg-primary/5', icon: Shield },
             { label: 'Warnings', value: summary.warnings.toLocaleString('vi-VN'), color: 'text-amber-600 bg-warning/10', icon: AlertTriangle },
@@ -96,7 +96,7 @@ export function AdminAuditLogs() {
           ].map((s, i) => {
             const Icon = s.icon;
             return (
-              <Card key={i} className="p-4 flex items-center gap-3">
+              <Card key={i} className="flex-row items-center gap-3 p-4">
                 <div className={`p-2 rounded-lg ${s.color}`}><Icon className="w-4 h-4" /></div>
                 <div>
                   <p className="text-xl font-bold text-foreground">{s.value}</p>

@@ -53,7 +53,7 @@ export function AdminAccessDenied() {
           </button>
           <button
             onClick={() => navigate('/admin')}
-            className="inline-flex items-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl px-5 py-2.5 text-sm font-semibold transition-all shadow-md shadow-primary/20"
+            className="inline-flex items-center gap-2 rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
           >
             <Home className="w-4 h-4" />
             Dashboard Admin

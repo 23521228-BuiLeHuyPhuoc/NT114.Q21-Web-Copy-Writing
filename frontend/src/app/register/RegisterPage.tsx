@@ -114,7 +114,7 @@ export function RegisterPage() {
   return (
     <div className="auth-page min-h-screen flex">
       {/* ─── LEFT PANEL ─── */}
-      <div className="dark hidden lg:flex lg:w-[42%] flex-col relative overflow-hidden bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-950">
+      <div className="dark relative hidden flex-col overflow-hidden bg-sidebar lg:flex lg:w-[42%]">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_70%_at_20%_50%,rgba(20,184,166,0.15),transparent)]" />
 
         <div className="relative p-10">
@@ -124,7 +124,7 @@ export function RegisterPage() {
         </div>
 
         <div className="relative flex-1 flex flex-col justify-center px-12 pb-16">
-          <h2 className="text-white mb-4 leading-tight">
+          <h2 className="type-public-title mb-4 text-sidebar-foreground">
             Mở một bàn viết mới.<br />
             <span className="text-accent">Bắt đầu từ brief.</span>
           </h2>
@@ -199,7 +199,7 @@ export function RegisterPage() {
           {!registrationClosed && step === 1 && (
             <>
               <div className="mb-7">
-                <h2 className="text-foreground mb-1">Tạo tài khoản</h2>
+                <h2 className="type-auth-title mb-1 text-foreground">Tạo tài khoản</h2>
                 <p className="text-muted-foreground text-sm">Tài khoản mới sẽ dùng gói Free mặc định</p>
               </div>
               <form onSubmit={rhfHandleSubmit(handleStep1)} className="space-y-4">
@@ -251,7 +251,7 @@ export function RegisterPage() {
                 <button
                   type="submit"
                   disabled={loadingSystemStatus || isLoading}
-                  className="w-full h-12 bg-gradient-to-r from-emerald-600 via-green-600 to-green-600 hover:from-emerald-500 hover:via-green-500 hover:to-green-500 disabled:opacity-60 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2 mt-2"
+                  className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-md bg-primary text-sm font-bold text-primary-foreground shadow-[4px_4px_0_rgba(23,32,51,.18)] transition-colors hover:bg-primary/90 disabled:opacity-60"
                 >
                   {loadingSystemStatus ? 'Đang kiểm tra hệ thống...' : isLoading ? 'Đang tạo tài khoản...' : 'Tạo tài khoản Free'} {!loadingSystemStatus && !isLoading && <ArrowRight className="w-4 h-4" />}
                 </button>
@@ -263,7 +263,7 @@ export function RegisterPage() {
           {!registrationClosed && step === 2 && (
             <>
               <div className="mb-7">
-                <h2 className="text-foreground mb-1">Xác thực email</h2>
+                <h2 className="type-auth-title mb-1 text-foreground">Xác thực email</h2>
                 <p className="text-muted-foreground text-sm">Nhập mã OTP đã gửi đến {pendingVerificationEmail}</p>
               </div>
               <div className="space-y-4">
@@ -284,7 +284,7 @@ export function RegisterPage() {
                 <button
                   onClick={handleVerifyEmail}
                   disabled={isVerifying || verificationCode.length !== 6}
-                  className="w-full h-12 bg-gradient-to-r from-emerald-600 via-green-600 to-green-600 hover:from-emerald-500 hover:via-green-500 hover:to-green-500 disabled:opacity-60 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-primary/20"
+                  className="h-12 w-full rounded-md bg-primary text-sm font-bold text-primary-foreground shadow-[4px_4px_0_rgba(23,32,51,.18)] transition-colors hover:bg-primary/90 disabled:opacity-60"
                 >
                   {isVerifying ? 'Đang xác thực...' : 'Xác thực email'}
                 </button>

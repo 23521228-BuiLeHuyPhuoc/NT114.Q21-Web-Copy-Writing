@@ -25,6 +25,7 @@ import { publicSiteService, type PublicBlogPost, type PublicPageRecord } from '@
 import { ArrowLeft, Eye, Save, Upload } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { tinymceBaseInit, tinymceEditorProps } from '@/lib/tinymce';
+import { EDITORIAL_EDITOR_CONTENT_STYLE } from '@/lib/editorialContentStyles';
 
 interface BlogPostEditorProps {
   slug?: string;
@@ -178,13 +179,13 @@ export function BlogPostEditor({ slug, mode }: BlogPostEditorProps) {
   return (
     <Layout>
       <div className="mx-auto flex max-w-7xl flex-col gap-5 p-4 sm:p-6">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="page-header flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div className="min-w-0">
             <Link to="/admin/public-site?tab=blog" className="mb-3 inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-primary">
               <ArrowLeft className="h-4 w-4" /> Quay lại danh sách blog
             </Link>
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-2xl font-bold text-foreground sm:text-3xl">
+              <h1 className="studio-page-title text-foreground">
                 {mode === 'create' ? 'Thêm bài blog' : 'Sửa nội dung blog'}
               </h1>
               {form?.published === false ? <Badge variant="outline">Ẩn</Badge> : <Badge className="border-0 bg-emerald-100 text-emerald-700">Đang hiện</Badge>}
@@ -196,7 +197,7 @@ export function BlogPostEditor({ slug, mode }: BlogPostEditorProps) {
                 <Button variant="outline" className="gap-2"><Eye className="h-4 w-4" /> Xem public</Button>
               </Link>
             )}
-            <Button onClick={() => void savePost()} disabled={saving || loading || !form} className="gap-2 bg-primary text-white hover:bg-green-700">
+            <Button onClick={() => void savePost()} disabled={saving || loading || !form} className="gap-2">
               <Save className="h-4 w-4" /> {saving ? 'Đang lưu...' : 'Lưu bài viết'}
             </Button>
           </div>
@@ -293,7 +294,7 @@ export function BlogPostEditor({ slug, mode }: BlogPostEditorProps) {
                         };
                         input.click();
                       },
-                      content_style: 'body { font-family: Inter, Arial, sans-serif; font-size: 15px; line-height: 1.75; color: #1f2937; } p { margin: 0 0 14px; } ul, ol { margin: 0 0 14px 22px; padding: 0; } li { margin: 4px 0; } h1, h2, h3 { margin: 20px 0 12px; line-height: 1.3; color: #111827; } blockquote { margin: 16px 0; padding-left: 14px; border-left: 3px solid #16a34a; color: #374151; } table { border-collapse: collapse; width: 100%; } td, th { border: 1px solid #d1d5db; padding: 8px; }',
+                      content_style: EDITORIAL_EDITOR_CONTENT_STYLE,
                     }}
                     onEditorChange={(value: string) => updateForm('bodyHtml', value)}
                   />

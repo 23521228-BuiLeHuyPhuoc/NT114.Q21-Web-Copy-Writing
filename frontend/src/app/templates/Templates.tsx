@@ -156,8 +156,8 @@ export function CustomerTemplates() {
   return (
     <Layout>
       <div className="mx-auto max-w-[1450px] p-4 md:p-7 lg:p-9">
-        <div className="mb-8 border-b-2 border-foreground pb-7">
-          <p className="editorial-kicker mb-4 text-primary">Kho cấu trúc viết</p>
+        <div className="mb-6 border-b-2 border-foreground pb-5">
+          <p className="editorial-kicker mb-3 text-primary">Kho cấu trúc viết</p>
           <h1 className="studio-page-title text-foreground">Mẫu copy</h1>
           <p className="mt-3 max-w-2xl text-sm leading-7 text-muted-foreground">Tìm mẫu theo mục tiêu nội dung, xem cấu trúc prompt và mở thẳng trong Generator.</p>
         </div>
@@ -170,7 +170,7 @@ export function CustomerTemplates() {
           </div>
 
           <Card className="mb-5 overflow-hidden border-2 border-foreground">
-            <div className="border-b border-foreground bg-foreground px-4 py-2 font-mono-editorial text-[10px] font-bold uppercase tracking-[.15em] text-background">Tìm và phân loại template</div>
+            <div className="border-b border-foreground bg-foreground px-4 py-2 text-xs font-bold uppercase tracking-[.06em] text-background">Tìm và phân loại template</div>
             <div className="flex flex-wrap gap-3 p-4">
               <div className="relative flex-1 min-w-56">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/80" />
@@ -213,7 +213,7 @@ export function CustomerTemplates() {
 
           <div className="grid gap-5 lg:grid-cols-[220px_minmax(0,1fr)]">
             <aside className="h-fit border-2 border-foreground bg-card p-3 lg:sticky lg:top-24">
-              <p className="px-2 pb-3 font-mono-editorial text-[10px] font-bold uppercase tracking-[.14em] text-muted-foreground">Danh mục</p>
+              <p className="px-2 pb-3 text-xs font-bold uppercase tracking-[.06em] text-muted-foreground">Danh mục</p>
               <div className="space-y-1">
                 {categories.map((category) => (
                   <button key={category} onClick={() => setSelectedCategory(category)} className={`flex w-full items-center justify-between border px-3 py-2 text-left text-sm font-bold transition-colors ${selectedCategory === category ? 'border-foreground bg-accent text-foreground' : 'border-transparent text-foreground/65 hover:border-border hover:bg-background'}`}>
@@ -224,7 +224,7 @@ export function CustomerTemplates() {
             </aside>
             <div>
               {isLoading && <Card className="paper-noise p-8 text-sm text-muted-foreground">Đang mở kho template...</Card>}
-              {error && <Card className="flex items-center gap-2 border-destructive/40 p-4 text-sm text-destructive"><AlertCircle className="h-4 w-4" /> Không thể tải template API. Kiểm tra backend hoặc đăng nhập lại.</Card>}
+              {error && <Card className="flex-row items-center gap-2 border-destructive/40 p-4 text-sm text-destructive"><AlertCircle className="h-4 w-4" /> Không thể tải template API. Kiểm tra backend hoặc đăng nhập lại.</Card>}
               {!isLoading && !error && visibleTemplates.length === 0 && <EditorialEmptyState title="Chưa có mẫu phù hợp" description="Thử danh mục hoặc từ khóa khác. Các mẫu từ backend sẽ xuất hiện tại đây." />}
               {visibleTemplates.length > 0 && <div className="grid gap-5 xl:grid-cols-2">{visibleTemplates.map((template) => <TemplateCard key={template.id} template={template} />)}</div>}
             </div>

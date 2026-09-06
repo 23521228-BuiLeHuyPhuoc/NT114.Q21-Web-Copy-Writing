@@ -83,9 +83,9 @@ export function CustomerNotifications() {
   return (
     <Layout>
       <div className="mx-auto max-w-5xl p-4 md:p-7 lg:p-9">
-        <div className="mb-8 flex items-end justify-between border-b-2 border-foreground pb-7">
+        <div className="mb-6 flex items-end justify-between border-b-2 border-foreground pb-5">
           <div>
-            <p className="editorial-kicker mb-4 text-primary">Hộp thư hoạt động</p>
+            <p className="editorial-kicker mb-3 text-primary">Hộp thư hoạt động</p>
             <h1 className="studio-page-title text-foreground">Thông báo</h1>
             <p className="text-foreground/70">
               {unreadCount > 0

@@ -25,6 +25,7 @@ import { useContent, useDeleteContent, useUpdateContent } from '@/hooks/queries/
 import { Markdown } from '@/app/components/common/Markdown';
 import { looksLikeHtml, sanitizeHtml } from '@/lib/richText';
 import { tinymceBaseInit, tinymceEditorProps } from '@/lib/tinymce';
+import { EDITORIAL_EDITOR_CONTENT_STYLE } from '@/lib/editorialContentStyles';
 import { EditorialEmptyState } from '@/app/components/EditorialArtwork';
 
 export function CustomerContentDetail() {
@@ -70,7 +71,7 @@ export function CustomerContentDetail() {
     }
 
     if (outputText.length > 60000) {
-      toast.error('Ná»™i dung tá»‘i Ä‘a 60.000 kÃ½ tá»±');
+      toast.error('Nội dung tối đa 60.000 ký tự');
       return;
     }
 
@@ -150,7 +151,7 @@ export function CustomerContentDetail() {
         </Button>
 
         <div className="mb-7 flex flex-col justify-between gap-5 border-b-2 border-foreground pb-6 md:flex-row md:items-end">
-          <div>
+          <div className="min-w-0 max-w-4xl flex-1">
             <div className="flex flex-wrap items-center gap-2 mb-2">
               <Badge className="bg-primary/10 text-primary border-0">Đã xuất bản</Badge>
               <Badge className="bg-muted text-foreground/70 border-0">{content.type}</Badge>
@@ -164,14 +165,14 @@ export function CustomerContentDetail() {
                 maxLength={160}
               />
             ) : (
-              <h1 className="font-display text-3xl font-bold leading-tight text-foreground md:text-5xl">{content.title}</h1>
+              <h1 className="break-words font-display text-2xl font-bold leading-tight tracking-[-.02em] text-foreground sm:text-3xl lg:text-4xl">{content.title}</h1>
             )}
             <p className="text-sm text-muted-foreground mt-1">
               <Calendar className="w-3 h-3 inline mr-1" />{content.createdAt} · {content.industry}
               {content.project ? ` · ${content.project}` : ''}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button variant="outline" size="sm" onClick={isEditing ? handleCancelEdit : handleStartEdit}>
               {isEditing ? <X className="w-4 h-4 mr-1.5" /> : <Edit2 className="w-4 h-4 mr-1.5" />}
               {isEditing ? 'Hủy' : 'Chỉnh sửa'}
@@ -191,10 +192,10 @@ export function CustomerContentDetail() {
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-4">
+        <div className="grid gap-6 min-[1280px]:grid-cols-3">
+          <div className="space-y-4 min-[1280px]:col-span-2">
             <Card className="paper-noise border-2 border-foreground p-6">
-              <div className="flex items-center justify-between mb-4 gap-3">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <h3 className="font-semibold text-foreground">Nội dung</h3>
                 <div className="flex gap-2">
                   {isEditing ? (
@@ -221,7 +222,7 @@ export function CustomerContentDetail() {
                       statusbar: true,
                       plugins: 'autolink lists link table code wordcount autoresize preview searchreplace visualblocks fullscreen',
                       toolbar: 'undo redo | blocks | bold italic underline blockquote | alignleft aligncenter alignright | bullist numlist | link table | removeformat | preview fullscreen code',
-                      content_style: 'body { font-family: Inter, Arial, sans-serif; font-size: 14px; line-height: 1.7; color: #1f2937; } p { margin: 0 0 12px; } ul, ol { margin: 0 0 12px 22px; padding: 0; } li { margin: 4px 0; } h1, h2, h3 { margin: 18px 0 10px; line-height: 1.3; color: #111827; } blockquote { margin: 14px 0; padding-left: 14px; border-left: 3px solid #16a34a; color: #374151; } table { border-collapse: collapse; width: 100%; } td, th { border: 1px solid #d1d5db; padding: 8px; }',
+                      content_style: EDITORIAL_EDITOR_CONTENT_STYLE,
                     }}
                     onEditorChange={(value: string) => setEditContent(value)}
                   />
@@ -229,7 +230,7 @@ export function CustomerContentDetail() {
               ) : (
                 <div className="bg-surface-muted rounded-xl p-5 border text-sm text-foreground leading-relaxed">
                   {looksLikeHtml(content.content) ? (
-                    <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(content.content) }} />
+                    <div className="rich-text" dangerouslySetInnerHTML={{ __html: sanitizeHtml(content.content) }} />
                   ) : (
                     <Markdown>{content.content}</Markdown>
                   )}
@@ -250,12 +251,12 @@ export function CustomerContentDetail() {
             </Card>
 
             <Card className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 border-primary/20">
-              <div className="flex items-center justify-between gap-4">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h3 className="font-semibold text-foreground mb-1">Tạo lại nội dung</h3>
                   <p className="text-sm text-foreground/70">Quay lại generator để tạo phiên bản mới với cấu hình tương tự.</p>
                 </div>
-                <Button className="bg-gradient-to-r from-green-600 to-emerald-600 text-white" onClick={() => navigate('/generate')}>
+                <Button onClick={() => navigate('/generate')}>
                   <RefreshCw className="w-4 h-4 mr-2" /> Tạo lại
                 </Button>
               </div>

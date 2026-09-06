@@ -93,20 +93,20 @@ export function ContactPage() {
       <PublicNavbar />
 
       {/* Hero */}
-      <section className="pt-32 pb-16 bg-gradient-to-br from-slate-950 via-green-950 to-slate-950 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_50%_-10%,rgba(34,197,94,0.12),transparent)]" />
+      <section className="paper-grid relative overflow-hidden border-b-2 border-foreground bg-background pb-16 pt-28 md:pt-32">
+        <div className="pointer-events-none absolute -left-14 top-24 h-36 w-36 rounded-full border-[24px] border-primary/10" />
         <div className="max-w-3xl mx-auto px-5 text-center relative">
-          <Badge className="mb-5 bg-green-950/50 text-green-200 border border-green-700/40 px-4 py-1.5">
+          <Badge className="mb-5 border border-foreground/30 bg-accent/35 px-4 py-1.5 text-foreground">
             {contactHeroBadge}
           </Badge>
-          <h1 className="text-white mb-4">
+          <h1 className="type-hero mb-4 text-foreground">
             {contactHeroTitle}
           </h1>
           <PublicRichText
             content={contactContent}
             field="heroDescription"
             fallback={contactHeroDescription}
-            className="text-base text-muted-foreground/80 [&_a]:text-green-200 [&_a]:underline [&_p]:mb-2 [&_p:last-child]:mb-0 [&_strong]:text-white"
+            className="text-base leading-7 text-muted-foreground [&_a]:text-primary [&_a]:underline [&_p]:mb-2 [&_p:last-child]:mb-0 [&_strong]:text-foreground"
           />
         </div>
       </section>
@@ -137,7 +137,7 @@ export function ContactPage() {
           <div className="grid lg:grid-cols-5 gap-12">
             {/* Form */}
             <div className="lg:col-span-3">
-              <h2 className="text-foreground mb-2" style={{ fontSize: '1.5rem' }}>Gửi tin nhắn</h2>
+              <h2 className="type-section-title mb-2 text-foreground">Gửi tin nhắn</h2>
               <p className="text-muted-foreground text-sm mb-8">Điền đủ ngữ cảnh để bộ phận phụ trách có thể xử lý yêu cầu chính xác hơn.</p>
 
               {submitted ? (
@@ -217,7 +217,7 @@ export function ContactPage() {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="w-full h-13 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-lg shadow-primary/20 py-4"
+                    className="flex h-13 w-full items-center justify-center gap-2 rounded-md bg-primary py-4 text-sm font-bold text-primary-foreground shadow-[4px_4px_0_rgba(23,32,51,.16)] transition-colors hover:bg-primary/90"
                   >
                     <Send className="w-4 h-4" /> {submitting ? 'Đang gửi...' : 'Gửi tin nhắn'}
                   </button>
@@ -254,7 +254,7 @@ export function ContactPage() {
               </div>
 
               <div className="border-2 border-foreground bg-accent p-6 text-foreground shadow-[5px_5px_0_#172033]">
-                <p className="font-mono-editorial text-[10px] font-bold uppercase tracking-[.15em]">Trước khi gửi</p>
+                <p className="text-xs font-bold uppercase tracking-[.06em]">Trước khi gửi</p>
                 <h3 className="mt-3 text-2xl text-foreground">Mô tả đủ để tái hiện vấn đề.</h3>
                 <p className="mt-3 text-sm leading-7 text-foreground/70">Nếu là lỗi kỹ thuật, hãy nêu màn hình, thao tác đã thực hiện và thông báo lỗi nhìn thấy. Không gửi mật khẩu hoặc thông tin bí mật.</p>
               </div>
@@ -268,7 +268,7 @@ export function ContactPage() {
         <div className="max-w-3xl mx-auto px-5 lg:px-8">
           <div className="text-center mb-12">
             <Badge className="mb-4 bg-primary/10 text-primary border-0">FAQ</Badge>
-            <h2 className="text-foreground" style={{ fontSize: '1.8rem' }}>Câu hỏi thường gặp</h2>
+            <h2 className="type-public-title text-foreground">Câu hỏi thường gặp</h2>
           </div>
           <div className="space-y-3">
             {FAQ.map((item, i) => (

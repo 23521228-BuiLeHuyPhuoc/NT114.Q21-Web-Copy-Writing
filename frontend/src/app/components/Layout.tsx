@@ -293,7 +293,7 @@ export function Layout({ children }: LayoutProps) {
                             {notification.title}
                           </p>
                           <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{notification.desc}</p>
-                          <p className="text-[10px] text-muted-foreground/80 mt-1">{notification.time}</p>
+                          <p className="mt-1 text-xs text-muted-foreground">{notification.time}</p>
                         </div>
                         {!notification.read && <span className="w-2 h-2 bg-destructive rounded-full flex-shrink-0 mt-1.5" />}
                       </button>
@@ -402,7 +402,7 @@ export function Layout({ children }: LayoutProps) {
         <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
           <BrandLogo size="md" tone="light" />
         </Link>
-        <p className="mt-3 font-mono-editorial text-[9px] font-bold uppercase tracking-[.2em] text-sidebar-foreground/45">
+        <p className="mt-3 text-xs font-bold uppercase tracking-[.08em] text-sidebar-foreground/65">
           {user?.role === 'admin' ? 'Hệ thống biên tập' : 'Không gian sáng tạo'}
         </p>
       </div>
@@ -430,7 +430,7 @@ export function Layout({ children }: LayoutProps) {
           <div className="space-y-3">
             {adminMenuGroups.map((group) => (
               <div key={group.label} className="space-y-1">
-                <p className="px-3 font-mono-editorial text-[9px] font-bold uppercase tracking-[.16em] text-sidebar-foreground/40">
+                <p className="px-3 text-xs font-bold uppercase tracking-[.06em] text-sidebar-foreground/65">
                   {group.label}
                 </p>
                 <div className="space-y-0.5">
@@ -443,7 +443,7 @@ export function Layout({ children }: LayoutProps) {
           <div className="space-y-3">
             {filteredCustomerMenuGroups.map((group) => (
               <div key={group.label} className="space-y-1">
-                <p className="px-3 font-mono-editorial text-[9px] font-bold uppercase tracking-[.16em] text-sidebar-foreground/40">
+                <p className="px-3 text-xs font-bold uppercase tracking-[.06em] text-sidebar-foreground/65">
                   {group.label}
                 </p>
                 <div className="space-y-0.5">
@@ -466,7 +466,7 @@ export function Layout({ children }: LayoutProps) {
           </Avatar>
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-sm truncate text-sidebar-foreground">{user?.name}</p>
-            <p className="text-xs text-sidebar-foreground/50 truncate">{user?.email}</p>
+            <p className="truncate text-xs text-sidebar-foreground/70">{user?.email}</p>
           </div>
         </div>
         <Button variant="outline" className="w-full h-9 border-sidebar-border bg-transparent text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground" onClick={handleLogout}>
@@ -499,7 +499,7 @@ export function Layout({ children }: LayoutProps) {
               <SheetTrigger asChild>
                 <Button variant="outline" size="icon"><Menu className="w-5 h-5" /></Button>
               </SheetTrigger>
-              <SheetContent side="left" className="p-0 w-60">
+              <SheetContent side="left" className="w-64 border-sidebar-border bg-sidebar p-0 text-sidebar-foreground">
                 <Sidebar />
               </SheetContent>
             </Sheet>
@@ -532,7 +532,7 @@ export function Layout({ children }: LayoutProps) {
             <SheetTrigger asChild>
               <Button variant="outline" size="icon"><Menu className="w-5 h-5" /></Button>
             </SheetTrigger>
-            <SheetContent side="left" className="p-0 w-60">
+            <SheetContent side="left" className="w-64 border-sidebar-border bg-sidebar p-0 text-sidebar-foreground">
               <Sidebar />
             </SheetContent>
           </Sheet>

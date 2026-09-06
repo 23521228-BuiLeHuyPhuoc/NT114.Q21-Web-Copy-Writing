@@ -134,9 +134,9 @@ export function CustomerContents() {
   return (
     <Layout>
       <div className="mx-auto max-w-[1450px] p-4 md:p-7 lg:p-9">
-        <div className="mb-8 flex flex-col justify-between gap-5 border-b-2 border-foreground pb-7 md:flex-row md:items-end">
+        <div className="mb-6 flex flex-col justify-between gap-4 border-b-2 border-foreground pb-5 md:flex-row md:items-end">
           <div>
-            <p className="editorial-kicker mb-4 text-primary">Thư viện bản thảo</p>
+            <p className="editorial-kicker mb-3 text-primary">Thư viện bản thảo</p>
             <h1 className="studio-page-title text-foreground">Nội dung</h1>
             <p className="mt-3 text-sm leading-7 text-muted-foreground">Tìm, đọc và xử lý các bản copy đã lưu từ generator.</p>
           </div>
@@ -178,7 +178,7 @@ export function CustomerContents() {
         </div>
 
         <Card className="mb-7 overflow-hidden border-2 border-foreground">
-          <div className="border-b border-foreground bg-foreground px-4 py-2 font-mono-editorial text-[10px] font-bold uppercase tracking-[.15em] text-background">Tra cứu thư viện</div>
+          <div className="border-b border-foreground bg-foreground px-4 py-2 text-xs font-bold uppercase tracking-[.06em] text-background">Tra cứu thư viện</div>
           <div className="flex flex-wrap gap-3 p-4">
             <div className="relative flex-1 min-w-48">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/80" />
@@ -258,7 +258,7 @@ export function CustomerContents() {
                     </div>
                   </div>
                   <div className="flex flex-shrink-0 items-center gap-1 border-l-0 border-border md:border-l md:pl-3" onClick={e => e.stopPropagation()}>
-                    <span className="mr-2 text-right"><span className="block font-display text-xl font-bold text-primary">{item.quality}%</span><span className="block text-[9px] uppercase tracking-wide text-muted-foreground">chất lượng</span></span>
+                    <span className="mr-2 text-right"><span className="block font-display text-xl font-bold text-primary">{item.quality}%</span><span className="block text-xs text-muted-foreground">chất lượng</span></span>
                     <Button aria-label={`Xem ${item.title}`} variant="ghost" size="sm" onClick={() => navigate(`/contents/${item.id}`)}><Eye className="w-4 h-4" /></Button>
                     <Button aria-label={`Sao chép ${item.title}`} variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(item.content || item.title); toast.success('Đã sao chép!'); }}><Copy className="w-4 h-4" /></Button>
                     <Button aria-label={`Tải xuống ${item.title}`} variant="ghost" size="sm"><Download className="w-4 h-4" /></Button>

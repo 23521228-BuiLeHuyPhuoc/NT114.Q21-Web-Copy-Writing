@@ -601,29 +601,29 @@ export function CustomerGenerator() {
   return (
     <Layout>
       <div className="mx-auto max-w-[1500px] p-4 md:p-7 lg:p-9">
-        <header className="mb-8 grid gap-5 border-b-2 border-foreground pb-7 lg:grid-cols-[1fr_auto] lg:items-end">
+        <header className="mb-6 grid gap-4 border-b-2 border-foreground pb-5 lg:grid-cols-[1fr_auto] lg:items-end">
           <div>
-            <p className="editorial-kicker mb-4 text-primary">Bàn biên tập / Generator</p>
-            <h1 className="studio-page-title text-foreground">Tạo bản nháp.<br />Chọn hướng viết.</h1>
-            <p className="mt-4 max-w-2xl text-sm leading-7 text-muted-foreground">Đi theo thứ tự từ brief đến model, sau đó so sánh và biên tập kết quả ở cùng một mặt bàn.</p>
+            <p className="editorial-kicker mb-3 text-primary">Bàn biên tập / Generator</p>
+            <h1 className="studio-page-title max-w-3xl text-foreground">Tạo bản nháp. Chọn hướng viết.</h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">Đi theo thứ tự từ brief đến model, sau đó so sánh và biên tập kết quả ở cùng một mặt bàn.</p>
           </div>
-          <div className="flex items-center gap-4 border-l-2 border-primary pl-4 font-mono-editorial text-[10px] font-bold uppercase tracking-[.13em] text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-3 border-l-2 border-primary pl-4 text-xs font-bold uppercase tracking-[.06em] text-muted-foreground">
             <span>01 Brief</span><span>→</span><span>02 Model</span><span>→</span><span>03 Bản nháp</span>
           </div>
         </header>
 
-        <div className="generator-workbench grid gap-6 xl:grid-cols-[minmax(380px,.82fr)_minmax(520px,1.18fr)]">
+        <div className="generator-workbench grid gap-6 min-[1380px]:grid-cols-[minmax(380px,.82fr)_minmax(520px,1.18fr)]">
           <section className="space-y-5">
             <div className="border-2 border-foreground bg-card shadow-[7px_7px_0_rgba(23,32,51,.1)]">
               <div className="flex items-center justify-between bg-foreground px-5 py-3 text-background">
                 <div className="flex items-center gap-3"><EditorialGlyph kind="manuscript" className="h-7 w-7 text-background" /><span className="text-sm font-bold">Brief nội dung</span></div>
-                <span className="font-mono-editorial text-[10px] uppercase tracking-[.16em] text-background/55">Step 01</span>
+                <span className="text-xs font-bold uppercase tracking-[.06em] text-background/65">Step 01</span>
               </div>
               <div className="space-y-5 p-4 md:p-5">
                 <IndustryPicker value={industry} onChange={setIndustry} options={industryOptions} />
                 <CopyTypePicker value={copyType} onChange={setCopyType} options={copyTypeOptions} />
 
-                <div className="grid gap-3 md:grid-cols-2">
+                <div className="grid gap-3 lg:grid-cols-2">
                   <div className="border border-border bg-background p-3">
                     <div className="mb-2 flex items-center gap-2"><FileText className="h-4 w-4 text-primary" /><p className="text-xs font-bold uppercase tracking-wide text-foreground">Template</p></div>
                     <select value={selectedTemplateId} onChange={(event) => setSelectedTemplateId(event.target.value)} disabled={templatesLoading} className="h-10 w-full border border-border bg-card px-3 text-sm text-foreground outline-none focus:border-primary">
@@ -650,7 +650,7 @@ export function CustomerGenerator() {
             <div className="border-2 border-foreground bg-card">
               <div className="flex items-center justify-between border-b border-foreground px-5 py-3">
                 <div className="flex items-center gap-2"><Cpu className="h-4 w-4 text-primary" /><span className="text-sm font-bold">Model & tùy chọn đầu ra</span></div>
-                <span className="font-mono-editorial text-[10px] uppercase tracking-[.16em] text-muted-foreground">Step 02</span>
+                <span className="text-xs font-bold uppercase tracking-[.06em] text-muted-foreground">Step 02</span>
               </div>
               <div className="space-y-4 p-4 md:p-5">
                 <div className="grid grid-cols-2 gap-2">
@@ -677,7 +677,7 @@ export function CustomerGenerator() {
           </section>
 
           <section className="min-w-0">
-            <div className="generator-sticky-panel space-y-4 xl:sticky xl:top-24 xl:max-h-[calc(100vh-7rem)] xl:overflow-y-auto xl:overscroll-contain xl:pr-2 xl:pb-4">
+            <div className="generator-sticky-panel space-y-4 min-[1380px]:sticky min-[1380px]:top-24 min-[1380px]:max-h-[calc(100vh-7rem)] min-[1380px]:overflow-y-auto min-[1380px]:overscroll-contain min-[1380px]:pb-4 min-[1380px]:pr-2">
               <div className="flex flex-wrap items-center gap-2 border-b-2 border-foreground pb-3">
                 <div className={`${selectedIndustry?.color} flex h-8 w-8 items-center justify-center border border-foreground`}><IndustryIcon className="h-4 w-4 text-white" /></div>
                 <span className="text-sm font-bold text-foreground">{selectedIndustry?.name}</span>
@@ -685,14 +685,14 @@ export function CustomerGenerator() {
                 {selectedModel && <Badge className="border-0 bg-primary/10 text-primary">{selectedModel.name}</Badge>}
                 {selectedTemplate && <Badge className="border-0 bg-accent/55 text-foreground">{selectedTemplate.name}</Badge>}
                 {selectedProject && <Badge className="border-0 bg-info/10 text-info">{selectedProject.name}</Badge>}
-                {results.length > 0 && <span className="ml-auto font-mono-editorial text-[10px] font-bold uppercase tracking-[.12em] text-muted-foreground">{tokensUsed} tokens · {latency}s</span>}
+                {results.length > 0 && <span className="ml-auto text-xs font-semibold text-muted-foreground">{tokensUsed} tokens · {latency}s</span>}
               </div>
 
               <details className="group border border-border bg-card">
                 <summary className="cursor-pointer list-none px-4 py-3 text-xs font-bold text-foreground marker:hidden">Chi tiết prompt gửi đến API <span className="float-right text-primary group-open:rotate-45">+</span></summary>
                 <div className="space-y-3 border-t border-border bg-background p-4">
-                  {selectedTemplate && <div><p className="mb-2 font-mono-editorial text-[9px] font-bold uppercase tracking-[.14em] text-muted-foreground">System prompt</p><pre className="max-h-40 overflow-auto whitespace-pre-wrap border-l-2 border-accent pl-3 text-xs leading-6 text-foreground/75">{selectedTemplate.systemPrompt}</pre></div>}
-                  <div><p className="mb-2 font-mono-editorial text-[9px] font-bold uppercase tracking-[.14em] text-muted-foreground">User prompt</p><pre className="max-h-52 overflow-auto whitespace-pre-wrap border-l-2 border-primary pl-3 text-xs leading-6 text-foreground/75">{buildPrompt()}</pre></div>
+                  {selectedTemplate && <div><p className="mb-2 text-xs font-bold uppercase tracking-[.05em] text-muted-foreground">System prompt</p><pre className="max-h-40 overflow-auto whitespace-pre-wrap border-l-2 border-accent pl-3 text-xs leading-6 text-foreground/75">{selectedTemplate.systemPrompt}</pre></div>}
+                  <div><p className="mb-2 text-xs font-bold uppercase tracking-[.05em] text-muted-foreground">User prompt</p><pre className="max-h-52 overflow-auto whitespace-pre-wrap border-l-2 border-primary pl-3 text-xs leading-6 text-foreground/75">{buildPrompt()}</pre></div>
                 </div>
               </details>
 

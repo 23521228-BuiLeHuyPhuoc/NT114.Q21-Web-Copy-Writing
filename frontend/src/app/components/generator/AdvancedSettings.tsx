@@ -37,7 +37,7 @@ export function AdvancedSettings({
   onOpenChange,
 }: Props) {
   return (
-    <Card className="p-4">
+    <Card className="gap-0 p-4">
       <button
         className="flex items-center justify-between w-full text-sm font-semibold text-foreground/80"
         onClick={() => onOpenChange(!open)}

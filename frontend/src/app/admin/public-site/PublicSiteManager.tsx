@@ -15,6 +15,7 @@ import { PUBLIC_PAGE_FIELD_DEFS, buildDefaultContent, getPublicPageDef } from '@
 import { normalizePosts } from '@/lib/publicBlog';
 import { matchesSearchRegex } from '@/lib/searchRegex';
 import { tinymceBaseInit, tinymceEditorProps } from '@/lib/tinymce';
+import { EDITORIAL_EDITOR_CONTENT_STYLE } from '@/lib/editorialContentStyles';
 import { publicSiteService, type PublicBlogPost, type PublicPageRecord } from '@/services/publicSiteService';
 import { Edit2, Eye, FileText, Globe2, Newspaper, Plus, Save, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -244,7 +245,7 @@ export function PublicSiteManager() {
                         };
                         input.click();
                       },
-                      content_style: 'body { font-family: Inter, Arial, sans-serif; font-size: 14px; line-height: 1.7; color: #1f2937; } p { margin: 0 0 10px; } ul, ol { margin: 0 0 10px 22px; padding: 0; } li { margin: 4px 0; } h1, h2, h3 { margin: 16px 0 10px; line-height: 1.3; color: #111827; } table { border-collapse: collapse; width: 100%; } td, th { border: 1px solid #d1d5db; padding: 8px; }',
+                      content_style: EDITORIAL_EDITOR_CONTENT_STYLE,
                     }}
                     onEditorChange={(value: string) => updateDraftField(field.key, value)}
                   />
@@ -257,7 +258,7 @@ export function PublicSiteManager() {
         </div>
 
         <div className="mt-6 flex justify-end">
-          <Button onClick={() => void savePage()} disabled={savingPage} className="rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 text-white">
+          <Button onClick={() => void savePage()} disabled={savingPage} className="rounded-md">
             <Save className="mr-2 h-4 w-4" /> {savingPage ? 'Đang lưu...' : 'Lưu trang'}
           </Button>
         </div>
@@ -277,7 +278,7 @@ export function PublicSiteManager() {
           <Link to="/admin/public-site/blog/new">
             <Button variant="outline" className="rounded-xl"><Plus className="mr-2 h-4 w-4" /> Thêm bài</Button>
           </Link>
-          <Button onClick={() => void saveBlog()} disabled={savingBlog} className="rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 text-white"><Save className="mr-2 h-4 w-4" /> {savingBlog ? 'Đang lưu...' : 'Lưu blog'}</Button>
+          <Button onClick={() => void saveBlog()} disabled={savingBlog} className="rounded-md"><Save className="mr-2 h-4 w-4" /> {savingBlog ? 'Đang lưu...' : 'Lưu blog'}</Button>
         </div>
       </div>
 
@@ -324,10 +325,10 @@ export function PublicSiteManager() {
 
   return (
     <Layout>
-      <div className="mx-auto max-w-7xl p-6">
-        <div className="mb-6 flex items-center justify-between gap-4">
+      <div className="mx-auto max-w-7xl p-4 sm:p-6">
+        <div className="page-header flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="mb-1 text-2xl font-bold text-foreground">Quản lý public site</h1>
+            <h1 className="studio-page-title mb-1 text-foreground">Quản lý public site</h1>
             <p className="text-sm text-muted-foreground">Trang chủ, giới thiệu, liên hệ, footer và blog được lưu vào MongoDB.</p>
           </div>
           <Link to="/" className="inline-flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-sm font-semibold text-foreground/70 transition-colors hover:bg-surface-muted">
@@ -335,7 +336,7 @@ export function PublicSiteManager() {
           </Link>
         </div>
 
-        <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-3">
+        <div className="mb-6 grid grid-cols-2 gap-4 min-[1000px]:grid-cols-3">
           <StatTile icon={Globe2} label="Trang quản lý" value={PUBLIC_PAGE_FIELD_DEFS.length} color="text-primary bg-primary/5" />
           <StatTile icon={Newspaper} label="Bài blog" value={blogPosts.length} color="text-primary bg-primary/5" />
           <StatTile icon={FileText} label="Đang hiển thị" value={visibleBlogCount} color="text-emerald-700 bg-emerald-100" />

@@ -156,7 +156,7 @@ export function ForgotPasswordPage() {
           </div>
 
           <div className="text-center mb-8">
-            <h2 className="text-foreground mb-2">{cfg.title}</h2>
+            <h2 className="type-auth-title mb-2 text-foreground">{cfg.title}</h2>
             <p className="text-muted-foreground text-sm">{cfg.sub}</p>
           </div>
 
@@ -168,7 +168,7 @@ export function ForgotPasswordPage() {
                 <Input type="email" placeholder="Nhập email đã đăng ký" {...emailForm.register('email', { validate: validateEmail })} className="h-12 rounded-xl border-border focus:border-primary" />
                 {emailForm.formState.errors.email && <p className="text-xs text-red-600 mt-1">{emailForm.formState.errors.email.message}</p>}
               </div>
-              <button type="submit" disabled={isLoading || emailForm.formState.isSubmitting} className="w-full h-12 bg-gradient-to-r from-emerald-600 via-green-600 to-green-600 hover:from-emerald-500 hover:via-green-500 hover:to-green-500 disabled:opacity-60 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-primary/20">
+              <button type="submit" disabled={isLoading || emailForm.formState.isSubmitting} className="h-12 w-full rounded-md bg-primary text-sm font-bold text-primary-foreground shadow-[4px_4px_0_rgba(23,32,51,.18)] transition-colors hover:bg-primary/90 disabled:opacity-60">
                 {isLoading ? 'Đang gửi...' : 'Gửi mã OTP →'}
               </button>
             </form>
@@ -195,7 +195,7 @@ export function ForgotPasswordPage() {
               <button
                 onClick={handleVerifyOtp}
                 disabled={isLoading}
-                className="w-full h-12 bg-gradient-to-r from-emerald-600 via-green-600 to-green-600 hover:from-emerald-500 hover:via-green-500 hover:to-green-500 disabled:opacity-60 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-primary/20"
+                className="h-12 w-full rounded-md bg-primary text-sm font-bold text-primary-foreground shadow-[4px_4px_0_rgba(23,32,51,.18)] transition-colors hover:bg-primary/90 disabled:opacity-60"
               >
                 {isLoading ? 'Đang xác nhận...' : 'Xác nhận OTP →'}
               </button>
@@ -235,7 +235,7 @@ export function ForgotPasswordPage() {
                 <Input type="password" placeholder="Nhập lại mật khẩu" {...resetForm.register('confirmPass', { validate: (value) => validateConfirmPassword(value, resetForm.watch('newPass')) })} className="h-12 rounded-xl border-border focus:border-primary" />
                 {resetForm.formState.errors.confirmPass && <p className="text-xs text-red-600 mt-1">{resetForm.formState.errors.confirmPass.message}</p>}
               </div>
-              <button type="submit" disabled={isLoading || resetForm.formState.isSubmitting} className="w-full h-12 bg-gradient-to-r from-emerald-600 via-green-600 to-green-600 hover:from-emerald-500 hover:via-green-500 hover:to-green-500 disabled:opacity-60 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-primary/20">
+              <button type="submit" disabled={isLoading || resetForm.formState.isSubmitting} className="h-12 w-full rounded-md bg-primary text-sm font-bold text-primary-foreground shadow-[4px_4px_0_rgba(23,32,51,.18)] transition-colors hover:bg-primary/90 disabled:opacity-60">
                 {isLoading ? 'Đang đặt lại...' : 'Đặt lại mật khẩu →'}
               </button>
             </form>
@@ -246,7 +246,7 @@ export function ForgotPasswordPage() {
             <div className="text-center space-y-4">
               <button
                 onClick={() => navigate('/login')}
-                className="w-full h-12 bg-gradient-to-r from-emerald-600 via-green-600 to-green-600 hover:from-emerald-500 hover:via-green-500 hover:to-green-500 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-primary/20"
+                className="h-12 w-full rounded-md bg-primary text-sm font-bold text-primary-foreground shadow-[4px_4px_0_rgba(23,32,51,.18)] transition-colors hover:bg-primary/90"
               >
                 Đăng nhập ngay →
               </button>

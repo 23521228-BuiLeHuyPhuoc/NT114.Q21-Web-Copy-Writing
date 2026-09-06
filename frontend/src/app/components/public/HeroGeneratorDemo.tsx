@@ -1,566 +1,247 @@
-import { useState, useEffect, useRef } from 'react';
-import {
-  Sparkles, Wand2, Mail, FileText, ShoppingCart,
-  Megaphone, CheckCircle2, Copy, RotateCcw, ChevronDown,
-} from 'lucide-react';
-import { PUBLIC_SITE_HOST } from '@/lib/publicEnv';
+import { useEffect, useState } from 'react';
+import { Check, FileText, Sparkles, Wand2 } from 'lucide-react';
 
-/* ─────────────────────────────────────────────
-   Scenarios — each loops automatically
-───────────────────────────────────────────── */
-interface Scenario {
-  type: string;
-  typeIcon: React.ElementType;
-  typeColor: string;
-  model: string;
-  modelBg: string;
-  industry: string;
-  inputText: string;
+type Phase = 'waiting' | 'typing' | 'thinking' | 'writing' | 'complete' | 'changing';
+
+type DemoScene = {
+  format: string;
+  prompt: string;
   tone: string;
-  output: string;
-  quality: number;
-  seconds: string;
-}
+  result: string;
+};
 
-const SCENARIOS: Scenario[] = [
+const DEMO_SCENES: DemoScene[] = [
   {
-    type: 'Facebook Ad',
-    typeIcon: Megaphone,
-    typeColor: 'bg-warning/15 text-amber-800',
-    model: 'GPT-4',
-    modelBg: 'bg-primary/10 text-primary',
-    industry: 'E-commerce',
-    inputText: 'Khóa học lập trình Python',
-    tone: 'Hấp dẫn, thúc đẩy hành động',
-    output:
-      '🚀 Học Python từ ZERO đến PRO — chỉ trong 30 ngày!\n\n' +
-      'Bạn đang loay hoay không biết bắt đầu từ đâu?\n' +
-      'Khóa học Python của chúng tôi sẽ dẫn bạn từng bước từ cơ bản đến thực chiến.\n\n' +
-      '✅ 120+ bài học video chất lượng cao\n' +
-      '✅ Dự án thực tế: xây app, phân tích dữ liệu\n' +
-      '✅ Mentor 1-1 hỗ trợ 24/7\n' +
-      '✅ Chứng chỉ được doanh nghiệp công nhận\n\n' +
-      '🔥 Ưu đãi 50% — chỉ còn 48 giờ!\n' +
-      '👉 Đăng ký ngay để nhận học bổng miễn phí!',
-    quality: 94,
-    seconds: '1.7',
+    format: 'Bài đăng mạng xã hội',
+    prompt: 'Viết caption ra mắt bộ sổ tay làm từ giấy tái chế, dành cho người thích ghi chép mỗi ngày.',
+    tone: 'Ấm áp · gần gũi',
+    result: 'Một cuốn sổ mới, một nhịp viết chậm hơn.\n\nBộ sổ tay Mộc được làm từ giấy tái chế, đủ nhẹ để mang theo và đủ bền cho mọi ý tưởng bất chợt.\n\nMở trang đầu tiên — câu chuyện tiếp theo là của bạn.',
   },
   {
-    type: 'Email Marketing',
-    typeIcon: Mail,
-    typeColor: 'bg-primary/10 text-primary',
-    model: 'GPT-4',
-    modelBg: 'bg-warning/15 text-amber-800',
-    industry: 'Retail',
-    inputText: 'Flash sale cuối năm giảm 70%',
-    tone: 'Khẩn cấp, cá nhân hóa',
-    output:
-      'Subject: [CHỈ 24H] Tên bạn — Ưu đãi 70% dành riêng cho bạn! 🎁\n\n' +
-      'Chào [Tên khách hàng],\n\n' +
-      'Chúng tôi đã chọn riêng cho bạn những sản phẩm BÁN CHẠY NHẤT với mức giá\n' +
-      'TỐT NHẤT trong năm nay — giảm đến 70%!\n\n' +
-      '⏰ Ưu đãi kết thúc lúc 23:59 hôm nay\n' +
-      '🛍️  Hơn 500 sản phẩm đang chờ bạn khám phá\n' +
-      '🚚 Miễn phí vận chuyển cho đơn từ 299K\n\n' +
-      '→ [XEM ƯU ĐÃI NGAY]\n\n' +
-      'Chúc bạn mua sắm vui vẻ,\nĐội ngũ CSKH',
-    quality: 92,
-    seconds: '2.1',
+    format: 'Email giới thiệu',
+    prompt: 'Soạn email giới thiệu workshop viết nội dung cho chủ doanh nghiệp nhỏ, nhấn mạnh tính thực hành.',
+    tone: 'Rõ ràng · thuyết phục',
+    result: 'Tiêu đề: Biến ý tưởng thành nội dung bán hàng trong một buổi sáng\n\nChào bạn,\n\nWorkshop này không bắt đầu bằng lý thuyết dài. Bạn sẽ mang một sản phẩm thật đến lớp, xây brief và hoàn thiện bộ nội dung đầu tiên ngay tại chỗ.\n\nĐăng ký để giữ chỗ cho buổi thực hành gần nhất.',
   },
   {
-    type: 'Mô tả sản phẩm',
-    typeIcon: ShoppingCart,
-    typeColor: 'bg-primary/10 text-primary',
-    model: 'Llama 3.1',
-    modelBg: 'bg-primary/10 text-primary',
-    industry: 'Bất động sản',
-    inputText: 'Căn hộ cao cấp view sông Q.7',
-    tone: 'Sang trọng, thu hút nhà đầu tư',
-    output:
-      '✨ SUNRISE RIVERSIDE — Kiệt tác kiến trúc bên sông Sài Gòn\n\n' +
-      'Nơi cuộc sống thượng lưu chạm đến từng khoảnh khắc.\n\n' +
-      'Tọa lạc tại vị trí vàng Quận 7 — trái tim phồn vinh của TP.HCM,\n' +
-      'Sunrise Riverside mang đến trải nghiệm sống đẳng cấp 5 sao\n' +
-      'với tầm nhìn panorama 270° ôm trọn dòng sông thơ mộng.\n\n' +
-      '🏙️ Diện tích: 68 – 142 m² | 2 – 4 phòng ngủ\n' +
-      '🌿 Tiện ích: hồ bơi vô cực, gym, spa, sky lounge\n' +
-      '📍 Kết nối: 5 phút đến Phú Mỹ Hưng, Crescent Mall\n' +
-      '💎 Pháp lý: sổ hồng lâu dài, ngân hàng hỗ trợ 70%\n\n' +
-      'Chỉ 20 căn cuối — Liên hệ ngay để nhận giá ưu đãi!',
-    quality: 96,
-    seconds: '1.9',
-  },
-  {
-    type: 'Landing Page',
-    typeIcon: FileText,
-    typeColor: 'bg-primary/10 text-primary',
-    model: 'GPT-4',
-    modelBg: 'bg-warning/15 text-amber-800',
-    industry: 'SaaS / Công nghệ',
-    inputText: 'Phần mềm quản lý nhà hàng',
-    tone: 'Chuyên nghiệp, thuyết phục',
-    output:
-      'HEADLINE:\n' +
-      '"Quản lý nhà hàng thông minh hơn — Tăng doanh thu 35% ngay tháng đầu"\n\n' +
-      'SUBHEADLINE:\n' +
-      'Phần mềm all-in-one giúp bạn kiểm soát order, kho hàng,\n' +
-      'nhân sự và báo cáo tài chính — từ một màn hình duy nhất.\n\n' +
-      'SOCIAL PROOF:\n' +
-      '⭐⭐⭐⭐⭐ "Doanh thu tăng 40% sau 2 tháng dùng!"\n' +
-      '— Trần Văn Minh, Chủ chuỗi 5 nhà hàng tại Hà Nội\n\n' +
-      'CTA PRIMARY:   [Dùng thử miễn phí 30 ngày →]\n' +
-      'CTA SECONDARY: [Xem video demo]\n\n' +
-      '✅ Setup 15 phút   ✅ Không cần IT   ✅ Hỗ trợ 24/7',
-    quality: 95,
-    seconds: '2.3',
+    format: 'Mô tả sản phẩm',
+    prompt: 'Viết mô tả cho đèn bàn làm việc có ánh sáng dịu, thiết kế tối giản và điều chỉnh được độ sáng.',
+    tone: 'Tinh tế · súc tích',
+    result: 'Ánh sáng vừa đủ cho những giờ tập trung.\n\nĐèn bàn Nét có ba mức sáng, thân đèn mảnh và góc chiếu linh hoạt. Thiết kế gọn giúp bàn làm việc thoáng hơn, trong khi ánh sáng dịu giữ đôi mắt dễ chịu từ bản nháp đầu tiên đến dòng cuối ngày.',
   },
 ];
 
-/* ─────────────────────────────────────────────
-   Animation phases (ms durations):
-   IDLE → TYPING_INPUT → PRE_GEN → GENERATING → STREAMING → DONE → FADE
-───────────────────────────────────────────── */
-type Phase =
-  | 'idle'
-  | 'typing_input'
-  | 'pre_gen'
-  | 'generating'
-  | 'streaming'
-  | 'done'
-  | 'fade';
+const PHASE_LABELS: Record<Phase, string> = {
+  waiting: 'Sẵn sàng nhận brief',
+  typing: 'Đang nhập prompt',
+  thinking: 'AI đang lên dàn ý',
+  writing: 'Đang viết bản nháp',
+  complete: 'Bản nháp đã sẵn sàng',
+  changing: 'Chuyển brief tiếp theo',
+};
 
-/* ─────────────────────────────────────────────
-   Typewriter helper
-───────────────────────────────────────────── */
-function useTypewriter(
-  active: boolean,
-  fullText: string,
-  onDone: () => void,
-  charDelay = 16,
-) {
-  const [displayed, setDisplayed] = useState('');
-  const indexRef = useRef(0);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+function usePrefersReducedMotion() {
+  const [reducedMotion, setReducedMotion] = useState(false);
 
   useEffect(() => {
-    if (!active) {
-      clearTimeout(timerRef.current);
-      return;
-    }
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const updatePreference = () => setReducedMotion(media.matches);
 
-    setDisplayed('');
-    indexRef.current = 0;
+    updatePreference();
+    media.addEventListener?.('change', updatePreference);
+    return () => media.removeEventListener?.('change', updatePreference);
+  }, []);
 
-    function tick() {
-      if (indexRef.current < fullText.length) {
-        const burst = Math.min(4, fullText.length - indexRef.current);
-        indexRef.current += burst;
-        setDisplayed(fullText.slice(0, indexRef.current));
-        timerRef.current = setTimeout(tick, charDelay);
-      } else {
-        onDone();
-      }
-    }
-
-    timerRef.current = setTimeout(tick, 60);
-    return () => clearTimeout(timerRef.current);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active, fullText]);
-
-  return displayed;
+  return reducedMotion;
 }
 
-/* ─────────────────────────────────────────────
-   Typewriter for input field
-───────────────────────────────────────────── */
-function useInputTypewriter(
-  active: boolean,
-  fullText: string,
-  onDone: () => void,
-) {
-  const [displayed, setDisplayed] = useState('');
-  const indexRef = useRef(0);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
-
-  useEffect(() => {
-    if (!active) {
-      clearTimeout(timerRef.current);
-      return;
-    }
-
-    setDisplayed('');
-    indexRef.current = 0;
-
-    function tick() {
-      if (indexRef.current < fullText.length) {
-        indexRef.current += 1;
-        setDisplayed(fullText.slice(0, indexRef.current));
-        timerRef.current = setTimeout(tick, 55 + Math.random() * 40);
-      } else {
-        onDone();
-      }
-    }
-
-    timerRef.current = setTimeout(tick, 300);
-    return () => clearTimeout(timerRef.current);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active, fullText]);
-
-  return displayed;
-}
-
-/* ─────────────────────────────────────────────
-   Main component
-───────────────────────────────────────────── */
 export function HeroGeneratorDemo() {
-  const [scenarioIdx, setScenarioIdx] = useState(0);
-  const [phase, setPhase] = useState<Phase>('idle');
-  const [btnPressed, setBtnPressed] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const reducedMotion = usePrefersReducedMotion();
+  const [sceneIndex, setSceneIndex] = useState(0);
+  const [phase, setPhase] = useState<Phase>('waiting');
+  const [promptLength, setPromptLength] = useState(0);
+  const [resultLength, setResultLength] = useState(0);
 
-  const scenario = SCENARIOS[scenarioIdx];
+  const scene = DEMO_SCENES[sceneIndex];
 
-  /* ── Typewriter state ── */
-  const inputTyped = useInputTypewriter(
-    phase === 'typing_input',
-    scenario.inputText,
-    () => {
-      setTimeout(() => setPhase('pre_gen'), 600);
-    },
-  );
-
-  const outputTyped = useTypewriter(
-    phase === 'streaming',
-    scenario.output,
-    () => setTimeout(() => setPhase('done'), 200),
-    14,
-  );
-
-  /* ── Phase machine ── */
   useEffect(() => {
-    let t: ReturnType<typeof setTimeout>;
-
-    if (phase === 'idle') {
-      t = setTimeout(() => setPhase('typing_input'), 800);
-    } else if (phase === 'pre_gen') {
-      // Animate button click
-      t = setTimeout(() => {
-        setBtnPressed(true);
-        setTimeout(() => {
-          setBtnPressed(false);
-          setPhase('generating');
-        }, 300);
-      }, 400);
-    } else if (phase === 'generating') {
-      t = setTimeout(() => setPhase('streaming'), 1100);
-    } else if (phase === 'done') {
-      t = setTimeout(() => setPhase('fade'), 3200);
-    } else if (phase === 'fade') {
-      t = setTimeout(() => {
-        setScenarioIdx(i => (i + 1) % SCENARIOS.length);
-        setPhase('idle');
-        setCopied(false);
-      }, 700);
+    if (reducedMotion) {
+      setPhase('complete');
+      setPromptLength(scene.prompt.length);
+      setResultLength(scene.result.length);
+      return;
     }
 
-    return () => clearTimeout(t);
-  }, [phase]);
+    let timer: ReturnType<typeof setTimeout>;
 
-  const TypeIcon = scenario.typeIcon;
+    if (phase === 'waiting') {
+      timer = setTimeout(() => setPhase('typing'), 650);
+    } else if (phase === 'typing') {
+      if (promptLength < scene.prompt.length) {
+        timer = setTimeout(() => setPromptLength((value) => Math.min(value + 1, scene.prompt.length)), 32);
+      } else {
+        timer = setTimeout(() => setPhase('thinking'), 450);
+      }
+    } else if (phase === 'thinking') {
+      timer = setTimeout(() => setPhase('writing'), 1050);
+    } else if (phase === 'writing') {
+      if (resultLength < scene.result.length) {
+        timer = setTimeout(() => setResultLength((value) => Math.min(value + 3, scene.result.length)), 18);
+      } else {
+        timer = setTimeout(() => setPhase('complete'), 180);
+      }
+    } else if (phase === 'complete') {
+      timer = setTimeout(() => setPhase('changing'), 3400);
+    } else {
+      timer = setTimeout(() => {
+        setSceneIndex((value) => (value + 1) % DEMO_SCENES.length);
+        setPromptLength(0);
+        setResultLength(0);
+        setPhase('waiting');
+      }, 420);
+    }
 
-  const isInputVisible = phase !== 'idle';
-  const isOutputVisible = phase === 'streaming' || phase === 'done' || phase === 'fade';
-  const isDone = phase === 'done' || phase === 'fade';
-  const isFading = phase === 'fade';
+    return () => clearTimeout(timer);
+  }, [phase, promptLength, reducedMotion, resultLength, scene.prompt.length, scene.result.length]);
 
-  const progressPct =
-    phase === 'idle'         ? 0
-    : phase === 'typing_input' ? 15
-    : phase === 'pre_gen'      ? 30
-    : phase === 'generating'   ? 70
-    : phase === 'streaming'    ? 85
-    : phase === 'done'         ? 100
-    : 100;
+  const promptText = scene.prompt.slice(0, promptLength);
+  const resultText = scene.result.slice(0, resultLength);
+  const isWorking = phase === 'thinking' || phase === 'writing';
+  const isComplete = phase === 'complete';
+  const activeStep = phase === 'waiting' || phase === 'typing' ? 0 : phase === 'thinking' ? 1 : 2;
 
   return (
     <div
-      className={`dark relative select-none transition-opacity duration-700 ${isFading ? 'opacity-0' : 'opacity-100'}`}
+      aria-hidden="true"
+      className={`relative select-none transition-all duration-500 ${phase === 'changing' ? 'translate-y-1 opacity-30' : 'translate-y-0 opacity-100'}`}
     >
-      {/* Outer card — browser chrome */}
-      <div className="rounded-2xl overflow-hidden shadow-[0_24px_60px_rgba(0,0,0,0.5)] ring-1 ring-white/10 bg-[#0f1117]">
+      <div className="pointer-events-none absolute -right-3 -top-5 z-10 hidden rotate-2 border-2 border-foreground bg-accent px-4 py-2 font-mono-editorial text-[11px] font-bold uppercase tracking-[.12em] text-foreground shadow-[3px_3px_0_#172033] sm:block">
+        Demo tự chạy
+      </div>
 
-        {/* Title bar */}
-        <div className="flex items-center gap-2 px-4 py-3 bg-[#1a1d27] border-b border-white/6">
-          <div className="flex gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-[#ff5f57]" />
-            <div className="w-3 h-3 rounded-full bg-[#febc2e]" />
-            <div className="w-3 h-3 rounded-full bg-[#28c840]" />
+      <div className="overflow-hidden border-2 border-foreground bg-card shadow-[8px_8px_0_#172033] sm:shadow-[11px_11px_0_#172033]">
+        <div className="flex min-w-0 items-center gap-3 border-b-2 border-foreground bg-foreground px-3 py-2.5 text-background sm:px-4">
+          <div className="flex shrink-0 gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-full bg-primary" />
+            <span className="h-2.5 w-2.5 rounded-full bg-accent" />
+            <span className="h-2.5 w-2.5 rounded-full bg-background/65" />
           </div>
-          <div className="flex-1 flex justify-center">
-            <div className="bg-[#0f1117] rounded-lg px-4 py-1 flex items-center gap-2 border border-white/8">
-              <div className="w-3 h-3 rounded-full bg-primary/80" />
-              <span className="text-[11px] text-muted-foreground font-mono truncate">{PUBLIC_SITE_HOST}/generator</span>
-            </div>
-          </div>
-          <div className="w-16" />
+          <p className="min-w-0 truncate font-mono-editorial text-[11px] font-bold uppercase tracking-[.1em] text-background/80">
+            CopyPro / Bàn soạn trực tiếp
+          </p>
+          <span className="ml-auto flex shrink-0 items-center gap-1.5 text-[11px] font-semibold text-background/65">
+            <span className={`h-1.5 w-1.5 rounded-full ${isComplete ? 'bg-accent' : 'bg-primary editorial-demo-pulse'}`} />
+            {PHASE_LABELS[phase]}
+          </span>
         </div>
 
-        {/* App shell — unified height for balanced look */}
-        <div className="flex h-[450px] bg-[#0f1117]">
-
-          {/* ── Main area ── */}
-          <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-
-            {/* Top bar */}
-            <div className="flex items-center justify-between px-4 py-3.5 border-b border-white/5">
-              <h2 className="text-white text-sm font-bold truncate">AI Content Generator</h2>
-              <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-                <span className={`text-[10px] px-2 py-1 rounded-full font-semibold ${scenario.modelBg}`}>
-                  {scenario.model}
-                </span>
-                <span className="text-[10px] px-2 py-1 rounded-full bg-gray-800 text-muted-foreground/80 font-medium hidden sm:block">
-                  {scenario.industry}
-                </span>
-              </div>
+        <div className="grid min-w-0 sm:grid-cols-[.88fr_1.12fr]">
+          <div className="min-w-0 border-b-2 border-foreground bg-surface-muted/70 p-4 sm:border-b-0 sm:border-r-2 sm:p-5">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <p className="font-mono-editorial text-xs font-bold uppercase tracking-[.08em] text-primary">01 / Brief</p>
+              <span className="border border-foreground/35 bg-card px-2 py-1 text-[11px] font-semibold text-muted-foreground">
+                {scene.format}
+              </span>
             </div>
 
-            {/* Progress bar */}
-            <div className="h-0.5 bg-gray-800 relative flex-shrink-0">
-              <div
-                className="absolute inset-y-0 left-0 bg-gradient-to-r from-green-500 to-emerald-500 transition-all duration-700 ease-out"
-                style={{ width: `${progressPct}%` }}
-              />
+            <div className="border border-foreground bg-card p-3 shadow-[3px_3px_0_rgba(23,32,51,.12)] sm:min-h-[132px] sm:p-4">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <span className="text-xs font-bold text-foreground">Prompt</span>
+                <span className="font-mono-editorial text-[10px] font-semibold uppercase tracking-[.08em] text-muted-foreground">Tiếng Việt</span>
+              </div>
+              <p className="min-h-[72px] break-words text-[13px] leading-6 text-foreground sm:text-sm">
+                {promptText || <span className="text-muted-foreground/60">Nhập mục tiêu nội dung tại đây...</span>}
+                {phase === 'typing' && <span className="editorial-demo-caret ml-0.5 inline-block h-[1.05em] w-0.5 translate-y-0.5 bg-primary" />}
+              </p>
             </div>
 
-            {/* Content */}
-            <div className="flex flex-1 overflow-hidden min-h-0">
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <span className="text-[11px] font-bold text-muted-foreground">Giọng viết</span>
+              <span className="border border-foreground/30 bg-accent/35 px-2.5 py-1 text-[11px] font-semibold text-foreground">{scene.tone}</span>
+            </div>
 
-              {/* ── Left: Controls — narrower so output gets more room ── */}
-              <div className="scrollbar-none w-[170px] sm:w-[185px] flex-shrink-0 border-r border-white/5 p-3 flex flex-col gap-2.5 overflow-y-auto">
-
-                {/* Content type */}
-                <div>
-                  <p className="text-foreground/70 text-[10px] font-bold uppercase tracking-widest mb-2">Loại nội dung</p>
-                  <div
-                    className={`flex items-center gap-2 p-2.5 rounded-xl border ${
-                      isInputVisible
-                        ? 'border-primary/50 bg-primary/10'
-                        : 'border-white/8 bg-card/4'
-                    } transition-all`}
-                  >
-                    <div className={`p-1.5 rounded-lg ${scenario.typeColor} transition-all`}>
-                      <TypeIcon className="w-3 h-3" />
-                    </div>
-                    <span className="text-white text-[11px] font-semibold flex-1 truncate">{scenario.type}</span>
-                    <ChevronDown className="w-3 h-3 text-foreground/70 flex-shrink-0" />
-                  </div>
-                </div>
-
-                {/* Input field */}
-                <div>
-                  <p className="text-foreground/70 text-[10px] font-bold uppercase tracking-widest mb-2">Sản phẩm / Chủ đề</p>
-                  <div className={`relative rounded-xl border px-3 py-2 bg-card/4 min-h-[38px] transition-all ${
-                    phase === 'typing_input'
-                      ? 'border-primary/60 shadow-[0_0_0_2px_rgba(34,197,94,0.14)]'
-                      : isInputVisible
-                      ? 'border-white/15'
-                      : 'border-white/6'
-                  }`}>
-                    <span className="text-white text-[11px] leading-snug break-words">
-                      {isInputVisible ? inputTyped : ''}
-                      {phase === 'typing_input' && (
-                        <span className="inline-block w-0.5 h-3 bg-green-400 ml-0.5 align-middle animate-pulse" />
-                      )}
-                    </span>
-                    {!isInputVisible && (
-                      <span className="text-foreground/80 text-[11px]">Nhập tên sản phẩm...</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Tone */}
-                <div>
-                  <p className="text-foreground/70 text-[10px] font-bold uppercase tracking-widest mb-2">Giọng văn</p>
-                  <div className={`rounded-xl border px-3 py-1.5 bg-card/4 transition-all ${isInputVisible ? 'border-white/12' : 'border-white/5'}`}>
-                    <span className="text-muted-foreground/80 text-[11px]">{isInputVisible ? scenario.tone : '—'}</span>
-                  </div>
-                </div>
-
-                {/* Versions */}
-                <div>
-                  <p className="text-foreground/70 text-[10px] font-bold uppercase tracking-widest mb-2">Số phiên bản</p>
-                  <div className="flex gap-1.5">
-                    {[1, 2, 3].map(n => (
-                      <div
-                        key={n}
-                        className={`flex-1 text-center py-1.5 rounded-lg text-[11px] font-bold border transition-all cursor-default ${
-                          n === 1
-                            ? 'bg-primary/20 border-primary/40 text-primary'
-                            : 'bg-card/4 border-white/8 text-foreground/70'
-                        }`}
-                      >
-                        {n}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Generate button */}
-                <button
-                  className={`w-full py-2 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all ${
-                    phase === 'generating' || phase === 'streaming'
-                      ? 'bg-primary/30 text-primary border border-primary/30 cursor-not-allowed'
-                      : btnPressed
-                      ? 'bg-green-400 text-white scale-95 shadow-none'
-                      : phase === 'pre_gen'
-                      ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-primary/30 scale-100'
-                      : 'bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-md shadow-primary/25'
-                  }`}
-                >
-                  {phase === 'generating' ? (
-                    <>
-                      <div className="w-3 h-3 border-2 border-green-300 border-t-transparent rounded-full animate-spin" />
-                      Đang tạo...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-3 h-3" />
-                      Tạo copy AI
-                    </>
-                  )}
-                </button>
-              </div>
-
-              {/* ── Right: Output ── */}
-              <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-
-                {/* Output header */}
-                <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 border-b border-white/5 flex-shrink-0">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-1.5 h-1.5 rounded-full transition-colors flex-shrink-0 ${
-                      phase === 'generating' ? 'bg-amber-400 animate-pulse'
-                      : isDone ? 'bg-primary/50'
-                      : phase === 'streaming' ? 'bg-green-400 animate-pulse'
-                      : 'bg-gray-700'
-                    }`} />
-                    <span className="text-foreground/70 text-[10px] font-semibold uppercase tracking-wider truncate">
-                      {phase === 'idle' ? 'Sẵn sàng'
-                        : phase === 'typing_input' ? 'Đang nhập...'
-                        : phase === 'pre_gen' ? 'Chuẩn bị...'
-                        : phase === 'generating' ? 'AI đang xử lý...'
-                        : phase === 'streaming' ? 'Đang tạo copy...'
-                        : 'Hoàn thành ✓'}
-                    </span>
-                  </div>
-                  {isDone && (
-                    <div className="flex items-center gap-1.5 flex-shrink-0">
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-900/40 text-emerald-400 border border-emerald-700/30 font-medium hidden sm:block">
-                        ⭐ {scenario.quality}%
-                      </span>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-900/30 text-primary border border-green-700/30 font-medium">
-                        ⚡ {scenario.seconds}s
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Output body */}
-                <div className="flex-1 overflow-hidden relative min-h-0">
-
-                  {/* Loading shimmer rows */}
-                  {phase === 'generating' && (
-                    <div className="absolute inset-0 p-4 flex flex-col gap-2.5">
-                      {[95, 80, 88, 72, 85, 60, 78].map((w, i) => (
-                        <div
-                          key={i}
-                          className="h-3 rounded-full bg-gradient-to-r from-gray-800 via-gray-700 to-gray-800 animate-pulse"
-                          style={{
-                            width: `${w}%`,
-                            animationDelay: `${i * 120}ms`,
-                            animationDuration: '1.4s',
-                          }}
-                        />
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Idle placeholder */}
-                  {(phase === 'idle' || phase === 'typing_input' || phase === 'pre_gen') && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-                      <div className="w-12 h-12 rounded-2xl bg-gray-800 flex items-center justify-center">
-                        <Wand2 className="w-5 h-5 text-foreground/70" />
-                      </div>
-                      <p className="text-foreground/80 text-xs font-medium text-center px-6">
-                        {phase === 'idle'
-                          ? 'Kết quả sẽ xuất hiện tại đây...'
-                          : phase === 'typing_input'
-                          ? 'Điền thông tin sản phẩm...'
-                          : 'Sẵn sàng tạo copy!'}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Streamed text */}
-                  {isOutputVisible && (
-                    <div className="absolute inset-0 overflow-y-auto p-3 sm:p-4">
-                      <pre className="whitespace-pre-wrap text-gray-200 text-[11px] sm:text-[11.5px] leading-[1.75] font-sans break-words">
-                        {outputTyped}
-                        {phase === 'streaming' && (
-                          <span className="inline-block w-0.5 h-3.5 bg-green-400 ml-0.5 animate-pulse align-middle" />
-                        )}
-                      </pre>
-                    </div>
-                  )}
-                </div>
-
-                {/* Action bar */}
-                {isDone && (
-                  <div className="border-t border-white/5 px-3 sm:px-4 py-2.5 flex items-center gap-2 bg-[#13161f]/60 flex-shrink-0">
-                    <button
-                      onClick={() => setCopied(true)}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all ${
-                        copied
-                          ? 'bg-primary/20 text-primary border border-primary/30'
-                          : 'bg-card/10 text-muted-foreground/60 border border-white/10 hover:bg-card/10'
-                      }`}
-                    >
-                      {copied
-                        ? <><CheckCircle2 className="w-3 h-3" /> Đã copy!</>
-                        : <><Copy className="w-3 h-3" /> Copy</>}
-                    </button>
-                    <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-card/10 text-muted-foreground/60 border border-white/10 transition-all">
-                      <RotateCcw className="w-3 h-3" /> Tạo lại
-                    </button>
-                    <div className="ml-auto flex items-center gap-1 text-[10px] text-foreground/80">
-                      <div className="w-1.5 h-1.5 bg-primary/50 rounded-full animate-pulse" />
-                      Phiên bản 1/1
-                    </div>
-                  </div>
-                )}
-              </div>
+            <div
+              className={`mt-4 flex h-10 items-center justify-center gap-2 border-2 border-foreground px-4 text-xs font-bold transition-all duration-200 ${
+                isWorking
+                  ? 'translate-x-[2px] translate-y-[2px] bg-primary/85 text-primary-foreground shadow-none'
+                  : isComplete
+                    ? 'bg-accent text-foreground shadow-[3px_3px_0_#172033]'
+                    : 'bg-primary text-primary-foreground shadow-[3px_3px_0_#172033]'
+              }`}
+            >
+              {isComplete ? <Check className="h-4 w-4" /> : <Sparkles className={`h-4 w-4 ${isWorking ? 'editorial-demo-spin' : ''}`} />}
+              {isWorking ? 'AI đang soạn...' : isComplete ? 'Đã tạo bản nháp' : 'Tạo bản nháp'}
             </div>
           </div>
+
+          <div className="min-w-0 bg-card p-4 sm:p-5">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+              <p className="font-mono-editorial text-xs font-bold uppercase tracking-[.08em] text-primary">02 / Bản thảo</p>
+              <span className="flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground">
+                <span className={`h-2 w-2 rounded-full ${isComplete ? 'bg-success' : isWorking ? 'bg-warning editorial-demo-pulse' : 'bg-muted-foreground/35'}`} />
+                {PHASE_LABELS[phase]}
+              </span>
+            </div>
+
+            <div className="paper-noise relative min-h-[238px] overflow-hidden border border-foreground bg-background p-4 sm:min-h-[292px] sm:p-5">
+              <div className="absolute right-0 top-0 h-7 w-7 border-b border-l border-foreground bg-accent/65 [clip-path:polygon(100%_0,100%_100%,0_0)]" />
+
+              {phase === 'thinking' ? (
+                <div className="space-y-3 pt-2">
+                  <div className="mb-5 flex items-center gap-2 text-xs font-bold text-primary">
+                    <Wand2 className="h-4 w-4" /> Đang sắp xếp ý chính
+                  </div>
+                  {[92, 76, 86, 64, 82, 55].map((width, index) => (
+                    <div
+                      key={width}
+                      className="editorial-demo-shimmer h-2.5"
+                      style={{ width: `${width}%`, animationDelay: `${index * 90}ms` }}
+                    />
+                  ))}
+                </div>
+              ) : resultText ? (
+                <div className="relative">
+                  <div className="mb-4 h-1.5 w-20 -rotate-1 bg-accent" />
+                  <p className="whitespace-pre-line break-words text-[13px] leading-[1.72] text-foreground sm:text-sm">
+                    {resultText}
+                    {phase === 'writing' && <span className="editorial-demo-caret ml-0.5 inline-block h-[1.05em] w-0.5 translate-y-0.5 bg-primary" />}
+                  </p>
+                </div>
+              ) : (
+                <div className="flex min-h-[198px] flex-col items-center justify-center text-center sm:min-h-[250px]">
+                  <div className="mb-3 flex h-12 w-12 items-center justify-center border border-foreground bg-accent/30">
+                    <FileText className="h-5 w-5 text-foreground" />
+                  </div>
+                  <p className="font-display text-lg font-bold text-foreground">Trang giấy đang chờ</p>
+                  <p className="mt-1 max-w-44 text-xs leading-5 text-muted-foreground">Bản nháp xuất hiện ngay khi brief hoàn tất.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 border-t-2 border-foreground bg-background">
+          {['Nhập brief', 'AI biên soạn', 'Duyệt bản nháp'].map((label, index) => (
+            <div
+              key={label}
+              className={`flex min-w-0 items-center gap-2 border-r border-foreground px-3 py-2.5 last:border-r-0 ${index <= activeStep ? 'text-foreground' : 'text-muted-foreground/60'}`}
+            >
+              <span className={`flex h-5 w-5 shrink-0 items-center justify-center text-[10px] font-bold ${index < activeStep || isComplete ? 'bg-foreground text-background' : index === activeStep ? 'bg-primary text-primary-foreground' : 'border border-foreground/35'}`}>
+                {index < activeStep || (isComplete && index === 2) ? <Check className="h-3 w-3" /> : index + 1}
+              </span>
+              <span className="truncate text-[11px] font-bold sm:text-xs">{label}</span>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Scenario dots */}
-      <div className="flex items-center justify-center flex-wrap gap-2 mt-4">
-        {SCENARIOS.map((s, i) => {
-          const Icon = s.typeIcon;
-          return (
-            <div
-              key={i}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-semibold transition-all ${
-                i === scenarioIdx
-                  ? 'bg-primary/20 border-primary/40 text-primary'
-                  : 'bg-card/4 border-white/8 text-foreground/70'
-              }`}
-            >
-              <Icon className="w-2.5 h-2.5 flex-shrink-0" />
-              {s.type}
-            </div>
-          );
-        })}
+      <div className="mt-4 flex items-center justify-center gap-2">
+        {DEMO_SCENES.map((item, index) => (
+          <span
+            key={item.format}
+            className={`h-1.5 transition-all duration-300 ${index === sceneIndex ? 'w-8 bg-primary' : 'w-3 bg-foreground/25'}`}
+          />
+        ))}
       </div>
     </div>
   );

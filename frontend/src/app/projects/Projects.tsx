@@ -124,9 +124,9 @@ export function CustomerProjects() {
   return (
     <Layout>
       <div className="mx-auto max-w-[1450px] p-4 md:p-7 lg:p-9">
-        <div className="mb-8 flex flex-col justify-between gap-5 border-b-2 border-foreground pb-7 md:flex-row md:items-end">
+        <div className="mb-6 flex flex-col justify-between gap-4 border-b-2 border-foreground pb-5 md:flex-row md:items-end">
           <div>
-            <p className="editorial-kicker mb-4 text-primary">Tủ hồ sơ chiến dịch</p>
+            <p className="editorial-kicker mb-3 text-primary">Tủ hồ sơ chiến dịch</p>
             <h1 className="studio-page-title text-foreground">Dự án</h1>
             <p className="mt-3 text-sm leading-7 text-muted-foreground">Gom bản thảo theo chiến dịch, theo dõi tiến độ và mở đúng nhóm nội dung cần xử lý.</p>
           </div>
@@ -136,7 +136,7 @@ export function CustomerProjects() {
         </div>
 
         <Card className="mb-7 overflow-hidden border-2 border-foreground">
-          <div className="border-b border-foreground bg-foreground px-4 py-2 font-mono-editorial text-[10px] font-bold uppercase tracking-[.15em] text-background">Tìm và sắp xếp hồ sơ</div>
+          <div className="border-b border-foreground bg-foreground px-4 py-2 text-xs font-bold uppercase tracking-[.06em] text-background">Tìm và sắp xếp hồ sơ</div>
           <div className="flex flex-wrap gap-3 p-4">
             <div className="relative flex-1 min-w-56">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/80" />
@@ -210,7 +210,7 @@ export function CustomerProjects() {
               }}
             >
               <div className="flex items-center justify-between border-b border-foreground bg-accent/40 px-5 py-3">
-                <span className="font-mono-editorial text-[10px] font-bold uppercase tracking-[.14em] text-foreground/60">Project file</span>
+                <span className="text-xs font-bold uppercase tracking-[.06em] text-foreground/65">Project file</span>
                 <Badge className={project.status === 'active' ? 'border border-success/40 bg-success/10 text-success' : 'border border-border bg-muted text-muted-foreground'}>{project.status === 'active' ? 'Đang hoạt động' : 'Đã lưu trữ'}</Badge>
               </div>
               <div className="p-5">
@@ -277,7 +277,7 @@ export function CustomerProjects() {
                 <Input placeholder="VD: Thương mại điện tử" value={newIndustry} onChange={e => setNewIndustry(e.target.value)} className="mt-1" />
               </div>
               <Button
-                className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white"
+                className="w-full"
                 onClick={handleCreateProject}
                 disabled={createProject.isPending}
               >

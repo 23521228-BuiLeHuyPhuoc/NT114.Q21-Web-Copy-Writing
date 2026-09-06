@@ -765,8 +765,8 @@ export function CustomerPlagiarismCheck() {
   return (
     <Layout>
       <div className='mx-auto max-w-[1350px] space-y-6 p-4 md:p-7 lg:p-9'>
-        <div className='border-b-2 border-foreground pb-7'>
-          <p className='editorial-kicker mb-4 text-primary'>Kiểm định bản thảo</p>
+        <div className='border-b-2 border-foreground pb-5'>
+          <p className='editorial-kicker mb-3 text-primary'>Kiểm định bản thảo</p>
           <h1 className='studio-page-title text-foreground'>Kiểm tra đạo văn</h1>
           <p className='mt-3 max-w-2xl text-sm leading-7 text-muted-foreground'>Đưa nội dung cần kiểm tra và nguồn đối chiếu vào hai vùng riêng biệt để tránh nhầm thao tác.</p>
         </div>
@@ -947,7 +947,7 @@ export function CustomerPlagiarismCheck() {
                 </div>
               </div>
             )}
-            <div className='grid gap-4 md:grid-cols-4'>
+            <div className='grid grid-cols-2 gap-4 min-[1100px]:grid-cols-4'>
               <div className='rounded-lg border p-4'><p className='text-xs uppercase text-muted-foreground'>Tính độc đáo</p><p className={`mt-2 text-3xl font-bold ${scoreClass(visibleOriginalityScore)}`}>{visibleOriginalityScore}%</p><Progress value={visibleOriginalityScore} className='mt-3' /></div>
               <div className='rounded-lg border p-4'><p className='text-xs uppercase text-muted-foreground'>Nguy cơ đạo văn</p><p className={`mt-2 text-3xl font-bold ${scoreClass(visiblePlagiarismScore, true)}`}>{visiblePlagiarismScore}%</p><Progress value={visiblePlagiarismScore} className='mt-3' /></div>
               <div className='rounded-lg border p-4'><p className='text-xs uppercase text-muted-foreground'>Tương đồng chủ đề</p><p className={`mt-2 text-3xl font-bold ${scoreClass(result.analysis.topicSimilarityScore || result.analysis.wordOverlapScore, true)}`}>{result.analysis.topicSimilarityScore || result.analysis.wordOverlapScore}%</p><Progress value={result.analysis.topicSimilarityScore || result.analysis.wordOverlapScore} className='mt-3' /></div>

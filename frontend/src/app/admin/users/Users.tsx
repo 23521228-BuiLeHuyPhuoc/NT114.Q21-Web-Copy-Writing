@@ -326,10 +326,10 @@ export function AdminUsers() {
 
   return (
     <Layout>
-      <div className="p-6 max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
+      <div className="mx-auto max-w-7xl p-4 sm:p-6">
+        <div className="page-header flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground mb-1">Quản lý người dùng</h1>
+            <h1 className="studio-page-title mb-1 text-foreground">Quản lý người dùng</h1>
             <p className="text-muted-foreground text-sm">Dữ liệu được đọc trực tiếp từ MongoDB qua API admin.</p>
           </div>
           <div className="flex items-center gap-2">
@@ -348,7 +348,7 @@ export function AdminUsers() {
             {isSuperAdmin && (
               <Button
                 onClick={() => setAddOpen(true)}
-                className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl gap-2 text-sm"
+                className="gap-2 rounded-md text-sm"
               >
                 <UserPlus className="w-4 h-4" /> Thêm người dùng
               </Button>
@@ -550,7 +550,7 @@ export function AdminUsers() {
             )}
             <div className="flex gap-2 pt-2">
               <button onClick={() => setAddOpen(false)} className="flex-1 h-10 border border-border rounded-xl text-sm font-semibold text-foreground/70 hover:bg-surface-muted transition-colors">Hủy</button>
-              <button onClick={handleCreateUser} disabled={addSaving} className="flex-1 h-10 bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+              <button onClick={handleCreateUser} disabled={addSaving} className="flex h-10 flex-1 items-center justify-center gap-2 rounded-md bg-primary text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50">
                 {addSaving ? <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : 'Tạo người dùng'}
               </button>
             </div>
@@ -627,7 +627,7 @@ export function AdminUsers() {
               </div>
               <div className="flex gap-2 pt-2">
                 <button onClick={() => setEditUser(null)} className="flex-1 h-10 border border-border rounded-xl text-sm font-semibold text-foreground/70 hover:bg-surface-muted transition-colors">Hủy</button>
-                <button onClick={handleSaveEdit} disabled={editSaving} className="flex-1 h-10 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+                <button onClick={handleSaveEdit} disabled={editSaving} className="flex h-10 flex-1 items-center justify-center gap-2 rounded-md bg-primary text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50">
                   {editSaving ? <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : 'Lưu thay đổi'}
                 </button>
               </div>

@@ -18,7 +18,7 @@ interface Props {
 
 export function IndustryPicker({ value, onChange, options }: Props) {
   return (
-    <Card className="p-4">
+    <Card className="gap-0 p-4">
       <Label className="text-sm font-semibold text-foreground/80 mb-3 block">Ngành nghề</Label>
       <div className="grid grid-cols-2 gap-2">
         {options.map(ind => {

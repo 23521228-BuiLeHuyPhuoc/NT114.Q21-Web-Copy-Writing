@@ -43,7 +43,7 @@ export function AdminLoginPage() {
   };
 
   return (
-    <div className="auth-page dark min-h-screen flex bg-gray-950">
+    <div className="auth-page dark flex min-h-screen bg-sidebar">
 
       {/* ── LEFT: System Panel ── */}
       <div className="hidden lg:flex lg:w-[52%] flex-col relative overflow-hidden">
@@ -71,7 +71,7 @@ export function AdminLoginPage() {
         {/* Main */}
         <div className="relative flex-1 flex flex-col justify-center px-12 xl:px-16">
           <p className="text-primary text-xs font-bold uppercase tracking-[0.2em] mb-4">Hệ thống quản trị</p>
-          <h2 className="text-white mb-4 leading-tight">
+          <h2 className="type-public-title mb-4 text-sidebar-foreground">
             Trung tâm điều hành
             <br />
             <span className="text-primary">CopyPro Platform</span>
@@ -106,7 +106,7 @@ export function AdminLoginPage() {
       </div>
 
       {/* ── RIGHT: Login Form ── */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 bg-gray-950">
+      <div className="flex flex-1 flex-col items-center justify-center bg-sidebar px-6 py-12">
         {/* Mobile logo */}
         <div className="lg:hidden mb-10 flex items-center gap-2.5">
           <Link to="/" className="inline-flex items-center hover:opacity-90 transition-opacity">
@@ -122,7 +122,7 @@ export function AdminLoginPage() {
               <AlertTriangle className="w-4 h-4 text-amber-500" />
               <span className="text-amber-500 text-xs font-semibold">Khu vực giới hạn</span>
             </div>
-            <h2 className="text-white mb-1.5 leading-tight">Đăng nhập Admin</h2>
+            <h2 className="type-auth-title mb-1.5 text-sidebar-foreground">Đăng nhập Admin</h2>
             <p className="text-muted-foreground text-sm">
               Chỉ dành cho nhân viên CopyPro được ủy quyền.
             </p>
@@ -170,7 +170,7 @@ export function AdminLoginPage() {
               <div className="mt-2 text-right">
                 <Link
                   to="/admin/forgot-password"
-                  className="text-xs text-primary hover:text-green-200 hover:underline font-semibold transition-colors"
+                  className="text-xs font-semibold text-primary transition-colors hover:text-sidebar-foreground hover:underline"
                 >
                   Quên mật khẩu?
                 </Link>
@@ -180,7 +180,7 @@ export function AdminLoginPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full h-12 bg-gradient-to-r from-emerald-600 via-green-600 to-green-600 hover:from-emerald-500 hover:via-green-500 hover:to-green-500 disabled:opacity-50 text-white rounded-xl font-bold text-sm transition-all shadow-xl shadow-primary/25 mt-2 flex items-center justify-center gap-2"
+              className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-md bg-primary text-sm font-bold text-primary-foreground shadow-[4px_4px_0_rgba(0,0,0,.28)] transition-colors hover:bg-primary/90 disabled:opacity-50"
             >
               {isSubmitting ? (
                 <>
@@ -201,7 +201,7 @@ export function AdminLoginPage() {
               <div className="w-full border-t border-gray-800" />
             </div>
             <div className="relative flex justify-center">
-              <span className="bg-gray-950 px-3 text-xs text-foreground/70">Không phải Admin?</span>
+              <span className="bg-sidebar px-3 text-xs text-sidebar-foreground/65">Không phải Admin?</span>
             </div>
           </div>
 

@@ -55,10 +55,10 @@ export function BlogDetailPage() {
     <div className="public-page min-h-screen overflow-x-hidden bg-card">
       <PublicNavbar />
 
-      <section className="max-w-full bg-gradient-to-br from-slate-950 via-green-950 to-slate-950 pb-14 pt-28 md:pb-20 md:pt-32">
+      <section className="relative max-w-full border-b-2 border-foreground bg-foreground pb-14 pt-28 text-background md:pb-20 md:pt-32">
         <div className="mx-auto max-w-6xl min-w-0 px-5 lg:px-8">
           <div className="mb-8 flex flex-wrap items-center gap-3">
-            <Link to="/blog" className="inline-flex items-center gap-2 text-sm font-semibold text-green-200 transition-colors hover:text-green-100">
+            <Link to="/blog" className="inline-flex items-center gap-2 text-sm font-semibold text-accent transition-colors hover:text-background">
               <ArrowLeft className="h-4 w-4" />
               Quay lại Blog
             </Link>
@@ -67,16 +67,16 @@ export function BlogDetailPage() {
 
           <div className="max-w-5xl min-w-0">
             <h1
-              className="mb-6 max-w-full break-words text-[1.75rem] leading-[1.16] text-white sm:text-[2.45rem] md:text-[3.05rem] lg:text-[3.45rem]"
+              className="mb-6 max-w-full break-words font-display text-[1.75rem] font-bold leading-[1.16] tracking-[-.025em] text-background sm:text-[2.25rem] md:text-[2.75rem] lg:text-[3.25rem]"
             >
               {post.title}
             </h1>
-            <p className="max-w-3xl break-words text-base leading-7 text-muted-foreground/60 md:text-lg md:leading-8">
+            <p className="max-w-3xl break-words text-base leading-7 text-background/65 md:text-lg md:leading-8">
               {post.excerpt}
             </p>
           </div>
 
-          <div className="mt-8 flex max-w-full flex-wrap items-center gap-x-6 gap-y-3 text-sm text-muted-foreground/80">
+          <div className="mt-8 flex max-w-full flex-wrap items-center gap-x-6 gap-y-3 text-sm text-background/65">
             <span className="flex min-w-0 items-center gap-2">
               <User className="h-4 w-4 flex-shrink-0 text-primary" />
               <span className="break-words">{post.author} · {post.authorRole}</span>
@@ -108,7 +108,7 @@ export function BlogDetailPage() {
 
             {postHtml ? (
               <div
-                className="max-w-none break-words [&_a]:text-primary [&_a]:underline [&_blockquote]:border-l-4 [&_blockquote]:border-primary [&_blockquote]:bg-primary/5 [&_blockquote]:px-5 [&_blockquote]:py-4 [&_h1]:mb-4 [&_h1]:text-3xl [&_h1]:text-foreground [&_h2]:mb-4 [&_h2]:mt-10 [&_h2]:text-[1.75rem] [&_h2]:leading-snug [&_h2]:text-foreground [&_h3]:mb-3 [&_h3]:mt-8 [&_h3]:text-xl [&_h3]:text-foreground [&_img]:my-6 [&_img]:h-auto [&_img]:max-w-full [&_img]:rounded-lg [&_img]:border [&_img]:border-border [&_li]:mb-2 [&_li]:text-foreground/70 [&_ol]:mb-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_p]:mb-4 [&_p]:text-base [&_p]:leading-8 [&_p]:text-foreground/70 [&_strong]:text-foreground [&_table]:my-6 [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-border [&_td]:p-3 [&_th]:border [&_th]:border-border [&_th]:bg-surface-muted [&_th]:p-3 [&_ul]:mb-6 [&_ul]:list-disc [&_ul]:pl-6"
+                className="rich-text rich-text--reading"
                 dangerouslySetInnerHTML={{ __html: postHtml }}
               />
             ) : (
@@ -169,7 +169,7 @@ export function BlogDetailPage() {
             <p className="break-words text-base font-semibold text-foreground">Muốn tạo nội dung như bài viết này nhanh hơn?</p>
             <p className="mt-1 break-words text-sm text-muted-foreground">Thử CopyPro để tạo và tối ưu nhiều biến thể copy trong vài giây.</p>
           </div>
-          <Link to="/register" className="inline-flex flex-shrink-0 items-center gap-2 rounded-lg bg-primary px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-green-700">
+          <Link to="/register" className="inline-flex flex-shrink-0 items-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90">
             Dùng thử miễn phí
             <ArrowRight className="h-4 w-4" />
           </Link>

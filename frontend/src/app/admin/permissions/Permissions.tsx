@@ -489,13 +489,13 @@ export function AdminPermissions() {
   return (
     <Layout>
       <div className="mx-auto flex max-w-7xl flex-col gap-5 p-4 sm:p-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="page-header flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div className="min-w-0">
             <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-semibold text-primary">
               <Shield className="h-3.5 w-3.5" />
               RBAC
             </div>
-            <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Phân quyền người dùng</h1>
+            <h1 className="studio-page-title text-foreground">Phân quyền người dùng</h1>
             <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
               Quản lý nhóm admin, nhóm customer, loại quyền và phạm vi truy cập theo từng route.
             </p>
@@ -506,7 +506,7 @@ export function AdminPermissions() {
           </Button>
         </div>
 
-        <div className="grid gap-3 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 min-[1100px]:grid-cols-4">
           <div className="rounded-lg border bg-card p-4">
             <p className="text-xs font-medium uppercase text-muted-foreground">Nhóm admin</p>
             <p className="mt-2 text-2xl font-bold text-foreground">{Object.keys(roles).length}</p>
@@ -669,7 +669,7 @@ export function AdminPermissions() {
                     </div>
                   </div>
                 </div>
-                <Button className="w-full gap-2 bg-primary text-white hover:bg-green-700" onClick={createRole}>
+                <Button className="w-full gap-2" onClick={createRole}>
                   <Plus className="h-4 w-4" />
                   Tạo nhóm
                 </Button>
@@ -861,7 +861,7 @@ export function AdminPermissions() {
                     <Textarea className="mt-2 min-h-20" placeholder="Mô tả quyền này dùng để làm gì" value={newPermission.description} onChange={(event) => setNewPermission((prev) => ({ ...prev, description: event.target.value }))} />
                   </div>
                 </div>
-                <Button className="w-full gap-2 bg-primary text-white hover:bg-green-700" onClick={createPermission}>
+                <Button className="w-full gap-2" onClick={createPermission}>
                   <Plus className="h-4 w-4" />
                   Tạo quyền
                 </Button>

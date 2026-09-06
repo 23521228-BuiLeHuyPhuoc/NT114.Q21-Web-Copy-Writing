@@ -13,7 +13,7 @@ interface Props {
 
 export function ProductInfoForm({ productName, keywords, targetAudience, additionalContext, onChange }: Props) {
   return (
-    <Card className="p-4 space-y-3">
+    <Card className="gap-0 space-y-3 p-4">
       <Label className="text-sm font-semibold text-foreground/80 block">Thông tin sản phẩm</Label>
       <div>
         <Label className="text-xs text-foreground/70">Tên sản phẩm/dịch vụ</Label>

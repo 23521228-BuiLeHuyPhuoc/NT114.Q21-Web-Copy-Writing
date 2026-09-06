@@ -155,16 +155,16 @@ export function AdminPayments() {
 
   return (
     <Layout>
-      <div className="p-6 max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
+      <div className="mx-auto max-w-7xl p-4 sm:p-6">
+        <div className="page-header flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-1">Quản lý thanh toán</h1>
+            <h1 className="studio-page-title mb-1 text-foreground">Quản lý thanh toán</h1>
             <p className="text-foreground/70">Theo dõi giao dịch, doanh thu và hóa đơn từ dữ liệu thật.</p>
           </div>
           <Button variant="outline"><Download className="w-4 h-4 mr-2" /> Xuất báo cáo</Button>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="mb-6 grid grid-cols-2 gap-4 min-[1100px]:grid-cols-4">
           {statCards.map((item) => (
             <StatTile key={item.label} icon={item.icon} label={item.label} value={item.value} color={item.color} trend={{ value: item.change }} />
           ))}

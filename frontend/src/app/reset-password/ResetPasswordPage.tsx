@@ -49,7 +49,7 @@ export function ResetPasswordPage() {
           <p className="text-foreground/70 mb-6">Mật khẩu đã được cập nhật. Bạn có thể đăng nhập ngay.</p>
           <button
             onClick={() => navigate('/login')}
-            className="w-full bg-gradient-to-r from-emerald-600 via-green-600 to-green-600 text-white rounded-xl py-3 font-semibold hover:from-emerald-500 hover:via-green-500 hover:to-green-500 transition-all"
+            className="w-full rounded-md bg-primary py-3 font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
           >
             Đăng nhập ngay
           </button>
@@ -69,7 +69,7 @@ export function ResetPasswordPage() {
           <BrandLogo size="lg" />
         </Link>
 
-        <h1 className="text-2xl font-bold text-foreground mb-1">Đặt lại mật khẩu</h1>
+        <h1 className="type-auth-title mb-1 text-foreground">Đặt lại mật khẩu</h1>
         <p className="text-foreground/70 mb-6">Nhập mật khẩu mới cho tài khoản của bạn</p>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -105,7 +105,7 @@ export function ResetPasswordPage() {
           <button
             type="submit"
             disabled={!allValid || isSubmitting}
-            className="w-full bg-gradient-to-r from-emerald-600 via-green-600 to-green-600 text-white rounded-xl py-3 font-semibold hover:from-emerald-500 hover:via-green-500 hover:to-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            className="w-full rounded-md bg-primary py-3 font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isSubmitting ? 'Đang xử lý...' : 'Đặt lại mật khẩu'}
           </button>

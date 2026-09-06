@@ -289,10 +289,10 @@ export function AdminNotifications() {
 
   return (
     <Layout>
-      <div className="mx-auto max-w-7xl p-6">
-        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mx-auto max-w-7xl p-4 sm:p-6">
+        <div className="page-header flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Thông báo</h1>
+            <h1 className="studio-page-title text-foreground">Thông báo</h1>
             <p className="text-sm text-muted-foreground">Gửi thông báo hệ thống tới khách hàng hoặc admin khác.</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">

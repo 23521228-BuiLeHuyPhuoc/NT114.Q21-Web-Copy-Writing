@@ -294,13 +294,13 @@ export function AdminModelManagement() {
 
   return (
     <Layout>
-      <div className="p-6 max-w-7xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-foreground mb-1">Quản lý model AI</h1>
+      <div className="mx-auto max-w-7xl p-4 sm:p-6">
+        <div className="page-header">
+          <h1 className="studio-page-title mb-1 text-foreground">Quản lý model AI</h1>
           <p className="text-muted-foreground text-sm">Toàn bộ model người dùng chọn được trong Model AI, kèm route backend và benchmark theo nguồn công khai.</p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="mb-6 grid grid-cols-2 gap-4 min-[1100px]:grid-cols-4">
           <StatTile icon={Cpu} label="Model người dùng thấy" value={AI_MODELS.length} color="bg-primary/10 text-primary" iconClassName="w-5 h-5" valueClassName="text-2xl" />
           <StatTile icon={CheckCircle2} label="Có benchmark cố định" value={benchmarkedModels.length} color="bg-primary/10 text-primary" iconClassName="w-5 h-5" valueClassName="text-2xl" />
           <StatTile icon={Globe} label="Providers/wrappers" value={providerCount} color="bg-primary/10 text-primary" iconClassName="w-5 h-5" valueClassName="text-2xl" />

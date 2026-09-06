@@ -258,10 +258,10 @@ export function AdminContents() {
 
   return (
     <Layout>
-      <div className="p-6 max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
+      <div className="mx-auto max-w-7xl p-4 sm:p-6">
+        <div className="page-header flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground mb-1">Quản lý nội dung</h1>
+            <h1 className="studio-page-title mb-1 text-foreground">Quản lý nội dung</h1>
             <p className="text-muted-foreground text-sm">Danh sách nội dung thật từ collection Content.</p>
           </div>
           <button
@@ -278,7 +278,7 @@ export function AdminContents() {
           </button>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="mb-6 grid grid-cols-2 gap-4 min-[1100px]:grid-cols-4">
           <StatTile icon={FileText} label="Tổng nội dung" value={contents.length.toLocaleString('vi-VN')} color="text-primary bg-primary/5" />
           <StatTile icon={Calendar} label="Hôm nay" value={contents.filter(item => isToday(item.createdAt)).length.toLocaleString('vi-VN')} color="text-primary bg-primary/5" />
           <StatTile icon={Star} label="Đã đánh dấu" value={contents.filter(item => item.isFavorite).length.toLocaleString('vi-VN')} color="text-amber-700 bg-amber-100" />
@@ -477,7 +477,7 @@ export function AdminContents() {
               </div>
               <div className="flex gap-2 pt-2">
                 <button onClick={() => setEditItem(null)} className="flex-1 h-10 border border-border rounded-xl text-sm font-semibold text-foreground/70 hover:bg-surface-muted transition-colors">Hủy</button>
-                <button onClick={handleSaveEdit} disabled={editSaving} className="flex-1 h-10 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+                <button onClick={handleSaveEdit} disabled={editSaving} className="flex h-10 flex-1 items-center justify-center gap-2 rounded-md bg-primary text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50">
                   {editSaving ? <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : 'Lưu thay đổi'}
                 </button>
               </div>

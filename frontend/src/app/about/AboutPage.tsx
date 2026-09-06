@@ -48,7 +48,7 @@ export function AboutPage() {
         <div className="mx-auto grid max-w-7xl gap-10 px-5 pb-16 lg:grid-cols-[.9fr_1.1fr] lg:items-center lg:px-8 lg:pb-20">
           <div className="editorial-reveal py-8">
             <p className="editorial-kicker text-primary">{heroBadge}</p>
-            <h1 className="mt-6 max-w-3xl text-foreground">{heroTitle}</h1>
+            <h1 className="type-hero mt-6 max-w-3xl text-foreground">{heroTitle}</h1>
             <PublicRichText
               content={aboutContent}
               field="heroDescription"
@@ -64,7 +64,7 @@ export function AboutPage() {
         <div className="mx-auto grid max-w-7xl gap-10 px-5 lg:grid-cols-[.78fr_1.22fr] lg:px-8">
           <div>
             <EditorialGlyph kind="quote" className="h-16 w-16 text-background" />
-            <h2 className="mt-6 max-w-lg text-background">{missionTitle}</h2>
+            <h2 className="type-public-title mt-6 max-w-lg text-background">{missionTitle}</h2>
           </div>
           <PublicRichText
             content={aboutContent}
@@ -99,7 +99,7 @@ export function AboutPage() {
         <div className="mx-auto max-w-7xl px-5 lg:px-8">
           <div className="max-w-2xl">
             <p className="editorial-kicker text-foreground">Một hệ thống hoàn chỉnh</p>
-            <h2 className="mt-5 text-foreground">Mỗi phần có một vai trò rõ trong quy trình nội dung.</h2>
+            <h2 className="type-public-title mt-5 text-foreground">Mỗi phần có một vai trò rõ trong quy trình nội dung.</h2>
           </div>
           <div className="mt-10 grid border-2 border-foreground bg-card md:grid-cols-2 lg:grid-cols-4">
             {SYSTEM_PARTS.map((item) => {

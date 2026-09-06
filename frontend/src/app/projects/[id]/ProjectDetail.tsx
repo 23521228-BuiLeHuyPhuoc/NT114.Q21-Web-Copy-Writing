@@ -137,15 +137,15 @@ export function CustomerProjectDetail() {
         </Button>
 
         <div className="mb-7 flex flex-col justify-between gap-5 border-b-2 border-foreground pb-6 md:flex-row md:items-end">
-          <div>
+          <div className="min-w-0 max-w-4xl flex-1">
             <div className="flex items-center gap-2 mb-2">
               <Badge className={project.status === 'active' ? 'bg-primary/10 text-primary border-0' : 'bg-muted text-foreground/70 border-0'}>
                 {project.status === 'active' ? 'Đang hoạt động' : 'Đã lưu trữ'}
               </Badge>
               <Badge className="bg-muted text-foreground/70 border-0">{project.industry}</Badge>
             </div>
-            <h1 className="font-display text-4xl font-bold leading-none text-foreground md:text-6xl">{project.name}</h1>
-            <p className="text-sm text-muted-foreground mt-1">{project.desc || 'Chưa có mô tả.'}</p>
+            <h1 className="break-words font-display text-3xl font-bold leading-tight tracking-[-.025em] text-foreground sm:text-4xl lg:text-5xl">{project.name}</h1>
+            <p className="mt-2 max-w-3xl break-words text-sm leading-6 text-muted-foreground">{project.desc || 'Chưa có mô tả.'}</p>
           </div>
           <Button
             size="lg"
@@ -155,7 +155,7 @@ export function CustomerProjectDetail() {
           </Button>
         </div>
 
-        <div className="mb-7 grid grid-cols-2 border-l border-t border-foreground md:grid-cols-4">
+        <div className="mb-7 grid grid-cols-2 border-l border-t border-foreground lg:grid-cols-4">
           {[
             { label: 'Tổng nội dung', value: stats.total, icon: FileText, color: 'text-primary bg-primary/5' },
             { label: 'Hoàn thành', value: stats.completed, icon: CheckCircle2, color: 'text-emerald-600 bg-emerald-50' },
@@ -216,7 +216,7 @@ export function CustomerProjectDetail() {
                   <FileText className="w-4 h-4 text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-sm text-foreground truncate">{item.title}</h3>
+                  <h3 className="line-clamp-2 break-words text-sm font-semibold text-foreground">{item.title}</h3>
                   <div className="flex items-center gap-2 mt-1">
                     <Badge className="bg-muted text-foreground/70 border-0 text-xs">{TYPE_LABELS[item.type] || item.type}</Badge>
                     <Badge className="bg-primary/10 text-primary border-0 text-xs">{item.model}</Badge>
@@ -284,7 +284,7 @@ export function CustomerProjectDetail() {
                   {availableContents.map(item => (
                     <div key={item.id} className="flex flex-col gap-3 border-b p-4 last:border-b-0 sm:flex-row sm:items-start sm:justify-between">
                       <div className="min-w-0 flex-1">
-                        <h3 className="truncate text-sm font-semibold text-foreground">{item.title}</h3>
+                        <h3 className="line-clamp-2 break-words text-sm font-semibold text-foreground">{item.title}</h3>
                         <div className="mt-2 flex flex-wrap items-center gap-2">
                           <Badge className="bg-muted text-foreground/70 border-0 text-xs">{TYPE_LABELS[item.type] || item.type}</Badge>
                           <Badge className="bg-primary/10 text-primary border-0 text-xs">{item.model}</Badge>
@@ -294,7 +294,7 @@ export function CustomerProjectDetail() {
                       </div>
                       <Button
                         size="sm"
-                        className="w-full shrink-0 bg-gradient-to-r from-green-600 to-emerald-600 text-white sm:w-auto"
+                        className="w-full shrink-0 sm:w-auto"
                         disabled={updateContent.isPending}
                         onClick={() => handleAddContent(item.id)}
                       >
