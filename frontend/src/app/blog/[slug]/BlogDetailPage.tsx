@@ -52,7 +52,7 @@ export function BlogDetailPage() {
   const postHtml = post.content.html ? sanitizeHtml(post.content.html) : '';
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-card">
+    <div className="public-page min-h-screen overflow-x-hidden bg-card">
       <PublicNavbar />
 
       <section className="max-w-full bg-gradient-to-br from-slate-950 via-green-950 to-slate-950 pb-14 pt-28 md:pb-20 md:pt-32">

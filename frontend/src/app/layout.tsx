@@ -3,8 +3,8 @@ import { Providers } from './providers';
 import '@/styles/index.css';
 
 export const metadata: Metadata = {
-  title: 'CopyPro',
-  description: 'AI Copywriter platform',
+  title: 'CopyPro · Creative Editorial Studio',
+  description: 'Studio sáng tạo và biên tập nội dung AI cho đội ngũ Việt Nam.',
   icons: {
     icon: '/images/logo.svg',
     shortcut: '/images/logo.svg',

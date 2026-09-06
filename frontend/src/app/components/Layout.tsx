@@ -189,13 +189,13 @@ export function Layout({ children }: LayoutProps) {
 
     return (
       <Link key={item.path} to={item.path}>
-        <div className={`flex items-start justify-between gap-2 px-3 py-2.5 rounded-xl transition-colors ${
+        <div className={`group relative flex items-start justify-between gap-2 border px-3 py-2.5 transition-all ${
           isActive
-            ? 'bg-primary/10 text-primary'
-            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+            ? 'border-sidebar-primary bg-sidebar-accent text-sidebar-accent-foreground shadow-[3px_3px_0_rgba(255,118,92,.28)]'
+            : 'border-transparent text-sidebar-foreground/65 hover:border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-foreground'
         }`}>
           <div className="flex min-w-0 flex-1 items-start gap-3">
-            <Icon className={`mt-0.5 h-4 w-4 flex-shrink-0 ${isActive ? 'text-primary' : ''}`} />
+            <Icon className={`mt-0.5 h-4 w-4 flex-shrink-0 ${isActive ? 'text-sidebar-primary' : 'group-hover:text-sidebar-primary'}`} />
             <span className="min-w-0 flex-1 whitespace-normal break-words text-sm font-medium leading-snug">
               {item.label}
             </span>
@@ -209,10 +209,10 @@ export function Layout({ children }: LayoutProps) {
   };
 
   const AdminHeader = () => (
-    <header className="hidden md:flex h-[60px] bg-card border-b border-border/80 items-center px-4 lg:px-6 gap-3 sticky top-0 z-30 flex-shrink-0">
+    <header className="hidden md:flex h-[68px] bg-card/95 border-b border-border items-center px-5 lg:px-8 gap-3 sticky top-0 z-30 flex-shrink-0 backdrop-blur-xl">
       <div className="flex-1 min-w-0 flex items-center gap-2">
         <Link to="/admin" className="text-xs text-muted-foreground hover:text-primary transition-colors shrink-0">
-          CopyPro Admin
+          Editorial Console
         </Link>
         <span className="text-border text-xs">/</span>
         <span className="text-xs text-muted-foreground truncate max-w-44">{adminPageSection}</span>
@@ -329,7 +329,7 @@ export function Layout({ children }: LayoutProps) {
             >
               <Avatar className="w-7 h-7">
                 <AvatarImage src={user?.avatar || undefined} alt={user?.name || 'Avatar'} className="object-cover" />
-                <AvatarFallback className="bg-gradient-to-br from-primary to-success text-primary-foreground text-xs font-bold">
+                <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">
                   {userInitial}
                 </AvatarFallback>
               </Avatar>
@@ -342,7 +342,7 @@ export function Layout({ children }: LayoutProps) {
               <div className="flex items-center gap-3 min-w-0">
                 <Avatar className="w-10 h-10 flex-shrink-0">
                   <AvatarImage src={user?.avatar || undefined} alt={user?.name || 'Avatar'} className="object-cover" />
-                  <AvatarFallback className="bg-gradient-to-br from-primary to-success text-primary-foreground font-bold">
+                  <AvatarFallback className="bg-primary text-primary-foreground font-bold">
                     {userInitial}
                   </AvatarFallback>
                 </Avatar>
@@ -396,16 +396,19 @@ export function Layout({ children }: LayoutProps) {
   );
 
   const Sidebar = () => (
-    <div ref={restoreSidebarScroll} onScroll={saveSidebarScroll} className="h-full flex flex-col overflow-y-auto overscroll-contain">
+    <div ref={restoreSidebarScroll} onScroll={saveSidebarScroll} className="studio-sidebar h-full flex flex-col overflow-y-auto overscroll-contain">
       {/* Logo */}
-      <div className="p-5 border-b flex-shrink-0">
+      <div className="p-5 border-b border-sidebar-border flex-shrink-0">
         <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-          <BrandLogo size="md" />
+          <BrandLogo size="md" tone="light" />
         </Link>
+        <p className="mt-3 font-mono-editorial text-[9px] font-bold uppercase tracking-[.2em] text-sidebar-foreground/45">
+          {user?.role === 'admin' ? 'Hệ thống biên tập' : 'Không gian sáng tạo'}
+        </p>
       </div>
 
       {/* Role badge */}
-      <div className="px-4 py-3 border-b flex-shrink-0 space-y-1.5">
+      <div className="px-4 py-3 border-b border-sidebar-border flex-shrink-0 space-y-1.5">
         {user?.role === 'admin' && adminRoleDef ? (
           <div className={`inline-flex items-center gap-1.5 ${adminRoleDef.color} border ${adminRoleDef.borderColor} rounded-lg px-2.5 py-1.5 w-full`}>
             <div className={`w-2 h-2 rounded-full flex-shrink-0 ${adminRoleDef.dotColor}`} />
@@ -422,12 +425,12 @@ export function Layout({ children }: LayoutProps) {
       </div>
 
       {/* Menu */}
-      <nav className="flex-1 p-3">
+      <nav className="flex-1 p-3.5">
         {user?.role === 'admin' ? (
           <div className="space-y-3">
             {adminMenuGroups.map((group) => (
               <div key={group.label} className="space-y-1">
-                <p className="px-3 text-[11px] font-semibold uppercase text-muted-foreground/70">
+                <p className="px-3 font-mono-editorial text-[9px] font-bold uppercase tracking-[.16em] text-sidebar-foreground/40">
                   {group.label}
                 </p>
                 <div className="space-y-0.5">
@@ -440,7 +443,7 @@ export function Layout({ children }: LayoutProps) {
           <div className="space-y-3">
             {filteredCustomerMenuGroups.map((group) => (
               <div key={group.label} className="space-y-1">
-                <p className="px-3 text-[11px] font-semibold uppercase text-muted-foreground/70">
+                <p className="px-3 font-mono-editorial text-[9px] font-bold uppercase tracking-[.16em] text-sidebar-foreground/40">
                   {group.label}
                 </p>
                 <div className="space-y-0.5">
@@ -453,20 +456,20 @@ export function Layout({ children }: LayoutProps) {
       </nav>
 
       {/* User Info */}
-      <div className="p-4 border-t flex-shrink-0">
+      <div className="p-4 border-t border-sidebar-border flex-shrink-0">
         <div className="flex items-center gap-3 mb-3">
           <Avatar className="w-9 h-9 flex-shrink-0">
             <AvatarImage src={user?.avatar || undefined} alt={user?.name || 'Avatar'} className="object-cover" />
-            <AvatarFallback className="bg-gradient-to-br from-primary to-success text-primary-foreground text-sm">
+            <AvatarFallback className="bg-primary text-primary-foreground text-sm">
               {userInitial}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-sm truncate text-foreground">{user?.name}</p>
-            <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+            <p className="font-semibold text-sm truncate text-sidebar-foreground">{user?.name}</p>
+            <p className="text-xs text-sidebar-foreground/50 truncate">{user?.email}</p>
           </div>
         </div>
-        <Button variant="outline" className="w-full h-9 text-sm rounded-xl" onClick={handleLogout}>
+        <Button variant="outline" className="w-full h-9 border-sidebar-border bg-transparent text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground" onClick={handleLogout}>
           <LogOut className="w-4 h-4 mr-2" /> Đăng xuất
         </Button>
       </div>
@@ -476,8 +479,8 @@ export function Layout({ children }: LayoutProps) {
   // ── ADMIN LAYOUT ──
   if (user?.role === 'admin') {
     return (
-      <div className="min-h-screen bg-surface-muted flex">
-        <aside className="hidden md:block w-60 bg-card border-r flex-shrink-0 sticky top-0 h-screen">
+      <div className="studio-shell admin-shell min-h-screen flex">
+        <aside className="studio-sidebar hidden md:block w-68 border-r flex-shrink-0 sticky top-0 h-screen">
           <Sidebar />
         </aside>
         <div className="flex-1 flex flex-col min-w-0">
@@ -502,7 +505,7 @@ export function Layout({ children }: LayoutProps) {
             </Sheet>
           </header>
           <AdminHeader />
-          <main className="flex-1 overflow-auto">
+          <main className="studio-main admin-main flex-1 overflow-auto">
             {children}
           </main>
         </div>
@@ -512,9 +515,9 @@ export function Layout({ children }: LayoutProps) {
 
   // ── CUSTOMER LAYOUT (sidebar + header + footer) ──
   return (
-    <div className="min-h-screen bg-surface-muted flex">
+    <div className="studio-shell customer-shell min-h-screen flex">
       {/* Desktop Sidebar */}
-      <aside className="hidden md:block w-60 bg-card border-r flex-shrink-0 sticky top-0 h-screen">
+      <aside className="studio-sidebar hidden md:block w-68 border-r flex-shrink-0 sticky top-0 h-screen">
         <Sidebar />
       </aside>
 
@@ -541,7 +544,7 @@ export function Layout({ children }: LayoutProps) {
         </div>
 
         {/* Page content */}
-        <main className="flex-1">
+        <main className="studio-main customer-main flex-1">
           {children}
         </main>
 

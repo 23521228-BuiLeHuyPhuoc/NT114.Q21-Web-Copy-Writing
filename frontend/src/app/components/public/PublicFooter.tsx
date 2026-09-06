@@ -1,59 +1,19 @@
 import { useEffect, useState } from 'react';
 import { Link } from '@/lib/next-router-compat';
+import { ArrowUpRight, Mail } from 'lucide-react';
 import { BrandLogo } from '@/app/components/BrandLogo';
 import { PublicRichText } from '@/app/components/public/PublicRichText';
-import { Sparkles, Mail, Phone, MapPin, Facebook, Youtube, Linkedin, Twitter, ArrowUpRight } from 'lucide-react';
 import { getPublicText } from '@/lib/publicSiteDefaults';
 import { PUBLIC_SUPPORT_EMAIL } from '@/lib/publicEnv';
 import { publicSiteService, type PublicPageContent } from '@/services/publicSiteService';
 
-const FOOTER_LINKS = {
-  product: {
-    title: 'Sản phẩm',
-    links: [
-      { label: 'AI Copywriting Engine', href: '/login' },
-      { label: 'Fine-tuning Studio', href: '/login' },
-      { label: 'Template Library', href: '/login' },
-      { label: 'RESTful API', href: '/login' },
-      { label: 'Bảng giá', href: '/pricing' },
-    ],
-  },
-  company: {
-    title: 'Công ty',
-    links: [
-      { label: 'Giới thiệu', href: '/about' },
-      { label: 'Blog & Kiến thức', href: '/blog' },
-      { label: 'Liên hệ', href: '/contact' },
-      { label: 'Tuyển dụng', href: '/about#careers' },
-      { label: 'Đối tác', href: '/about#partners' },
-    ],
-  },
-  support: {
-    title: 'Hỗ trợ',
-    links: [
-      { label: 'Trung tâm hỗ trợ', href: '/blog' },
-      { label: 'Tài liệu API', href: '/login' },
-      { label: 'Hướng dẫn sử dụng', href: '/blog' },
-      { label: 'Cộng đồng', href: '/blog' },
-      { label: 'Báo cáo lỗi', href: '/contact' },
-    ],
-  },
-  legal: {
-    title: 'Pháp lý',
-    links: [
-      { label: 'Điều khoản sử dụng', href: '#' },
-      { label: 'Chính sách bảo mật', href: '#' },
-      { label: 'Chính sách Cookie', href: '#' },
-      { label: 'Hoàn tiền', href: '#' },
-    ],
-  },
-};
-
-const SOCIALS = [
-  { icon: Facebook, label: 'Facebook', href: '#', color: 'hover:bg-primary' },
-  { icon: Youtube, label: 'Youtube', href: '#', color: 'hover:bg-red-600' },
-  { icon: Linkedin, label: 'LinkedIn', href: '#', color: 'hover:bg-green-700' },
-  { icon: Twitter, label: 'Twitter/X', href: '#', color: 'hover:bg-gray-800' },
+const FOOTER_LINKS = [
+  { label: 'Tạo nội dung', href: '/generate' },
+  { label: 'Mẫu copy', href: '/templates' },
+  { label: 'Bảng giá', href: '/pricing' },
+  { label: 'Giới thiệu', href: '/about' },
+  { label: 'Blog', href: '/blog' },
+  { label: 'Liên hệ', href: '/contact' },
 ];
 
 export function PublicFooter() {
@@ -69,142 +29,65 @@ export function PublicFooter() {
     return () => { active = false; };
   }, []);
 
-  const footerCtaTitle = getPublicText(footerContent, 'ctaTitle', 'Sẵn sàng tạo copy đỉnh cao?');
-  const footerCtaDescription = getPublicText(footerContent, 'ctaDescription', 'Dùng thử miễn phí 14 ngày · Không cần thẻ tín dụng · Hủy bất kỳ lúc nào');
-  const footerBrandDescription = getPublicText(footerContent, 'brandDescription', 'Nền tảng AI Copywriting hàng đầu Việt Nam — tích hợp GPT-4, Llama 3.1 và Fine-tuning, giúp doanh nghiệp tạo nội dung marketing chuyên nghiệp trong vài giây.');
+  const footerCtaTitle = getPublicText(footerContent, 'ctaTitle', 'Một brief tốt xứng đáng có nhiều hơn một bản nháp.');
+  const footerCtaDescription = getPublicText(footerContent, 'ctaDescription', 'Đưa ý tưởng, ngữ cảnh và giọng thương hiệu vào cùng một không gian biên tập.');
+  const footerBrandDescription = getPublicText(footerContent, 'brandDescription', 'CopyPro là studio AI hỗ trợ đội ngũ nội dung đi từ brief đến bản copy có thể tiếp tục chỉnh sửa, lưu trữ và quản lý.');
   const footerEmail = getPublicText(footerContent, 'email', PUBLIC_SUPPORT_EMAIL);
-  const footerPhone = getPublicText(footerContent, 'phone', '+84 901 234 567');
-  const footerAddress = getPublicText(footerContent, 'address', 'Tòa nhà Innovation Hub, 2 Nguyễn Thị Minh Khai, Q.1, TP.HCM');
-  const footerCopyright = getPublicText(footerContent, 'copyright', '© 2026 CopyPro Vietnam Co., Ltd.');
-  const footerPhoneHref = footerPhone.replace(/[^\d+]/g, '');
+  const footerCopyright = getPublicText(footerContent, 'copyright', '© 2026 CopyPro.');
 
   return (
-    <footer className="dark bg-gray-950 text-muted-foreground/80">
-      {/* Top CTA strip */}
-      <div className="border-b border-gray-800">
-        <div className="max-w-7xl mx-auto px-5 lg:px-8 py-12">
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
-            <div>
-              <h3
-                className="text-2xl font-bold text-white mb-2"
-                style={{ letterSpacing: '-0.02em' }}
-              >
-                {footerCtaTitle}
-              </h3>
-              <PublicRichText
-                content={footerContent}
-                field="ctaDescription"
-                fallback={footerCtaDescription}
-                className="text-sm text-muted-foreground/80 [&_a]:text-primary [&_a]:underline [&_p]:mb-1 [&_p:last-child]:mb-0"
-              />
-            </div>
-            <div className="flex gap-3 flex-shrink-0">
-              <Link to="/register">
-                <button className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-400 hover:to-green-400 text-white rounded-xl px-6 py-3 text-sm font-bold transition-all shadow-lg shadow-primary/30">
-                  <Sparkles className="w-4 h-4" />
-                  Bắt đầu miễn phí
-                  <ArrowUpRight className="w-4 h-4" />
-                </button>
-              </Link>
-              <Link to="/pricing">
-                <button className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-gray-200 rounded-xl px-6 py-3 text-sm font-semibold transition-colors">
-                  Xem bảng giá
-                </button>
-              </Link>
-            </div>
+    <footer className="border-t-2 border-foreground bg-foreground text-background">
+      <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
+        <div className="grid gap-10 border-b border-background/20 pb-12 lg:grid-cols-[1.25fr_.75fr] lg:items-end">
+          <div>
+            <p className="editorial-kicker mb-5 text-accent">Bắt đầu một bản thảo</p>
+            <h2 className="max-w-3xl text-background">{footerCtaTitle}</h2>
+            <PublicRichText
+              content={footerContent}
+              field="ctaDescription"
+              fallback={footerCtaDescription}
+              className="mt-5 max-w-2xl text-sm leading-7 text-background/65 [&_a]:text-accent [&_a]:underline"
+            />
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row lg:justify-end">
+            <Link to="/register" className="inline-flex h-12 items-center justify-center gap-2 border-2 border-accent bg-accent px-6 text-sm font-bold text-foreground transition-transform hover:-translate-y-1">
+              Mở studio <ArrowUpRight className="h-4 w-4" />
+            </Link>
+            <Link to="/pricing" className="inline-flex h-12 items-center justify-center border border-background/35 px-6 text-sm font-bold text-background hover:bg-background/10">
+              Xem gói sử dụng
+            </Link>
           </div>
         </div>
-      </div>
 
-      {/* Main footer */}
-      <div className="max-w-7xl mx-auto px-5 lg:px-8 py-16">
-        <div className="grid grid-cols-2 lg:grid-cols-6 gap-8 lg:gap-12">
-          {/* Brand */}
-          <div className="col-span-2">
-            <Link to="/" className="inline-flex items-center mb-5 hover:opacity-90 transition-opacity">
-              <BrandLogo size="lg" tone="light" surface="light" />
-            </Link>
+        <div className="grid gap-9 pt-10 md:grid-cols-[1.2fr_.8fr_.8fr]">
+          <div>
+            <Link to="/" className="inline-flex"><BrandLogo size="lg" tone="light" /></Link>
             <PublicRichText
               content={footerContent}
               field="brandDescription"
               fallback={footerBrandDescription}
-              className="mb-6 text-sm leading-relaxed text-muted-foreground [&_a]:text-primary [&_a]:underline [&_p]:mb-2 [&_p:last-child]:mb-0"
+              className="mt-5 max-w-md text-sm leading-7 text-background/60 [&_a]:text-accent [&_a]:underline"
             />
-
-            {/* Contact */}
-            <div className="space-y-2.5 text-sm">
-              <a href={`mailto:${footerEmail}`} className="flex items-center gap-2.5 hover:text-primary transition-colors">
-                <Mail className="w-4 h-4 text-primary flex-shrink-0" />
-                {footerEmail}
-              </a>
-              <a href={`tel:${footerPhoneHref}`} className="flex items-center gap-2.5 hover:text-primary transition-colors">
-                <Phone className="w-4 h-4 text-primary flex-shrink-0" />
-                {footerPhone}
-              </a>
-              <div className="flex items-start gap-2.5">
-                <MapPin className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
-                <PublicRichText
-                  content={footerContent}
-                  field="address"
-                  fallback={footerAddress}
-                  className="[&_a]:text-primary [&_a]:underline [&_p]:mb-1 [&_p:last-child]:mb-0"
-                />
-              </div>
-            </div>
-
-            {/* Socials */}
-            <div className="flex gap-2 mt-6">
-              {SOCIALS.map((s) => {
-                const Icon = s.icon;
-                return (
-                  <a
-                    key={s.label}
-                    href={s.href}
-                    aria-label={s.label}
-                    className={`w-9 h-9 bg-gray-800 ${s.color} rounded-lg flex items-center justify-center transition-colors`}
-                  >
-                    <Icon className="w-4 h-4 text-muted-foreground/60" />
-                  </a>
-                );
-              })}
+          </div>
+          <div>
+            <p className="font-mono-editorial text-[10px] font-bold uppercase tracking-[.18em] text-background/45">Điều hướng</p>
+            <div className="mt-4 grid grid-cols-2 gap-x-5 gap-y-3">
+              {FOOTER_LINKS.map((link) => (
+                <Link key={link.href} to={link.href} className="text-sm text-background/70 hover:text-accent">{link.label}</Link>
+              ))}
             </div>
           </div>
-
-          {/* Links */}
-          {Object.values(FOOTER_LINKS).map((section) => (
-            <div key={section.title}>
-              <h4 className="text-white text-sm font-bold mb-4 tracking-wide">{section.title}</h4>
-              <ul className="space-y-2.5">
-                {section.links.map((link) => (
-                  <li key={link.label}>
-                    <Link
-                      to={link.href}
-                      className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          <div>
+            <p className="font-mono-editorial text-[10px] font-bold uppercase tracking-[.18em] text-background/45">Hỗ trợ</p>
+            <a href={`mailto:${footerEmail}`} className="mt-4 inline-flex items-center gap-2 text-sm text-background/70 hover:text-accent">
+              <Mail className="h-4 w-4" /> {footerEmail}
+            </a>
+          </div>
         </div>
 
-        {/* Bottom */}
-        <div className="border-t border-gray-800 mt-14 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-sm text-foreground/70">
-            <span>{footerCopyright}</span>
-            <span className="text-foreground/80">·</span>
-            <span>Mã số doanh nghiệp: 0317xxxxxx</span>
-          </div>
-          <div className="flex items-center gap-3 text-sm text-foreground/70">
-            <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-primary/50 animate-pulse" />
-              Tất cả hệ thống hoạt động bình thường
-            </span>
-            <span className="text-foreground/80">·</span>
-            <span>Made with 🇻🇳 in Vietnam</span>
-          </div>
+        <div className="mt-10 flex flex-col gap-2 border-t border-background/20 pt-5 font-mono-editorial text-[10px] uppercase tracking-[.13em] text-background/45 sm:flex-row sm:items-center sm:justify-between">
+          <span>{footerCopyright}</span>
+          <span>Creative editorial studio · Vietnamese first</span>
         </div>
       </div>
     </footer>

@@ -74,26 +74,26 @@ function buildResponse(type: string, input: string): string {
 
   const templates: Record<string, string[]> = {
     fb_ad: [
-      `🔥 Đừng bỏ lỡ! ${product} — Giải pháp TỐT NHẤT mà bạn chưa biết đến!\n\n✅ Tiết kiệm đến 60% so với cách làm truyền thống\n✅ Kết quả rõ ràng chỉ sau 7 ngày\n✅ Hơn 10,000 khách hàng hài lòng\n\n👉 Nhấp "Tìm hiểu thêm" để nhận ưu đãi độc quyền — chỉ còn HÔM NAY!\n\n#${product.replace(/\s/g, '')} #Ưu_đãi #Hôm_nay`,
-      `💥 SỐC! ${product} giảm đến 50% — Chỉ trong 24 giờ!\n\nBạn đã thử ${product} chưa?\n→ Không cần kinh nghiệm\n→ Hỗ trợ 24/7 tận tình\n→ Hoàn tiền 100% nếu không hài lòng\n\nLiên hệ ngay để nhận báo giá tốt nhất! ⬇️`,
+      `GỢI Ý QUẢNG CÁO\n\n${product} — bắt đầu từ điều khách hàng thực sự quan tâm.\n\n• Nêu một lợi ích có thể kiểm chứng\n• Làm rõ đối tượng phù hợp\n• Thêm bằng chứng hoặc điều kiện thực tế\n\nCTA: “Tìm hiểu ${product}”\n\n#${product.replace(/\s/g, '')}`,
+      `GỢI Ý QUẢNG CÁO / HƯỚNG 2\n\nVấn đề: [Nỗi đau chính của khách hàng]\nGiải pháp: ${product}\nKhác biệt: [Điểm khác biệt đã được xác thực]\n\nCTA: “Xem cách sản phẩm hoạt động”`,
     ],
     email: [
-      `Subject: [CHỈ HÔM NAY] ${product} — Cơ hội vàng không thể bỏ lỡ 🎁\n\nChào [Tên khách hàng],\n\nChúng tôi muốn gửi tặng bạn một ưu đãi đặc biệt cho ${product}.\n\nTrong 24 giờ tới, bạn sẽ nhận được:\n• Giảm ngay 30% tổng giá trị đơn hàng\n• Tặng kèm phần quà trị giá 500,000₫\n• Ưu tiên hỗ trợ từ chuyên gia\n\n🔗 [Nhận ưu đãi ngay — Hết hạn lúc 23:59 hôm nay]\n\nTrân trọng,\nĐội ngũ ${product}`,
-      `Subject: Bạn ơi — ${product} đang chờ bạn quay lại! 👋\n\nHi [Tên],\n\nChúng tôi nhận thấy bạn chưa hoàn thành đơn hàng ${product}.\n\nĐừng để nó "bay mất" — chúng tôi đã giữ lại cho bạn và tặng thêm:\n✨ Miễn phí vận chuyển\n✨ Giảm thêm 10% khi dùng mã: COMEBACK10\n\n→ Hoàn thành đơn hàng ngay`,
+      `Subject: Một cách rõ hơn để giới thiệu ${product}\n\nChào [Tên người nhận],\n\n${product} được tạo ra để [vấn đề sản phẩm giải quyết].\n\nBa điều cần biết:\n• [Lợi ích chính]\n• [Cách hoạt động]\n• [Bằng chứng hoặc điều kiện áp dụng]\n\nCTA: [Hành động tiếp theo]\n\nTrân trọng,\n[Tên thương hiệu]`,
+      `Subject: Bạn còn câu hỏi về ${product}?\n\nChào [Tên],\n\nNếu bạn đang cân nhắc ${product}, đây là phần tóm tắt ngắn:\n\nPhù hợp với: [Đối tượng]\nGiúp giải quyết: [Vấn đề]\nBước tiếp theo: [CTA]\n\n[Tên người gửi]`,
     ],
     product: [
-      `✨ ${product}\n\n🌟 Mô tả sản phẩm:\n${product} là giải pháp hoàn hảo dành cho những ai đang tìm kiếm hiệu quả vượt trội với chi phí tối ưu.\n\n🎯 Điểm nổi bật:\n• Thiết kế hiện đại, dễ sử dụng ngay từ lần đầu\n• Chất liệu cao cấp, bền bỉ theo thời gian\n• Tiết kiệm 70% thời gian so với phương pháp truyền thống\n• Bảo hành chính hãng 24 tháng\n\n💚 Hơn 5,000 khách hàng đã tin dùng — Bạn sẽ là người tiếp theo!`,
+      `${product}\n\nMô tả ngắn:\n${product} dành cho [đối tượng] cần [nhu cầu chính].\n\nĐiểm cần làm rõ:\n• Tính năng: [Thông tin sản phẩm]\n• Lợi ích: [Kết quả thực tế]\n• Cách dùng: [Hướng dẫn ngắn]\n• Điều kiện / bảo hành: [Thông tin đã xác thực]\n\nCTA: Xem chi tiết sản phẩm`,
     ],
     landing: [
-      `HEADLINE:\n"${product} — Giải pháp #1 Việt Nam cho người muốn kết quả thật, không phí thời gian"\n\nSUBHEADLINE:\nTham gia cùng 50,000+ người dùng đã thay đổi cách tiếp cận với ${product}. Bắt đầu miễn phí hôm nay — không cần thẻ tín dụng.\n\nCTA BUTTON: "Dùng thử miễn phí 14 ngày →"\n\nSOCIAL PROOF:\n⭐⭐⭐⭐⭐ "Đây là thứ tôi cần từ lâu!" — Nguyễn Minh T., TP.HCM`,
-      `HEADLINE:\n"Bạn xứng đáng có được ${product} tốt hơn — và chúng tôi sẽ chứng minh điều đó"\n\nSUBHEADLINE:\nKhông rủi ro. Không ràng buộc. Chỉ kết quả thực sự trong 30 ngày đầu tiên.\n\nCTA: "Bắt đầu ngay — Miễn phí"\n\n✅ Setup trong 2 phút  ✅ Hủy bất kỳ lúc nào  ✅ Hỗ trợ tiếng Việt 24/7`,
+      `HEADLINE:\n“${product}, được giải thích bằng lợi ích quan trọng nhất.”\n\nSUBHEADLINE:\nDành cho [đối tượng] đang cần [kết quả mong muốn], với [điểm khác biệt có thể chứng minh].\n\nCTA BUTTON: “Xem ${product} hoạt động”\n\nPROOF BLOCK:\n[Chèn số liệu, đánh giá hoặc chứng nhận đã được xác thực]`,
+      `HEADLINE:\n“Bắt đầu với vấn đề. Kết thúc bằng ${product}.”\n\nSUBHEADLINE:\nMột câu giải thích rõ sản phẩm làm gì, cho ai và vì sao đáng cân nhắc.\n\nCTA: “Tìm hiểu thêm”\n\nTRUST NOTE: [Chính sách hoặc bằng chứng thực tế]`,
     ],
     push: [
-      `🔔 ${product}\n━━━━━━━━━━━━━━━\nTitle: "⚡ Chỉ còn 2 giờ! ${product} giảm 40%"\nBody: "Đừng bỏ lỡ — Hơn 500 người đang xem ngay lúc này"\n[Mở ngay] [Để sau]\n━━━━━━━━━━━━━━━\nTime to send: 20:00 - 21:00 (giờ cao điểm)\nPredicted CTR: 8.4%`,
-      `🔔 Notification Preview\n━━━━━━━━━━━━━━━\nTitle: "🎁 Quà tặng dành riêng cho bạn từ ${product}!"\nBody: "Nhấp để nhận ngay — Chỉ hôm nay thôi"\nBadge: 1  Sound: Default\n━━━━━━━━━━━━━━━\nDự đoán open rate: 23.1%`,
+      `NOTIFICATION PREVIEW\n━━━━━━━━━━━━━━━\nTitle: “Có gì mới ở ${product}?”\nBody: “[Thông tin ngắn, cụ thể và đúng thời điểm]”\nCTA: “Mở chi tiết”\n━━━━━━━━━━━━━━━\nGợi ý: chỉ dùng tính khẩn cấp khi có thời hạn thật.`,
+      `NOTIFICATION PREVIEW / HƯỚNG 2\n━━━━━━━━━━━━━━━\nTitle: “Tiếp tục với ${product}”\nBody: “[Nhắc đúng hành động người dùng đang dang dở]”\nCTA: “Tiếp tục”`,
     ],
     google: [
-      `📢 GOOGLE ADS — ${product}\n\nHeadline 1: ${product} Uy Tín #1 VN\nHeadline 2: Giá Tốt Nhất - Đặt Ngay\nHeadline 3: Miễn Phí Tư Vấn 24/7\n\nDescription 1: ${product} chính hãng, bảo hành 24 tháng. Giao hàng toàn quốc. Đặt hàng ngay hôm nay!\nDescription 2: Hơn 10,000 khách hàng tin tưởng. Giá tốt nhất thị trường. Hỗ trợ 24/7.\n\nDisplay URL: ${PUBLIC_SITE_HOST}/${product.toLowerCase().replace(/\s/g, '-')}`,
+      `GOOGLE ADS — ${product}\n\nHeadline 1: ${product} cho [đối tượng]\nHeadline 2: [Lợi ích chính đã xác thực]\nHeadline 3: Tìm Hiểu Cách Hoạt Động\n\nDescription 1: Giải thích ngắn sản phẩm, lợi ích và điều kiện áp dụng.\nDescription 2: Thêm khác biệt hoặc bằng chứng có nguồn thực tế.\n\nDisplay URL: ${PUBLIC_SITE_HOST}/${product.toLowerCase().replace(/\s/g, '-')}`,
     ],
   };
 
@@ -180,9 +180,9 @@ export function AIDemoSection() {
   };
 
   return (
-    <section className="py-16 md:py-20 bg-gradient-to-b from-background to-surface-muted relative overflow-hidden">
+    <section className="editorial-demo paper-grid relative overflow-hidden bg-background py-16 md:py-24">
       {/* Subtle radial glow */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_50%_60%,rgba(34,197,94,0.06),transparent)] pointer-events-none" />
+      <div className="pointer-events-none absolute right-[-5rem] top-20 h-52 w-52 rotate-12 border-[32px] border-primary/10" />
 
       <div className="max-w-7xl mx-auto px-5 lg:px-8 relative">
 
@@ -421,7 +421,7 @@ export function AIDemoSection() {
               <CheckCircle2 className="w-4 h-4 text-primary" /> Đăng ký để dùng đầy đủ tính năng
             </span>
             <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-primary" /> 14 ngày Pro miễn phí
+              <CheckCircle2 className="w-4 h-4 text-primary" /> Kết quả chỉ dùng để minh họa giao diện
             </span>
           </div>
         </div>

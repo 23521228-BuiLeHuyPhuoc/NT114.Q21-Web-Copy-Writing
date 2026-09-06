@@ -515,10 +515,11 @@ export function CustomerBilling() {
 
   return (
     <Layout>
-      <div className="mx-auto max-w-6xl p-6">
-        <div className="mb-8">
-          <h1 className="mb-1 text-3xl font-bold text-foreground">Gói dịch vụ & Thanh toán</h1>
-          <p className="text-foreground/70">Quản lý gói đăng ký, nâng cấp gói và hóa đơn</p>
+      <div className="mx-auto max-w-[1350px] p-4 md:p-7 lg:p-9">
+        <div className="mb-8 border-b-2 border-foreground pb-7">
+          <p className="editorial-kicker mb-4 text-primary">Tài khoản / tài chính</p>
+          <h1 className="studio-page-title text-foreground">Gói & thanh toán</h1>
+          <p className="mt-3 text-sm leading-7 text-muted-foreground">Quản lý gói hiện tại, quota, nâng cấp và lịch sử hóa đơn.</p>
         </div>
 
         <Tabs defaultValue="plan">
@@ -529,7 +530,7 @@ export function CustomerBilling() {
           </TabsList>
 
           <TabsContent value="plan">
-            <Card className="mb-6 border-primary/20 bg-gradient-to-r from-primary/5 to-emerald-50 p-6">
+            <Card className="mb-6 border-2 border-foreground bg-accent/25 p-6">
               <div className="mb-4 flex items-start justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <div className="rounded-lg bg-gradient-to-br from-green-600 to-emerald-700 p-3">

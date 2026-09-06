@@ -16,7 +16,7 @@ import {
   FileText, BarChart3, Settings, RefreshCw
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { ImageWithFallback } from '@/app/components/figma/ImageWithFallback';
+import { EditorialGlyph } from '@/app/components/EditorialArtwork';
 import { useNavigate } from '@/lib/next-router-compat';
 import * as XLSX from 'xlsx';
 
@@ -592,22 +592,20 @@ export function CustomerFineTuningStudio() {
 
   return (
     <Layout>
-      <div className="p-6 max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-1">Fine-tuning Studio</h1>
-          <p className="text-foreground/70">Huấn luyện model AI theo giọng văn thương hiệu và ngành nghề của bạn</p>
+      <div className="mx-auto max-w-[1450px] p-4 md:p-7 lg:p-9">
+        <div className="mb-8 border-b-2 border-foreground pb-7">
+          <p className="editorial-kicker mb-4 text-primary">AI nâng cao / huấn luyện</p>
+          <h1 className="studio-page-title text-foreground">Fine-tuning Studio</h1>
+          <p className="mt-3 text-sm leading-7 text-muted-foreground">Quản lý dataset, job huấn luyện và model tùy chỉnh theo quyền truy cập hiện tại.</p>
         </div>
 
         {/* Info banner */}
-        <Card className="p-4 mb-6 bg-gradient-to-r from-green-50 to-green-50 border-primary/20">
+        <Card className="mb-6 border-2 border-foreground bg-accent/25 p-4">
           <div className="flex gap-3">
-            <ImageWithFallback
-              src="https://images.unsplash.com/photo-1591453089816-0fbb971b454c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=80"
-              alt="Fine-tuning" className="w-16 h-16 rounded-lg object-cover flex-shrink-0 hidden sm:block"
-            />
+            <EditorialGlyph kind="quote" className="hidden h-14 w-14 flex-shrink-0 text-foreground sm:block" />
             <div>
-              <h3 className="font-semibold text-green-900 mb-1">Fine-tuning là gì?</h3>
-              <p className="text-sm text-primary">
+              <h3 className="mb-1 font-sans text-base font-bold tracking-normal text-foreground">Fine-tuning là gì?</h3>
+              <p className="text-sm leading-6 text-foreground/70">
                 Fine-tuning cho phép bạn tinh chỉnh model AI đang cấu hình để viết copy đúng phong cách, tone giọng 
                 và đặc thù ngành nghề của thương hiệu bạn. Cung cấp càng nhiều ví dụ tốt, model càng chính xác.
               </p>

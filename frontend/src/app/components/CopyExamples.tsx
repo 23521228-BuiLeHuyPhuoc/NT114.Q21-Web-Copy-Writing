@@ -838,7 +838,10 @@ export function CopyExamples({ industry }: CopyExamplesProps) {
     <Card className="p-6">
       <div className="flex items-center gap-2 mb-6">
         <BookOpen className="w-6 h-6 text-primary" />
-        <h2 className="text-2xl font-bold">Mẫu Copy Thực Tế - {examples.name}</h2>
+        <div>
+          <h2 className="text-2xl font-bold">Mẫu copy minh họa - {examples.name}</h2>
+          <p className="mt-1 text-xs text-muted-foreground">Cấu trúc tham khảo; hãy thay mọi số liệu, chính sách và claim bằng thông tin đã xác thực.</p>
+        </div>
       </div>
 
       <Tabs defaultValue="0" className="w-full">

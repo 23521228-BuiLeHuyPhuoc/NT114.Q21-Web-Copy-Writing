@@ -25,6 +25,7 @@ import { ModelPicker, type GeneratorModelOption } from '@/app/components/generat
 import { ProductInfoForm } from '@/app/components/generator/ProductInfoForm';
 import { AdvancedSettings, type ContentLength } from '@/app/components/generator/AdvancedSettings';
 import { GeneratorResults } from '@/app/components/generator/GeneratorResults';
+import { EditorialGlyph } from '@/app/components/EditorialArtwork';
 import { useCreateContent, useGenerateContent } from '@/hooks/queries/useContents';
 import { useProjects } from '@/hooks/queries/useProjects';
 import { useTemplates } from '@/hooks/queries/useTemplates';
@@ -599,243 +600,113 @@ export function CustomerGenerator() {
 
   return (
     <Layout>
-      <div className="p-4 md:p-6 max-w-7xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-foreground mb-1">AI Copywriting Engine</h1>
-          <p className="text-foreground/70">Tạo nhiều phiên bản copy và chỉ lưu phiên bản bạn chọn vào thư viện nội dung.</p>
-        </div>
-
-        <div className="grid lg:grid-cols-5 gap-6">
-          <div className="lg:col-span-2 space-y-4">
-            <IndustryPicker value={industry} onChange={setIndustry} options={industryOptions} />
-            <CopyTypePicker value={copyType} onChange={setCopyType} options={copyTypeOptions} />
-            <Card className="p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <FileText className="w-4 h-4 text-primary" />
-                <p className="text-sm font-semibold text-foreground/80">Template prompt</p>
-              </div>
-              <select
-                value={selectedTemplateId}
-                onChange={(event) => setSelectedTemplateId(event.target.value)}
-                disabled={templatesLoading}
-                className="w-full h-10 rounded border border-border bg-card px-3 text-sm text-foreground outline-none focus:border-primary"
-              >
-                <option value="">{templatesLoading ? 'Đang tải templates...' : 'Không dùng template'}</option>
-                {templates.map((template) => (
-                  <option key={template.id} value={template.id}>
-                    {template.name} - {TEMPLATE_TYPE_LABELS[template.type] || template.type}
-                  </option>
-                ))}
-              </select>
-              {selectedTemplate ? (
-                <div className="mt-3 space-y-2">
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant="outline">{TEMPLATE_CATEGORY_LABELS[selectedTemplate.category] || selectedTemplate.category}</Badge>
-                    <Badge variant="outline">{TEMPLATE_TYPE_LABELS[selectedTemplate.type] || selectedTemplate.type}</Badge>
-                    <Badge className="bg-primary/10 text-primary border-0">
-                      {selectedTemplate.isSystem ? 'System' : 'Cá nhân'}
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground line-clamp-3">{selectedTemplate.description}</p>
-                </div>
-              ) : (
-                <p className="mt-2 text-xs text-muted-foreground">Backend sẽ generate bằng prompt thủ công nếu không chọn template.</p>
-              )}
-            </Card>
-            <Card className="p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <FolderOpen className="w-4 h-4 text-primary" />
-                <p className="text-sm font-semibold text-foreground/80">Dự án</p>
-              </div>
-              <select
-                value={selectedProjectId}
-                onChange={(event) => setSelectedProjectId(event.target.value)}
-                disabled={projectsLoading}
-                className="w-full h-10 rounded border border-border bg-card px-3 text-sm text-foreground outline-none focus:border-primary"
-              >
-                <option value="">{projectsLoading ? 'Đang tải dự án...' : 'Không gắn dự án'}</option>
-                {projects.map((project) => (
-                  <option key={project.id} value={project.id}>
-                    {project.name}
-                  </option>
-                ))}
-              </select>
-              {selectedProject ? (
-                <p className="mt-2 text-xs text-muted-foreground line-clamp-2">{selectedProject.desc || 'No description'}</p>
-              ) : (
-                <p className="mt-2 text-xs text-muted-foreground">Nội dung sinh ra sẽ được gắn vào dự án đã chọn.</p>
-              )}
-            </Card>
-            <TonePicker value={tone} onChange={setTone} options={toneOptions} />
-            <Card className="p-4">
-              <div className="grid grid-cols-2 gap-2">
-                <Button type="button" variant={modelMode === 'base' ? 'default' : 'outline'} onClick={() => handleModelModeChange('base')}>
-                  <Cpu className="w-4 h-4 mr-2" /> Model gốc
-                </Button>
-                <Button type="button" variant={modelMode === 'fine-tuned' ? 'default' : 'outline'} disabled={!isFineTunedAllowed} onClick={() => handleModelModeChange('fine-tuned')}>
-                  <Brain className="w-4 h-4 mr-2" /> Fine-tuned
-                </Button>
-              </div>
-            </Card>
-            {modelMode === 'base' ? (
-              baseGeneratorModels.length > 0 ? (
-                <ModelPicker value={model} onChange={setModel} models={baseGeneratorModels} estimatedQuotaUnits={estimatedQuotaUnits} />
-              ) : (
-                <Card className="p-4 border-dashed">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Cpu className="w-4 h-4 text-primary" />
-                    <p className="text-sm font-semibold text-foreground/80">Gói hiện tại chưa có model generate</p>
-                  </div>
-                  <p className="text-xs text-muted-foreground">Admin cần mở ít nhất một model trong cấu hình gói dịch vụ.</p>
-                </Card>
-              )
-            ) : hasFineTunedModels ? (
-              <ModelPicker value={fineTunedModelPickerValue} onChange={handleFineTunedModelChange} models={fineTunedGeneratorModels} estimatedQuotaUnits={estimatedQuotaUnits} />
-            ) : (
-              <Card className="p-4 border-dashed">
-                <div className="flex items-center gap-2 mb-2">
-                  <Brain className="w-4 h-4 text-primary" />
-                  <p className="text-sm font-semibold text-foreground/80">Chưa có model fine-tuned khả dụng</p>
-                </div>
-                <p className="text-xs text-muted-foreground mb-3">Promote job fine-tuning và bật active để dùng model tại generator.</p>
-                {fineTunedUnavailableMessage && (
-                  <p className="text-xs text-amber-700 mb-3">{fineTunedUnavailableMessage}</p>
-                )}
-                <Button variant="outline" size="sm" onClick={() => navigate('/fine-tune')}>Mở fine-tuning</Button>
-              </Card>
-            )}
-            <ProductInfoForm
-              productName={productName}
-              keywords={keywords}
-              targetAudience={targetAudience}
-              additionalContext={additionalContext}
-              onChange={handleProductInfoChange}
-            />
-            <AdvancedSettings
-              variations={variations}
-              onVariationsChange={setVariations}
-              temperature={temperature}
-              onTemperatureChange={setTemperature}
-              contentLength={contentLength}
-              onContentLengthChange={handleContentLengthChange}
-              maxOutputTokens={maxOutputTokens}
-              onMaxOutputTokensChange={setMaxOutputTokens}
-              open={showAdvanced}
-              onOpenChange={setShowAdvanced}
-            />
-
-            <div className="flex gap-2">
-              <Button
-                className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white h-12"
-                onClick={handleGenerate}
-                disabled={isGenerating || !effectiveModel}
-              >
-                {isGenerating ? <RefreshCw className="w-5 h-5 mr-2 animate-spin" /> : <Wand2 className="w-5 h-5 mr-2" />}
-                {isGenerating ? 'Đang tạo...' : 'Tạo Copy Ngay'}
-              </Button>
-              {isGenerating && (
-                <Button variant="outline" onClick={handleStop} className="h-12">Stop</Button>
-              )}
-            </div>
+      <div className="mx-auto max-w-[1500px] p-4 md:p-7 lg:p-9">
+        <header className="mb-8 grid gap-5 border-b-2 border-foreground pb-7 lg:grid-cols-[1fr_auto] lg:items-end">
+          <div>
+            <p className="editorial-kicker mb-4 text-primary">Bàn biên tập / Generator</p>
+            <h1 className="studio-page-title text-foreground">Tạo bản nháp.<br />Chọn hướng viết.</h1>
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-muted-foreground">Đi theo thứ tự từ brief đến model, sau đó so sánh và biên tập kết quả ở cùng một mặt bàn.</p>
           </div>
+          <div className="flex items-center gap-4 border-l-2 border-primary pl-4 font-mono-editorial text-[10px] font-bold uppercase tracking-[.13em] text-muted-foreground">
+            <span>01 Brief</span><span>→</span><span>02 Model</span><span>→</span><span>03 Bản nháp</span>
+          </div>
+        </header>
 
-          <div className="lg:col-span-3">
-            <div className="generator-sticky-panel space-y-4 lg:sticky lg:top-20 lg:max-h-[calc(100vh-12rem)] lg:overflow-y-auto lg:overscroll-contain lg:pr-2 lg:pb-3">
-              <div className="flex flex-wrap items-center gap-2">
-                <div className={`${selectedIndustry?.color} p-1.5 rounded flex-shrink-0`}>
-                  <IndustryIcon className="w-4 h-4 text-white" />
+        <div className="generator-workbench grid gap-6 xl:grid-cols-[minmax(380px,.82fr)_minmax(520px,1.18fr)]">
+          <section className="space-y-5">
+            <div className="border-2 border-foreground bg-card shadow-[7px_7px_0_rgba(23,32,51,.1)]">
+              <div className="flex items-center justify-between bg-foreground px-5 py-3 text-background">
+                <div className="flex items-center gap-3"><EditorialGlyph kind="manuscript" className="h-7 w-7 text-background" /><span className="text-sm font-bold">Brief nội dung</span></div>
+                <span className="font-mono-editorial text-[10px] uppercase tracking-[.16em] text-background/55">Step 01</span>
+              </div>
+              <div className="space-y-5 p-4 md:p-5">
+                <IndustryPicker value={industry} onChange={setIndustry} options={industryOptions} />
+                <CopyTypePicker value={copyType} onChange={setCopyType} options={copyTypeOptions} />
+
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="border border-border bg-background p-3">
+                    <div className="mb-2 flex items-center gap-2"><FileText className="h-4 w-4 text-primary" /><p className="text-xs font-bold uppercase tracking-wide text-foreground">Template</p></div>
+                    <select value={selectedTemplateId} onChange={(event) => setSelectedTemplateId(event.target.value)} disabled={templatesLoading} className="h-10 w-full border border-border bg-card px-3 text-sm text-foreground outline-none focus:border-primary">
+                      <option value="">{templatesLoading ? 'Đang tải...' : 'Không dùng template'}</option>
+                      {templates.map((template) => <option key={template.id} value={template.id}>{template.name} - {TEMPLATE_TYPE_LABELS[template.type] || template.type}</option>)}
+                    </select>
+                    <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">{selectedTemplate?.description || 'Dùng brief thủ công nếu không chọn mẫu.'}</p>
+                  </div>
+                  <div className="border border-border bg-background p-3">
+                    <div className="mb-2 flex items-center gap-2"><FolderOpen className="h-4 w-4 text-primary" /><p className="text-xs font-bold uppercase tracking-wide text-foreground">Dự án</p></div>
+                    <select value={selectedProjectId} onChange={(event) => setSelectedProjectId(event.target.value)} disabled={projectsLoading} className="h-10 w-full border border-border bg-card px-3 text-sm text-foreground outline-none focus:border-primary">
+                      <option value="">{projectsLoading ? 'Đang tải...' : 'Không gắn dự án'}</option>
+                      {projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}
+                    </select>
+                    <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">{selectedProject?.desc || 'Có thể gắn bản lưu vào một dự án.'}</p>
+                  </div>
                 </div>
-                <span className="text-sm font-medium text-foreground/80">{selectedIndustry?.name}</span>
-                <span className="text-muted-foreground/60">·</span>
-                <Badge className="bg-muted text-foreground/80 border-0">{selectedType?.name}</Badge>
-                {selectedModel && <Badge className="bg-primary/10 text-primary border-0">{selectedModel.name}</Badge>}
-                {selectedTemplate && (
-                  <Badge className="bg-emerald-50 text-emerald-700 border-0">{selectedTemplate.name}</Badge>
+
+                <TonePicker value={tone} onChange={setTone} options={toneOptions} />
+                <ProductInfoForm productName={productName} keywords={keywords} targetAudience={targetAudience} additionalContext={additionalContext} onChange={handleProductInfoChange} />
+              </div>
+            </div>
+
+            <div className="border-2 border-foreground bg-card">
+              <div className="flex items-center justify-between border-b border-foreground px-5 py-3">
+                <div className="flex items-center gap-2"><Cpu className="h-4 w-4 text-primary" /><span className="text-sm font-bold">Model & tùy chọn đầu ra</span></div>
+                <span className="font-mono-editorial text-[10px] uppercase tracking-[.16em] text-muted-foreground">Step 02</span>
+              </div>
+              <div className="space-y-4 p-4 md:p-5">
+                <div className="grid grid-cols-2 gap-2">
+                  <Button type="button" variant={modelMode === 'base' ? 'default' : 'outline'} onClick={() => handleModelModeChange('base')}><Cpu className="h-4 w-4" /> Model gốc</Button>
+                  <Button type="button" variant={modelMode === 'fine-tuned' ? 'default' : 'outline'} disabled={!isFineTunedAllowed} onClick={() => handleModelModeChange('fine-tuned')}><Brain className="h-4 w-4" /> Fine-tuned</Button>
+                </div>
+                {modelMode === 'base' ? (
+                  baseGeneratorModels.length > 0 ? <ModelPicker value={model} onChange={setModel} models={baseGeneratorModels} estimatedQuotaUnits={estimatedQuotaUnits} /> : (
+                    <Card className="border-dashed p-4"><p className="text-sm font-bold">Gói hiện tại chưa có model generate</p><p className="mt-1 text-xs text-muted-foreground">Admin cần mở ít nhất một model trong cấu hình gói.</p></Card>
+                  )
+                ) : hasFineTunedModels ? <ModelPicker value={fineTunedModelPickerValue} onChange={handleFineTunedModelChange} models={fineTunedGeneratorModels} estimatedQuotaUnits={estimatedQuotaUnits} /> : (
+                  <Card className="border-dashed p-4"><p className="text-sm font-bold">Chưa có model fine-tuned khả dụng</p><p className="mt-1 text-xs text-muted-foreground">{fineTunedUnavailableMessage || 'Promote job fine-tuning và bật active để sử dụng.'}</p><Button variant="outline" size="sm" className="mt-3" onClick={() => navigate('/fine-tune')}>Mở fine-tuning</Button></Card>
                 )}
-                {selectedProject && (
-                  <Badge className="bg-teal-50 text-teal-700 border-0">{selectedProject.name}</Badge>
-                )}
-                {results.length > 0 && (
-                  <>
-                    <Badge className="bg-primary/10 text-primary border-0">{tokensUsed} tokens</Badge>
-                    <Badge className="bg-muted text-foreground/70 border-0">{latency}s</Badge>
-                  </>
-                )}
-                <Button
-                  size="sm"
-                  className="ml-auto h-8 bg-gradient-to-r from-green-600 to-emerald-600 px-3 text-white hover:from-green-700 hover:to-emerald-700"
-                  onClick={handleGenerate}
-                  disabled={isGenerating || !effectiveModel}
-                >
-                  {isGenerating ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
-                  {isGenerating ? 'Đang tạo...' : 'Tạo Copy'}
-                </Button>
+                <AdvancedSettings variations={variations} onVariationsChange={setVariations} temperature={temperature} onTemperatureChange={setTemperature} contentLength={contentLength} onContentLengthChange={handleContentLengthChange} maxOutputTokens={maxOutputTokens} onMaxOutputTokensChange={setMaxOutputTokens} open={showAdvanced} onOpenChange={setShowAdvanced} />
+              </div>
+            </div>
+
+            <div className="sticky bottom-3 z-20 flex gap-2 border-2 border-foreground bg-accent p-3 shadow-[6px_6px_0_rgba(23,32,51,.16)]">
+              <Button className="h-12 flex-1 border-2 border-foreground text-base" onClick={handleGenerate} disabled={isGenerating || !effectiveModel}>
+                {isGenerating ? <RefreshCw className="h-5 w-5 animate-spin" /> : <Wand2 className="h-5 w-5" />}{isGenerating ? 'Đang tạo bản nháp...' : `Tạo ${variations} phiên bản`}
+              </Button>
+              {isGenerating && <Button variant="outline" onClick={handleStop} className="h-12 border-2 border-foreground">Dừng</Button>}
+            </div>
+          </section>
+
+          <section className="min-w-0">
+            <div className="generator-sticky-panel space-y-4 xl:sticky xl:top-24 xl:max-h-[calc(100vh-7rem)] xl:overflow-y-auto xl:overscroll-contain xl:pr-2 xl:pb-4">
+              <div className="flex flex-wrap items-center gap-2 border-b-2 border-foreground pb-3">
+                <div className={`${selectedIndustry?.color} flex h-8 w-8 items-center justify-center border border-foreground`}><IndustryIcon className="h-4 w-4 text-white" /></div>
+                <span className="text-sm font-bold text-foreground">{selectedIndustry?.name}</span>
+                <Badge variant="outline">{selectedType?.name}</Badge>
+                {selectedModel && <Badge className="border-0 bg-primary/10 text-primary">{selectedModel.name}</Badge>}
+                {selectedTemplate && <Badge className="border-0 bg-accent/55 text-foreground">{selectedTemplate.name}</Badge>}
+                {selectedProject && <Badge className="border-0 bg-info/10 text-info">{selectedProject.name}</Badge>}
+                {results.length > 0 && <span className="ml-auto font-mono-editorial text-[10px] font-bold uppercase tracking-[.12em] text-muted-foreground">{tokensUsed} tokens · {latency}s</span>}
               </div>
 
-              {selectedTemplate && (
-                <Card className="p-4 bg-surface-muted">
-                  <p className="text-xs font-semibold text-foreground/70 mb-2">Template system prompt sẽ được backend ghép vào:</p>
-                  <p className="text-xs text-foreground/80 font-mono bg-card rounded border p-3 whitespace-pre-wrap">
-                    {selectedTemplate.systemPrompt}
-                  </p>
-                </Card>
-              )}
+              <details className="group border border-border bg-card">
+                <summary className="cursor-pointer list-none px-4 py-3 text-xs font-bold text-foreground marker:hidden">Chi tiết prompt gửi đến API <span className="float-right text-primary group-open:rotate-45">+</span></summary>
+                <div className="space-y-3 border-t border-border bg-background p-4">
+                  {selectedTemplate && <div><p className="mb-2 font-mono-editorial text-[9px] font-bold uppercase tracking-[.14em] text-muted-foreground">System prompt</p><pre className="max-h-40 overflow-auto whitespace-pre-wrap border-l-2 border-accent pl-3 text-xs leading-6 text-foreground/75">{selectedTemplate.systemPrompt}</pre></div>}
+                  <div><p className="mb-2 font-mono-editorial text-[9px] font-bold uppercase tracking-[.14em] text-muted-foreground">User prompt</p><pre className="max-h-52 overflow-auto whitespace-pre-wrap border-l-2 border-primary pl-3 text-xs leading-6 text-foreground/75">{buildPrompt()}</pre></div>
+                </div>
+              </details>
 
-              <Card className="p-4 bg-surface-muted">
-                <p className="text-xs font-semibold text-foreground/70 mb-2">Prompt user gửi đến API {selectedModel?.name || 'model đã chọn'}:</p>
-                <p className="text-xs text-foreground/80 font-mono bg-card rounded border p-3 whitespace-pre-wrap">
-                  {buildPrompt()}
-                </p>
-              </Card>
-
-              <GeneratorResults
-                isGenerating={isGenerating}
-                isSaving={createContent.isPending}
-                streamText={streamText}
-                results={results}
-                selectedResult={selectedResult}
-                qualityScores={qualityScores}
-                plagiarism={plagiarism}
-                variations={variations}
-                onSelectResult={setSelectedResult}
-                onResultChange={handleResultChange}
-                onCopy={handleCopy}
-                onSave={handleSave}
-                onDownload={handleDownload}
-                onRegenerate={handleGenerate}
-              />
+              <GeneratorResults isGenerating={isGenerating} isSaving={createContent.isPending} streamText={streamText} results={results} selectedResult={selectedResult} qualityScores={qualityScores} plagiarism={plagiarism} variations={variations} onSelectResult={setSelectedResult} onResultChange={handleResultChange} onCopy={handleCopy} onSave={handleSave} onDownload={handleDownload} onRegenerate={handleGenerate} />
 
               {savedContentId && !isGenerating && (
-                <Card className="p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                  <div>
-                    <p className="font-semibold text-sm text-foreground">Nội dung đã được lưu</p>
-                    <p className="text-xs text-muted-foreground">Bạn có thể xem lại trong thư viện nội dung.</p>
-                  </div>
-                  <Button variant="outline" size="sm" onClick={() => navigate(`/contents/${savedContentId}`)}>
-                    Xem chi tiết
-                  </Button>
-                </Card>
+                <Card className="flex flex-col gap-3 border-l-4 border-l-success p-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-sm font-bold text-foreground">Bản đã chọn được lưu vào thư viện</p><p className="text-xs text-muted-foreground">Bạn có thể mở lại để tiếp tục chỉnh sửa.</p></div><Button variant="outline" size="sm" onClick={() => navigate(`/contents/${savedContentId}`)}>Xem chi tiết</Button></Card>
               )}
 
               {savedItems.length > 0 && (
-                <Card className="p-4">
-                  <h3 className="font-semibold text-sm text-foreground mb-3 flex items-center gap-2">
-                    <History className="w-4 h-4 text-primary" /> Đã lưu trong phiên này ({savedItems.length})
-                  </h3>
-                  <div className="space-y-2 max-h-40 overflow-y-auto">
-                    {savedItems.map((item, i) => (
-                      <div key={i} className="flex items-start gap-2 p-2 bg-surface-muted rounded text-xs text-foreground/80">
-                        <span className="flex-1 line-clamp-2">{item}</span>
-                        <button onClick={() => handleCopy(item)} className="text-primary hover:text-primary flex-shrink-0">
-                          <Copy className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
+                <Card className="p-4"><h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-foreground"><History className="h-4 w-4 text-primary" /> Đã lưu trong phiên này ({savedItems.length})</h3><div className="max-h-40 space-y-2 overflow-y-auto">{savedItems.map((item, i) => <div key={i} className="flex items-start gap-2 border-l-2 border-accent bg-background p-2 text-xs text-foreground/80"><span className="line-clamp-2 flex-1">{item}</span><button onClick={() => handleCopy(item)} className="flex-shrink-0 text-primary"><Copy className="h-3.5 w-3.5" /></button></div>)}</div></Card>
               )}
             </div>
-          </div>
+          </section>
         </div>
       </div>
     </Layout>

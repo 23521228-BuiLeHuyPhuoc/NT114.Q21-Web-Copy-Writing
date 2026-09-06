@@ -8,15 +8,14 @@ import { Label } from '@/app/components/ui/label';
 import { BrandLogo } from '@/app/components/BrandLogo';
 import {
   Shield, Eye, EyeOff, Mail, Lock, AlertTriangle,
-  BarChart3, Users, Brain, Activity,
+  KeyRound, ClipboardList, Database,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const ADMIN_STATS = [
-  { icon: Users,    label: 'Tổng người dùng', value: '2,419' },
-  { icon: BarChart3, label: 'Copy tháng này', value: '124K' },
-  { icon: Brain,    label: 'Models đang chạy', value: '7' },
-  { icon: Activity, label: 'Uptime hệ thống',  value: '99.8%' },
+const ADMIN_CAPABILITIES = [
+  { icon: KeyRound, label: 'Phân quyền theo vai trò và route' },
+  { icon: ClipboardList, label: 'Audit log cho thao tác quản trị' },
+  { icon: Database, label: 'Quản lý người dùng, nội dung và cấu hình' },
 ];
 
 interface AdminLoginFormData { email: string; password: string }
@@ -44,7 +43,7 @@ export function AdminLoginPage() {
   };
 
   return (
-    <div className="dark min-h-screen flex bg-gray-950">
+    <div className="auth-page dark min-h-screen flex bg-gray-950">
 
       {/* ── LEFT: System Panel ── */}
       <div className="hidden lg:flex lg:w-[52%] flex-col relative overflow-hidden">
@@ -81,50 +80,27 @@ export function AdminLoginPage() {
             Quản lý toàn bộ người dùng, mô hình AI, templates, analytics và cấu hình hệ thống từ một nơi duy nhất.
           </p>
 
-          {/* Live Stats Grid */}
-          <div className="grid grid-cols-2 gap-3 mb-8">
-            {ADMIN_STATS.map((s) => {
+          <div className="mb-8 space-y-2 border-l-2 border-primary pl-4">
+            {ADMIN_CAPABILITIES.map((s) => {
               const Icon = s.icon;
               return (
-                <div key={s.label} className="bg-card/4 border border-white/8 rounded-2xl p-4 hover:bg-card/10 transition-colors">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Icon className="w-3.5 h-3.5 text-primary" />
-                    <span className="text-muted-foreground text-xs">{s.label}</span>
-                  </div>
-                  <p className="text-white text-xl font-bold tracking-tight">{s.value}</p>
+                <div key={s.label} className="flex items-center gap-3 border border-white/10 bg-card/5 p-3">
+                  <Icon className="h-4 w-4 text-primary" />
+                  <span className="text-sm text-muted-foreground">{s.label}</span>
                 </div>
               );
             })}
           </div>
 
-          {/* System status */}
-          <div className="bg-green-950/35 border border-green-800/35 rounded-2xl p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-              <span className="text-primary text-xs font-bold uppercase tracking-wider">Trạng thái hệ thống</span>
-            </div>
-            <div className="space-y-2">
-              {[
-                { name: 'GPT-4 API', status: 'Online', dot: 'bg-green-400' },
-                { name: 'Llama 3.1 Server', status: 'Online', dot: 'bg-green-400' },
-                { name: 'Fine-tuning Engine', status: 'Đang xử lý 2 jobs', dot: 'bg-amber-400' },
-              ].map(item => (
-                <div key={item.name} className="flex items-center justify-between">
-                  <span className="text-muted-foreground/80 text-xs">{item.name}</span>
-                  <div className="flex items-center gap-1.5">
-                    <div className={`w-1.5 h-1.5 rounded-full ${item.dot}`} />
-                    <span className="text-xs text-muted-foreground/60 font-medium">{item.status}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
+          <div className="border border-warning/35 bg-warning/10 p-4">
+            <p className="text-xs leading-6 text-warning">Khu vực quản trị chỉ dành cho tài khoản được cấp quyền. Mọi thao tác quan trọng có thể được ghi lại trong audit log.</p>
           </div>
         </div>
 
         {/* Footer */}
         <div className="relative px-12 xl:px-16 pb-10 pt-6 border-t border-white/5">
           <p className="text-foreground/70 text-xs">
-            CopyPro Admin Console v2.0 · Chỉ dành cho nhân viên được ủy quyền
+            CopyPro Editorial Console · Chỉ dành cho tài khoản được ủy quyền
           </p>
         </div>
       </div>

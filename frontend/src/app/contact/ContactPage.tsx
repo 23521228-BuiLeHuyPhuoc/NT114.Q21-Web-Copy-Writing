@@ -13,7 +13,7 @@ import { PUBLIC_SUPPORT_EMAIL } from '@/lib/publicEnv';
 import { publicSiteService, type PublicPageContent } from '@/services/publicSiteService';
 import { contactSubmissionService, type ContactTopic } from '@/services/contactSubmissionService';
 import {
-  Mail, Phone, MapPin, Clock, MessageSquare,
+  Mail, Phone, MapPin, MessageSquare,
   Send, Headphones, BookOpen, Zap, CheckCircle2,
 } from 'lucide-react';
 
@@ -25,11 +25,10 @@ const CONTACT_TYPES = [
 ];
 
 const FAQ = [
-  { q: 'CopyPro có hỗ trợ tiếng Anh không?', a: 'Có, CopyPro hỗ trợ tạo copy bằng tiếng Việt và tiếng Anh. Bạn có thể chọn ngôn ngữ đầu ra trước khi tạo.' },
-  { q: 'Tôi có thể hủy gói bất kỳ lúc nào không?', a: 'Hoàn toàn có thể. Không có hợp đồng ràng buộc. Hủy trong vài giây từ trang Cài đặt tài khoản.' },
-  { q: 'Dữ liệu của tôi có được bảo mật không?', a: 'Chúng tôi không dùng nội dung của bạn để huấn luyện model. Dữ liệu được mã hóa AES-256 và lưu trữ tại datacenter tại Việt Nam.' },
-  { q: 'Fine-tuning có khó không, tôi cần biết code không?', a: 'Không cần code. Fine-tuning Studio được thiết kế cho người dùng không kỹ thuật. Chỉ cần cung cấp ví dụ input/output là xong.' },
-  { q: 'Copy được tạo có bị phát hiện là AI không?', a: 'Model của chúng tôi được tối ưu để tạo văn phong tự nhiên. Fine-tuning với giọng văn riêng của bạn sẽ giúp copy nghe hoàn toàn như con người viết.' },
+  { q: 'Tạo nội dung mới ở đâu?', a: 'Sau khi đăng nhập, mở Generator, hoàn tất brief, chọn model và nhấn tạo phiên bản.' },
+  { q: 'Kết quả có tự động vào thư viện không?', a: 'Bạn chọn phiên bản phù hợp rồi dùng thao tác Lưu. Bản đã lưu sẽ xuất hiện trong trang Nội dung.' },
+  { q: 'Có thể gom nội dung theo chiến dịch không?', a: 'Có. Chọn dự án ngay trong Generator hoặc thêm nội dung có sẵn từ trang chi tiết dự án.' },
+  { q: 'Khi nào dùng được fine-tuning?', a: 'Khả năng tạo và dùng model fine-tuned phụ thuộc quyền truy cập, provider và cấu hình gói hiện tại.' },
 ];
 
 function getContactErrorMessage(error: unknown) {
@@ -57,10 +56,10 @@ export function ContactPage() {
 
   const contactHeroBadge = getPublicText(contactContent, 'heroBadge', '💬 Liên hệ với chúng tôi');
   const contactHeroTitle = getPublicText(contactContent, 'heroTitle', 'Chúng tôi luôn sẵn sàng lắng nghe');
-  const contactHeroDescription = getPublicText(contactContent, 'heroDescription', 'Dù bạn có câu hỏi về sản phẩm, cần hỗ trợ kỹ thuật hay muốn thảo luận về hợp tác — đội ngũ của chúng tôi sẽ phản hồi trong vòng 24 giờ.');
+  const contactHeroDescription = getPublicText(contactContent, 'heroDescription', 'Gửi câu hỏi về sản phẩm, tài khoản, thanh toán hoặc lỗi kỹ thuật qua biểu mẫu. Nội dung sẽ được chuyển vào hệ thống quản trị liên hệ.');
   const contactEmail = getPublicText(contactContent, 'email', PUBLIC_SUPPORT_EMAIL);
-  const contactPhone = getPublicText(contactContent, 'phone', '+84 901 234 567');
-  const contactAddress = getPublicText(contactContent, 'address', 'Innovation Hub, Q.1, TP.HCM');
+  const contactPhone = typeof contactContent.phone === 'string' ? contactContent.phone.trim() : '';
+  const contactAddress = typeof contactContent.address === 'string' ? contactContent.address.trim() : '';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,7 +80,7 @@ export function ContactPage() {
     try {
       await contactSubmissionService.create(payload);
       setSubmitted(true);
-      toast.success('Đã gửi tin nhắn! Chúng tôi sẽ phản hồi trong 24 giờ.');
+      toast.success('Đã gửi tin nhắn vào hệ thống hỗ trợ.');
     } catch (error) {
       toast.error(getContactErrorMessage(error));
     } finally {
@@ -90,7 +89,7 @@ export function ContactPage() {
   };
 
   return (
-    <div className="min-h-screen bg-card">
+    <div className="public-page min-h-screen bg-card">
       <PublicNavbar />
 
       {/* Hero */}
@@ -139,7 +138,7 @@ export function ContactPage() {
             {/* Form */}
             <div className="lg:col-span-3">
               <h2 className="text-foreground mb-2" style={{ fontSize: '1.5rem' }}>Gửi tin nhắn</h2>
-              <p className="text-muted-foreground text-sm mb-8">Điền form bên dưới và chúng tôi sẽ liên lạc lại trong vòng 24 giờ làm việc.</p>
+              <p className="text-muted-foreground text-sm mb-8">Điền đủ ngữ cảnh để bộ phận phụ trách có thể xử lý yêu cầu chính xác hơn.</p>
 
               {submitted ? (
                 <div className="bg-primary/5 border border-primary/20 rounded-2xl p-10 text-center">
@@ -229,14 +228,13 @@ export function ContactPage() {
             {/* Info sidebar */}
             <div className="lg:col-span-2 space-y-6">
               {/* Contact info */}
-              <div className="bg-surface-muted rounded-2xl p-7 border border-border">
+              <div className="paper-noise border-2 border-foreground bg-surface-muted p-7">
                 <h3 className="text-foreground mb-6" style={{ fontSize: '1.1rem' }}>Thông tin liên hệ</h3>
                 <div className="space-y-5">
                   {[
-                    { icon: Mail, label: 'Email', value: contactEmail, sub: 'Phản hồi trong 24h' },
-                    { icon: Phone, label: 'Hotline', value: contactPhone, sub: 'T2-T6, 8:00 - 18:00' },
-                    { icon: MapPin, label: 'Văn phòng', value: contactAddress, sub: 'Hẹn gặp trực tiếp' },
-                    { icon: Clock, label: 'Giờ làm việc', value: 'Thứ 2 – Thứ 6', sub: '8:00 – 18:00 GMT+7' },
+                    { icon: Mail, label: 'Email hỗ trợ', value: contactEmail, sub: 'Kênh liên hệ trực tiếp' },
+                    ...(contactPhone ? [{ icon: Phone, label: 'Điện thoại', value: contactPhone, sub: 'Thông tin do quản trị viên cấu hình' }] : []),
+                    ...(contactAddress ? [{ icon: MapPin, label: 'Địa chỉ', value: contactAddress, sub: 'Thông tin do quản trị viên cấu hình' }] : []),
                   ].map((item) => {
                     const Icon = item.icon;
                     return (
@@ -255,19 +253,10 @@ export function ContactPage() {
                 </div>
               </div>
 
-              {/* SLA */}
-              <div className="bg-gradient-to-br from-green-600 to-emerald-700 rounded-2xl p-6 text-white">
-                <h3 className="text-white mb-4" style={{ fontSize: '1rem' }}>Cam kết phản hồi</h3>
-                {[
-                  { plan: 'Gói Free', time: '< 72 giờ' },
-                  { plan: 'Gói Pro', time: '< 24 giờ' },
-                  { plan: 'Gói Business', time: '< 4 giờ' },
-                ].map(s => (
-                  <div key={s.plan} className="flex justify-between py-2.5 border-b border-white/20 last:border-0">
-                    <span className="text-green-100 text-sm">{s.plan}</span>
-                    <span className="text-white font-bold text-sm">{s.time}</span>
-                  </div>
-                ))}
+              <div className="border-2 border-foreground bg-accent p-6 text-foreground shadow-[5px_5px_0_#172033]">
+                <p className="font-mono-editorial text-[10px] font-bold uppercase tracking-[.15em]">Trước khi gửi</p>
+                <h3 className="mt-3 text-2xl text-foreground">Mô tả đủ để tái hiện vấn đề.</h3>
+                <p className="mt-3 text-sm leading-7 text-foreground/70">Nếu là lỗi kỹ thuật, hãy nêu màn hình, thao tác đã thực hiện và thông báo lỗi nhìn thấy. Không gửi mật khẩu hoặc thông tin bí mật.</p>
               </div>
             </div>
           </div>

@@ -21,9 +21,20 @@ export const PUBLIC_APP_URL = trimTrailingSlash(
     || browserOrigin(),
 );
 
-export const API_BASE_URL = trimTrailingSlash(
+const CONFIGURED_API_BASE_URL = trimTrailingSlash(
   cleanValue(process.env.NEXT_PUBLIC_API_BASE_URL) || '/api',
 );
+
+function isLocalBrowser() {
+  if (typeof window === 'undefined') return false;
+  return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+}
+
+// Local requests use the Next proxy to avoid CORS and adapt secure auth cookies
+// for HTTP localhost. Production keeps calling the configured API directly.
+export const API_BASE_URL = isLocalBrowser() && /^https?:\/\//i.test(CONFIGURED_API_BASE_URL)
+  ? '/api'
+  : CONFIGURED_API_BASE_URL;
 
 export const API_DOCS_BASE_URL = trimTrailingSlash(
   cleanValue(process.env.NEXT_PUBLIC_COPYPRO_API_BASE_URL)

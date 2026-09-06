@@ -764,9 +764,13 @@ export function CustomerPlagiarismCheck() {
 
   return (
     <Layout>
-      <div className='mx-auto max-w-6xl space-y-6 p-6'>
-        <h1 className='text-3xl font-bold text-foreground'>Kiểm tra đạo văn AI</h1>
-        <Card className='p-5'>
+      <div className='mx-auto max-w-[1350px] space-y-6 p-4 md:p-7 lg:p-9'>
+        <div className='border-b-2 border-foreground pb-7'>
+          <p className='editorial-kicker mb-4 text-primary'>Kiểm định bản thảo</p>
+          <h1 className='studio-page-title text-foreground'>Kiểm tra đạo văn</h1>
+          <p className='mt-3 max-w-2xl text-sm leading-7 text-muted-foreground'>Đưa nội dung cần kiểm tra và nguồn đối chiếu vào hai vùng riêng biệt để tránh nhầm thao tác.</p>
+        </div>
+        <Card className='border-2 border-foreground p-5'>
           <div className='mb-3 flex items-center justify-between gap-3'>
             <div><h2 className='font-semibold text-foreground'>Nội dung cần kiểm tra</h2><p className='text-xs text-muted-foreground'>Dán đoạn cần kiểm tra; file nguồn so khớp nằm ở khung riêng bên dưới.</p></div>
             <Badge variant='outline'>{words} từ</Badge>

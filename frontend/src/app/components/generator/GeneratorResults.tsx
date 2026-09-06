@@ -4,25 +4,21 @@ import { Card } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
 import { Separator } from '@/app/components/ui/separator';
 import {
-  CheckCircle2,
   Copy,
   Download,
   Eye,
-  History,
   Pencil,
   RefreshCw,
   Save,
-  Sparkles,
-  Star,
   ThumbsDown,
   ThumbsUp,
-  Zap,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Markdown } from '@/app/components/common/Markdown';
 import { looksLikeHtml, sanitizeHtml } from '@/lib/richText';
 import { tinymceBaseInit, tinymceEditorProps } from '@/lib/tinymce';
 import type { GeneratedPlagiarism } from '@/services/contentService';
+import { EditorialEmptyState } from '@/app/components/EditorialArtwork';
 
 interface Props {
   isGenerating: boolean;
@@ -79,7 +75,7 @@ export function GeneratorResults({
     return (
       <div className="space-y-4">
         {isGenerating && !streamText && (
-          <Card className="p-5 border-2 border-primary/20 bg-primary/5">
+          <Card className="paper-noise border-2 border-foreground bg-card p-6">
             <div className="flex items-center gap-2 mb-2">
               <RefreshCw className="w-4 h-4 text-primary animate-spin" />
               <span className="text-sm font-medium text-primary">Đang gửi prompt đến model...</span>
@@ -91,7 +87,7 @@ export function GeneratorResults({
         )}
 
         {isGenerating && streamText && (
-          <Card className="p-5 border-2 border-primary/20 bg-primary/5">
+          <Card className="paper-noise border-2 border-foreground bg-card p-6">
             <div className="flex items-center gap-2 mb-3">
               <RefreshCw className="w-4 h-4 text-primary animate-spin" />
               <span className="text-sm font-medium text-primary">Đang tạo phiên bản 1/{variations}...</span>
@@ -105,7 +101,7 @@ export function GeneratorResults({
 
         {!isGenerating && results.length > 0 && (
           <>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-0 border-b-2 border-foreground">
               {results.map((_, i) => (
                 <button
                   key={i}
@@ -113,10 +109,10 @@ export function GeneratorResults({
                     onSelectResult(i);
                     setViewMode('preview');
                   }}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  className={`border-x border-t border-foreground px-4 py-2 text-xs font-bold transition-colors ${
                     selectedResult === i
-                      ? 'bg-primary text-white'
-                      : 'bg-muted text-foreground/70 hover:bg-gray-200'
+                      ? 'bg-foreground text-background'
+                      : 'bg-card text-foreground/70 hover:bg-accent/35'
                   }`}
                 >
                   Phiên bản {i + 1}
@@ -126,19 +122,19 @@ export function GeneratorResults({
             </div>
 
             {activeResult && (
-              <Card className="p-5 border-2 border-primary/20">
+              <Card className="manuscript-results paper-noise border-2 border-foreground p-5 shadow-[7px_7px_0_rgba(23,32,51,.12)] md:p-6">
                 <div className="flex flex-col gap-3 mb-4 md:flex-row md:items-center md:justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="px-3 py-1 rounded-full text-sm font-bold bg-primary/10 text-primary">
+                    <div className="border border-primary bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
                       Chất lượng: {activeQuality}%
                     </div>
                     {plagiarism && (
-                      <div className={`px-3 py-1 rounded-full text-sm font-bold ${
+                      <div className={`border px-3 py-1 text-xs font-bold ${
                         plagiarism.similarityScore >= 45
-                          ? 'bg-red-100 text-red-700'
+                          ? 'border-destructive/40 bg-destructive/10 text-destructive'
                           : plagiarism.similarityScore >= 20
-                            ? 'bg-amber-100 text-amber-700'
-                            : 'bg-emerald-100 text-emerald-700'
+                            ? 'border-warning/50 bg-warning/15 text-warning-foreground'
+                            : 'border-success/40 bg-success/10 text-success'
                       }`}>
                         Đạo văn: {Math.round(plagiarism.similarityScore)}%
                       </div>
@@ -146,7 +142,7 @@ export function GeneratorResults({
                     <span className="text-xs text-muted-foreground">{countWords(activeResult)} từ</span>
                   </div>
                   <div className="flex gap-1 items-center">
-                    <div className="flex items-center gap-1 mr-2 bg-muted rounded-lg p-0.5">
+                    <div className="mr-2 flex items-center gap-1 border border-border bg-muted p-0.5">
                       <button
                         onClick={() => setViewMode('preview')}
                         className={`px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1 transition-colors ${
@@ -178,7 +174,7 @@ export function GeneratorResults({
                 </div>
 
                 {viewMode === 'edit' ? (
-                  <div className="overflow-hidden rounded-md border bg-card">
+                  <div className="overflow-hidden border-2 border-foreground bg-card">
                     <Editor
                       {...tinymceEditorProps}
                       value={activeResult}
@@ -192,12 +188,12 @@ export function GeneratorResults({
                         toolbar:
                           'undo redo | blocks | bold italic underline | bullist numlist | link table | removeformat | code',
                         content_style:
-                          'body { font-family: Inter, Arial, sans-serif; font-size: 14px; line-height: 1.65; color: #1f2937; } p { margin: 0 0 12px; } ul, ol { margin: 0 0 12px 22px; padding: 0; } li { margin: 4px 0; } h1, h2, h3 { margin: 0 0 12px; line-height: 1.3; }',
+                          'body { font-family: Georgia, serif; font-size: 15px; line-height: 1.75; color: #172033; background: #fffdf7; padding: 14px; } p { margin: 0 0 12px; } ul, ol { margin: 0 0 12px 22px; padding: 0; } li { margin: 4px 0; } h1, h2, h3 { margin: 0 0 12px; line-height: 1.2; }',
                       }}
                     />
                   </div>
                 ) : (
-                  <div className="min-h-40 bg-surface-muted rounded-md p-4 text-sm leading-relaxed">
+                  <div className="min-h-52 border-l-2 border-primary bg-card p-5 text-[15px] leading-8">
                     {looksLikeHtml(activeResult) ? (
                       <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(activeResult) }} />
                     ) : (
@@ -230,31 +226,5 @@ export function GeneratorResults({
     );
   }
 
-  return (
-    <Card className="p-12 text-center border-2 border-dashed border-border">
-      <div className="bg-gradient-to-r from-green-100 to-green-100 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-        <Sparkles className="w-10 h-10 text-primary" />
-      </div>
-      <h3 className="font-bold text-foreground mb-2">Sẵn sàng tạo copy?</h3>
-      <p className="text-sm text-muted-foreground mb-6 max-w-xs mx-auto">
-        Chọn ngành nghề, loại nội dung, tone giọng và model AI. Nhấn "Tạo Copy Ngay" để bắt đầu.
-      </p>
-      <div className="grid grid-cols-2 gap-3 max-w-sm mx-auto text-left">
-        {[
-          { icon: Zap, label: 'Tạo nhanh', color: 'text-amber-600 bg-warning/10' },
-          { icon: Star, label: 'Chỉnh sửa rich text', color: 'text-primary bg-primary/5' },
-          { icon: History, label: 'Lưu thủ công', color: 'text-primary bg-primary/5' },
-          { icon: CheckCircle2, label: 'Đa phiên bản', color: 'text-primary bg-primary/5' },
-        ].map(f => {
-          const Icon = f.icon;
-          return (
-            <div key={f.label} className={`flex items-center gap-2 p-2.5 rounded-lg ${f.color}`}>
-              <Icon className="w-4 h-4" />
-              <span className="text-xs font-medium">{f.label}</span>
-            </div>
-          );
-        })}
-      </div>
-    </Card>
-  );
+  return <EditorialEmptyState title="Trang bản thảo đang chờ brief" description="Hoàn tất brief ở cột bên trái, chọn model rồi tạo các phiên bản. Kết quả có thể xem trước, chỉnh sửa và lưu ngay tại đây." />;
 }

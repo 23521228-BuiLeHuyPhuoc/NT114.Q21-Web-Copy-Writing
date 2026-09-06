@@ -22,6 +22,7 @@ import { usePagination } from '@/hooks/usePagination';
 import { useContents, useUpdateContent } from '@/hooks/queries/useContents';
 import { useProject } from '@/hooks/queries/useProjects';
 import { matchesSearchRegex } from '@/lib/searchRegex';
+import { EditorialEmptyState } from '@/app/components/EditorialArtwork';
 
 const TYPE_LABELS: Record<string, string> = {
   headline: 'Headline',
@@ -108,8 +109,8 @@ export function CustomerProjectDetail() {
   if (isProjectLoading) {
     return (
       <Layout>
-        <div className="p-6 max-w-6xl mx-auto">
-          <Card className="p-6 text-sm text-muted-foreground">Đang tải dự án...</Card>
+        <div className="mx-auto max-w-[1350px] p-4 md:p-7 lg:p-9">
+          <Card className="paper-noise border-2 border-foreground p-8 text-sm text-muted-foreground">Đang mở hồ sơ dự án...</Card>
         </div>
       </Layout>
     );
@@ -118,11 +119,11 @@ export function CustomerProjectDetail() {
   if (!project) {
     return (
       <Layout>
-        <div className="p-6 max-w-6xl mx-auto">
+        <div className="mx-auto max-w-[1350px] p-4 md:p-7 lg:p-9">
           <Button variant="ghost" className="mb-4 text-foreground/70" onClick={() => navigate('/projects')}>
             <ArrowLeft className="w-4 h-4 mr-2" /> Quay lại dự án
           </Button>
-          <Card className="p-6 text-sm text-muted-foreground">Không tìm thấy dự án.</Card>
+          <EditorialEmptyState title="Không tìm thấy dự án" description="Hồ sơ này không tồn tại hoặc tài khoản hiện tại không có quyền truy cập." />
         </div>
       </Layout>
     );
@@ -130,12 +131,12 @@ export function CustomerProjectDetail() {
 
   return (
     <Layout>
-      <div className="p-6 max-w-6xl mx-auto">
+      <div className="mx-auto max-w-[1350px] p-4 md:p-7 lg:p-9">
         <Button variant="ghost" className="mb-4 text-foreground/70" onClick={() => navigate('/projects')}>
           <ArrowLeft className="w-4 h-4 mr-2" /> Quay lại dự án
         </Button>
 
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-6">
+        <div className="mb-7 flex flex-col justify-between gap-5 border-b-2 border-foreground pb-6 md:flex-row md:items-end">
           <div>
             <div className="flex items-center gap-2 mb-2">
               <Badge className={project.status === 'active' ? 'bg-primary/10 text-primary border-0' : 'bg-muted text-foreground/70 border-0'}>
@@ -143,18 +144,18 @@ export function CustomerProjectDetail() {
               </Badge>
               <Badge className="bg-muted text-foreground/70 border-0">{project.industry}</Badge>
             </div>
-            <h1 className="text-2xl font-bold text-foreground">{project.name}</h1>
+            <h1 className="font-display text-4xl font-bold leading-none text-foreground md:text-6xl">{project.name}</h1>
             <p className="text-sm text-muted-foreground mt-1">{project.desc || 'Chưa có mô tả.'}</p>
           </div>
           <Button
-            className="bg-gradient-to-r from-green-600 to-emerald-600 text-white"
+            size="lg"
             onClick={() => setShowAddContent(true)}
           >
             <Plus className="w-4 h-4 mr-2" /> Thêm nội dung
           </Button>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="mb-7 grid grid-cols-2 border-l border-t border-foreground md:grid-cols-4">
           {[
             { label: 'Tổng nội dung', value: stats.total, icon: FileText, color: 'text-primary bg-primary/5' },
             { label: 'Hoàn thành', value: stats.completed, icon: CheckCircle2, color: 'text-emerald-600 bg-emerald-50' },
@@ -163,18 +164,18 @@ export function CustomerProjectDetail() {
           ].map((s, i) => {
             const Icon = s.icon;
             return (
-              <Card key={i} className="p-4 flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${s.color}`}><Icon className="w-4 h-4" /></div>
+              <div key={i} className="flex items-center gap-3 border-b border-r border-foreground bg-card p-4">
+                <div className={`border border-foreground p-2 ${s.color}`}><Icon className="h-4 w-4" /></div>
                 <div>
                   <p className="text-xl font-bold text-foreground">{s.value}</p>
                   <p className="text-xs text-muted-foreground">{s.label}</p>
                 </div>
-              </Card>
+              </div>
             );
           })}
         </div>
 
-        <Card className="p-5 mb-6 bg-gradient-to-r from-green-50 to-emerald-50 border-primary/20">
+        <Card className="mb-7 border-2 border-foreground bg-accent/30 p-5">
           <div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-semibold text-foreground">Tiến độ nội dung</span>
@@ -189,16 +190,27 @@ export function CustomerProjectDetail() {
           </div>
         </Card>
 
-        <h2 className="text-lg font-bold text-foreground mb-4">Nội dung trong dự án</h2>
+        <h2 className="mb-4 font-sans text-lg font-bold tracking-normal text-foreground">Nội dung trong dự án</h2>
         {isContentsLoading && (
           <Card className="p-6 text-sm text-muted-foreground">Đang tải nội dung...</Card>
         )}
         {!isContentsLoading && contents.length === 0 && (
-          <Card className="p-6 text-sm text-muted-foreground">Dự án này chưa có nội dung.</Card>
+          <EditorialEmptyState compact title="Dự án chưa có nội dung" description="Thêm một bản thảo có sẵn hoặc tạo nội dung mới và gắn vào dự án này." action={<Button size="sm" onClick={() => setShowAddContent(true)}><Plus className="h-4 w-4" /> Thêm nội dung</Button>} />
         )}
         <div className="space-y-3">
           {contentPagination.pageItems.map(item => (
-            <Card key={item.id} className="p-4 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`/contents/${item.id}`)}>
+            <Card
+              key={item.id}
+              role="link"
+              tabIndex={0}
+              className="cursor-pointer border-l-4 border-l-transparent p-4 transition-all hover:border-l-primary hover:shadow-[5px_5px_0_rgba(23,32,51,.08)]"
+              onClick={() => navigate(`/contents/${item.id}`)}
+              onKeyDown={(event) => {
+                if (event.currentTarget !== event.target || (event.key !== 'Enter' && event.key !== ' ')) return;
+                event.preventDefault();
+                navigate(`/contents/${item.id}`);
+              }}
+            >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
                 <div className="bg-primary/10 p-2 rounded-lg flex-shrink-0">
                   <FileText className="w-4 h-4 text-primary" />

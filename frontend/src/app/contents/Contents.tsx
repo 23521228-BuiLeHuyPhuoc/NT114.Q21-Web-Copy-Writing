@@ -34,14 +34,15 @@ import { usePagination } from '@/hooks/usePagination';
 import type { UiContent } from '@/services/contentService';
 import { TrashBin } from '@/app/components/admin/TrashBin';
 import { matchesSearchRegex } from '@/lib/searchRegex';
+import { EditorialEmptyState } from '@/app/components/EditorialArtwork';
 
 const CONTENT_FETCH_PAGE_SIZE = 100;
 const CONTENT_UI_PAGE_SIZE = 10;
 
 const STATUS_MAP: Record<UiContent['status'], { label: string; color: string }> = {
-  published: { label: 'Đã xuất bản', color: 'bg-green-100 text-green-700' },
-  draft: { label: 'Nháp', color: 'bg-yellow-100 text-yellow-700' },
-  archived: { label: 'Lưu trữ', color: 'bg-gray-100 text-gray-600' },
+  published: { label: 'Đã xuất bản', color: 'border border-success/40 bg-success/10 text-success' },
+  draft: { label: 'Nháp', color: 'border border-warning/50 bg-warning/15 text-warning-foreground' },
+  archived: { label: 'Lưu trữ', color: 'border border-border bg-muted text-muted-foreground' },
 };
 
 export function CustomerContents() {
@@ -132,11 +133,12 @@ export function CustomerContents() {
 
   return (
     <Layout>
-      <div className="p-6 max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+      <div className="mx-auto max-w-[1450px] p-4 md:p-7 lg:p-9">
+        <div className="mb-8 flex flex-col justify-between gap-5 border-b-2 border-foreground pb-7 md:flex-row md:items-end">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-1">Quản Lý Nội Dung</h1>
-            <p className="text-foreground/70">Tất cả copy AI đã tạo, được lưu trực tiếp từ backend.</p>
+            <p className="editorial-kicker mb-4 text-primary">Thư viện bản thảo</p>
+            <h1 className="studio-page-title text-foreground">Nội dung</h1>
+            <p className="mt-3 text-sm leading-7 text-muted-foreground">Tìm, đọc và xử lý các bản copy đã lưu từ generator.</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Button variant="outline" className="relative" onClick={() => setTrashOpen(true)}>
@@ -147,13 +149,13 @@ export function CustomerContents() {
                 </span>
               )}
             </Button>
-            <Button className="bg-gradient-to-r from-green-600 to-emerald-600 text-white" onClick={() => navigate('/generate')}>
-              <Plus className="w-4 h-4 mr-2" /> Tạo Nội Dung Mới
+            <Button size="lg" onClick={() => navigate('/generate')}>
+              <Plus className="h-4 w-4" /> Tạo nội dung mới
             </Button>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="mb-7 grid border-l border-t border-foreground grid-cols-2 lg:grid-cols-4">
           {[
             { label: 'Tổng nội dung', value: contents.length, icon: FileText, color: 'text-primary bg-primary/5' },
             { label: 'Đã xuất bản', value: contents.filter(c => c.status === 'published').length, icon: Star, color: 'text-primary bg-primary/5' },
@@ -162,21 +164,22 @@ export function CustomerContents() {
           ].map((s) => {
             const Icon = s.icon;
             return (
-              <Card key={s.label} className="min-h-24 p-4 flex items-center gap-3 overflow-hidden">
-                <div className={`h-10 w-10 shrink-0 rounded-lg ${s.color} flex items-center justify-center`}>
+              <div key={s.label} className="flex min-h-24 items-center gap-3 overflow-hidden border-b border-r border-foreground bg-card p-4">
+                <div className={`flex h-10 w-10 shrink-0 items-center justify-center border border-foreground ${s.color}`}>
                   <Icon className="w-4 h-4" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-2xl font-bold leading-tight text-foreground truncate" title={String(s.value)}>{s.value}</p>
                   <p className="mt-1 text-xs leading-snug text-muted-foreground line-clamp-2">{s.label}</p>
                 </div>
-              </Card>
+              </div>
             );
           })}
         </div>
 
-        <Card className="p-4 mb-6">
-          <div className="flex flex-wrap gap-3">
+        <Card className="mb-7 overflow-hidden border-2 border-foreground">
+          <div className="border-b border-foreground bg-foreground px-4 py-2 font-mono-editorial text-[10px] font-bold uppercase tracking-[.15em] text-background">Tra cứu thư viện</div>
+          <div className="flex flex-wrap gap-3 p-4">
             <div className="relative flex-1 min-w-48">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/80" />
               <Input placeholder="Tìm kiếm nội dung..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
@@ -220,25 +223,33 @@ export function CustomerContents() {
 
         <div className="space-y-3">
           {!isLoading && filtered.length === 0 && (
-            <div className="text-center py-16 text-muted-foreground/80">
-              <FileText className="w-12 h-12 mx-auto mb-3 opacity-30" />
-              <p>Không tìm thấy nội dung phù hợp</p>
-            </div>
+            <EditorialEmptyState title="Không tìm thấy bản thảo" description="Thử từ khóa hoặc bộ lọc khác. Nếu thư viện đang trống, hãy tạo nội dung đầu tiên từ Generator." action={<Button size="sm" onClick={() => navigate('/generate')}><Plus className="h-4 w-4" /> Mở Generator</Button>} />
           )}
 
           {pagination.pageItems.map(item => {
             const status = STATUS_MAP[item.status] ?? STATUS_MAP.published;
             return (
-              <Card key={item.id} className="p-4 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`/contents/${item.id}`)}>
-                <div className="flex flex-col md:flex-row md:items-center gap-3">
+              <Card
+                key={item.id}
+                role="link"
+                tabIndex={0}
+                className="group cursor-pointer border-l-4 border-l-transparent p-0 transition-all hover:border-l-primary hover:shadow-[5px_5px_0_rgba(23,32,51,.08)]"
+                onClick={() => navigate(`/contents/${item.id}`)}
+                onKeyDown={(event) => {
+                  if (event.currentTarget !== event.target || (event.key !== 'Enter' && event.key !== ' ')) return;
+                  event.preventDefault();
+                  navigate(`/contents/${item.id}`);
+                }}
+              >
+                <div className="flex flex-col gap-3 p-4 md:flex-row md:items-center">
+                  <div className="hidden h-12 w-10 shrink-0 items-center justify-center border border-foreground bg-accent/45 font-display text-xl font-bold text-foreground sm:flex">{String(item.title || 'N').charAt(0).toUpperCase()}</div>
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                      <Badge className={`${status.color} border-0 text-xs`}>{status.label}</Badge>
-                      <Badge className="bg-muted text-foreground/70 border-0 text-xs">{item.type}</Badge>
-                      <Badge className="max-w-full whitespace-normal bg-primary/10 text-left text-primary border-0 text-xs leading-tight" title={item.model}>{item.model}</Badge>
-                      <Badge className="bg-emerald-50 text-emerald-700 border-0 text-xs">CL {item.quality}%</Badge>
+                      <Badge className={`${status.color} text-xs`}>{status.label}</Badge>
+                      <Badge variant="outline" className="text-xs">{item.type}</Badge>
+                      <Badge className="max-w-full whitespace-normal border-0 bg-primary/10 text-left text-xs leading-tight text-primary" title={item.model}>{item.model}</Badge>
                     </div>
-                    <h3 className="font-semibold text-foreground truncate">{item.title}</h3>
+                    <h3 className="truncate font-display text-xl font-bold text-foreground">{item.title}</h3>
                     <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground/80">
                       <span><Calendar className="w-3 h-3 inline mr-1" />{item.createdAt}</span>
                       <span>{item.words} từ</span>
@@ -246,14 +257,16 @@ export function CustomerContents() {
                       {item.project && <span className="text-primary">{item.project}</span>}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 flex-shrink-0" onClick={e => e.stopPropagation()}>
-                    <Button variant="ghost" size="sm" onClick={() => navigate(`/contents/${item.id}`)}><Eye className="w-4 h-4" /></Button>
-                    <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(item.content || item.title); toast.success('Đã sao chép!'); }}><Copy className="w-4 h-4" /></Button>
-                    <Button variant="ghost" size="sm"><Download className="w-4 h-4" /></Button>
+                  <div className="flex flex-shrink-0 items-center gap-1 border-l-0 border-border md:border-l md:pl-3" onClick={e => e.stopPropagation()}>
+                    <span className="mr-2 text-right"><span className="block font-display text-xl font-bold text-primary">{item.quality}%</span><span className="block text-[9px] uppercase tracking-wide text-muted-foreground">chất lượng</span></span>
+                    <Button aria-label={`Xem ${item.title}`} variant="ghost" size="sm" onClick={() => navigate(`/contents/${item.id}`)}><Eye className="w-4 h-4" /></Button>
+                    <Button aria-label={`Sao chép ${item.title}`} variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(item.content || item.title); toast.success('Đã sao chép!'); }}><Copy className="w-4 h-4" /></Button>
+                    <Button aria-label={`Tải xuống ${item.title}`} variant="ghost" size="sm"><Download className="w-4 h-4" /></Button>
                     <Button
                       variant="ghost"
                       size="sm"
                       className="text-red-500"
+                      aria-label={`Xóa ${item.title}`}
                       disabled={deleteContent.isPending}
                       onClick={() => handleDelete(item.id)}
                     >

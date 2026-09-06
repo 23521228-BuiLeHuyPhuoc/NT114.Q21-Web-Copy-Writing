@@ -82,10 +82,10 @@ export function CustomerHeader() {
   };
 
   return (
-    <header className="h-[60px] bg-card border-b border-border/80 flex items-center px-4 lg:px-6 gap-3 sticky top-0 z-30 flex-shrink-0">
+    <header className="sticky top-0 z-30 flex h-[68px] flex-shrink-0 items-center gap-3 border-b border-border bg-card/95 px-5 backdrop-blur-xl lg:px-8">
       <div className="hidden min-w-0 flex-1 flex-wrap items-center gap-2 md:flex">
-        <Link to="/" className="text-xs text-muted-foreground hover:text-primary transition-colors shrink-0">
-          CopyPro
+        <Link to="/dashboard" className="editorial-kicker shrink-0 text-[9px] text-primary transition-colors hover:text-foreground">
+          Workspace
         </Link>
         <span className="text-border text-xs">/</span>
         <span className="min-w-0 whitespace-normal break-words text-sm font-semibold leading-tight text-foreground">
@@ -100,7 +100,7 @@ export function CustomerHeader() {
       <div className="flex items-center gap-1.5 flex-shrink-0">
         <button
           onClick={() => navigate('/generate')}
-          className="hidden sm:flex items-center gap-1.5 h-9 px-3.5 bg-gradient-to-r from-primary to-success hover:from-primary/90 hover:to-success/90 text-primary-foreground rounded-lg text-xs font-bold transition-all shadow-sm shadow-primary/20"
+          className="hidden h-9 items-center gap-1.5 border border-foreground bg-primary px-3.5 text-xs font-bold text-primary-foreground shadow-[2px_2px_0_#172033] transition-all hover:-translate-y-0.5 sm:flex"
         >
           <Wand2 className="w-3.5 h-3.5" />
           Tạo copy
@@ -193,7 +193,7 @@ export function CustomerHeader() {
           >
             <Avatar className="w-7 h-7">
               <AvatarImage src={user?.avatar || undefined} alt={user?.name || 'Avatar'} className="object-cover" />
-              <AvatarFallback className="bg-gradient-to-br from-primary to-success text-primary-foreground text-xs font-bold">
+              <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">
                 {userInitial}
               </AvatarFallback>
             </Avatar>
@@ -207,7 +207,7 @@ export function CustomerHeader() {
                 <div className="flex items-center gap-3">
                   <Avatar className="w-10 h-10">
                     <AvatarImage src={user?.avatar || undefined} alt={user?.name || 'Avatar'} className="object-cover" />
-                    <AvatarFallback className="bg-gradient-to-br from-primary to-success text-primary-foreground font-bold">
+                    <AvatarFallback className="bg-primary text-primary-foreground font-bold">
                       {userInitial}
                     </AvatarFallback>
                   </Avatar>

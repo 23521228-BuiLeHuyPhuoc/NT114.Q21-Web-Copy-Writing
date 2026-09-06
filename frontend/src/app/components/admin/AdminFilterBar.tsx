@@ -31,8 +31,9 @@ export function AdminFilterBar({
   className = '',
 }: AdminFilterBarProps) {
   return (
-    <Card className={`p-4 mb-6 ${className}`}>
-      <div className="flex flex-wrap gap-3 items-center">
+    <Card className={`mb-6 overflow-hidden border-2 border-foreground ${className}`}>
+      <div className="border-b border-foreground bg-foreground px-4 py-2 font-mono-editorial text-[10px] font-bold uppercase tracking-[.14em] text-background">Bộ lọc dữ liệu</div>
+      <div className="flex flex-wrap items-center gap-3 p-4">
         <div className="relative flex-1 min-w-48">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/80" />
           <Input
@@ -55,10 +56,10 @@ export function AdminFilterBar({
                   className="focus:outline-none"
                 >
                   <Badge
-                    className={`border-0 cursor-pointer transition-colors ${
+                    className={`cursor-pointer border transition-colors ${
                       active
-                        ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white'
-                        : 'bg-primary/10 text-primary hover:bg-primary/10'
+                        ? 'border-foreground bg-accent text-foreground'
+                        : 'border-border bg-card text-foreground/65 hover:border-foreground/40'
                     }`}
                   >
                     {f.label}

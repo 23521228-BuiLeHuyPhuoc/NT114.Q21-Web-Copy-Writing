@@ -15,7 +15,7 @@ export interface AdminTableProps {
  */
 export function AdminTable({ children, empty, className = '' }: AdminTableProps) {
   return (
-    <Card className={className}>
+    <Card className={`overflow-hidden border-2 border-foreground shadow-[5px_5px_0_rgba(23,32,51,.07)] ${className}`}>
       <div className="overflow-x-auto">
         <Table>{children}</Table>
       </div>

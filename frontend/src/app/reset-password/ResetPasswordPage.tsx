@@ -40,7 +40,7 @@ export function ResetPasswordPage() {
 
   if (done) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-50 to-green-50 flex items-center justify-center p-5">
+      <div className="auth-page min-h-screen flex items-center justify-center p-5">
         <div className="bg-card rounded-3xl shadow-xl p-8 max-w-md w-full text-center">
           <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
             <CheckCircle2 className="w-8 h-8 text-primary" />
@@ -59,7 +59,7 @@ export function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-50 to-green-50 flex items-center justify-center p-5">
+    <div className="auth-page min-h-screen flex items-center justify-center p-5">
       <div className="bg-card rounded-3xl shadow-xl p-8 max-w-md w-full">
         <Link to="/login" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary mb-6">
           <ArrowLeft className="w-4 h-4" /> Quay lại đăng nhập

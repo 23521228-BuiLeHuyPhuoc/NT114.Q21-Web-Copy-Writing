@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/app/components/ui/dialog';
-import { Bell, Check, ExternalLink } from 'lucide-react';
+import { Check, ExternalLink } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { TYPE_COLORS } from '@/lib/notificationUi';
 import {
@@ -20,6 +20,7 @@ import {
   useNotifications,
 } from '@/hooks/queries/useNotifications';
 import { DataPagination } from '@/app/components/common/DataPagination';
+import { EditorialEmptyState } from '@/app/components/EditorialArtwork';
 import { usePagination } from '@/hooks/usePagination';
 import type { UiNotification } from '@/services/notificationService';
 
@@ -81,10 +82,11 @@ export function CustomerNotifications() {
 
   return (
     <Layout>
-      <div className="p-6 max-w-4xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
+      <div className="mx-auto max-w-5xl p-4 md:p-7 lg:p-9">
+        <div className="mb-8 flex items-end justify-between border-b-2 border-foreground pb-7">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-1">Thông Báo</h1>
+            <p className="editorial-kicker mb-4 text-primary">Hộp thư hoạt động</p>
+            <h1 className="studio-page-title text-foreground">Thông báo</h1>
             <p className="text-foreground/70">
               {unreadCount > 0
                 ? `Bạn có ${unreadCount} thông báo chưa đọc`
@@ -107,17 +109,11 @@ export function CustomerNotifications() {
 
         <div className="space-y-3">
           {isLoading && (
-            <div className="text-center py-16 text-muted-foreground/80">
-              <Bell className="w-12 h-12 mx-auto mb-3 opacity-30" />
-              <p>Đang tải thông báo...</p>
-            </div>
+            <div className="paper-noise border border-dashed border-border py-16 text-center text-muted-foreground">Đang mở hộp thư...</div>
           )}
 
           {!isLoading && notifications.length === 0 && (
-            <div className="text-center py-16 text-muted-foreground/80">
-              <Bell className="w-12 h-12 mx-auto mb-3 opacity-30" />
-              <p>Không có thông báo nào</p>
-            </div>
+            <EditorialEmptyState compact title="Hộp thư đang trống" description="Thông báo về tài khoản và hoạt động nội dung sẽ xuất hiện tại đây." />
           )}
 
           {pagination.pageItems.map((notification) => {
@@ -128,7 +124,7 @@ export function CustomerNotifications() {
               <Card
                 key={notification.id}
                 className={`p-4 transition-all cursor-pointer hover:shadow-md ${
-                  !notification.read ? 'border-l-4 border-l-green-500 bg-primary/5' : ''
+                  !notification.read ? 'border-l-4 border-l-primary bg-primary/5' : ''
                 }`}
                 onClick={() => openNotification(notification)}
               >

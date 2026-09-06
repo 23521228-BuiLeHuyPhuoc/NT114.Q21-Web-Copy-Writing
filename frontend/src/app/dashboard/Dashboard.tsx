@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { AreaChart } from '@/app/components/charts';
 import type { UiContent } from '@/services/contentService';
+import { EditorialEmptyState } from '@/app/components/EditorialArtwork';
 
 const WEEKDAY_LABELS = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
 
@@ -190,21 +191,18 @@ export function CustomerDashboard() {
 
   return (
     <Layout>
-      <div className="p-6 max-w-7xl mx-auto">
-        <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="mx-auto max-w-[1450px] p-4 md:p-7 lg:p-9">
+        <header className="mb-8 grid gap-5 border-b-2 border-foreground pb-7 lg:grid-cols-[1fr_auto] lg:items-end">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-1">Chào {user?.name?.split(' ').pop() || user?.name || 'bạn'}</h1>
-            <p className="text-foreground/70">Tổng quan nội dung, quota và fine-tuning của tài khoản hiện tại.</p>
+            <p className="editorial-kicker mb-4 text-primary">Bàn làm việc hôm nay</p>
+            <h1 className="studio-page-title text-foreground">Chào {user?.name?.split(' ').pop() || user?.name || 'bạn'}.</h1>
+            <p className="mt-3 text-sm leading-7 text-muted-foreground">Nội dung gần đây, quota và các công cụ đang dùng được đặt theo đúng thứ tự công việc.</p>
           </div>
-          <div className="flex items-center gap-3">
-            <Badge className="bg-warning/15 text-amber-800 border-0 px-4 py-2">
-              <Crown className="w-4 h-4 mr-1.5" /> Gói {planName}
-            </Badge>
-            <Button className="bg-gradient-to-r from-green-600 to-emerald-600 text-white" onClick={() => navigate('/generate')}>
-              <Wand2 className="w-4 h-4 mr-2" /> Tạo Copy Ngay
-            </Button>
+          <div className="flex flex-wrap items-center gap-3">
+            <Badge className="border border-warning/50 bg-warning/15 px-4 py-2 text-warning-foreground"><Crown className="mr-1.5 h-4 w-4" /> Gói {planName}</Badge>
+            <Button size="lg" onClick={() => navigate('/generate')}><Wand2 className="h-4 w-4" /> Tạo bản thảo</Button>
           </div>
-        </div>
+        </header>
 
         {(contentsError) && (
           <Card className="mb-6 border-destructive/30 bg-destructive/5 p-4">
@@ -214,137 +212,82 @@ export function CustomerDashboard() {
           </Card>
         )}
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="mb-7 grid border-l border-t border-foreground sm:grid-cols-2 lg:grid-cols-4">
           {stats.map((stat) => {
             const Icon = stat.icon;
             return (
-              <Card key={stat.label} className="p-5">
-                <div className="flex items-center justify-between mb-3">
-                  <div className={`${stat.color} p-2.5 rounded-lg`}>
-                    <Icon className="w-5 h-5 text-white" />
-                  </div>
+              <div key={stat.label} className="min-w-0 border-b border-r border-foreground bg-card p-5">
+                <div className="mb-5 flex items-center justify-between">
+                  <Icon className="h-5 w-5 text-primary" />
                   {(contentsLoading || billingLoading) && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
                 </div>
-                <p className="text-2xl font-bold text-foreground truncate" title={stat.value}>{stat.value}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{stat.label}</p>
-                <p className="text-xs text-primary mt-1 truncate" title={stat.change}>{stat.change}</p>
-              </Card>
-            );
-          })}
-        </div>
-
-        <Card className="p-5 mb-8 bg-gradient-to-r from-amber-50 to-green-50 border-amber-200">
-          <div className="flex items-center justify-between mb-3 gap-4">
-            <div>
-              <p className="font-semibold text-foreground">Quota gói {planName}</p>
-              <p className="text-xs text-foreground/70">
-                {copyLimit < 0 ? `${formatNumber(copyUsed)} copy đã dùng - chưa đặt giới hạn` : `${formatNumber(copyUsed)} / ${quotaLimitLabel} copy đã dùng`}
-              </p>
-            </div>
-            <div className="text-right">
-              <Badge className="bg-warning/15 text-amber-800 border-0">{copyLimit < 0 ? 'Chưa đặt' : `${quotaPercent}%`}</Badge>
-              <p className="mt-1 text-xs text-muted-foreground">{planPrice}</p>
-            </div>
-          </div>
-          <Progress value={copyLimit < 0 ? 100 : quotaPercent} className="h-2.5" />
-          <div className="flex justify-between mt-2 text-xs text-muted-foreground">
-            <span>Còn {quotaRemaining} copy</span>
-            <span>Hết hạn: {expiresLabel}</span>
-          </div>
-        </Card>
-
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {quickActions.map((action) => {
-            const Icon = action.icon;
-            return (
-              <Card key={action.title} className="p-5 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(action.path)}>
-                <div className={`bg-gradient-to-r ${action.color} p-3 rounded-xl w-fit mb-4`}>
-                  <Icon className="w-6 h-6 text-white" />
-                </div>
-                <h3 className="font-semibold text-foreground mb-1">{action.title}</h3>
-                <p className="text-xs text-foreground/70 leading-relaxed mb-4">{action.desc}</p>
-                <Button variant="link" className="p-0 h-auto text-primary text-xs">
-                  {action.cta} <ArrowRight className="w-3 h-3 ml-1" />
-                </Button>
-              </Card>
-            );
-          })}
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-6">
-          <Card className="p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-foreground">Copy tạo trong 7 ngày</h3>
-              <Badge className="bg-primary/10 text-primary border-0">{formatNumber(copiesThisWeek)} copy</Badge>
-            </div>
-            <AreaChart
-              data={weeklyData}
-              xKey="day"
-              height={180}
-              series={[{ key: 'copies', label: 'Copy tạo', color: '#16723a', fill: true }]}
-            />
-          </Card>
-
-          <Card className="p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-foreground">Copy gần đây</h3>
-              <Button variant="link" className="text-primary text-xs p-0" onClick={() => navigate('/contents')}>
-                Xem tất cả <ArrowRight className="w-3 h-3 ml-1" />
-              </Button>
-            </div>
-            <div className="space-y-3">
-              {recentContents.length === 0 ? (
-                <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-                  Chưa có nội dung nào. Tạo copy đầu tiên để dashboard có dữ liệu.
-                </div>
-              ) : recentContents.map((copy) => (
-                <div key={copy.id} className="flex items-start gap-3 p-3 rounded-lg hover:bg-surface-muted transition-colors cursor-pointer" onClick={() => navigate(`/contents/${copy.id}`)}>
-                  <div className="bg-primary/10 p-2 rounded-lg flex-shrink-0">
-                    <Sparkles className="w-4 h-4 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm text-foreground truncate">{copy.title}</p>
-                    <div className="flex flex-wrap items-center gap-2 mt-1">
-                      <span className="text-xs text-muted-foreground/80">{formatRelativeTime(copy.createdAtRaw) || copy.createdAt}</span>
-                      <Badge className="bg-muted text-foreground/70 border-0 text-xs">{copy.model}</Badge>
-                      <Badge className="bg-warning/15 text-amber-800 border-0 text-xs">{copy.quality}%</Badge>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-        </div>
-
-        <Card className="p-5 mt-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-foreground">Model fine-tuned</h3>
-            {modelsLoading ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : (
-              <Badge className="bg-primary/10 text-primary border-0">{formatNumber(activeFineTunedModels.length)} active</Badge>
-            )}
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {activeFineTunedModels.slice(0, 4).map((model) => (
-              <button
-                key={model.registryModelId || model.id}
-                type="button"
-                className="flex items-center gap-2.5 p-3 bg-surface-muted rounded-lg border text-left hover:border-primary/30 hover:bg-primary/5 transition-colors"
-                onClick={() => navigate('/fine-tune')}
-              >
-                <div className="w-2 h-2 rounded-full bg-primary/50 flex-shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-xs font-semibold text-foreground truncate">{model.name}</p>
-                  <p className="text-xs text-muted-foreground truncate">{model.baseModel || model.provider || 'Ready'}</p>
-                </div>
-              </button>
-            ))}
-            {activeFineTunedModels.length === 0 && (
-              <div className="col-span-2 md:col-span-4 rounded-lg border border-dashed p-5 text-sm text-muted-foreground">
-                Chưa có fine-tuned model active. Hiện có {formatNumber(liveFineTuneJobs.length)} job đang chạy và {formatNumber(fineTuneQuotas?.datasetCount || 0)} dataset.
+                <p className="truncate font-display text-3xl font-bold text-foreground" title={stat.value}>{stat.value}</p>
+                <p className="mt-1 text-xs font-bold uppercase tracking-wide text-foreground/75">{stat.label}</p>
+                <p className="mt-2 truncate text-xs text-muted-foreground" title={stat.change}>{stat.change}</p>
               </div>
-            )}
+            );
+          })}
+        </div>
+
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(330px,.65fr)]">
+          <div className="space-y-6">
+            <Card className="overflow-hidden border-2 border-foreground">
+              <div className="flex items-center justify-between border-b-2 border-foreground bg-foreground px-5 py-3 text-background">
+                <h3 className="font-sans text-sm font-bold tracking-normal">Bản thảo gần đây</h3>
+                <Button variant="ghost" className="h-auto p-0 text-xs text-background hover:bg-transparent hover:text-accent" onClick={() => navigate('/contents')}>Mở thư viện <ArrowRight className="h-3 w-3" /></Button>
+              </div>
+              <div className="divide-y divide-border">
+              {recentContents.length === 0 ? (
+                <EditorialEmptyState compact title="Chưa có bản thảo" description="Tạo nội dung đầu tiên để bắt đầu xây thư viện và theo dõi hoạt động tại dashboard." action={<Button size="sm" onClick={() => navigate('/generate')}>Tạo nội dung</Button>} />
+              ) : recentContents.map((copy) => (
+                <button key={copy.id} className="grid w-full gap-3 bg-card p-4 text-left transition-colors hover:bg-accent/15 md:grid-cols-[36px_minmax(0,1fr)_auto] md:items-center" onClick={() => navigate(`/contents/${copy.id}`)}>
+                  <span className="flex h-9 w-9 items-center justify-center border border-foreground bg-accent"><Sparkles className="h-4 w-4 text-foreground" /></span>
+                  <div className="min-w-0"><p className="truncate text-sm font-bold text-foreground">{copy.title}</p><div className="mt-1 flex flex-wrap items-center gap-2"><span className="text-xs text-muted-foreground">{formatRelativeTime(copy.createdAtRaw) || copy.createdAt}</span><Badge variant="outline" className="text-[10px]">{copy.model}</Badge></div></div>
+                  <div className="text-left md:text-right"><p className="font-display text-xl font-bold text-primary">{copy.quality}%</p><p className="text-[10px] uppercase tracking-wide text-muted-foreground">chất lượng</p></div>
+                </button>
+              ))}
+              </div>
+            </Card>
+
+            <Card className="border-2 border-foreground p-5">
+              <div className="mb-4 flex items-center justify-between"><div><p className="editorial-kicker text-primary">Nhịp xuất bản</p><h3 className="mt-2 text-xl text-foreground">Nội dung tạo trong 7 ngày</h3></div><Badge variant="outline">{formatNumber(copiesThisWeek)} copy</Badge></div>
+              <AreaChart data={weeklyData} xKey="day" height={190} series={[{ key: 'copies', label: 'Copy tạo', color: '#d64b32', fill: true }]} />
+            </Card>
           </div>
-        </Card>
+
+          <aside className="space-y-6">
+            <Card className="border-2 border-foreground bg-accent/35 p-5">
+              <div className="mb-4 flex items-start justify-between gap-4"><div><p className="text-sm font-bold text-foreground">Quota gói {planName}</p><p className="mt-1 text-xs text-muted-foreground">{copyLimit < 0 ? `${formatNumber(copyUsed)} copy đã dùng` : `${formatNumber(copyUsed)} / ${quotaLimitLabel} copy đã dùng`}</p></div><span className="font-display text-2xl font-bold text-primary">{copyLimit < 0 ? '∞' : `${quotaPercent}%`}</span></div>
+              <Progress value={copyLimit < 0 ? 100 : quotaPercent} className="h-3 border border-foreground" />
+              <div className="mt-3 flex justify-between text-xs text-muted-foreground"><span>Còn {quotaRemaining}</span><span>{planPrice}</span></div>
+              <p className="mt-4 border-t border-foreground/20 pt-3 text-[10px] uppercase tracking-wide text-muted-foreground">Hết hạn: {expiresLabel}</p>
+            </Card>
+
+            <div className="border-2 border-foreground bg-card">
+              <div className="border-b-2 border-foreground px-5 py-3"><p className="text-sm font-bold text-foreground">Mở nhanh công cụ</p></div>
+              {quickActions.map((action) => {
+                const Icon = action.icon;
+                return (
+                  <button key={action.title} className="group flex w-full items-center gap-3 border-b border-border p-4 text-left last:border-b-0 hover:bg-accent/20" onClick={() => navigate(action.path)}>
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center border border-foreground bg-background group-hover:bg-accent"><Icon className="h-4 w-4 text-primary" /></span>
+                    <span className="min-w-0 flex-1"><span className="block text-sm font-bold text-foreground">{action.title}</span><span className="mt-0.5 block truncate text-xs text-muted-foreground">{action.desc}</span></span>
+                    <ArrowRight className="h-4 w-4 text-primary" />
+                  </button>
+                );
+              })}
+            </div>
+
+            <Card className="border-2 border-foreground p-5">
+              <div className="mb-4 flex items-center justify-between"><h3 className="font-sans text-sm font-bold tracking-normal text-foreground">Model fine-tuned</h3>{modelsLoading ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : <Badge variant="outline">{formatNumber(activeFineTunedModels.length)} active</Badge>}</div>
+              <div className="space-y-2">
+                {activeFineTunedModels.slice(0, 4).map((model) => (
+                  <button key={model.registryModelId || model.id} type="button" className="flex w-full items-center gap-2.5 border-l-2 border-success bg-success/5 p-3 text-left hover:bg-success/10" onClick={() => navigate('/fine-tune')}><span className="h-2 w-2 shrink-0 rounded-full bg-success" /><span className="min-w-0"><span className="block truncate text-xs font-bold text-foreground">{model.name}</span><span className="block truncate text-xs text-muted-foreground">{model.baseModel || model.provider || 'Ready'}</span></span></button>
+                ))}
+                {activeFineTunedModels.length === 0 && <p className="border border-dashed border-border p-4 text-xs leading-6 text-muted-foreground">Chưa có model active. Có {formatNumber(liveFineTuneJobs.length)} job đang chạy và {formatNumber(fineTuneQuotas?.datasetCount || 0)} dataset.</p>}
+              </div>
+            </Card>
+          </aside>
+        </div>
       </div>
     </Layout>
   );

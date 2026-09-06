@@ -205,12 +205,16 @@ export function CustomerProfile() {
 
   return (
     <Layout>
-      <div className="p-6 max-w-5xl mx-auto">
-        <h1 className="text-3xl font-bold text-foreground mb-8">Hồ Sơ Cá Nhân</h1>
+      <div className="mx-auto max-w-6xl p-4 md:p-7 lg:p-9">
+        <div className="mb-8 border-b-2 border-foreground pb-7">
+          <p className="editorial-kicker mb-4 text-primary">Tài khoản / hồ sơ</p>
+          <h1 className="studio-page-title text-foreground">Hồ sơ cá nhân</h1>
+          <p className="mt-3 text-sm leading-7 text-muted-foreground">Cập nhật thông tin hiển thị, ảnh đại diện và tùy chọn tài khoản.</p>
+        </div>
 
         <div className="grid md:grid-cols-3 gap-6 mb-6">
           {/* Avatar card */}
-          <Card className="p-6 flex flex-col items-center text-center">
+          <Card className="paper-noise flex flex-col items-center border-2 border-foreground p-6 text-center">
             <div className="relative mb-4">
               <Avatar className="w-24 h-24">
                 <AvatarImage src={user?.avatar || undefined} alt={user?.name || 'Avatar'} className="object-cover" />

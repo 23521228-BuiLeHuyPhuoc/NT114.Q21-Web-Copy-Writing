@@ -5,66 +5,36 @@ import { PublicFooter } from '@/app/components/public/PublicFooter';
 import { Badge } from '@/app/components/ui/badge';
 import {
   CheckCircle2, X, Crown, Zap, Building2,
-  Star, ChevronDown, ChevronUp,
+  ChevronDown, ChevronUp,
 } from 'lucide-react';
 import { billingService, type BillingPlan } from '@/services/billingService';
-import { PUBLIC_STATUS_PAGE_LABEL } from '@/lib/publicEnv';
+import { EditorialEmptyState } from '@/app/components/EditorialArtwork';
 
 /* ─── Data ─────────────────────────────────────────────────── */
 
 const PLANS = [
   {
     id: 'free', name: 'Miễn Phí', icon: Zap, monthlyPrice: 0, yearlyPrice: 0,
-    desc: 'Dành cho cá nhân muốn khám phá AI copywriting',
+    desc: 'Gói khởi đầu được cấu hình trong hệ thống.',
     color: 'border-border', accent: 'text-foreground/80', highlight: false,
     badge: '',
-    features: [
-      { text: '30 copy/tháng', ok: true },
-      { text: '5 ngành nghề cơ bản', ok: true },
-      { text: '20 template', ok: true },
-      { text: 'GPT-3.5 Turbo', ok: true },
-      { text: 'GPT-4 & Llama 3.1', ok: false },
-      { text: 'Fine-tuning Studio', ok: false },
-      { text: 'API Access', ok: false },
-      { text: 'Xuất file (.docx, .pdf)', ok: false },
-      { text: 'Hỗ trợ ưu tiên', ok: false },
-    ],
+    features: [] as Array<{ text: string; ok: boolean }>,
     cta: 'Bắt đầu miễn phí',
   },
   {
-    id: 'pro', name: 'Pro', icon: Crown, monthlyPrice: 299000, yearlyPrice: 2990000,
-    desc: 'Dành cho marketer & freelancer chuyên nghiệp',
+    id: 'pro', name: 'Pro', icon: Crown, monthlyPrice: 0, yearlyPrice: 0,
+    desc: 'Gói mở rộng quota và quyền truy cập.',
     color: 'border-primary', accent: 'text-primary', highlight: true,
     badge: 'Phổ biến nhất',
-    features: [
-      { text: '500 copy/tháng', ok: true },
-      { text: '15+ ngành nghề', ok: true },
-      { text: '100+ template', ok: true },
-      { text: 'GPT-4 + GPT-3.5 + Llama 3.1', ok: true },
-      { text: 'Fine-tuning Studio (3 models)', ok: true },
-      { text: 'API Access (5.000 calls/tháng)', ok: true },
-      { text: 'Xuất file (.docx, .txt)', ok: true },
-      { text: 'Hỗ trợ email trong 24h', ok: true },
-      { text: 'Dedicated CSM', ok: false },
-    ],
+    features: [] as Array<{ text: string; ok: boolean }>,
     cta: 'Bắt đầu dùng Pro',
   },
   {
-    id: 'business', name: 'Business', icon: Building2, monthlyPrice: 799000, yearlyPrice: 7990000,
-    desc: 'Dành cho team và doanh nghiệp cần quota lớn, kiểm soát rõ ràng',
+    id: 'business', name: 'Business', icon: Building2, monthlyPrice: 0, yearlyPrice: 0,
+    desc: 'Gói dành cho nhu cầu vận hành lớn hơn.',
     color: 'border-border', accent: 'text-foreground/80', highlight: false,
     badge: '',
-    features: [
-      { text: '3.000 copy/tháng', ok: true },
-      { text: '15+ ngành nghề', ok: true },
-      { text: 'Tất cả template', ok: true },
-      { text: 'Tất cả model AI (incl. custom)', ok: true },
-      { text: 'Fine-tuning nâng cao (10 models)', ok: true },
-      { text: 'API Access (50.000 calls/tháng)', ok: true },
-      { text: 'Xuất file (.docx, .pdf, .csv)', ok: true },
-      { text: 'Hỗ trợ ưu tiên < 4 giờ + chat', ok: true },
-      { text: 'Dedicated CSM + Onboarding', ok: true },
-    ],
+    features: [] as Array<{ text: string; ok: boolean }>,
     cta: 'Liên hệ dùng Business',
   },
 ];
@@ -138,32 +108,11 @@ function isSupportedPlanSlug(slug: string) {
   return PLAN_ORDER.includes(slug);
 }
 
-const COMPARE_ROWS = [
-  { label: 'Copy/tháng',             free: '30',              pro: '500',                business: '3.000' },
-  { label: 'Ngành nghề',             free: '5',               pro: '15+',                business: '15+ & custom' },
-  { label: 'Template library',       free: '20',              pro: '100+',               business: 'Tất cả' },
-  { label: 'Model AI',               free: 'GPT-3.5',         pro: 'GPT-4, 3.5, Llama', business: 'Tất cả + custom' },
-  { label: 'Fine-tuning Studio',     free: null,              pro: '3 models',           business: '10 models' },
-  { label: 'API Access (calls/tháng)',free: null,             pro: '5.000',              business: '50.000' },
-  { label: 'Xuất file',              free: null,              pro: '.docx, .txt',        business: '.docx, .pdf, .csv' },
-  { label: 'Hỗ trợ',                 free: 'Email (72h)',      pro: 'Email (24h)',        business: 'Email + Chat (4h)' },
-  { label: 'Dedicated CSM',          free: null,              pro: null,                 business: true },
-  { label: 'Onboarding riêng',       free: null,              pro: null,                 business: true },
-];
-
 const FAQ = [
-  { q: 'Tôi có thể hủy gói bất kỳ lúc nào không?', a: 'Hoàn toàn có thể. Không hợp đồng ràng buộc. Hủy trong vài click từ trang Cài đặt. Bạn vẫn được dùng đến hết kỳ thanh toán hiện tại.' },
-  { q: 'Fine-tuning mất bao lâu và khó không?', a: 'Không cần biết code. Bạn chỉ cần cung cấp 50-100 cặp ví dụ input/output. Training tự động mất khoảng 30-60 phút tùy dữ liệu.' },
-  { q: 'API có ổn định không? SLA như thế nào?', a: `Chúng tôi cam kết 99.8% uptime với SLA rõ ràng. API có rate limiting thông minh và retry logic tự động. Xem status page tại ${PUBLIC_STATUS_PAGE_LABEL}.` },
-  { q: 'Có dùng thử gói Pro trước khi mua không?', a: 'Có. Tất cả tài khoản mới đều có 14 ngày dùng thử đầy đủ tính năng Pro, không cần thẻ tín dụng.' },
-  { q: 'Dữ liệu của tôi có an toàn không?', a: 'Tuyệt đối. Chúng tôi không dùng nội dung của bạn để train model. Dữ liệu mã hóa AES-256, lưu trong datacenter Việt Nam, tuân thủ PDPA.' },
-  { q: 'Gói Business có thể thêm thành viên không?', a: 'Gói Business hỗ trợ tối đa 10 user trong cùng workspace. Nếu cần nhiều hơn, liên hệ chúng tôi để được tư vấn giới hạn phù hợp trong 3 gói hiện có.' },
-];
-
-const TESTIMONIALS = [
-  { name: 'Nguyễn Hồng Sơn', role: 'CMO – RetailX', text: 'ROI của chúng tôi là 520% sau 3 tháng. Copy chất lượng, không phải AI viết thứ vô hồn.', avatar: 'HS', rating: 5 },
-  { name: 'Mai Thị Loan', role: 'Founder – Bloom Agency', text: 'Dùng Business plan cho 8 client cùng lúc. API integration với CMS tuyệt vời.', avatar: 'ML', rating: 5 },
-  { name: 'Đinh Trọng Khải', role: 'Growth Lead – FoodTech', text: 'Fine-tuning với data ngành F&B cho ra copy ngon hơn cả copywriter thật. Không đùa.', avatar: 'TK', rating: 5 },
+  { q: 'Các giới hạn trên trang này lấy từ đâu?', a: 'Giá, quota, model và tính năng được đọc từ cấu hình gói hiện hành của backend.' },
+  { q: 'Khi nào tôi cần nâng gói?', a: 'Bạn có thể xem mức sử dụng và quota còn lại trong Dashboard hoặc trang Gói & thanh toán.' },
+  { q: 'Fine-tuning có phụ thuộc gói không?', a: 'Có. Quyền truy cập fine-tuning và số model khả dụng được xác định bởi cấu hình gói và phân quyền hiện tại.' },
+  { q: 'Tôi cần hỏi thêm về thanh toán?', a: 'Dùng trang Liên hệ và chọn chủ đề Thanh toán & hóa đơn để gửi yêu cầu vào hệ thống hỗ trợ.' },
 ];
 
 /* ─── Component ─────────────────────────────────────────────── */
@@ -172,27 +121,29 @@ export function PricingPage() {
   const navigate = useNavigate();
   const [yearly, setYearly] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const [plans, setPlans] = useState<PricingPlan[]>(PLANS);
+  const [plans, setPlans] = useState<PricingPlan[]>([]);
+  const [plansLoading, setPlansLoading] = useState(true);
+  const [plansError, setPlansError] = useState(false);
 
   useEffect(() => {
     let active = true;
     billingService.listPlans()
       .then((items) => {
-        if (active && items.length > 0) {
+        if (active) {
           setPlans(items
             .filter(plan => isSupportedPlanSlug(plan.slug))
             .sort((a, b) => getPlanOrder(a.slug) - getPlanOrder(b.slug))
             .map(toPricingPlan));
         }
       })
-      .catch(() => undefined);
+      .catch(() => { if (active) setPlansError(true); })
+      .finally(() => { if (active) setPlansLoading(false); });
 
     return () => { active = false; };
   }, []);
 
   const compareRows = useMemo(() => {
-    if (plans.every(plan => plan.limits)) return buildCompareRows(plans);
-    return COMPARE_ROWS.map(row => ({ label: row.label, values: [row.free, row.pro, row.business] }));
+    return buildCompareRows(plans);
   }, [plans]);
 
   const yearlyDiscountPercent = useMemo(() => {
@@ -207,7 +158,7 @@ export function PricingPage() {
   }, [plans]);
 
   return (
-    <div className="min-h-screen bg-card overflow-x-hidden">
+    <div className="public-page min-h-screen overflow-x-hidden bg-card">
       <PublicNavbar />
 
       {/* ─── HERO ─── */}
@@ -221,13 +172,10 @@ export function PricingPage() {
             💳 Bảng giá minh bạch
           </Badge>
           <h1 className="text-white mb-5">
-            Đầu tư vào copy = đầu tư vào{' '}
-            <span className="bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
-              doanh thu
-            </span>
+            Chọn đúng không gian cho nhịp sản xuất nội dung.
           </h1>
           <p className="text-gray-300 text-xl leading-relaxed mb-10">
-            Bắt đầu miễn phí, nâng cấp khi bạn sẵn sàng. Không phí ẩn, không hợp đồng ràng buộc.
+            Giá, quota và quyền truy cập bên dưới được lấy trực tiếp từ cấu hình gói hiện hành.
           </p>
 
           {/* Toggle billing */}
@@ -257,6 +205,8 @@ export function PricingPage() {
       {/* ─── PRICING CARDS ─── */}
       <section className="pb-24 -mt-6">
         <div className="max-w-6xl mx-auto px-5 lg:px-8">
+          {plansLoading && <div className="paper-noise border-2 border-foreground bg-card p-10 text-center text-sm text-muted-foreground">Đang tải cấu hình gói...</div>}
+          {!plansLoading && (plansError || plans.length === 0) && <EditorialEmptyState title="Chưa tải được bảng giá" description="Không có dữ liệu gói khả dụng từ backend. Vui lòng thử lại hoặc liên hệ hỗ trợ." action={<Link to="/contact" className="inline-flex h-10 items-center border border-foreground bg-primary px-4 text-sm font-bold text-primary-foreground">Liên hệ hỗ trợ</Link>} />}
           <div className="grid gap-6 items-start md:grid-cols-3">
             {plans.map(plan => {
               const Icon = plan.icon;
@@ -348,40 +298,11 @@ export function PricingPage() {
             })}
           </div>
 
-          <p className="text-center text-sm text-muted-foreground mt-8">
-            Tất cả gói có 14 ngày dùng thử Pro miễn phí · Không cần thẻ tín dụng
-          </p>
-        </div>
-      </section>
-
-      {/* ─── TESTIMONIALS ─── */}
-      <section className="py-20 bg-background border-y border-border">
-        <div className="max-w-6xl mx-auto px-5 lg:px-8">
-          <p className="text-center text-xs font-bold text-muted-foreground/80 uppercase tracking-widest mb-10">Khách hàng nói gì về CopyPro</p>
-          <div className="grid md:grid-cols-3 gap-6">
-            {TESTIMONIALS.map((t, i) => (
-              <div key={i} className="bg-card rounded-3xl p-6 border border-border hover:shadow-lg transition-shadow">
-                <div className="flex items-center gap-1 mb-4">
-                  {[...Array(t.rating)].map((_, j) => <Star key={j} className="w-4 h-4 text-amber-400 fill-amber-400" />)}
-                </div>
-                <p className="text-foreground/80 text-sm leading-relaxed mb-5 italic">"{t.text}"</p>
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-green-600 to-emerald-700 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                    {t.avatar}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">{t.name}</p>
-                    <p className="text-xs text-muted-foreground">{t.role}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 
       {/* ─── COMPARE TABLE ─── */}
-      <section className="py-24">
+      {plans.length > 0 && <section className="py-24">
         <div className="max-w-5xl mx-auto px-5 lg:px-8">
           <div className="text-center mb-14">
             <Badge className="mb-5 bg-primary/10 text-primary border-0 px-4 py-1.5">So sánh chi tiết</Badge>
@@ -408,10 +329,7 @@ export function PricingPage() {
                       <td key={j} className={`px-4 py-4 text-center text-sm ${plans[j]?.highlight ? 'bg-primary/5' : ''}`}>
                         {val === null
                           ? <X className="w-4 h-4 text-muted-foreground/60 mx-auto" />
-                          : val === true
-                          ? <CheckCircle2 className="w-4 h-4 text-primary mx-auto" />
-                          : <span className={`font-medium ${plans[j]?.highlight ? 'text-primary' : 'text-foreground/80'}`}>{val as string}</span>
-                        }
+                          : <span className={`font-medium ${plans[j]?.highlight ? 'text-primary' : 'text-foreground/80'}`}>{val}</span>}
                       </td>
                     ))}
                   </tr>
@@ -420,7 +338,7 @@ export function PricingPage() {
             </table>
           </div>
         </div>
-      </section>
+      </section>}
 
       {/* ─── FAQ ─── */}
       <section className="pb-24">

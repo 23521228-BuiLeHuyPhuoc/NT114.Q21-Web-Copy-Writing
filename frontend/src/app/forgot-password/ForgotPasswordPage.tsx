@@ -132,7 +132,7 @@ export function ForgotPasswordPage() {
   const Icon = cfg.icon;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-surface-muted via-emerald-50/30 to-green-50/60 flex items-center justify-center p-5">
+    <div className="auth-page min-h-screen flex items-center justify-center p-5">
       {/* Background dots */}
       <div className="fixed inset-0 opacity-[0.025] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, #0d9488 1px, transparent 1px)', backgroundSize: '28px 28px' }} />
 

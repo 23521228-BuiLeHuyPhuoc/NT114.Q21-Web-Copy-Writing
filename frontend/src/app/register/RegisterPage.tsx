@@ -112,7 +112,7 @@ export function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="auth-page min-h-screen flex">
       {/* ─── LEFT PANEL ─── */}
       <div className="dark hidden lg:flex lg:w-[42%] flex-col relative overflow-hidden bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-950">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_70%_at_20%_50%,rgba(20,184,166,0.15),transparent)]" />
@@ -125,8 +125,8 @@ export function RegisterPage() {
 
         <div className="relative flex-1 flex flex-col justify-center px-12 pb-16">
           <h2 className="text-white mb-4 leading-tight">
-            Tham gia 2,000+<br />
-            <span className="bg-gradient-to-r from-emerald-300 via-green-300 to-green-300 bg-clip-text text-transparent">doanh nghiệp Việt</span>
+            Mở một bàn viết mới.<br />
+            <span className="text-accent">Bắt đầu từ brief.</span>
           </h2>
           <p className="text-muted-foreground/80 text-base leading-relaxed mb-10">
             Tạo tài khoản với gói Free mặc định. Bạn có thể nâng cấp sau khi cần thêm quota hoặc fine-tuning.
@@ -154,7 +154,7 @@ export function RegisterPage() {
       </div>
 
       {/* ─── RIGHT PANEL ─── */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 bg-gradient-to-br from-background via-green-50/45 to-green-50/70">
+      <div className="paper-grid flex flex-1 flex-col items-center justify-center bg-background px-6 py-12">
         {/* Mobile logo */}
         <Link to="/" className="lg:hidden mb-8 inline-flex items-center hover:opacity-80 transition-opacity">
           <BrandLogo size="xl" />

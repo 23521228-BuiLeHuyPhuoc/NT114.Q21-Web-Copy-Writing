@@ -20,6 +20,7 @@ import { useCreateProject, useProjects } from '@/hooks/queries/useProjects';
 import { DataPagination } from '@/app/components/common/DataPagination';
 import { usePagination } from '@/hooks/usePagination';
 import { matchesSearchRegex } from '@/lib/searchRegex';
+import { EditorialEmptyState } from '@/app/components/EditorialArtwork';
 
 type ProjectSort = 'newest' | 'oldest' | 'updated' | 'name' | 'contentCount' | 'progress';
 type ProjectStatusFilter = 'all' | 'active' | 'archived';
@@ -122,19 +123,21 @@ export function CustomerProjects() {
 
   return (
     <Layout>
-      <div className="p-6 max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+      <div className="mx-auto max-w-[1450px] p-4 md:p-7 lg:p-9">
+        <div className="mb-8 flex flex-col justify-between gap-5 border-b-2 border-foreground pb-7 md:flex-row md:items-end">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-1">Quản Lý Dự Án</h1>
-            <p className="text-foreground/70">Tổ chức nội dung theo dự án để dễ quản lý và theo dõi</p>
+            <p className="editorial-kicker mb-4 text-primary">Tủ hồ sơ chiến dịch</p>
+            <h1 className="studio-page-title text-foreground">Dự án</h1>
+            <p className="mt-3 text-sm leading-7 text-muted-foreground">Gom bản thảo theo chiến dịch, theo dõi tiến độ và mở đúng nhóm nội dung cần xử lý.</p>
           </div>
-          <Button className="bg-gradient-to-r from-green-600 to-emerald-600 text-white" onClick={() => setShowNew(true)}>
-            <Plus className="w-4 h-4 mr-2" /> Tạo Dự Án Mới
+          <Button size="lg" onClick={() => setShowNew(true)}>
+            <Plus className="h-4 w-4" /> Tạo dự án mới
           </Button>
         </div>
 
-        <Card className="p-4 mb-6">
-          <div className="flex flex-wrap gap-3">
+        <Card className="mb-7 overflow-hidden border-2 border-foreground">
+          <div className="border-b border-foreground bg-foreground px-4 py-2 font-mono-editorial text-[10px] font-bold uppercase tracking-[.15em] text-background">Tìm và sắp xếp hồ sơ</div>
+          <div className="flex flex-wrap gap-3 p-4">
             <div className="relative flex-1 min-w-56">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/80" />
               <Input placeholder="Tìm dự án..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
@@ -184,28 +187,42 @@ export function CustomerProjects() {
         </Card>
 
         {isLoading && (
-          <Card className="p-6 text-sm text-muted-foreground">Đang tải danh sách dự án...</Card>
+          <Card className="paper-noise p-8 text-sm text-muted-foreground">Đang mở tủ dự án...</Card>
         )}
 
         {!isLoading && filtered.length === 0 && (
-          <Card className="p-6 text-sm text-muted-foreground">Chưa có dự án nào phù hợp.</Card>
+          <EditorialEmptyState title="Chưa có hồ sơ dự án phù hợp" description="Thay đổi bộ lọc hoặc tạo dự án mới để gom các bản copy theo một chiến dịch." action={<Button size="sm" onClick={() => setShowNew(true)}><Plus className="h-4 w-4" /> Tạo dự án</Button>} />
         )}
 
         {/* Projects grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {pagination.pageItems.map(project => (
-            <Card key={project.id} className="p-5 hover:shadow-lg transition-all cursor-pointer group" onClick={() => navigate(`/projects/${project.id}`)}>
-              <div className="flex items-start justify-between mb-4">
-                <div className={`bg-gradient-to-br ${project.color} p-3 rounded-xl`}>
-                  <FolderOpen className="w-5 h-5 text-white" />
-                </div>
-                <Badge className={project.status === 'active' ? 'bg-primary/10 text-primary border-0' : 'bg-muted text-foreground/70 border-0'}>
-                  {project.status === 'active' ? 'Đang hoạt động' : 'Đã lưu trữ'}
-                </Badge>
+            <Card
+              key={project.id}
+              role="link"
+              tabIndex={0}
+              className="group cursor-pointer overflow-hidden border-2 border-foreground p-0 transition-transform hover:-translate-y-1 hover:shadow-[8px_8px_0_rgba(23,32,51,.12)]"
+              onClick={() => navigate(`/projects/${project.id}`)}
+              onKeyDown={(event) => {
+                if (event.currentTarget !== event.target || (event.key !== 'Enter' && event.key !== ' ')) return;
+                event.preventDefault();
+                navigate(`/projects/${project.id}`);
+              }}
+            >
+              <div className="flex items-center justify-between border-b border-foreground bg-accent/40 px-5 py-3">
+                <span className="font-mono-editorial text-[10px] font-bold uppercase tracking-[.14em] text-foreground/60">Project file</span>
+                <Badge className={project.status === 'active' ? 'border border-success/40 bg-success/10 text-success' : 'border border-border bg-muted text-muted-foreground'}>{project.status === 'active' ? 'Đang hoạt động' : 'Đã lưu trữ'}</Badge>
               </div>
-              <h3 className="font-semibold text-foreground mb-1">{project.name}</h3>
-              <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{project.desc}</p>
-              <div className="mb-4 rounded-lg border border-border/70 bg-surface-muted/60 p-3">
+              <div className="p-5">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex h-12 w-12 items-center justify-center border-2 border-foreground bg-card shadow-[3px_3px_0_#d64b32]">
+                  <FolderOpen className="h-5 w-5 text-foreground" />
+                </div>
+                <span className="font-display text-3xl font-bold text-primary">{project.completionPercent}%</span>
+              </div>
+              <h3 className="mb-1 text-2xl text-foreground">{project.name}</h3>
+              <p className="mb-4 line-clamp-2 min-h-12 text-sm leading-6 text-muted-foreground">{project.desc}</p>
+              <div className="mb-4 border border-border bg-background p-3">
                 <div className="mb-2 flex items-center justify-between gap-3">
                   <span className="text-xs font-semibold text-foreground/80">Tiến độ hoàn thành</span>
                   <span className="text-sm font-bold text-primary">{project.completionPercent}%</span>
@@ -221,12 +238,12 @@ export function CustomerProjects() {
                 <span className="flex items-center gap-1"><FileText className="w-3 h-3" /> {project.contents} nội dung</span>
                 <span><Calendar className="w-3 h-3 inline mr-1" />{project.createdAt}</span>
               </div>
-              <div className="mt-3 pt-3 border-t flex items-center justify-between">
+              <div className="mt-3 flex items-center justify-between border-t pt-3">
                 <Badge className="bg-muted text-foreground/70 border-0 text-xs">{project.industry}</Badge>
                 <span className="text-primary text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
                   Xem chi tiết <ArrowRight className="w-3 h-3" />
                 </span>
-              </div>
+              </div></div>
             </Card>
           ))}
         </div>

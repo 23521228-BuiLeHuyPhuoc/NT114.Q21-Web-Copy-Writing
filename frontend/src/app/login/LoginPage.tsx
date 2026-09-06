@@ -13,10 +13,10 @@ import {
 import toast from 'react-hot-toast';
 
 const BENEFITS = [
-  'GPT-4 + Llama 3.1 70B',
-  'Fine-tuning theo thương hiệu',
-  '100+ template chuyên ngành',
-  'RESTful API tích hợp',
+  'Brief có cấu trúc trước khi generate',
+  'Nhiều phiên bản để so sánh',
+  'Rich text editor cho bản cuối',
+  'Nội dung được lưu theo dự án',
 ];
 
 interface LoginFormData { email: string; password: string }
@@ -42,7 +42,7 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="auth-page min-h-screen flex">
 
       {/* ── LEFT PANEL ── */}
       <div className="dark hidden lg:flex lg:w-1/2 xl:w-[55%] flex-col relative overflow-hidden">
@@ -67,16 +67,14 @@ export function LoginPage() {
         {/* Main content */}
         <div className="relative flex-1 flex flex-col justify-center px-12 xl:px-16 pb-16">
           <p className="text-primary text-sm font-semibold uppercase tracking-widest mb-4">
-            AI Copywriting Platform
+            Creative Editorial Studio
           </p>
           <h1 className="text-white mb-6 leading-tight">
-            Copy chuyên nghiệp<br />
-            <span className="bg-gradient-to-r from-emerald-300 via-green-300 to-green-300 bg-clip-text text-transparent">
-              trong vài giây
-            </span>
+            Trở lại bàn viết.<br />
+            <span className="text-accent">Tiếp tục bản thảo.</span>
           </h1>
           <p className="text-muted-foreground/80 text-lg leading-relaxed mb-10">
-            Tích hợp GPT-4, Llama 3.1 và Fine-tuning theo thương hiệu — nền tảng AI copywriting số 1 Việt Nam.
+            Brief, model, bản nháp và vùng biên tập nằm trong cùng một quy trình làm việc.
           </p>
 
           <ul className="space-y-4 mb-12">
@@ -90,50 +88,17 @@ export function LoginPage() {
             ))}
           </ul>
 
-          <div className="bg-card/10 border border-white/10 rounded-2xl p-5 backdrop-blur">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-2 h-2 bg-green-300 rounded-full animate-pulse" />
-              <span className="text-primary text-xs font-semibold">AI đang tạo...</span>
-              <span className="ml-auto bg-green-950/50 text-green-200 border border-green-700/30 rounded-md px-2 py-0.5 text-xs">
-                GPT-4
-              </span>
-            </div>
-            <p className="text-muted-foreground/60 text-sm leading-relaxed italic">
-              "🔥 FLASH SALE 48H! Giảm đến 70% toàn bộ sản phẩm — Đặt ngay kẻo lỡ. Freeship mọi đơn hàng trong hôm nay!"
-            </p>
-            <div className="flex items-center gap-2 mt-3">
-              <span className="bg-amber-950/45 text-amber-200 border border-amber-700/30 text-xs rounded-md px-2 py-0.5">
-                ⭐ 94% chất lượng
-              </span>
-              <span className="text-muted-foreground text-xs">· 1.8 giây</span>
-            </div>
+          <div className="paper-noise border-2 border-white/25 bg-card/10 p-5 backdrop-blur">
+            <p className="font-mono-editorial text-[10px] font-bold uppercase tracking-[.16em] text-primary">Ghi chú biên tập</p>
+            <p className="mt-3 font-display text-2xl font-bold leading-snug text-white">“AI mở thêm hướng viết. Người biên tập chọn câu chữ cuối cùng.”</p>
           </div>
         </div>
 
-        {/* Bottom social proof */}
-        <div className="relative px-12 xl:px-16 pb-10 border-t border-white/8 pt-6">
-          <div className="flex items-center gap-3">
-            <div className="flex -space-x-2">
-              {['TK', 'LH', 'PA', 'MK'].map((av, i) => (
-                <div
-                  key={i}
-                  className={`w-8 h-8 rounded-full border-2 border-slate-950 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 ${
-                    ['bg-emerald-600', 'bg-primary', 'bg-primary', 'bg-warning/100'][i]
-                  }`}
-                >
-                  {av}
-                </div>
-              ))}
-            </div>
-            <p className="text-muted-foreground/80 text-sm">
-              <span className="text-white font-semibold">2,000+</span> doanh nghiệp đang dùng hôm nay
-            </p>
-          </div>
-        </div>
+        <div className="relative border-t border-white/10 px-12 pb-10 pt-6 font-mono-editorial text-[10px] uppercase tracking-[.16em] text-muted-foreground xl:px-16">Brief → Generate → Edit → Save</div>
       </div>
 
       {/* ── RIGHT PANEL: Form ── */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 bg-gradient-to-br from-background via-emerald-50/45 to-green-50/70">
+      <div className="paper-grid flex flex-1 flex-col items-center justify-center bg-background px-6 py-12">
         {/* Mobile logo */}
         <Link to="/" className="lg:hidden mb-10 inline-flex items-center hover:opacity-80 transition-opacity">
           <BrandLogo size="xl" />

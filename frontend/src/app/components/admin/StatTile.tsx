@@ -42,9 +42,9 @@ export function StatTile({
 
   if (trend) {
     return (
-      <Card className="p-4">
+      <Card className="border-l-4 border-l-primary p-4">
         <div className="flex items-center gap-3 mb-2">
-          <div className={`p-2 rounded-lg ${bubbleClass}`}>
+          <div className={`border border-foreground p-2 ${bubbleClass}`}>
             <Icon className={iconClassName} />
           </div>
           <span className="text-xs text-muted-foreground">{label}</span>
@@ -62,8 +62,8 @@ export function StatTile({
   }
 
   return (
-    <Card className="p-4 flex items-center gap-3">
-      <div className={`p-2 rounded-lg ${bubbleClass}`}>
+    <Card className="flex items-center gap-3 border-l-4 border-l-primary p-4">
+      <div className={`border border-foreground p-2 ${bubbleClass}`}>
         <Icon className={iconClassName} />
       </div>
       <div>

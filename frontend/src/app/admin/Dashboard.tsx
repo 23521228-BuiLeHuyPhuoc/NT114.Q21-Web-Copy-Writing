@@ -79,36 +79,37 @@ export function AdminDashboard() {
 
   return (
     <Layout>
-      <div className="p-6 max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Admin Dashboard</h1>
-          <p className="text-foreground/70">Tổng quan hệ thống CopyPro từ dữ liệu MongoDB.</p>
+      <div className="mx-auto max-w-[1500px] p-4 md:p-7 lg:p-9">
+        <div className="mb-8 border-b-2 border-foreground pb-7">
+          <p className="editorial-kicker mb-4 text-primary">Editorial Operations</p>
+          <h1 className="studio-page-title text-foreground">Tổng quan hệ thống</h1>
+          <p className="mt-3 text-sm leading-7 text-muted-foreground">Dữ liệu vận hành, sử dụng model và nội dung gần đây từ hệ thống CopyPro.</p>
         </div>
 
         {loading ? (
-          <Card className="p-16 text-center text-sm text-muted-foreground">Đang tải thống kê hệ thống...</Card>
+          <Card className="paper-noise border-2 border-foreground p-16 text-center text-sm text-muted-foreground">Đang tải dữ liệu vận hành...</Card>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="mb-8 grid border-l border-t border-foreground md:grid-cols-2 lg:grid-cols-4">
               {statCards.map((stat) => {
                 const Icon = stat.icon;
                 return (
-                  <Card key={stat.label} className="p-6">
+                  <div key={stat.label} className="border-b border-r border-foreground bg-card p-5">
                     <div className="flex items-center justify-between mb-4">
-                      <div className={`${stat.color} p-3 rounded-lg`}>
+                      <div className={`${stat.color} border border-foreground p-2.5`}>
                         <Icon className="w-6 h-6" />
                       </div>
                     </div>
                     <p className="text-sm text-foreground/70 mb-1">{stat.label}</p>
-                    <p className="text-3xl font-bold text-foreground">{stat.value}</p>
+                    <p className="font-display text-3xl font-bold text-foreground">{stat.value}</p>
                     <p className="text-xs text-muted-foreground mt-2">{stat.sub}</p>
-                  </Card>
+                  </div>
                 );
               })}
             </div>
 
             <div className="grid md:grid-cols-2 gap-6 mb-8">
-              <Card className="p-6">
+              <Card className="border-2 border-foreground p-6">
                 <h3 className="font-bold text-lg mb-4">Tăng trưởng theo tháng</h3>
                 {monthlyData.length > 0 ? (
                   <LineChart
@@ -116,8 +117,8 @@ export function AdminDashboard() {
                     xKey="name"
                     height={300}
                     series={[
-                      { key: 'users', label: 'Users', color: '#16723a' },
-                      { key: 'copies', label: 'Contents', color: '#d88a0b' },
+                      { key: 'users', label: 'Users', color: '#d64b32' },
+                      { key: 'copies', label: 'Contents', color: '#1f6f78' },
                     ]}
                   />
                 ) : (
@@ -125,14 +126,14 @@ export function AdminDashboard() {
                 )}
               </Card>
 
-              <Card className="p-6">
+              <Card className="border-2 border-foreground p-6">
                 <h3 className="font-bold text-lg mb-4">Content theo loại</h3>
                 {contentTypeData.length > 0 ? (
                   <BarChart
                     data={contentTypeData}
                     xKey="name"
                     height={300}
-                    series={[{ key: 'value', label: 'Contents', color: '#16723a' }]}
+                    series={[{ key: 'value', label: 'Contents', color: '#d64b32' }]}
                   />
                 ) : (
                   <div className="h-[300px] flex items-center justify-center text-sm text-muted-foreground">Chưa có dữ liệu content.</div>
@@ -140,7 +141,7 @@ export function AdminDashboard() {
               </Card>
             </div>
 
-            <Card className="p-6 mb-8">
+            <Card className="mb-8 border-2 border-foreground p-6">
               <div className="flex items-center justify-between mb-5 gap-4">
                 <div>
                   <h3 className="font-bold text-lg">Báo cáo sử dụng</h3>
@@ -233,8 +234,8 @@ export function AdminDashboard() {
                     xKey="label"
                     height={260}
                     series={[
-                      { key: 'generates', label: 'Generate', color: '#16723a' },
-                      { key: 'quota', label: 'Quota units', color: '#d88a0b' },
+                      { key: 'generates', label: 'Generate', color: '#d64b32' },
+                      { key: 'quota', label: 'Quota units', color: '#1f6f78' },
                     ]}
                   />
                 </TabsContent>
@@ -244,8 +245,8 @@ export function AdminDashboard() {
                     xKey="label"
                     height={260}
                     series={[
-                      { key: 'generates', label: 'Generate', color: '#16723a' },
-                      { key: 'quota', label: 'Quota units', color: '#d88a0b' },
+                      { key: 'generates', label: 'Generate', color: '#d64b32' },
+                      { key: 'quota', label: 'Quota units', color: '#1f6f78' },
                     ]}
                   />
                 </TabsContent>
@@ -255,15 +256,15 @@ export function AdminDashboard() {
                     xKey="label"
                     height={260}
                     series={[
-                      { key: 'generates', label: 'Generate', color: '#16723a' },
-                      { key: 'quota', label: 'Quota units', color: '#d88a0b' },
+                      { key: 'generates', label: 'Generate', color: '#d64b32' },
+                      { key: 'quota', label: 'Quota units', color: '#1f6f78' },
                     ]}
                   />
                 </TabsContent>
               </Tabs>
             </Card>
 
-            <Card className="p-6">
+            <Card className="border-2 border-foreground p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-bold text-lg">Nội dung gần đây</h3>
                 <span className="text-xs text-muted-foreground">{data?.recentContents?.length || 0} bản mới nhất</span>

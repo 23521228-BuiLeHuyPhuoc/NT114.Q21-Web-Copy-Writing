@@ -7,7 +7,6 @@ import {
   Copy,
   Download,
   Edit2,
-  FileText,
   RefreshCw,
   Save,
   Share2,
@@ -26,6 +25,7 @@ import { useContent, useDeleteContent, useUpdateContent } from '@/hooks/queries/
 import { Markdown } from '@/app/components/common/Markdown';
 import { looksLikeHtml, sanitizeHtml } from '@/lib/richText';
 import { tinymceBaseInit, tinymceEditorProps } from '@/lib/tinymce';
+import { EditorialEmptyState } from '@/app/components/EditorialArtwork';
 
 export function CustomerContentDetail() {
   const { id } = useParams();
@@ -122,8 +122,8 @@ export function CustomerContentDetail() {
   if (isLoading) {
     return (
       <Layout>
-        <div className="p-6 max-w-5xl mx-auto">
-          <Card className="p-8 text-center text-muted-foreground">Đang tải nội dung...</Card>
+        <div className="mx-auto max-w-6xl p-4 md:p-7 lg:p-9">
+          <Card className="paper-noise border-2 border-foreground p-10 text-center text-muted-foreground">Đang mở bản thảo...</Card>
         </div>
       </Layout>
     );
@@ -132,14 +132,11 @@ export function CustomerContentDetail() {
   if (isError || !content) {
     return (
       <Layout>
-        <div className="p-6 max-w-5xl mx-auto">
+        <div className="mx-auto max-w-6xl p-4 md:p-7 lg:p-9">
           <Button variant="ghost" className="mb-4 text-foreground/70" onClick={() => navigate('/contents')}>
             <ArrowLeft className="w-4 h-4 mr-2" /> Quay lại danh sách
           </Button>
-          <Card className="p-8 text-center text-muted-foreground">
-            <FileText className="w-10 h-10 mx-auto mb-3 opacity-40" />
-            Không tìm thấy nội dung hoặc bạn không có quyền xem nội dung này.
-          </Card>
+          <EditorialEmptyState title="Không mở được bản thảo" description="Nội dung không tồn tại hoặc tài khoản hiện tại không có quyền truy cập." />
         </div>
       </Layout>
     );
@@ -147,12 +144,12 @@ export function CustomerContentDetail() {
 
   return (
     <Layout>
-      <div className="p-6 max-w-5xl mx-auto">
+      <div className="mx-auto max-w-6xl p-4 md:p-7 lg:p-9">
         <Button variant="ghost" className="mb-4 text-foreground/70" onClick={() => navigate('/contents')}>
           <ArrowLeft className="w-4 h-4 mr-2" /> Quay lại danh sách
         </Button>
 
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-6">
+        <div className="mb-7 flex flex-col justify-between gap-5 border-b-2 border-foreground pb-6 md:flex-row md:items-end">
           <div>
             <div className="flex flex-wrap items-center gap-2 mb-2">
               <Badge className="bg-primary/10 text-primary border-0">Đã xuất bản</Badge>
@@ -167,7 +164,7 @@ export function CustomerContentDetail() {
                 maxLength={160}
               />
             ) : (
-              <h1 className="text-2xl font-bold text-foreground">{content.title}</h1>
+              <h1 className="font-display text-3xl font-bold leading-tight text-foreground md:text-5xl">{content.title}</h1>
             )}
             <p className="text-sm text-muted-foreground mt-1">
               <Calendar className="w-3 h-3 inline mr-1" />{content.createdAt} · {content.industry}
@@ -196,7 +193,7 @@ export function CustomerContentDetail() {
 
         <div className="grid lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-4">
-            <Card className="p-6">
+            <Card className="paper-noise border-2 border-foreground p-6">
               <div className="flex items-center justify-between mb-4 gap-3">
                 <h3 className="font-semibold text-foreground">Nội dung</h3>
                 <div className="flex gap-2">

@@ -56,13 +56,13 @@ Lưu ý: Phải trung thực, không lạm dụng để không mất lòng tin k
       title: 'Sử dụng bằng chứng xã hội',
       content: `Xây dựng niềm tin thông qua:
 
-• Đánh giá khách hàng: "4.8/5 sao - 10,000 đánh giá"
-• Số liệu cụ thể: "Được 50,000+ khách hàng tin dùng"
-• Chứng nhận: "Chứng nhận FDA", "Top 10 sản phẩm tốt nhất"
-• Case study: "Khách hàng X tăng doanh thu 300%"
+• Đánh giá khách hàng: chỉ trích dẫn phản hồi có nguồn và được phép sử dụng
+• Số liệu cụ thể: ghi rõ nguồn, kỳ đo và phạm vi dữ liệu
+• Chứng nhận: kiểm tra tên chứng nhận và thời hạn hiệu lực
+• Case study: nêu bối cảnh, cách đo và giới hạn của kết quả
 • Testimonial: Lời chứng thực từ khách hàng thực
 
-Bằng chứng xã hội giúp giảm rủi ro và tăng độ tin cậy.`
+Bằng chứng xã hội giúp giảm rủi ro và tăng độ tin cậy khi thông tin là thật, còn hiệu lực và có thể kiểm chứng.`
     },
     {
       title: 'Viết CTA (Call-to-Action) mạnh mẽ',

@@ -129,19 +129,17 @@ export function PublicNavbar() {
 
   return (
     <header
-      className={`fixed left-0 right-0 top-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? 'border-b border-border/80 bg-card/95 shadow-sm backdrop-blur-xl'
-          : 'bg-transparent'
+      className={`public-nav fixed left-0 right-0 top-0 z-50 border-b border-border bg-background/95 backdrop-blur-xl transition-all duration-300 ${
+        scrolled ? 'shadow-[0_6px_0_rgba(23,32,51,.05)]' : ''
       }`}
     >
       <div className="mx-auto max-w-7xl px-5 lg:px-8">
-        <div className="flex h-[70px] items-center justify-between">
+        <div className="flex h-[74px] items-center justify-between">
           <Link to="/" className="flex flex-shrink-0 items-center gap-2">
-            <BrandLogo size="lg" tone={scrolled ? 'dark' : 'light'} surface="light" className="p-1" />
+            <BrandLogo size="lg" tone="dark" className="p-1" />
           </Link>
 
-          <nav className={`hidden items-center gap-1 lg:flex ${scrolled ? 'text-foreground/70' : 'text-white/90'}`}>
+          <nav className="hidden items-center gap-1 text-foreground/75 lg:flex">
             <Dropdown
               label="Chức năng"
               items={FEATURE_LINKS}
@@ -155,8 +153,8 @@ export function PublicNavbar() {
                 to={link.href}
                 className={`rounded-lg px-3 py-2 text-[0.9rem] font-semibold transition-colors ${
                   location.pathname === link.href
-                    ? scrolled ? 'bg-primary/10 text-primary' : 'bg-card/15 text-white'
-                    : scrolled ? 'text-muted-foreground hover:bg-accent hover:text-primary' : 'text-white/90 hover:bg-card/15 hover:text-white'
+                    ? 'bg-accent/55 text-foreground'
+                    : 'text-foreground/65 hover:bg-accent/35 hover:text-foreground'
                 }`}
               >
                 {link.label}
@@ -166,11 +164,11 @@ export function PublicNavbar() {
 
           <div className="hidden items-center gap-3 lg:flex">
             {isLoading ? (
-              <div className={`h-9 w-44 animate-pulse rounded-lg ${scrolled ? 'bg-muted' : 'bg-white/15'}`} />
+              <div className="h-9 w-44 animate-pulse rounded-md bg-muted" />
             ) : user ? (
               <>
                 <Button
-                  className="rounded-lg bg-gradient-to-r from-primary to-success px-5 text-[0.9rem] text-primary-foreground shadow-md shadow-primary/20 hover:from-primary/90 hover:to-success/90"
+                  className="border border-foreground bg-primary px-5 text-[0.9rem] text-primary-foreground shadow-[3px_3px_0_#172033] hover:-translate-y-0.5"
                   onClick={() => navigate(primaryAppPath)}
                 >
                   <PrimaryIcon className="mr-1.5 h-4 w-4" />
@@ -180,12 +178,12 @@ export function PublicNavbar() {
                 <div className="relative" ref={accountRef}>
                   <button
                     onClick={() => setAccountOpen((open) => !open)}
-                    className={`flex h-9 items-center gap-2 rounded-lg pl-1 pr-2 transition-colors ${scrolled ? 'text-foreground hover:bg-muted' : 'text-white hover:bg-card/15'}`}
+                    className="flex h-9 items-center gap-2 rounded-md pl-1 pr-2 text-foreground transition-colors hover:bg-accent/35"
                     aria-label="Tài khoản"
                   >
                     <Avatar className="h-7 w-7">
                       <AvatarImage src={user.avatar || undefined} alt={user.name || 'Avatar'} className="object-cover" />
-                      <AvatarFallback className="bg-gradient-to-br from-primary to-success text-xs font-bold text-primary-foreground">
+                      <AvatarFallback className="bg-primary text-xs font-bold text-primary-foreground">
                         {userInitial}
                       </AvatarFallback>
                     </Avatar>
@@ -201,7 +199,7 @@ export function PublicNavbar() {
                           <div className="flex min-w-0 items-center gap-3">
                             <Avatar className="h-10 w-10 flex-shrink-0">
                               <AvatarImage src={user.avatar || undefined} alt={user.name || 'Avatar'} className="object-cover" />
-                              <AvatarFallback className="bg-gradient-to-br from-primary to-success font-bold text-primary-foreground">
+                              <AvatarFallback className="bg-primary font-bold text-primary-foreground">
                                 {userInitial}
                               </AvatarFallback>
                             </Avatar>
@@ -263,13 +261,13 @@ export function PublicNavbar() {
               <>
                 <Button
                   variant="ghost"
-                  className={`text-[0.9rem] font-semibold transition-colors ${scrolled ? 'text-muted-foreground hover:bg-accent hover:text-primary' : 'text-white/90 hover:bg-card/15 hover:text-white'}`}
+                  className="text-[0.9rem] font-semibold text-foreground/70 transition-colors hover:bg-accent/35 hover:text-foreground"
                   onClick={() => navigate('/login')}
                 >
                   Đăng nhập
                 </Button>
                 <Button
-                  className="rounded-lg bg-gradient-to-r from-primary to-success px-5 text-[0.9rem] text-primary-foreground shadow-md shadow-primary/20 hover:from-primary/90 hover:to-success/90"
+                  className="border border-foreground bg-primary px-5 text-[0.9rem] text-primary-foreground shadow-[3px_3px_0_#172033] hover:-translate-y-0.5"
                   onClick={() => navigate('/register')}
                 >
                   <Sparkles className="mr-1.5 h-4 w-4" />
@@ -280,7 +278,7 @@ export function PublicNavbar() {
           </div>
 
           <button
-            className={`rounded-lg p-2 transition-colors lg:hidden ${scrolled ? 'text-foreground hover:bg-muted' : 'text-white hover:bg-card/15'}`}
+            className="rounded-md border border-border p-2 text-foreground transition-colors hover:bg-accent/35 lg:hidden"
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label="Mở menu"
           >
@@ -289,7 +287,7 @@ export function PublicNavbar() {
             ) : user ? (
               <Avatar className="h-7 w-7">
                 <AvatarImage src={user.avatar || undefined} alt={user.name || 'Avatar'} className="object-cover" />
-                <AvatarFallback className="bg-gradient-to-br from-primary to-success text-xs font-bold text-primary-foreground">
+                <AvatarFallback className="bg-primary text-xs font-bold text-primary-foreground">
                   {userInitial}
                 </AvatarFallback>
               </Avatar>
@@ -330,7 +328,7 @@ export function PublicNavbar() {
                 <div className="flex min-w-0 items-center gap-3 rounded-lg bg-surface-muted p-3">
                   <Avatar className="h-10 w-10 flex-shrink-0">
                     <AvatarImage src={user.avatar || undefined} alt={user.name || 'Avatar'} className="object-cover" />
-                    <AvatarFallback className="bg-gradient-to-br from-primary to-success font-bold text-primary-foreground">
+                    <AvatarFallback className="bg-primary font-bold text-primary-foreground">
                       {userInitial}
                     </AvatarFallback>
                   </Avatar>
@@ -341,7 +339,7 @@ export function PublicNavbar() {
                 </div>
 
                 <Button
-                  className="w-full rounded-lg bg-gradient-to-r from-primary to-success text-sm text-primary-foreground"
+                  className="w-full bg-primary text-sm text-primary-foreground"
                   onClick={() => navigate(primaryAppPath)}
                 >
                   <PrimaryIcon className="mr-2 h-4 w-4" />
@@ -369,7 +367,7 @@ export function PublicNavbar() {
             ) : (
               <div className="mt-3 grid grid-cols-2 gap-2 border-t border-border pt-4">
                 <Button variant="outline" className="w-full rounded-lg text-sm" onClick={() => navigate('/login')}>Đăng nhập</Button>
-                <Button className="w-full rounded-lg bg-gradient-to-r from-primary to-success text-sm text-primary-foreground" onClick={() => navigate('/register')}>Đăng ký</Button>
+                <Button className="w-full bg-primary text-sm text-primary-foreground" onClick={() => navigate('/register')}>Đăng ký</Button>
               </div>
             )}
           </div>

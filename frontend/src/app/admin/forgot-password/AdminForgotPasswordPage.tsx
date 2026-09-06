@@ -164,7 +164,7 @@ export function AdminForgotPasswordPage() {
   };
 
   return (
-    <div className="dark min-h-screen bg-gray-950 text-white flex items-center justify-center px-5 py-10">
+    <div className="auth-page dark min-h-screen bg-gray-950 text-white flex items-center justify-center px-5 py-10">
       <div className="fixed inset-0 bg-[radial-gradient(ellipse_70%_60%_at_20%_30%,rgba(20,184,166,0.12),transparent)] pointer-events-none" />
       <div className="fixed inset-0 bg-[radial-gradient(ellipse_60%_50%_at_90%_80%,rgba(245,158,11,0.08),transparent)] pointer-events-none" />
 
