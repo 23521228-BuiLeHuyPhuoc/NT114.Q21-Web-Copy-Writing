@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from '@/lib/next-router-compat';
 import {
   Brain,
@@ -26,7 +26,8 @@ import { ProductInfoForm } from '@/app/components/generator/ProductInfoForm';
 import { AdvancedSettings, type ContentLength } from '@/app/components/generator/AdvancedSettings';
 import { GeneratorResults } from '@/app/components/generator/GeneratorResults';
 import { EditorialGlyph } from '@/app/components/EditorialArtwork';
-import { useCreateContent, useGenerateContent } from '@/hooks/queries/useContents';
+import { useCreateContent, useGenerateContent, useUpdateContent } from '@/hooks/queries/useContents';
+import { persistGeneratedContent } from './persistGeneratedContent';
 import { useProjects } from '@/hooks/queries/useProjects';
 import { useTemplates } from '@/hooks/queries/useTemplates';
 import { useGenerateOptions } from '@/hooks/queries/useGenerateOptions';
@@ -220,6 +221,7 @@ export function CustomerGenerator() {
   const navigate = useNavigate();
   const generateContent = useGenerateContent();
   const createContent = useCreateContent();
+  const updateContent = useUpdateContent();
   const { data: templates = [], isLoading: templatesLoading } = useTemplates();
   const { data: projects = [], isLoading: projectsLoading } = useProjects({ limit: 50 });
   const { data: generateOptions } = useGenerateOptions();
@@ -250,7 +252,9 @@ export function CustomerGenerator() {
   const [latency, setLatency] = useState(0);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [savedItems, setSavedItems] = useState<string[]>([]);
-  const [savedContentId, setSavedContentId] = useState<string | null>(null);
+  const [originalGeneratedContentId, setOriginalGeneratedContentId] = useState<string | null>(null);
+  const [savedVersionIds, setSavedVersionIds] = useState<Record<number, string>>({});
+  const isSavingRef = useRef(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
   const [selectedProjectId, setSelectedProjectId] = useState('');
 
@@ -452,11 +456,12 @@ export function CustomerGenerator() {
       return;
     }
 
+    if (isSavingRef.current || createContent.isPending || updateContent.isPending) {
+      return;
+    }
+
     setIsGenerating(true);
-    setResults([]);
-    setPlagiarism(null);
     setStreamText('');
-    setSavedContentId(null);
 
     const startTime = Date.now();
 
@@ -497,7 +502,8 @@ export function CustomerGenerator() {
       setSelectedResult(0);
       setTokensUsed(result.usage?.totalTokens || result.content.tokens || 0);
       setLatency(Math.round((Date.now() - startTime) / 100) / 10);
-      setSavedContentId(result.content.id || null);
+      setOriginalGeneratedContentId(result.content.id || null);
+      setSavedVersionIds({});
       if (plagiarismSimilarity >= 35) {
         toast.error(`Nội dung có nguy cơ đạo văn ${Math.round(plagiarismSimilarity)}%, điểm chất lượng đã bị giảm.`);
       } else {
@@ -521,40 +527,57 @@ export function CustomerGenerator() {
   };
 
   const handleSave = async (text: string) => {
-    if (savedContentId) {
-      setSavedItems(prev => [...prev, htmlToPlainText(text)]);
-      toast.success('Nội dung đã được lưu trong DB!');
-      navigate(`/contents/${savedContentId}`);
+    if (isSavingRef.current || createContent.isPending || updateContent.isPending || isGenerating) {
       return;
     }
+    isSavingRef.current = true;
 
+    const targetVersionIndex = selectedResult;
+    const existingArticleId = savedVersionIds[targetVersionIndex] || null;
     const plainText = htmlToPlainText(text).trim();
 
     if (!plainText) {
+      isSavingRef.current = false;
       toast.error('Không có nội dung để lưu');
       return;
     }
 
     try {
-      const saved = await createContent.mutateAsync({
-        title: buildTitleFromText(copyType, plainText),
-        prompt: buildPrompt(),
-        outputText: plainText,
-        type: copyType,
-        tone,
-        language: 'vi',
-        modelUsed: effectiveModel || model,
-        tags: [industry].filter(Boolean),
-        templateId: selectedTemplateId || null,
-        projectId: selectedProjectId || null,
+      const saved = await persistGeneratedContent({
+        existingArticleId,
+        rawHtml: text,
+        createPayload: {
+          title: buildTitleFromText(copyType, plainText),
+          prompt: buildPrompt(),
+          type: copyType,
+          tone,
+          language: 'vi',
+          modelUsed: effectiveModel || model,
+          tags: [industry].filter(Boolean),
+          templateId: selectedTemplateId || null,
+          projectId: selectedProjectId || null,
+        },
+        updateContentFn: updateContent.mutateAsync,
+        createContentFn: createContent.mutateAsync,
       });
 
+      if (!saved || !saved.id) {
+        throw new Error('Response không có ID bài viết hợp lệ');
+      }
+
       setSavedItems(prev => [...prev, plainText]);
-      setSavedContentId(saved.id || null);
-      toast.success('Nội dung đã được lưu vào DB!');
+      setSavedVersionIds(prev => ({
+        ...prev,
+        [targetVersionIndex]: saved.id,
+      }));
+
+      toast.success(existingArticleId ? 'Đã lưu chỉnh sửa vào DB!' : 'Nội dung đã được lưu vào DB!');
+      navigate(`/contents/${saved.id}`);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Không thể lưu nội dung';
       toast.error(message);
+    } finally {
+      isSavingRef.current = false;
     }
   };
 
@@ -669,7 +692,7 @@ export function CustomerGenerator() {
             </div>
 
             <div className="sticky bottom-3 z-20 flex gap-2 border-2 border-foreground bg-accent p-3 shadow-[6px_6px_0_rgba(23,32,51,.16)]">
-              <Button className="h-12 flex-1 border-2 border-foreground text-base" onClick={handleGenerate} disabled={isGenerating || !effectiveModel}>
+              <Button className="h-12 flex-1 border-2 border-foreground text-base" onClick={handleGenerate} disabled={isGenerating || createContent.isPending || updateContent.isPending || !effectiveModel}>
                 {isGenerating ? <RefreshCw className="h-5 w-5 animate-spin" /> : <Wand2 className="h-5 w-5" />}{isGenerating ? 'Đang tạo bản nháp...' : `Tạo ${variations} phiên bản`}
               </Button>
               {isGenerating && <Button variant="outline" onClick={handleStop} className="h-12 border-2 border-foreground">Dừng</Button>}
@@ -696,10 +719,46 @@ export function CustomerGenerator() {
                 </div>
               </details>
 
-              <GeneratorResults isGenerating={isGenerating} isSaving={createContent.isPending} streamText={streamText} results={results} selectedResult={selectedResult} qualityScores={qualityScores} plagiarism={plagiarism} variations={variations} onSelectResult={setSelectedResult} onResultChange={handleResultChange} onCopy={handleCopy} onSave={handleSave} onDownload={handleDownload} onRegenerate={handleGenerate} />
+              <GeneratorResults isGenerating={isGenerating} isSaving={createContent.isPending || updateContent.isPending} streamText={streamText} results={results} selectedResult={selectedResult} qualityScores={qualityScores} plagiarism={plagiarism} variations={variations} onSelectResult={setSelectedResult} onResultChange={handleResultChange} onCopy={handleCopy} onSave={handleSave} onDownload={handleDownload} onRegenerate={handleGenerate} />
 
-              {savedContentId && !isGenerating && (
-                <Card className="flex flex-col gap-3 border-l-4 border-l-success p-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-sm font-bold text-foreground">Bản đã chọn được lưu vào thư viện</p><p className="text-xs text-muted-foreground">Bạn có thể mở lại để tiếp tục chỉnh sửa.</p></div><Button variant="outline" size="sm" onClick={() => navigate(`/contents/${savedContentId}`)}>Xem chi tiết</Button></Card>
+              {savedVersionIds[selectedResult] && !isGenerating && (
+                <Card className="flex flex-col gap-3 border-l-4 border-l-success p-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm font-bold text-foreground">
+                      Phiên bản {selectedResult + 1} đã được lưu thành bài riêng
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Bạn có thể mở lại để tiếp tục chỉnh sửa bài viết độc lập này.
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate(`/contents/${savedVersionIds[selectedResult]}`)}
+                  >
+                    Xem chi tiết
+                  </Button>
+                </Card>
+              )}
+
+              {originalGeneratedContentId && !savedVersionIds[selectedResult] && !isGenerating && (
+                <Card className="flex flex-col gap-3 border-l-4 border-l-muted-foreground/30 p-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm font-bold text-foreground">
+                      Bản gộp gốc đã được lưu tự động trong thư viện
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Bấm &quot;Lưu&quot; ở trên để lưu riêng phiên bản {selectedResult + 1} thành một bài độc lập.
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate(`/contents/${originalGeneratedContentId}`)}
+                  >
+                    Xem bản gộp
+                  </Button>
+                </Card>
               )}
 
               {savedItems.length > 0 && (

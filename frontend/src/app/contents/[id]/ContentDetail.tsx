@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Editor } from '@tinymce/tinymce-react';
 import { useNavigate, useParams } from '@/lib/next-router-compat';
 import {
@@ -23,7 +23,7 @@ import { Input } from '@/app/components/ui/input';
 import { Badge } from '@/app/components/ui/badge';
 import { useContent, useDeleteContent, useUpdateContent } from '@/hooks/queries/useContents';
 import { Markdown } from '@/app/components/common/Markdown';
-import { looksLikeHtml, sanitizeHtml } from '@/lib/richText';
+import { htmlToPlainText, looksLikeHtml, sanitizeHtml } from '@/lib/richText';
 import { tinymceBaseInit, tinymceEditorProps } from '@/lib/tinymce';
 import { EDITORIAL_EDITOR_CONTENT_STYLE } from '@/lib/editorialContentStyles';
 import { EditorialEmptyState } from '@/app/components/EditorialArtwork';
@@ -31,12 +31,15 @@ import { EditorialEmptyState } from '@/app/components/EditorialArtwork';
 export function CustomerContentDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { data: content, isError, isLoading } = useContent(id ?? '');
+  const { data: content, isError, error, isLoading, refetch } = useContent(id ?? '');
   const deleteContent = useDeleteContent();
   const updateContent = useUpdateContent();
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState('');
   const [editContent, setEditContent] = useState('');
+  const isSavingRef = useRef(false);
+  const isDeletingRef = useRef(false);
+  const isBusy = updateContent.isPending || deleteContent.isPending;
 
   useEffect(() => {
     if (!content || isEditing) return;
@@ -60,12 +63,13 @@ export function CustomerContentDetail() {
   };
 
   const handleSaveEdit = async () => {
-    if (!id) return;
+    if (!id || isSavingRef.current || isDeletingRef.current || isBusy) return;
 
     const title = editTitle.trim();
     const outputText = editContent.trim();
+    const plainText = htmlToPlainText(outputText).trim();
 
-    if (!title || !outputText) {
+    if (!title || !plainText) {
       toast.error('Tiêu đề và nội dung không được để trống');
       return;
     }
@@ -75,6 +79,7 @@ export function CustomerContentDetail() {
       return;
     }
 
+    isSavingRef.current = true;
     try {
       await updateContent.mutateAsync({
         id,
@@ -85,6 +90,8 @@ export function CustomerContentDetail() {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Không thể lưu chỉnh sửa';
       toast.error(message);
+    } finally {
+      isSavingRef.current = false;
     }
   };
 
@@ -108,8 +115,9 @@ export function CustomerContentDetail() {
   };
 
   const handleDelete = async () => {
-    if (!id) return;
+    if (!id || isDeletingRef.current || isSavingRef.current || isBusy) return;
 
+    isDeletingRef.current = true;
     try {
       await deleteContent.mutateAsync(id);
       toast.success('Đã đưa nội dung vào thùng rác!');
@@ -117,6 +125,8 @@ export function CustomerContentDetail() {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Không thể xóa nội dung';
       toast.error(message);
+    } finally {
+      isDeletingRef.current = false;
     }
   };
 
@@ -131,13 +141,30 @@ export function CustomerContentDetail() {
   }
 
   if (isError || !content) {
+    const isNotFound = !id || (error as any)?.response?.status === 404 || (error as any)?.response?.status === 403;
     return (
       <Layout>
         <div className="mx-auto max-w-6xl p-4 md:p-7 lg:p-9">
           <Button variant="ghost" className="mb-4 text-foreground/70" onClick={() => navigate('/contents')}>
             <ArrowLeft className="w-4 h-4 mr-2" /> Quay lại danh sách
           </Button>
-          <EditorialEmptyState title="Không mở được bản thảo" description="Nội dung không tồn tại hoặc tài khoản hiện tại không có quyền truy cập." />
+          <EditorialEmptyState
+            title={isNotFound ? 'Không tìm thấy bản thảo' : 'Không thể tải bản thảo'}
+            description={
+              isNotFound
+                ? 'Nội dung không tồn tại hoặc tài khoản hiện tại không có quyền truy cập.'
+                : error instanceof Error
+                  ? error.message
+                  : 'Đã có lỗi xảy ra khi kết nối máy chủ. Vui lòng thử lại.'
+            }
+            action={
+              !isNotFound ? (
+                <Button variant="outline" size="sm" onClick={() => refetch()}>
+                  Thử lại
+                </Button>
+              ) : undefined
+            }
+          />
         </div>
       </Layout>
     );
@@ -160,6 +187,7 @@ export function CustomerContentDetail() {
             {isEditing ? (
               <Input
                 value={editTitle}
+                disabled={isBusy}
                 onChange={event => setEditTitle(event.target.value)}
                 className="h-11 max-w-3xl text-xl font-bold"
                 maxLength={160}
@@ -173,18 +201,24 @@ export function CustomerContentDetail() {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Button variant="outline" size="sm" onClick={isEditing ? handleCancelEdit : handleStartEdit}>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={isBusy}
+              onClick={isEditing ? handleCancelEdit : handleStartEdit}
+            >
               {isEditing ? <X className="w-4 h-4 mr-1.5" /> : <Edit2 className="w-4 h-4 mr-1.5" />}
               {isEditing ? 'Hủy' : 'Chỉnh sửa'}
             </Button>
-            <Button variant="outline" size="sm" onClick={handleShareFacebook}>
+            <Button variant="outline" size="sm" disabled={isBusy} onClick={handleShareFacebook}>
               <Share2 className="w-4 h-4 mr-1.5" /> Facebook
             </Button>
             <Button
               variant="outline"
               size="sm"
               className="text-red-500 hover:text-red-600"
-              disabled={deleteContent.isPending}
+              aria-label="Xóa bài viết"
+              disabled={isBusy}
               onClick={handleDelete}
             >
               <Trash2 className="w-4 h-4" />
@@ -199,21 +233,22 @@ export function CustomerContentDetail() {
                 <h3 className="font-semibold text-foreground">Nội dung</h3>
                 <div className="flex gap-2">
                   {isEditing ? (
-                    <Button size="sm" onClick={handleSaveEdit} disabled={updateContent.isPending}>
+                    <Button size="sm" onClick={handleSaveEdit} disabled={isBusy}>
                       <Save className="w-3.5 h-3.5 mr-1.5" /> Lưu
                     </Button>
                   ) : (
-                    <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(content.content); toast.success('Đã sao chép!'); }}>
+                    <Button size="sm" variant="outline" disabled={isBusy} onClick={() => { navigator.clipboard.writeText(content.content); toast.success('Đã sao chép!'); }}>
                       <Copy className="w-3.5 h-3.5 mr-1.5" /> Sao chép
                     </Button>
                   )}
-                  <Button size="sm" variant="outline"><Download className="w-3.5 h-3.5 mr-1.5" /> Tải xuống</Button>
+                  <Button size="sm" variant="outline" disabled={isBusy}><Download className="w-3.5 h-3.5 mr-1.5" /> Tải xuống</Button>
                 </div>
               </div>
               {isEditing ? (
                 <div className="overflow-hidden rounded-lg border border-border bg-card">
                   <Editor
                     {...tinymceEditorProps}
+                    disabled={isBusy}
                     value={editContent}
                     init={{
                       ...tinymceBaseInit,

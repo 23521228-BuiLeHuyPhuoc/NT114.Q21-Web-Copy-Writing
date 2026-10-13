@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from '@/lib/next-router-compat';
 import {
   Calendar,
@@ -34,6 +34,7 @@ import { usePagination } from '@/hooks/usePagination';
 import type { UiContent } from '@/services/contentService';
 import { TrashBin } from '@/app/components/admin/TrashBin';
 import { matchesSearchRegex } from '@/lib/searchRegex';
+import { sanitizeHtml } from '@/lib/richText';
 import { EditorialEmptyState } from '@/app/components/EditorialArtwork';
 
 const CONTENT_FETCH_PAGE_SIZE = 100;
@@ -52,8 +53,17 @@ export function CustomerContents() {
   const [filterType, setFilterType] = useState('all');
   const [trashOpen, setTrashOpen] = useState(false);
   const [trashLoading, setTrashLoading] = useState<string | null>(null);
-  const { data: contents = [], isError, isLoading } = useContents({ fetchAll: true, limit: CONTENT_FETCH_PAGE_SIZE });
-  const { data: trashContents = [] } = useTrashContents({ fetchAll: true, limit: CONTENT_FETCH_PAGE_SIZE });
+  const isDeletingRef = useRef<Record<string, boolean>>({});
+  const isRestoringRef = useRef<Record<string, boolean>>({});
+  const isPermanentDeletingRef = useRef<Record<string, boolean>>({});
+  const isPermanentDeletingAllRef = useRef(false);
+  const { data: contents = [], isError, isLoading, refetch } = useContents({ fetchAll: true, limit: CONTENT_FETCH_PAGE_SIZE });
+  const {
+    data: trashContents = [],
+    isLoading: isTrashLoading,
+    isError: isTrashError,
+    refetch: refetchTrash,
+  } = useTrashContents({ fetchAll: true, limit: CONTENT_FETCH_PAGE_SIZE });
   const deleteContent = useDeleteContent();
   const restoreContent = useRestoreContent();
   const permanentDeleteContent = usePermanentDeleteContent();
@@ -72,17 +82,25 @@ export function CustomerContents() {
   });
 
   const handleDelete = async (id: string) => {
+    if (isDeletingRef.current[id] || deleteContent.isPending) return;
+    isDeletingRef.current[id] = true;
+
     try {
       await deleteContent.mutateAsync(id);
       toast.success('Đã đưa nội dung vào thùng rác!');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Không thể xóa nội dung';
       toast.error(message);
+    } finally {
+      delete isDeletingRef.current[id];
     }
   };
 
   const handleRestore = async (targetId: number | string) => {
     const contentId = String(targetId);
+    if (isRestoringRef.current[contentId] || restoreContent.isPending) return;
+
+    isRestoringRef.current[contentId] = true;
     setTrashLoading(contentId);
 
     try {
@@ -92,15 +110,19 @@ export function CustomerContents() {
       const message = error instanceof Error ? error.message : 'Không thể khôi phục nội dung';
       toast.error(message);
     } finally {
+      delete isRestoringRef.current[contentId];
       setTrashLoading(null);
     }
   };
 
   const handlePermanentDelete = async (targetId: number | string) => {
     const contentId = String(targetId);
+    if (isPermanentDeletingRef.current[contentId] || permanentDeleteContent.isPending) return;
+
     const confirmed = window.confirm('Xóa vĩnh viễn nội dung này? Thao tác này không thể hoàn tác.');
     if (!confirmed) return;
 
+    isPermanentDeletingRef.current[contentId] = true;
     setTrashLoading(contentId);
 
     try {
@@ -110,20 +132,25 @@ export function CustomerContents() {
       const message = error instanceof Error ? error.message : 'Không thể xóa vĩnh viễn nội dung';
       toast.error(message);
     } finally {
+      delete isPermanentDeletingRef.current[contentId];
       setTrashLoading(null);
     }
   };
 
   const handlePermanentDeleteAll = async (ids: Array<number | string>) => {
+    if (isPermanentDeletingAllRef.current || permanentDeleteAllContents.isPending) return;
     const contentIds = ids.map(String).filter(Boolean);
     if (contentIds.length === 0) return;
 
+    isPermanentDeletingAllRef.current = true;
     try {
       await permanentDeleteAllContents.mutateAsync(contentIds);
       toast.success(`Đã xóa vĩnh viễn ${contentIds.length} nội dung!`);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Không thể xóa tất cả nội dung';
       toast.error(message);
+    } finally {
+      isPermanentDeletingAllRef.current = false;
     }
   };
 
@@ -216,81 +243,100 @@ export function CustomerContents() {
         )}
 
         {isError && (
-          <Card className="p-8 text-center text-red-500 mb-6">
-            Không thể tải danh sách nội dung. Vui lòng thử lại.
+          <Card className="p-8 text-center text-red-500 mb-6 flex flex-col items-center gap-3">
+            <p>Không thể tải danh sách nội dung. Vui lòng thử lại.</p>
+            <Button variant="outline" size="sm" onClick={() => refetch()}>
+              Thử lại
+            </Button>
           </Card>
         )}
 
-        <div className="space-y-3">
-          {!isLoading && filtered.length === 0 && (
-            <EditorialEmptyState title="Không tìm thấy bản thảo" description="Thử từ khóa hoặc bộ lọc khác. Nếu thư viện đang trống, hãy tạo nội dung đầu tiên từ Generator." action={<Button size="sm" onClick={() => navigate('/generate')}><Plus className="h-4 w-4" /> Mở Generator</Button>} />
-          )}
+        {!isLoading && !isError && (
+          <>
+            <div className="space-y-3">
+              {filtered.length === 0 && (
+                <EditorialEmptyState
+                  title="Không tìm thấy bản thảo"
+                  description="Thử từ khóa hoặc bộ lọc khác. Nếu thư viện đang trống, hãy tạo nội dung đầu tiên từ Generator."
+                  action={<Button size="sm" onClick={() => navigate('/generate')}><Plus className="h-4 w-4" /> Mở Generator</Button>}
+                />
+              )}
 
-          {pagination.pageItems.map(item => {
-            const status = STATUS_MAP[item.status] ?? STATUS_MAP.published;
-            return (
-              <Card
-                key={item.id}
-                role="link"
-                tabIndex={0}
-                className="group cursor-pointer border-l-4 border-l-transparent p-0 transition-all hover:border-l-primary hover:shadow-[5px_5px_0_rgba(23,32,51,.08)]"
-                onClick={() => navigate(`/contents/${item.id}`)}
-                onKeyDown={(event) => {
-                  if (event.currentTarget !== event.target || (event.key !== 'Enter' && event.key !== ' ')) return;
-                  event.preventDefault();
-                  navigate(`/contents/${item.id}`);
-                }}
-              >
-                <div className="flex flex-col gap-3 p-4 md:flex-row md:items-center">
-                  <div className="hidden h-12 w-10 shrink-0 items-center justify-center border border-foreground bg-accent/45 font-display text-xl font-bold text-foreground sm:flex">{String(item.title || 'N').charAt(0).toUpperCase()}</div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                      <Badge className={`${status.color} text-xs`}>{status.label}</Badge>
-                      <Badge variant="outline" className="text-xs">{item.type}</Badge>
-                      <Badge className="max-w-full whitespace-normal border-0 bg-primary/10 text-left text-xs leading-tight text-primary" title={item.model}>{item.model}</Badge>
+              {pagination.pageItems.map(item => {
+                const status = STATUS_MAP[item.status] ?? STATUS_MAP.published;
+                return (
+                  <Card
+                    key={item.id}
+                    role="link"
+                    tabIndex={0}
+                    className="group cursor-pointer border-l-4 border-l-transparent p-0 transition-all hover:border-l-primary hover:shadow-[5px_5px_0_rgba(23,32,51,.08)]"
+                    onClick={() => navigate(`/contents/${item.id}`)}
+                    onKeyDown={(event) => {
+                      if (event.currentTarget !== event.target || (event.key !== 'Enter' && event.key !== ' ')) return;
+                      event.preventDefault();
+                      navigate(`/contents/${item.id}`);
+                    }}
+                  >
+                    <div className="flex flex-col gap-3 p-4 md:flex-row md:items-center">
+                      <div className="hidden h-12 w-10 shrink-0 items-center justify-center border border-foreground bg-accent/45 font-display text-xl font-bold text-foreground sm:flex">{String(item.title || 'N').charAt(0).toUpperCase()}</div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                          <Badge className={`${status.color} text-xs`}>{status.label}</Badge>
+                          <Badge variant="outline" className="text-xs">{item.type}</Badge>
+                          <Badge className="max-w-full whitespace-normal border-0 bg-primary/10 text-left text-xs leading-tight text-primary" title={item.model}>{item.model}</Badge>
+                        </div>
+                        <h3 className="truncate font-display text-xl font-bold text-foreground">{item.title}</h3>
+                        {item.content && (
+                          <div
+                            className="mt-1 line-clamp-2 text-xs text-muted-foreground leading-relaxed"
+                            dangerouslySetInnerHTML={{ __html: sanitizeHtml(item.content) }}
+                          />
+                        )}
+                        <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground/80">
+                          <span><Calendar className="w-3 h-3 inline mr-1" />{item.createdAt}</span>
+                          <span>{item.words} từ</span>
+                          <span>{item.industry}</span>
+                          {item.project && <span className="text-primary">{item.project}</span>}
+                        </div>
+                      </div>
+                      <div className="flex flex-shrink-0 items-center gap-1 border-l-0 border-border md:border-l md:pl-3" onClick={e => e.stopPropagation()}>
+                        <span className="mr-2 text-right"><span className="block font-display text-xl font-bold text-primary">{item.quality}%</span><span className="block text-xs text-muted-foreground">chất lượng</span></span>
+                        <Button aria-label={`Xem ${item.title}`} variant="ghost" size="sm" onClick={() => navigate(`/contents/${item.id}`)}><Eye className="w-4 h-4" /></Button>
+                        <Button aria-label={`Sao chép ${item.title}`} variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(item.content || item.title); toast.success('Đã sao chép!'); }}><Copy className="w-4 h-4" /></Button>
+                        <Button aria-label={`Tải xuống ${item.title}`} variant="ghost" size="sm"><Download className="w-4 h-4" /></Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-500"
+                          aria-label={`Xóa ${item.title}`}
+                          disabled={deleteContent.isPending || Boolean(isDeletingRef.current[item.id])}
+                          onClick={() => handleDelete(item.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
-                    <h3 className="truncate font-display text-xl font-bold text-foreground">{item.title}</h3>
-                    <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground/80">
-                      <span><Calendar className="w-3 h-3 inline mr-1" />{item.createdAt}</span>
-                      <span>{item.words} từ</span>
-                      <span>{item.industry}</span>
-                      {item.project && <span className="text-primary">{item.project}</span>}
-                    </div>
-                  </div>
-                  <div className="flex flex-shrink-0 items-center gap-1 border-l-0 border-border md:border-l md:pl-3" onClick={e => e.stopPropagation()}>
-                    <span className="mr-2 text-right"><span className="block font-display text-xl font-bold text-primary">{item.quality}%</span><span className="block text-xs text-muted-foreground">chất lượng</span></span>
-                    <Button aria-label={`Xem ${item.title}`} variant="ghost" size="sm" onClick={() => navigate(`/contents/${item.id}`)}><Eye className="w-4 h-4" /></Button>
-                    <Button aria-label={`Sao chép ${item.title}`} variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(item.content || item.title); toast.success('Đã sao chép!'); }}><Copy className="w-4 h-4" /></Button>
-                    <Button aria-label={`Tải xuống ${item.title}`} variant="ghost" size="sm"><Download className="w-4 h-4" /></Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-red-500"
-                      aria-label={`Xóa ${item.title}`}
-                      disabled={deleteContent.isPending}
-                      onClick={() => handleDelete(item.id)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            );
-          })}
-        </div>
+                  </Card>
+                );
+              })}
+            </div>
 
-        <DataPagination
-          page={pagination.page}
-          pageSize={pagination.pageSize}
-          totalItems={pagination.totalItems}
-          totalPages={pagination.totalPages}
-          startIndex={pagination.startIndex}
-          endIndex={pagination.endIndex}
-          onPageChange={pagination.setPage}
-          onPageSizeChange={pagination.setPageSize}
-          pageSizeOptions={[10, 20, 50]}
-          itemLabel="nội dung"
-        />
+            {filtered.length > 0 && (
+              <DataPagination
+                page={pagination.page}
+                pageSize={pagination.pageSize}
+                totalItems={pagination.totalItems}
+                totalPages={pagination.totalPages}
+                startIndex={pagination.startIndex}
+                endIndex={pagination.endIndex}
+                onPageChange={pagination.setPage}
+                onPageSizeChange={pagination.setPageSize}
+                pageSizeOptions={[10, 20, 50]}
+                itemLabel="nội dung"
+              />
+            )}
+          </>
+        )}
 
         <TrashBin
           open={trashOpen}
@@ -307,6 +353,9 @@ export function CustomerContents() {
           deleteAllLoading={permanentDeleteAllContents.isPending}
           entityName="nội dung"
           loading={trashLoading}
+          isLoading={isTrashLoading}
+          isError={isTrashError}
+          onRetry={() => refetchTrash()}
         />
       </div>
     </Layout>

@@ -22,6 +22,9 @@ interface TrashBinProps {
   deleteAllLabel?: string;
   entityName?: string;
   loading?: string | null;
+  isLoading?: boolean;
+  isError?: boolean;
+  onRetry?: () => void;
 }
 
 export function TrashBin({
@@ -35,6 +38,9 @@ export function TrashBin({
   deleteAllLabel = 'Xóa tất cả',
   entityName = 'mục',
   loading,
+  isLoading = false,
+  isError = false,
+  onRetry,
 }: TrashBinProps) {
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
   const [internalDeleteAllLoading, setInternalDeleteAllLoading] = useState(false);
@@ -75,6 +81,7 @@ export function TrashBin({
           </div>
           <button
             onClick={onClose}
+            aria-label="Đóng thùng rác"
             className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-200 text-muted-foreground transition-colors"
           >
             <X className="w-4 h-4" />
@@ -93,6 +100,7 @@ export function TrashBin({
               <button
                 onClick={() => setConfirmDeleteAll(true)}
                 disabled={isDeleteAllLoading || Boolean(loading)}
+                aria-label={deleteAllLabel}
                 className="h-8 shrink-0 flex items-center justify-center gap-1.5 rounded-lg border border-red-200 px-3 text-xs font-bold text-red-600 hover:bg-destructive/10 transition-colors disabled:opacity-40"
               >
                 {isDeleteAllLoading ? (
@@ -109,7 +117,24 @@ export function TrashBin({
         )}
 
         <div className="flex-1 overflow-y-auto p-4 space-y-2">
-          {items.length === 0 ? (
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center h-64 text-center">
+              <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mb-4" />
+              <p className="text-sm text-muted-foreground">Đang tải thùng rác...</p>
+            </div>
+          ) : isError ? (
+            <div className="flex flex-col items-center justify-center h-64 text-center px-4">
+              <p className="text-sm text-red-500 mb-3">Không thể tải thùng rác. Vui lòng thử lại.</p>
+              {onRetry && (
+                <button
+                  onClick={onRetry}
+                  className="px-3 py-1.5 border border-red-200 text-red-600 rounded-lg text-xs font-semibold hover:bg-destructive/10 transition-colors"
+                >
+                  Thử lại
+                </button>
+              )}
+            </div>
+          ) : items.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-center">
               <div className="w-16 h-16 bg-muted rounded-2xl flex items-center justify-center mb-4">
                 <Trash2 className="w-8 h-8 text-muted-foreground/60" />
@@ -141,6 +166,7 @@ export function TrashBin({
                     <button
                       onClick={() => onRestore(item.id)}
                       disabled={actionsDisabled}
+                      aria-label="Khôi phục"
                       className="flex-1 flex items-center justify-center gap-1.5 h-8 border border-primary/20 text-primary hover:bg-primary/5 rounded-lg text-xs font-semibold transition-colors disabled:opacity-40"
                     >
                       {isItemLoading ? (
@@ -155,6 +181,7 @@ export function TrashBin({
                     <button
                       onClick={() => onPermanentDelete(item.id)}
                       disabled={actionsDisabled}
+                      aria-label="Xóa vĩnh viễn"
                       className="flex-1 flex items-center justify-center gap-1.5 h-8 border border-red-200 text-red-600 hover:bg-destructive/10 rounded-lg text-xs font-semibold transition-colors disabled:opacity-40"
                     >
                       <Flame className="w-3.5 h-3.5" />

@@ -106,11 +106,15 @@ export function GeneratorResults({
               {results.map((_, i) => (
                 <button
                   key={i}
+                  disabled={isSaving}
                   onClick={() => {
+                    if (isSaving) return;
                     onSelectResult(i);
                     setViewMode('preview');
                   }}
                   className={`border-x border-t border-foreground px-4 py-2 text-xs font-bold transition-colors ${
+                    isSaving ? 'opacity-60 cursor-not-allowed ' : ''
+                  }${
                     selectedResult === i
                       ? 'bg-foreground text-background'
                       : 'bg-card text-foreground/70 hover:bg-accent/35'
@@ -178,6 +182,7 @@ export function GeneratorResults({
                   <div className="overflow-hidden border-2 border-foreground bg-card">
                     <Editor
                       {...tinymceEditorProps}
+                      disabled={isSaving}
                       value={activeResult}
                       onEditorChange={(value: string) => onResultChange(selectedResult, value)}
                       init={{
@@ -214,7 +219,7 @@ export function GeneratorResults({
                   <Button size="sm" variant="outline" onClick={() => onDownload(activeResult)}>
                     <Download className="w-4 h-4 mr-1" /> Tải xuống
                   </Button>
-                  <Button size="sm" variant="outline" onClick={onRegenerate}>
+                  <Button size="sm" variant="outline" disabled={isSaving} onClick={onRegenerate}>
                     <RefreshCw className="w-4 h-4 mr-1" /> Tạo lại
                   </Button>
                 </div>
