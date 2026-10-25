@@ -1,5 +1,5 @@
 :root {
-  --font-display: Georgia, "Times New Roman", serif;
+  --font-display: var(--font-display-vn), "Noto Serif", Georgia, "Times New Roman", serif;
   --font-sans: "Segoe UI", Arial, sans-serif;
-  --font-mono: "Cascadia Mono", Consolas, monospace;
+  --font-mono: var(--font-mono-vn), "Cascadia Mono", Consolas, monospace;
 }

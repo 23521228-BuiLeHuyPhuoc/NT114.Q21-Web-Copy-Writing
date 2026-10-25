@@ -1,4 +1,5 @@
 export const EDITORIAL_EDITOR_CONTENT_STYLE = `
+  @import url('https://fonts.googleapis.com/css2?family=Lora:wght@600;700&subset=vietnamese&display=swap');
   body {
     margin: 0;
     padding: 16px;
@@ -13,7 +14,7 @@ export const EDITORIAL_EDITOR_CONTENT_STYLE = `
   h1, h2, h3, h4, h5, h6 {
     margin: 1.5em 0 .55em;
     color: #172033;
-    font-family: Georgia, "Times New Roman", serif;
+    font-family: "Lora", "Noto Serif", Georgia, serif;
     font-weight: 700;
     line-height: 1.25;
     letter-spacing: -.015em;
