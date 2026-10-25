@@ -200,7 +200,7 @@ export function CustomerProfile() {
     { label: 'Copy đã tạo', value: '312', icon: BarChart3, color: 'bg-primary/10 text-primary' },
     { label: 'Model fine-tuned', value: '2', icon: Brain, color: 'bg-primary/10 text-primary' },
     { label: 'Template lưu', value: '18', icon: Key, color: 'bg-primary/10 text-primary' },
-    { label: 'Ngày thành viên', value: '68', icon: Calendar, color: 'bg-warning/10 text-amber-800' },
+    { label: 'Ngày thành viên', value: '68', icon: Calendar, color: 'bg-warning/10 text-foreground' },
   ];
 
   return (
@@ -278,10 +278,10 @@ export function CustomerProfile() {
               })}
             </div>
 
-            <Card className="p-4 bg-gradient-to-r from-green-50 to-green-50 border-primary/20">
+            <Card className="p-4 bg-primary/5 border-primary/20">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-semibold text-green-900">Gói {planName} {billing?.isExpired ? 'đã hết hạn' : 'đang hoạt động'}</p>
+                  <p className="font-semibold text-success">Gói {planName} {billing?.isExpired ? 'đã hết hạn' : 'đang hoạt động'}</p>
                   <p className="text-sm text-primary">{billingLoading ? 'Đang tải billing...' : 'Hết hạn: ' + expiresLabel + ' · ' + planPrice}</p>
                 </div>
                 <Badge className="bg-primary text-white border-0">{billingLoading ? 'Đang tải' : planBadge}</Badge>

@@ -338,7 +338,7 @@ export function Layout({ children }: LayoutProps) {
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-60 p-0 overflow-hidden">
-            <DropdownMenuLabel className="px-4 py-4 border-b bg-gradient-to-br from-primary/10 to-success/10">
+            <DropdownMenuLabel className="px-4 py-4 border-b bg-primary/10">
               <div className="flex items-center gap-3 min-w-0">
                 <Avatar className="w-10 h-10 flex-shrink-0">
                   <AvatarImage src={user?.avatar || undefined} alt={user?.name || 'Avatar'} className="object-cover" />

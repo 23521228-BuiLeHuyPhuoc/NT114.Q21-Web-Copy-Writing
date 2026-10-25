@@ -195,7 +195,7 @@ export function PublicNavbar() {
                     <>
                       <div className="fixed inset-0 z-40" onClick={() => setAccountOpen(false)} />
                       <div className="absolute right-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-lg border border-border bg-card shadow-xl">
-                        <div className="border-b bg-gradient-to-br from-primary/10 to-success/10 px-4 py-4">
+                        <div className="border-b bg-primary/10 px-4 py-4">
                           <div className="flex min-w-0 items-center gap-3">
                             <Avatar className="h-10 w-10 flex-shrink-0">
                               <AvatarImage src={user.avatar || undefined} alt={user.name || 'Avatar'} className="object-cover" />

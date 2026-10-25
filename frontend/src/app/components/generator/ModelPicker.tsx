@@ -77,7 +77,7 @@ export function ModelPicker({ value, onChange, models = MODELS, estimatedQuotaUn
                   onClick={() => onChange(model.id)}
                   className={`w-full flex items-start gap-3 p-3 rounded-lg border text-left transition-all ${value === model.id ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/30'}`}
                 >
-                  <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${value === model.id ? 'bg-primary/50' : 'bg-gray-300'}`} />
+                  <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${value === model.id ? 'bg-primary/50' : 'bg-border'}`} />
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className={`text-sm font-semibold ${model.color}`}>{model.name}</span>

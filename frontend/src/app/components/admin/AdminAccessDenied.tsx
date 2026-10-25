@@ -12,8 +12,8 @@ export function AdminAccessDenied() {
     <div className="min-h-[80vh] flex items-center justify-center p-6">
       <div className="text-center max-w-md">
         {/* Icon */}
-        <div className="w-24 h-24 bg-destructive/10 border-2 border-red-100 rounded-3xl flex items-center justify-center mx-auto mb-6">
-          <ShieldOff className="w-12 h-12 text-red-400" />
+        <div className="w-24 h-24 bg-destructive/10 border-2 border-destructive/25 rounded-md flex items-center justify-center mx-auto mb-6">
+          <ShieldOff className="w-12 h-12 text-destructive" />
         </div>
 
         {/* Heading */}
@@ -34,7 +34,7 @@ export function AdminAccessDenied() {
 
         {/* Permissions list */}
         {roleDef && (
-          <div className="bg-surface-muted border border-border rounded-2xl p-4 mb-8 text-left">
+          <div className="bg-surface-muted border border-border rounded-md p-4 mb-8 text-left">
             <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">
               Bạn được phép truy cập
             </p>

@@ -130,7 +130,7 @@ export function LoginPage() {
                   className="pl-10 h-12 rounded-xl border-border focus:border-primary focus:ring-ring/30"
                 />
               </div>
-              {errors.email && <p className="text-xs text-red-600 mt-1">{errors.email.message}</p>}
+              {errors.email && <p className="text-xs text-destructive mt-1">{errors.email.message}</p>}
             </div>
 
             <div>
@@ -153,7 +153,7 @@ export function LoginPage() {
                   {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-              {errors.password && <p className="text-xs text-red-600 mt-1">{errors.password.message}</p>}
+              {errors.password && <p className="text-xs text-destructive mt-1">{errors.password.message}</p>}
               <div className="mt-2 text-right">
                 <Link
                   to="/forgot-password"

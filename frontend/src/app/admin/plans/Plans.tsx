@@ -480,7 +480,7 @@ export function AdminPlans() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setTrashOpen(true)}
-              className="relative flex items-center gap-1.5 border border-border hover:border-red-300 hover:bg-destructive/10 text-muted-foreground hover:text-red-600 rounded-xl px-3 py-2 text-sm font-semibold transition-all"
+              className="relative flex items-center gap-1.5 border border-border hover:border-destructive/45 hover:bg-destructive/10 text-muted-foreground hover:text-destructive rounded-xl px-3 py-2 text-sm font-semibold transition-all"
             >
               <Trash2 className="w-4 h-4" />
               Thùng rác
@@ -498,7 +498,7 @@ export function AdminPlans() {
           {[
             { label: 'Tổng gói', value: plans.length, icon: Crown, color: 'text-primary bg-primary/5' },
             { label: 'Tổng subscribers', value: plans.reduce((total, plan) => total + plan.users, 0).toLocaleString('vi-VN'), icon: Users, color: 'text-primary bg-primary/5' },
-            { label: 'Doanh thu ước tính', value: `${(totalRevenue / 1000000).toFixed(1)}M VND`, icon: DollarSign, color: 'text-emerald-600 bg-emerald-50' },
+            { label: 'Doanh thu ước tính', value: `${(totalRevenue / 1000000).toFixed(1)}M VND`, icon: DollarSign, color: 'text-success bg-success/10' },
             { label: 'Paid users', value: paidUsers.toLocaleString('vi-VN'), icon: Zap, color: 'text-primary bg-primary/5' },
           ].map((item) => (
             <StatTile key={item.label} icon={item.icon} label={item.label} value={item.value} color={item.color} />
@@ -573,7 +573,7 @@ export function AdminPlans() {
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-foreground">{plan.name}</span>
-                          {plan.popular && <Badge className="bg-warning/15 text-amber-800 border-0 text-xs">Phổ biến</Badge>}
+                          {plan.popular && <Badge className="bg-warning/15 text-foreground border-0 text-xs">Phổ biến</Badge>}
                           {!plan.active && <Badge className="bg-muted text-muted-foreground border-0 text-xs">Tạm tắt</Badge>}
                         </div>
                         <p className="text-xs text-muted-foreground/80 mt-0.5">{plan.description || plan.slug}</p>
@@ -601,7 +601,7 @@ export function AdminPlans() {
                         <button onClick={() => openEdit(plan)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-primary/5 text-muted-foreground/80 hover:text-primary transition-colors">
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
-                        <button onClick={() => setConfirmDelete(plan)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-destructive/10 text-muted-foreground/80 hover:text-red-500 transition-colors">
+                        <button onClick={() => setConfirmDelete(plan)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-destructive/10 text-muted-foreground/80 hover:text-destructive transition-colors">
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>

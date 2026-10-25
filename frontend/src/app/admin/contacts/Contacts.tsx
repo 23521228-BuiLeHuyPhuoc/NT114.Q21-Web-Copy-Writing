@@ -46,11 +46,11 @@ import {
 } from '@/services/contactSubmissionService';
 
 const STATUS_META: Record<ContactStatus, { label: string; badge: string; icon: LucideIcon; statColor: string }> = {
-  new: { label: 'Mới', badge: 'bg-sky-100 text-sky-700 border-0', icon: Inbox, statColor: 'text-sky-700 bg-sky-50' },
-  in_progress: { label: 'Đang xử lý', badge: 'bg-amber-100 text-amber-700 border-0', icon: Clock, statColor: 'text-amber-700 bg-amber-50' },
-  resolved: { label: 'Đã xử lý', badge: 'bg-emerald-100 text-emerald-700 border-0', icon: CheckCircle2, statColor: 'text-emerald-700 bg-emerald-50' },
-  spam: { label: 'Spam', badge: 'bg-red-100 text-red-700 border-0', icon: AlertTriangle, statColor: 'text-red-700 bg-red-50' },
-  archived: { label: 'Lưu trữ', badge: 'bg-slate-100 text-slate-700 border-0', icon: Archive, statColor: 'text-slate-700 bg-slate-50' },
+  new: { label: 'Mới', badge: 'bg-info/15 text-info border-0', icon: Inbox, statColor: 'text-info bg-info/10' },
+  in_progress: { label: 'Đang xử lý', badge: 'bg-warning/15 text-foreground border-0', icon: Clock, statColor: 'text-foreground bg-warning/10' },
+  resolved: { label: 'Đã xử lý', badge: 'bg-success/15 text-success border-0', icon: CheckCircle2, statColor: 'text-success bg-success/10' },
+  spam: { label: 'Spam', badge: 'bg-destructive/15 text-destructive border-0', icon: AlertTriangle, statColor: 'text-destructive bg-destructive/10' },
+  archived: { label: 'Lưu trữ', badge: 'bg-muted text-muted-foreground border-0', icon: Archive, statColor: 'text-muted-foreground bg-muted' },
 };
 
 const TOPIC_LABELS: Record<ContactTopic, string> = {
@@ -152,7 +152,7 @@ export function AdminContacts() {
     { label: STATUS_META.new.label, value: stats.new, icon: STATUS_META.new.icon, color: STATUS_META.new.statColor },
     { label: STATUS_META.in_progress.label, value: stats.inProgress, icon: STATUS_META.in_progress.icon, color: STATUS_META.in_progress.statColor },
     { label: STATUS_META.resolved.label, value: stats.resolved, icon: STATUS_META.resolved.icon, color: STATUS_META.resolved.statColor },
-    { label: STATUS_META.spam.label, value: stats.spam + stats.archived, icon: Archive, color: 'text-slate-700 bg-slate-50' },
+    { label: STATUS_META.spam.label, value: stats.spam + stats.archived, icon: Archive, color: 'text-muted-foreground bg-muted' },
   ]), [stats]);
 
   const startIndex = totalItems === 0 ? 0 : (page - 1) * pageSize + 1;

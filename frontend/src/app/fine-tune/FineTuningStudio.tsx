@@ -275,7 +275,7 @@ function getMetricTrendLabel(trend: MetricTrend) {
 
 function getMetricBadgeClass(metric: MetricCard) {
   if (metric.trend === 'actual') return 'bg-primary/10 text-primary';
-  if (metric.trend === 'estimated') return 'bg-warning/15 text-amber-800';
+  if (metric.trend === 'estimated') return 'bg-warning/15 text-foreground';
   if (metric.trend === 'pending' || metric.trend === 'flat') return 'bg-muted text-foreground/70';
   return metric.good ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive';
 }
@@ -635,7 +635,7 @@ export function CustomerFineTuningStudio() {
                     <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
                       <span><FileText className="w-3 h-3 inline mr-1" />{m.trainedOn} ví dụ training</span>
                       <span><Clock className="w-3 h-3 inline mr-1" />Tạo: {m.createdAt}</span>
-                      {m.status === 'ready' && <span><Star className="w-3 h-3 inline mr-1 text-amber-500" />Độ chính xác: {m.accuracy}%</span>}
+                      {m.status === 'ready' && <span><Star className="w-3 h-3 inline mr-1 text-warning" />Độ chính xác: {m.accuracy}%</span>}
                     </div>
                     {m.status === 'training' && (
                       <div className="mt-3">
@@ -656,7 +656,7 @@ export function CustomerFineTuningStudio() {
                     <Button size="sm" variant="outline" onClick={() => setDetailModel(m)}>
                       <Settings className="w-4 h-4 mr-1" /> Chi tiết
                     </Button>
-                    <Button size="sm" variant="ghost" className="text-red-500" onClick={() => { setModels(prev => prev.filter(x => x.id !== m.id)); toast.success('Đã xóa model'); }}>
+                    <Button size="sm" variant="ghost" className="text-destructive" onClick={() => { setModels(prev => prev.filter(x => x.id !== m.id)); toast.success('Đã xóa model'); }}>
                       <Trash2 className="w-4 h-4 mr-1" /> Xóa
                     </Button>
                   </div>
@@ -717,7 +717,7 @@ export function CustomerFineTuningStudio() {
                     </SelectContent>
                   </Select>
                   {providerHint && (
-                    <p className={`mt-2 text-xs ${activeProvider?.status === 'active' ? 'text-muted-foreground' : 'text-amber-700'}`}>
+                    <p className={`mt-2 text-xs ${activeProvider?.status === 'active' ? 'text-muted-foreground' : 'text-foreground'}`}>
                       {providerHint}
                     </p>
                   )}
@@ -741,11 +741,11 @@ export function CustomerFineTuningStudio() {
                 </div>
 
                 {/* Training tips */}
-                <div className="bg-warning/10 border border-amber-200 rounded-lg p-3">
-                  <p className="text-sm font-semibold text-amber-800 flex items-center gap-1 mb-2">
+                <div className="bg-warning/10 border border-warning/35 rounded-lg p-3">
+                  <p className="text-sm font-semibold text-foreground flex items-center gap-1 mb-2">
                     <Lightbulb className="w-4 h-4" /> Mẹo training hiệu quả
                   </p>
-                  <ul className="text-xs text-amber-800 space-y-1">
+                  <ul className="text-xs text-foreground space-y-1">
                     <li>• Tối thiểu 50–100 cặp ví dụ cho kết quả tốt</li>
                     <li>• Ví dụ đa dạng về loại sản phẩm và tone</li>
                     <li>• Output phải là copy tốt nhất của bạn</li>
@@ -759,7 +759,7 @@ export function CustomerFineTuningStudio() {
                 <div className="flex flex-col gap-3 mb-4">
                   <div className="flex items-center justify-between gap-3">
                     <h3 className="font-bold text-foreground">Dữ liệu training</h3>
-                    <Badge className={`border-0 ${examples.length >= 50 ? 'bg-primary/10 text-primary' : examples.length >= 10 ? 'bg-primary/10 text-primary' : 'bg-warning/15 text-amber-800'}`}>
+                    <Badge className={`border-0 ${examples.length >= 50 ? 'bg-primary/10 text-primary' : examples.length >= 10 ? 'bg-primary/10 text-primary' : 'bg-warning/15 text-foreground'}`}>
                       {examples.length} ví dụ
                     </Badge>
                   </div>
@@ -777,7 +777,7 @@ export function CustomerFineTuningStudio() {
                       <Button size="sm" variant="outline" onClick={deleteSelectedExamples} disabled={selectedExampleIds.length === 0}>
                         <Trash2 className="w-4 h-4 mr-1" /> Xóa đã chọn ({selectedExampleIds.length})
                       </Button>
-                      <Button size="sm" variant="ghost" className="text-red-500" onClick={deleteAllExamples}>
+                      <Button size="sm" variant="ghost" className="text-destructive" onClick={deleteAllExamples}>
                         <Trash2 className="w-4 h-4 mr-1" /> Xóa tất cả
                       </Button>
                     </div>
@@ -785,9 +785,9 @@ export function CustomerFineTuningStudio() {
                 </div>
 
                 {examples.length < 10 && (
-                  <div className="flex items-start gap-2 p-3 bg-warning/10 border border-amber-200 rounded-lg mb-4">
-                    <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
-                    <p className="text-xs text-amber-800">Cần ít nhất <strong>10 cặp ví dụ</strong> để bắt đầu training. Hiện có {examples.length}.</p>
+                  <div className="flex items-start gap-2 p-3 bg-warning/10 border border-warning/35 rounded-lg mb-4">
+                    <AlertCircle className="w-4 h-4 text-warning flex-shrink-0 mt-0.5" />
+                    <p className="text-xs text-foreground">Cần ít nhất <strong>10 cặp ví dụ</strong> để bắt đầu training. Hiện có {examples.length}.</p>
                   </div>
                 )}
 
@@ -808,7 +808,7 @@ export function CustomerFineTuningStudio() {
                           {ex.type && <Badge className="bg-muted text-foreground/70 border-0 text-[10px]">{ex.type}</Badge>}
                           {ex.product && <Badge className="bg-muted text-foreground/70 border-0 text-[10px]">{ex.product}</Badge>}
                         </div>
-                        <button onClick={() => { setExamples(prev => prev.filter(e => e.id !== ex.id)); setSelectedExampleIds(prev => prev.filter(id => id !== String(ex.id))); }} className="text-muted-foreground/80 hover:text-red-500">
+                        <button onClick={() => { setExamples(prev => prev.filter(e => e.id !== ex.id)); setSelectedExampleIds(prev => prev.filter(id => id !== String(ex.id))); }} className="text-muted-foreground/80 hover:text-destructive">
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
@@ -1064,7 +1064,7 @@ export function CustomerFineTuningStudio() {
                 </div>
 
                 {(detailModel.deploymentErrorMessage || detailModel.generatorMessage) && (
-                  <div className="rounded-md border border-amber-200 bg-warning/10 p-3 text-sm text-amber-800">
+                  <div className="rounded-md border border-warning/35 bg-warning/10 p-3 text-sm text-foreground">
                     {detailModel.deploymentErrorMessage || detailModel.generatorMessage}
                   </div>
                 )}

@@ -248,12 +248,12 @@ export function AdminContents() {
   const typeBadgeColor: Record<string, string> = {
     headline: 'bg-primary/10 text-primary',
     landing: 'bg-primary/10 text-primary',
-    email: 'bg-warning/15 text-amber-800',
-    social: 'bg-warning/15 text-amber-800',
+    email: 'bg-warning/15 text-foreground',
+    social: 'bg-warning/15 text-foreground',
     description: 'bg-primary/10 text-primary',
-    seo: 'bg-teal-100 text-teal-700',
-    review: 'bg-emerald-100 text-emerald-700',
-    cta: 'bg-amber-100 text-amber-700',
+    seo: 'bg-info/15 text-info',
+    review: 'bg-success/15 text-success',
+    cta: 'bg-warning/15 text-foreground',
   };
 
   return (
@@ -266,7 +266,7 @@ export function AdminContents() {
           </div>
           <button
             onClick={() => setTrashOpen(true)}
-            className="relative flex items-center gap-1.5 border border-border hover:border-red-300 hover:bg-destructive/10 text-muted-foreground hover:text-red-600 rounded-xl px-3 py-2 text-sm font-semibold transition-all"
+            className="relative flex items-center gap-1.5 border border-border hover:border-destructive/45 hover:bg-destructive/10 text-muted-foreground hover:text-destructive rounded-xl px-3 py-2 text-sm font-semibold transition-all"
           >
             <Trash2 className="w-4 h-4" />
             Thùng rác
@@ -281,7 +281,7 @@ export function AdminContents() {
         <div className="mb-6 grid grid-cols-2 gap-4 min-[1100px]:grid-cols-4">
           <StatTile icon={FileText} label="Tổng nội dung" value={contents.length.toLocaleString('vi-VN')} color="text-primary bg-primary/5" />
           <StatTile icon={Calendar} label="Hôm nay" value={contents.filter(item => isToday(item.createdAt)).length.toLocaleString('vi-VN')} color="text-primary bg-primary/5" />
-          <StatTile icon={Star} label="Đã đánh dấu" value={contents.filter(item => item.isFavorite).length.toLocaleString('vi-VN')} color="text-amber-700 bg-amber-100" />
+          <StatTile icon={Star} label="Đã đánh dấu" value={contents.filter(item => item.isFavorite).length.toLocaleString('vi-VN')} color="text-foreground bg-warning/15" />
           <StatTile icon={Users} label="Người tạo" value={activeUsers.toLocaleString('vi-VN')} color="text-primary bg-primary/5" />
         </div>
 
@@ -356,7 +356,7 @@ export function AdminContents() {
                   <TableRow key={item.id}>
                     <TableCell>
                       <div className="flex items-center gap-2 min-w-0">
-                        {item.isFavorite && <Star className="w-4 h-4 text-amber-500 flex-shrink-0" />}
+                        {item.isFavorite && <Star className="w-4 h-4 text-warning flex-shrink-0" />}
                         <span className="font-medium text-sm truncate max-w-52">{item.title}</span>
                       </div>
                     </TableCell>
@@ -381,7 +381,7 @@ export function AdminContents() {
                         <button onClick={() => openEdit(item)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-primary/5 text-muted-foreground/80 hover:text-primary transition-colors" title="Chỉnh sửa">
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
-                        <button onClick={() => setConfirmDelete(item)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-destructive/10 text-muted-foreground/80 hover:text-red-500 transition-colors" title="Xóa">
+                        <button onClick={() => setConfirmDelete(item)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-destructive/10 text-muted-foreground/80 hover:text-destructive transition-colors" title="Xóa">
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
@@ -421,7 +421,7 @@ export function AdminContents() {
               <div className="flex flex-wrap gap-2">
                 <Badge className={`border-0 text-xs ${typeBadgeColor[viewItem.type] || 'bg-muted text-foreground/70'}`}>{viewItem.type}</Badge>
                 <Badge className="max-w-full whitespace-normal bg-primary/10 text-left text-primary border-0 text-xs leading-tight" title={viewItem.model}>{viewItem.model}</Badge>
-                {viewItem.isFavorite && <Badge className="bg-amber-100 text-amber-700 border-0 text-xs">Đã đánh dấu</Badge>}
+                {viewItem.isFavorite && <Badge className="bg-warning/15 text-foreground border-0 text-xs">Đã đánh dấu</Badge>}
               </div>
               <div className="bg-surface-muted rounded-xl p-4 max-h-72 overflow-y-auto">
                 <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap">{viewItem.body}</p>
@@ -434,7 +434,7 @@ export function AdminContents() {
                 <button onClick={() => { setViewItem(null); openEdit(viewItem); }} className="flex-1 h-9 border border-primary/20 text-primary hover:bg-primary/5 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-1.5">
                   <Edit2 className="w-3.5 h-3.5" /> Chỉnh sửa
                 </button>
-                <button onClick={() => setViewItem(null)} className="flex-1 h-9 bg-muted hover:bg-gray-200 text-foreground/80 rounded-xl text-sm font-semibold transition-colors">Đóng</button>
+                <button onClick={() => setViewItem(null)} className="flex-1 h-9 bg-muted hover:bg-secondary text-foreground/80 rounded-xl text-sm font-semibold transition-colors">Đóng</button>
               </div>
             </div>
           )}

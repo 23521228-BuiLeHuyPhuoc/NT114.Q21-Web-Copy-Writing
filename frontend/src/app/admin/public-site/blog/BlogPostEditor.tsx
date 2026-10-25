@@ -188,7 +188,7 @@ export function BlogPostEditor({ slug, mode }: BlogPostEditorProps) {
               <h1 className="studio-page-title text-foreground">
                 {mode === 'create' ? 'Thêm bài blog' : 'Sửa nội dung blog'}
               </h1>
-              {form?.published === false ? <Badge variant="outline">Ẩn</Badge> : <Badge className="border-0 bg-emerald-100 text-emerald-700">Đang hiện</Badge>}
+              {form?.published === false ? <Badge variant="outline">Ẩn</Badge> : <Badge className="border-0 bg-success/15 text-success">Đang hiện</Badge>}
             </div>
           </div>
           <div className="flex flex-wrap gap-2">

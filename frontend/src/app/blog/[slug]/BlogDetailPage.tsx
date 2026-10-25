@@ -11,8 +11,8 @@ import { ArrowLeft, ArrowRight, Calendar, Clock, User } from 'lucide-react';
 const catColor: Record<string, string> = {
   ai: 'bg-primary/10 text-primary',
   copy: 'bg-primary/10 text-primary',
-  marketing: 'bg-warning/15 text-amber-800',
-  case: 'bg-emerald-100 text-emerald-700',
+  marketing: 'bg-warning/15 text-foreground',
+  case: 'bg-success/15 text-success',
   news: 'bg-primary/10 text-primary',
 };
 

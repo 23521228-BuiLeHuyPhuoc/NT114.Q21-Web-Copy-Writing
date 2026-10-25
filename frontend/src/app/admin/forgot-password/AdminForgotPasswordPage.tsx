@@ -176,7 +176,7 @@ export function AdminForgotPasswordPage() {
           <ArrowLeft className="w-4 h-4" /> Quay lại đăng nhập Admin
         </Link>
 
-        <div className="bg-gray-900/90 border border-gray-800 rounded-3xl shadow-2xl shadow-green-950/20 p-8">
+        <div className="bg-card border border-border rounded-md shadow-2xl shadow-black/20 p-8">
           <div className="flex justify-center mb-8">
             <Link to="/" className="inline-flex items-center hover:opacity-90 transition-opacity">
               <BrandLogo size="lg" tone="light" surface="light" />
@@ -188,9 +188,9 @@ export function AdminForgotPasswordPage() {
           </div>
 
           <div className="text-center mb-8">
-            <div className="inline-flex items-center gap-2 bg-amber-950/50 border border-amber-700/40 rounded-full px-3 py-1 mb-4">
-              <Shield className="w-3.5 h-3.5 text-amber-400" />
-              <span className="text-amber-300 text-xs font-semibold">Admin Console</span>
+            <div className="inline-flex items-center gap-2 bg-warning/10 border border-warning/40 rounded-full px-3 py-1 mb-4">
+              <Shield className="w-3.5 h-3.5 text-warning" />
+              <span className="text-warning text-xs font-semibold">Admin Console</span>
             </div>
             <h1 className="type-auth-title mb-2 text-sidebar-foreground">{meta.title}</h1>
             <p className="text-muted-foreground text-sm leading-relaxed">{meta.subtitle}</p>
@@ -209,7 +209,7 @@ export function AdminForgotPasswordPage() {
                   className="h-12 rounded-md border-input bg-input-background text-foreground placeholder:text-muted-foreground focus:border-primary"
                 />
                 {emailForm.formState.errors.email && (
-                  <p className="text-xs text-red-400 mt-1">{emailForm.formState.errors.email.message}</p>
+                  <p className="text-xs text-destructive mt-1">{emailForm.formState.errors.email.message}</p>
                 )}
               </div>
 
@@ -284,7 +284,7 @@ export function AdminForgotPasswordPage() {
                   className="h-12 rounded-md border-input bg-input-background text-foreground placeholder:text-muted-foreground focus:border-primary"
                 />
                 {resetForm.formState.errors.newPass && (
-                  <p className="text-xs text-red-400 mt-1">{resetForm.formState.errors.newPass.message}</p>
+                  <p className="text-xs text-destructive mt-1">{resetForm.formState.errors.newPass.message}</p>
                 )}
                 {newPassword && (
                   <div className="grid grid-cols-2 gap-2 mt-2">
@@ -309,7 +309,7 @@ export function AdminForgotPasswordPage() {
                   className="h-12 rounded-md border-input bg-input-background text-foreground placeholder:text-muted-foreground focus:border-primary"
                 />
                 {resetForm.formState.errors.confirmPass && (
-                  <p className="text-xs text-red-400 mt-1">{resetForm.formState.errors.confirmPass.message}</p>
+                  <p className="text-xs text-destructive mt-1">{resetForm.formState.errors.confirmPass.message}</p>
                 )}
               </div>
 
@@ -325,7 +325,7 @@ export function AdminForgotPasswordPage() {
 
           {step === 'done' && (
             <div className="space-y-4 text-center">
-              <div className="bg-emerald-950/40 border border-emerald-800/50 rounded-xl p-4 text-sm text-emerald-200">
+              <div className="bg-success/10 border border-success/40 rounded-xl p-4 text-sm text-success">
                 Mật khẩu admin đã được cập nhật.
               </div>
               <button

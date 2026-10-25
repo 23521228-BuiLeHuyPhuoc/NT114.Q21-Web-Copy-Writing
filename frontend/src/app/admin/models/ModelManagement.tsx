@@ -304,7 +304,7 @@ export function AdminModelManagement() {
           <StatTile icon={Cpu} label="Model người dùng thấy" value={AI_MODELS.length} color="bg-primary/10 text-primary" iconClassName="w-5 h-5" valueClassName="text-2xl" />
           <StatTile icon={CheckCircle2} label="Có benchmark cố định" value={benchmarkedModels.length} color="bg-primary/10 text-primary" iconClassName="w-5 h-5" valueClassName="text-2xl" />
           <StatTile icon={Globe} label="Providers/wrappers" value={providerCount} color="bg-primary/10 text-primary" iconClassName="w-5 h-5" valueClassName="text-2xl" />
-          <StatTile icon={Database} label="Fine-tuned ready" value={readyFineTunedModels.length} color="bg-warning/10 text-amber-800" iconClassName="w-5 h-5" valueClassName="text-2xl" />
+          <StatTile icon={Database} label="Fine-tuned ready" value={readyFineTunedModels.length} color="bg-warning/10 text-foreground" iconClassName="w-5 h-5" valueClassName="text-2xl" />
         </div>
 
         <Tabs defaultValue="models">

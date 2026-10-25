@@ -41,7 +41,7 @@ export function ResetPasswordPage() {
   if (done) {
     return (
       <div className="auth-page min-h-screen flex items-center justify-center p-5">
-        <div className="bg-card rounded-3xl shadow-xl p-8 max-w-md w-full text-center">
+        <div className="bg-card rounded-md shadow-xl p-8 max-w-md w-full text-center">
           <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
             <CheckCircle2 className="w-8 h-8 text-primary" />
           </div>
@@ -60,7 +60,7 @@ export function ResetPasswordPage() {
 
   return (
     <div className="auth-page min-h-screen flex items-center justify-center p-5">
-      <div className="bg-card rounded-3xl shadow-xl p-8 max-w-md w-full">
+      <div className="bg-card rounded-md shadow-xl p-8 max-w-md w-full">
         <Link to="/login" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary mb-6">
           <ArrowLeft className="w-4 h-4" /> Quay lại đăng nhập
         </Link>
@@ -82,7 +82,7 @@ export function ResetPasswordPage() {
                 {showPw ? <EyeOff className="w-4 h-4 text-muted-foreground/80" /> : <Eye className="w-4 h-4 text-muted-foreground/80" />}
               </button>
             </div>
-            {errors.password && <p className="text-xs text-red-500 mt-1">{errors.password.message}</p>}
+            {errors.password && <p className="text-xs text-destructive mt-1">{errors.password.message}</p>}
           </div>
 
           <div className="space-y-1">
@@ -99,7 +99,7 @@ export function ResetPasswordPage() {
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/80" />
               <Input type="password" placeholder="Nhập lại mật khẩu mới" {...register('confirm', { required: 'Xác nhận mật khẩu là bắt buộc', validate: (v) => v === watch('password') || 'Mật khẩu không khớp' })} className="pl-10" />
             </div>
-            {errors.confirm && <p className="text-xs text-red-500 mt-1">{errors.confirm.message}</p>}
+            {errors.confirm && <p className="text-xs text-destructive mt-1">{errors.confirm.message}</p>}
           </div>
 
           <button

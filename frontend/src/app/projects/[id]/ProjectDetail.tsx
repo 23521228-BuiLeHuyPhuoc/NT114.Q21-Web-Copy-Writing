@@ -158,9 +158,9 @@ export function CustomerProjectDetail() {
         <div className="mb-7 grid grid-cols-2 border-l border-t border-foreground lg:grid-cols-4">
           {[
             { label: 'Tổng nội dung', value: stats.total, icon: FileText, color: 'text-primary bg-primary/5' },
-            { label: 'Hoàn thành', value: stats.completed, icon: CheckCircle2, color: 'text-emerald-600 bg-emerald-50' },
-            { label: 'Chưa hoàn thành', value: stats.inProgress, icon: Circle, color: 'text-amber-600 bg-warning/10' },
-            { label: 'Chất lượng TB', value: `${stats.avgQuality}%`, icon: BarChart3, color: 'text-emerald-600 bg-emerald-50' },
+            { label: 'Hoàn thành', value: stats.completed, icon: CheckCircle2, color: 'text-success bg-success/10' },
+            { label: 'Chưa hoàn thành', value: stats.inProgress, icon: Circle, color: 'text-warning bg-warning/10' },
+            { label: 'Chất lượng TB', value: `${stats.avgQuality}%`, icon: BarChart3, color: 'text-success bg-success/10' },
           ].map((s, i) => {
             const Icon = s.icon;
             return (
@@ -227,7 +227,7 @@ export function CustomerProjectDetail() {
                   <Button
                     size="sm"
                     variant={item.isProjectCompleted ? 'default' : 'outline'}
-                    className={item.isProjectCompleted ? 'bg-emerald-600 text-white hover:bg-emerald-700' : ''}
+                    className={item.isProjectCompleted ? 'bg-success text-success-foreground hover:bg-success/90' : ''}
                     disabled={updateContent.isPending}
                     onClick={event => handleToggleCompletion(event, item.id, !item.isProjectCompleted)}
                   >

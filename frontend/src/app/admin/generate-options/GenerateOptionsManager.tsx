@@ -293,7 +293,7 @@ export function GenerateOptionsManager({ group, title, description, noun, iconHi
                       <TableCell><code className="text-xs bg-muted px-2 py-0.5 rounded-md">{option.slug}</code></TableCell>
                       <TableCell><span className="text-xs font-mono">{option.icon || '-'}</span>{option.color ? <span className={`inline-block ml-2 w-3 h-3 rounded ${option.color}`} /> : null}</TableCell>
                       <TableCell><div className="flex items-center gap-2"><Switch checked={option.isActive} onCheckedChange={() => void toggleActive(option)} /><Badge variant="outline">{option.isActive ? 'Hiển thị' : 'Tạm tắt'}</Badge></div></TableCell>
-                      <TableCell><div className="flex justify-end gap-1"><button onClick={() => openEdit(option)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-primary/5 text-primary"><Edit2 className="w-3.5 h-3.5" /></button><button onClick={() => setDeleteItem(option)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-destructive/10 text-red-500"><Trash2 className="w-3.5 h-3.5" /></button></div></TableCell>
+                      <TableCell><div className="flex justify-end gap-1"><button onClick={() => openEdit(option)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-primary/5 text-primary"><Edit2 className="w-3.5 h-3.5" /></button><button onClick={() => setDeleteItem(option)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-destructive/10 text-destructive"><Trash2 className="w-3.5 h-3.5" /></button></div></TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

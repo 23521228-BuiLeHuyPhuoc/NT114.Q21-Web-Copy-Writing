@@ -47,7 +47,7 @@ export function AdminLoginPage() {
 
       {/* ── LEFT: System Panel ── */}
       <div className="hidden lg:flex lg:w-[52%] flex-col relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-950 via-slate-900 to-green-950" />
+        <div className="absolute inset-0 bg-card" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_60%_at_20%_50%,rgba(20,184,166,0.1),transparent)]" />
         <div
           className="absolute inset-0 opacity-[0.04]"
@@ -65,7 +65,7 @@ export function AdminLoginPage() {
           <Link to="/" className="inline-flex items-center hover:opacity-90 transition-opacity">
             <BrandLogo size="lg" tone="light" surface="light" />
           </Link>
-          <span className="text-xs bg-amber-950/60 text-amber-300 border border-amber-700/40 rounded px-2 py-0.5">Admin Console</span>
+          <span className="text-xs bg-warning/10 text-warning border border-warning/40 rounded px-2 py-0.5">Admin Console</span>
         </div>
 
         {/* Main */}
@@ -112,15 +112,15 @@ export function AdminLoginPage() {
           <Link to="/" className="inline-flex items-center hover:opacity-90 transition-opacity">
             <BrandLogo size="lg" tone="light" surface="light" />
           </Link>
-          <span className="text-xs bg-amber-950/60 text-amber-300 border border-amber-700/40 rounded px-2 py-0.5">Admin</span>
+          <span className="text-xs bg-warning/10 text-warning border border-warning/40 rounded px-2 py-0.5">Admin</span>
         </div>
 
         <div className="w-full max-w-[380px]">
           {/* Header */}
           <div className="mb-8">
             <div className="inline-flex items-center gap-2 mb-5">
-              <AlertTriangle className="w-4 h-4 text-amber-500" />
-              <span className="text-amber-500 text-xs font-semibold">Khu vực giới hạn</span>
+              <AlertTriangle className="w-4 h-4 text-warning" />
+              <span className="text-warning text-xs font-semibold">Khu vực giới hạn</span>
             </div>
             <h2 className="type-auth-title mb-1.5 text-sidebar-foreground">Đăng nhập Admin</h2>
             <p className="text-muted-foreground text-sm">
@@ -140,10 +140,10 @@ export function AdminLoginPage() {
                   {...register('email', {
                     validate: validateEmail,
                   })}
-                  className="pl-10 h-12 rounded-xl bg-gray-900 border-gray-700 text-white placeholder:text-foreground/70 focus:border-primary focus:bg-gray-800"
+                  className="pl-10 h-12 rounded-xl bg-input-background border-input text-foreground placeholder:text-muted-foreground focus:border-primary focus:bg-card"
                 />
               </div>
-              {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>}
+              {errors.email && <p className="text-xs text-destructive mt-1">{errors.email.message}</p>}
             </div>
 
             <div>
@@ -156,7 +156,7 @@ export function AdminLoginPage() {
                   type={showPass ? 'text' : 'password'}
                   placeholder="Nhập mật khẩu admin"
                   {...register('password', { validate: validateLoginPassword })}
-                  className="pl-10 pr-10 h-12 rounded-xl bg-gray-900 border-gray-700 text-white placeholder:text-foreground/70 focus:border-primary focus:bg-gray-800"
+                  className="pl-10 pr-10 h-12 rounded-xl bg-input-background border-input text-foreground placeholder:text-muted-foreground focus:border-primary focus:bg-card"
                 />
                 <button
                   type="button"
@@ -166,7 +166,7 @@ export function AdminLoginPage() {
                   {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-              {errors.password && <p className="text-xs text-red-500 mt-1">{errors.password.message}</p>}
+              {errors.password && <p className="text-xs text-destructive mt-1">{errors.password.message}</p>}
               <div className="mt-2 text-right">
                 <Link
                   to="/admin/forgot-password"
@@ -198,7 +198,7 @@ export function AdminLoginPage() {
 
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-800" />
+              <div className="w-full border-t border-border" />
             </div>
             <div className="relative flex justify-center">
               <span className="bg-sidebar px-3 text-xs text-sidebar-foreground/65">Không phải Admin?</span>
@@ -206,7 +206,7 @@ export function AdminLoginPage() {
           </div>
 
           <Link to="/login">
-            <button className="w-full h-11 border border-gray-800 hover:border-gray-700 text-muted-foreground/80 hover:text-gray-200 rounded-xl font-semibold text-sm transition-all hover:bg-gray-900">
+            <button className="w-full h-11 border border-border hover:border-input text-muted-foreground hover:text-foreground rounded-xl font-semibold text-sm transition-all hover:bg-card">
               → Trang đăng nhập người dùng
             </button>
           </Link>

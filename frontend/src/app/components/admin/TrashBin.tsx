@@ -72,7 +72,7 @@ export function TrashBin({
         <div className="flex items-center justify-between p-5 border-b bg-surface-muted">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 bg-destructive/10 rounded-xl flex items-center justify-center">
-              <Trash2 className="w-4 h-4 text-red-600" />
+              <Trash2 className="w-4 h-4 text-destructive" />
             </div>
             <div>
               <p className="font-bold text-foreground">Thùng rác</p>
@@ -82,17 +82,17 @@ export function TrashBin({
           <button
             onClick={onClose}
             aria-label="Đóng thùng rác"
-            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-200 text-muted-foreground transition-colors"
+            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-secondary text-muted-foreground transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {items.length > 0 && (
-          <div className="mx-4 mt-4 bg-warning/10 border border-amber-200 rounded-xl p-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="mx-4 mt-4 bg-warning/10 border border-warning/35 rounded-xl p-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex gap-2.5 items-start min-w-0">
-              <Flame className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-amber-700 leading-relaxed">
+              <Flame className="w-4 h-4 text-warning flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-foreground leading-relaxed">
                 Các mục trong thùng rác sẽ bị <span className="font-semibold">xóa vĩnh viễn sau 30 ngày</span>.
               </p>
             </div>
@@ -101,10 +101,10 @@ export function TrashBin({
                 onClick={() => setConfirmDeleteAll(true)}
                 disabled={isDeleteAllLoading || Boolean(loading)}
                 aria-label={deleteAllLabel}
-                className="h-8 shrink-0 flex items-center justify-center gap-1.5 rounded-lg border border-red-200 px-3 text-xs font-bold text-red-600 hover:bg-destructive/10 transition-colors disabled:opacity-40"
+                className="h-8 shrink-0 flex items-center justify-center gap-1.5 rounded-lg border border-destructive/35 px-3 text-xs font-bold text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-40"
               >
                 {isDeleteAllLoading ? (
-                  <div className="w-3.5 h-3.5 border-2 border-red-300 border-t-transparent rounded-full animate-spin" />
+                  <div className="w-3.5 h-3.5 border-2 border-destructive/45 border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <>
                     <Flame className="w-3.5 h-3.5" />
@@ -124,11 +124,11 @@ export function TrashBin({
             </div>
           ) : isError ? (
             <div className="flex flex-col items-center justify-center h-64 text-center px-4">
-              <p className="text-sm text-red-500 mb-3">Không thể tải thùng rác. Vui lòng thử lại.</p>
+              <p className="text-sm text-destructive mb-3">Không thể tải thùng rác. Vui lòng thử lại.</p>
               {onRetry && (
                 <button
                   onClick={onRetry}
-                  className="px-3 py-1.5 border border-red-200 text-red-600 rounded-lg text-xs font-semibold hover:bg-destructive/10 transition-colors"
+                  className="px-3 py-1.5 border border-destructive/35 text-destructive rounded-lg text-xs font-semibold hover:bg-destructive/10 transition-colors"
                 >
                   Thử lại
                 </button>
@@ -136,7 +136,7 @@ export function TrashBin({
             </div>
           ) : items.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-center">
-              <div className="w-16 h-16 bg-muted rounded-2xl flex items-center justify-center mb-4">
+              <div className="w-16 h-16 bg-muted rounded-md flex items-center justify-center mb-4">
                 <Trash2 className="w-8 h-8 text-muted-foreground/60" />
               </div>
               <p className="font-semibold text-muted-foreground/80">Thùng rác trống</p>
@@ -170,7 +170,7 @@ export function TrashBin({
                       className="flex-1 flex items-center justify-center gap-1.5 h-8 border border-primary/20 text-primary hover:bg-primary/5 rounded-lg text-xs font-semibold transition-colors disabled:opacity-40"
                     >
                       {isItemLoading ? (
-                        <div className="w-3.5 h-3.5 border-2 border-green-400 border-t-transparent rounded-full animate-spin" />
+                        <div className="w-3.5 h-3.5 border-2 border-success border-t-transparent rounded-full animate-spin" />
                       ) : (
                         <>
                           <RotateCcw className="w-3.5 h-3.5" />
@@ -182,7 +182,7 @@ export function TrashBin({
                       onClick={() => onPermanentDelete(item.id)}
                       disabled={actionsDisabled}
                       aria-label="Xóa vĩnh viễn"
-                      className="flex-1 flex items-center justify-center gap-1.5 h-8 border border-red-200 text-red-600 hover:bg-destructive/10 rounded-lg text-xs font-semibold transition-colors disabled:opacity-40"
+                      className="flex-1 flex items-center justify-center gap-1.5 h-8 border border-destructive/35 text-destructive hover:bg-destructive/10 rounded-lg text-xs font-semibold transition-colors disabled:opacity-40"
                     >
                       <Flame className="w-3.5 h-3.5" />
                       Xóa vĩnh viễn

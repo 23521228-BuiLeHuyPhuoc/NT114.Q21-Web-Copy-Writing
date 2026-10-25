@@ -24,10 +24,10 @@ const industries = [
   { id: 'fnb', name: 'Ẩm Thực', icon: Utensils, color: 'bg-warning/100' },
   { id: 'healthcare', name: 'Y Tế & Sức Khỏe', icon: Heart, color: 'bg-destructive/100' },
   { id: 'education', name: 'Giáo Dục', icon: GraduationCap, color: 'bg-primary/50' },
-  { id: 'finance', name: 'Tài Chính', icon: DollarSign, color: 'bg-emerald-500' },
+  { id: 'finance', name: 'Tài Chính', icon: DollarSign, color: 'bg-success' },
   { id: 'fashion', name: 'Thời Trang', icon: Shirt, color: 'bg-warning/100' },
   { id: 'business', name: 'Dịch Vụ Doanh Nghiệp', icon: Briefcase, color: 'bg-primary/50' },
-  { id: 'travel', name: 'Du Lịch', icon: Luggage, color: 'bg-cyan-500' },
+  { id: 'travel', name: 'Du Lịch', icon: Luggage, color: 'bg-info' },
 ];
 
 export function IndustrySelector({ selectedIndustry, onSelectIndustry }: IndustrySelectorProps) {
@@ -42,7 +42,7 @@ export function IndustrySelector({ selectedIndustry, onSelectIndustry }: Industr
             key={industry.id}
             className={`p-6 cursor-pointer transition-all hover:scale-105 ${
               isSelected
-                ? 'ring-2 ring-green-500 shadow-lg'
+                ? 'ring-2 ring-success shadow-lg'
                 : 'hover:shadow-md'
             }`}
             onClick={() => onSelectIndustry(industry.id)}

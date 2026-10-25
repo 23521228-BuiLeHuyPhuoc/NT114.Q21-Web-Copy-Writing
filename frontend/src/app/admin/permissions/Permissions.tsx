@@ -121,7 +121,7 @@ function groupPermissions(permissions: AdminPermissionDef[]) {
 function getScopeBadgeClass(scope: PermissionScope) {
   return scope === 'admin'
     ? 'border-0 bg-primary/10 text-primary'
-    : 'border-0 bg-teal-100 text-teal-700';
+    : 'border-0 bg-info/15 text-info';
 }
 
 function getDefaultPermissionKey(route: string, scope: PermissionScope) {
@@ -691,7 +691,7 @@ export function AdminPermissions() {
                     <div className="flex flex-wrap gap-2">
                       <Badge className="border-0 bg-muted text-foreground/80">{selectedPermissionCount}/{activeScopePermissions.length} quyền</Badge>
                       {!selectedRoleDef.system && (
-                        <Button variant="outline" className="gap-2 border-red-200 text-red-600 hover:bg-destructive/10" onClick={() => deleteRole(activeSelectedRole)}>
+                        <Button variant="outline" className="gap-2 border-destructive/35 text-destructive hover:bg-destructive/10" onClick={() => deleteRole(activeSelectedRole)}>
                           <Trash2 className="h-4 w-4" />
                           Xoá nhóm
                         </Button>
@@ -891,7 +891,7 @@ export function AdminPermissions() {
                           </div>
                           <p className="mt-1 truncate font-mono text-[11px] text-muted-foreground/80">{permission.key}</p>
                         </div>
-                        <Button variant="ghost" size="icon" className="shrink-0 text-red-500 hover:bg-destructive/10" onClick={() => deletePermission(permission.key)}>
+                        <Button variant="ghost" size="icon" className="shrink-0 text-destructive hover:bg-destructive/10" onClick={() => deletePermission(permission.key)}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -969,7 +969,7 @@ export function AdminPermissions() {
                                 {permission.system ? (
                                   <Badge className="shrink-0 border-0 bg-muted text-foreground/70">Mặc định</Badge>
                                 ) : (
-                                  <Button variant="ghost" size="icon" className="shrink-0 text-red-500 hover:bg-destructive/10" onClick={() => deletePermission(permission.key)}>
+                                  <Button variant="ghost" size="icon" className="shrink-0 text-destructive hover:bg-destructive/10" onClick={() => deletePermission(permission.key)}>
                                     <Trash2 className="h-4 w-4" />
                                   </Button>
                                 )}

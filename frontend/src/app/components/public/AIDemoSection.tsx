@@ -28,7 +28,7 @@ const CONTENT_TYPES: ContentType[] = [
     hint: 'Quảng cáo Facebook siêu chuyển đổi',
     inputLabel: 'Tên sản phẩm / dịch vụ',
     placeholder: 'Ví dụ: Khóa học tiếng Anh online',
-    model: 'GPT-4', badge: 'Phổ biến nhất', badgeColor: 'bg-warning/15 text-amber-800',
+    model: 'GPT-4', badge: 'Phổ biến nhất', badgeColor: 'bg-warning/15 text-foreground',
   },
   {
     id: 'email', icon: Mail,          label: 'Email Marketing',
@@ -63,7 +63,7 @@ const CONTENT_TYPES: ContentType[] = [
     hint: 'Headline + description theo chuẩn Google Ads',
     inputLabel: 'Từ khóa / dịch vụ',
     placeholder: 'Ví dụ: Dịch vụ sửa điện lạnh tại nhà',
-    model: 'GPT-4', badge: 'SEM', badgeColor: 'bg-warning/15 text-amber-800',
+    model: 'GPT-4', badge: 'SEM', badgeColor: 'bg-warning/15 text-foreground',
   },
 ];
 
@@ -205,9 +205,9 @@ export function AIDemoSection() {
 
             {/* Window bar */}
             <div className="flex items-center gap-2 px-5 py-3.5 bg-surface-muted border-b border-border">
-              <div className="w-3 h-3 rounded-full bg-red-400" />
-              <div className="w-3 h-3 rounded-full bg-amber-400" />
-              <div className="w-3 h-3 rounded-full bg-green-400" />
+              <div className="w-3 h-3 rounded-full bg-destructive" />
+              <div className="w-3 h-3 rounded-full bg-warning" />
+              <div className="w-3 h-3 rounded-full bg-success" />
               <div className="flex-1 text-center">
                 <span className="text-xs text-muted-foreground/80 font-mono">{PUBLIC_SITE_HOST}/generator</span>
               </div>
@@ -285,7 +285,7 @@ export function AIDemoSection() {
                 >
                   {isGenerating ? (
                     <>
-                      <div className="w-4 h-4 border-2 border-green-300 border-t-green-600 rounded-full animate-spin" />
+                      <div className="w-4 h-4 border-2 border-success/30 border-t-success rounded-full animate-spin" />
                       AI đang tạo copy...
                     </>
                   ) : (
@@ -307,7 +307,7 @@ export function AIDemoSection() {
                 {/* Output header */}
                 <div className="flex items-center justify-between px-5 py-4 border-b border-border">
                   <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${isGenerating ? 'bg-amber-400 animate-pulse' : hasGenerated ? 'bg-primary/50' : 'bg-gray-300'}`} />
+                    <div className={`w-2 h-2 rounded-full ${isGenerating ? 'bg-warning animate-pulse' : hasGenerated ? 'bg-primary/50' : 'bg-border'}`} />
                     <span className="text-xs font-semibold text-muted-foreground">
                       {isGenerating ? 'Đang tạo...' : hasGenerated ? 'Hoàn thành' : 'Sẵn sàng'}
                     </span>

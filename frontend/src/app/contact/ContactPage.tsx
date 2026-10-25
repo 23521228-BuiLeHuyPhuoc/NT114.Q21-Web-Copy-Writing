@@ -21,7 +21,7 @@ const CONTACT_TYPES = [
   { icon: MessageSquare, label: 'Tư vấn sản phẩm', desc: 'Hỏi về tính năng, phù hợp với nhu cầu', color: 'bg-primary/10 text-primary' },
   { icon: Headphones, label: 'Hỗ trợ kỹ thuật', desc: 'Lỗi, API, tích hợp hệ thống', color: 'bg-primary/10 text-primary' },
   { icon: BookOpen, label: 'Đối tác & Hợp tác', desc: 'Agency, reseller, co-marketing', color: 'bg-primary/10 text-primary' },
-  { icon: Zap, label: 'Tư vấn Business', desc: 'Tư vấn quota, team và triển khai gói Business', color: 'bg-warning/15 text-amber-800' },
+  { icon: Zap, label: 'Tư vấn Business', desc: 'Tư vấn quota, team và triển khai gói Business', color: 'bg-warning/15 text-foreground' },
 ];
 
 const FAQ = [
@@ -118,7 +118,7 @@ export function ContactPage() {
             {CONTACT_TYPES.map(c => {
               const Icon = c.icon;
               return (
-                <div key={c.label} className="bg-card rounded-2xl p-5 border border-border hover:border-primary/20 hover:shadow-md transition-all text-center cursor-pointer">
+                <div key={c.label} className="bg-card rounded-md p-5 border border-border hover:border-primary/20 hover:shadow-md transition-all text-center cursor-pointer">
                   <div className={`inline-flex p-3 rounded-xl ${c.color} mb-3`}>
                     <Icon className="w-5 h-5" />
                   </div>
@@ -141,7 +141,7 @@ export function ContactPage() {
               <p className="text-muted-foreground text-sm mb-8">Điền đủ ngữ cảnh để bộ phận phụ trách có thể xử lý yêu cầu chính xác hơn.</p>
 
               {submitted ? (
-                <div className="bg-primary/5 border border-primary/20 rounded-2xl p-10 text-center">
+                <div className="bg-primary/5 border border-primary/20 rounded-md p-10 text-center">
                   <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                     <CheckCircle2 className="w-8 h-8 text-primary" />
                   </div>
@@ -274,7 +274,7 @@ export function ContactPage() {
             {FAQ.map((item, i) => (
               <div
                 key={i}
-                className={`bg-card rounded-2xl border overflow-hidden transition-all ${faqOpen === i ? 'border-primary/20 shadow-md' : 'border-border hover:border-border'}`}
+                className={`bg-card rounded-md border overflow-hidden transition-all ${faqOpen === i ? 'border-primary/20 shadow-md' : 'border-border hover:border-border'}`}
               >
                 <button
                   className="w-full flex items-center justify-between p-6 text-left"

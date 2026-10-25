@@ -203,7 +203,7 @@ export function CustomerHeader() {
 
           {userOpen && (
             <div className="absolute top-full right-0 mt-2 w-60 bg-card rounded-lg shadow-2xl border border-border z-50 overflow-hidden">
-              <div className="px-4 py-4 border-b bg-gradient-to-br from-primary/10 to-success/10">
+              <div className="px-4 py-4 border-b bg-primary/10">
                 <div className="flex items-center gap-3">
                   <Avatar className="w-10 h-10">
                     <AvatarImage src={user?.avatar || undefined} alt={user?.name || 'Avatar'} className="object-cover" />

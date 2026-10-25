@@ -335,7 +335,7 @@ export function AdminUsers() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setTrashOpen(true)}
-              className="relative flex items-center gap-1.5 border border-border hover:border-red-300 hover:bg-destructive/10 text-muted-foreground hover:text-red-600 rounded-xl px-3 py-2 text-sm font-semibold transition-all"
+              className="relative flex items-center gap-1.5 border border-border hover:border-destructive/45 hover:bg-destructive/10 text-muted-foreground hover:text-destructive rounded-xl px-3 py-2 text-sm font-semibold transition-all"
             >
               <Trash2 className="w-4 h-4" />
               Thùng rác
@@ -418,7 +418,7 @@ export function AdminUsers() {
                       <div className="flex items-center gap-3">
                         <Avatar className="h-8 w-8 rounded-lg flex-shrink-0">
                           <AvatarImage src={item.avatar || undefined} alt={item.name || item.email} className="object-cover" />
-                          <AvatarFallback className={'rounded-lg text-xs font-bold text-white ' + (item.role === 'admin' ? 'bg-gradient-to-br from-green-500 to-green-700' : 'bg-gradient-to-br from-green-500 to-emerald-700')}>
+                          <AvatarFallback className={'rounded-lg text-xs font-bold ' + (item.role === 'admin' ? 'bg-primary text-primary-foreground' : 'bg-success text-success-foreground')}>
                             {getUserInitial(item)}
                           </AvatarFallback>
                         </Avatar>
@@ -437,7 +437,7 @@ export function AdminUsers() {
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
                         {isSuperAdmin && (
-                          <button onClick={() => setConfirmDelete(item)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-destructive/10 text-muted-foreground/80 hover:text-red-500 transition-colors">
+                          <button onClick={() => setConfirmDelete(item)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-destructive/10 text-muted-foreground/80 hover:text-destructive transition-colors">
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         )}

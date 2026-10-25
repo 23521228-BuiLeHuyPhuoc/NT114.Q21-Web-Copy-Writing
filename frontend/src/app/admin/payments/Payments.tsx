@@ -123,7 +123,7 @@ export function AdminPayments() {
       label: 'Tổng giao dịch',
       value: (revenueStats?.totalTransactions || 0).toLocaleString('vi-VN'),
       icon: TrendingUp,
-      color: 'text-emerald-600 bg-emerald-50',
+      color: 'text-success bg-success/10',
       change: 'toàn thời gian',
     },
     {

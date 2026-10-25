@@ -214,7 +214,7 @@ export function PricingPage() {
               return (
                 <div
                   key={plan.id}
-                  className={`relative bg-card rounded-3xl p-8 border-2 transition-all ${
+                  className={`relative bg-card rounded-md p-8 border-2 transition-all ${
                     plan.highlight
                       ? 'border-primary shadow-2xl shadow-primary/10 -mt-4'
                       : 'border-border hover:border-primary/20 hover:shadow-xl'
@@ -270,10 +270,10 @@ export function PricingPage() {
                   {/* CTA */}
                   <button
                     onClick={() => navigate(plan.monthlyPrice === -1 ? '/contact' : '/register')}
-                    className={`w-full py-3.5 rounded-2xl font-bold text-sm mb-7 transition-all ${
+                    className={`w-full py-3.5 rounded-md font-bold text-sm mb-7 transition-all ${
                       plan.highlight
                         ? 'bg-primary text-primary-foreground shadow-[3px_3px_0_rgba(23,32,51,.16)] hover:bg-primary/90'
-                        : 'bg-gray-900 hover:bg-gray-700 text-white'
+                        : 'bg-foreground hover:bg-foreground/90 text-background'
                     }`}
                   >
                     {plan.cta}
@@ -307,7 +307,7 @@ export function PricingPage() {
             <h2 className="type-public-title text-foreground">Tính năng đầy đủ theo từng gói</h2>
           </div>
 
-          <div className="overflow-x-auto rounded-3xl border border-border shadow-sm">
+          <div className="overflow-x-auto rounded-md border border-border shadow-sm">
             <table className="w-full min-w-[600px]">
               <thead>
                 <tr className="bg-background border-b border-border">

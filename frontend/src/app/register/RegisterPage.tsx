@@ -175,13 +175,13 @@ export function RegisterPage() {
                 <span className={`text-xs font-semibold ${step >= s ? 'text-primary' : 'text-muted-foreground/80'}`}>
                   {s === 1 ? 'Thông tin' : 'Xác thực'}
                 </span>
-                {s < 2 && <div className={`flex-1 h-px ${step > s ? 'bg-green-400' : 'bg-gray-200'}`} />}
+                {s < 2 && <div className={`flex-1 h-px ${step > s ? 'bg-primary' : 'bg-border'}`} />}
               </div>
             ))}
           </div>
 
           {registrationClosed && (
-            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-amber-900">
+            <div className="rounded-md border border-warning/40 bg-warning/10 p-5 text-foreground">
               <div className="mb-3 flex items-center gap-2 font-bold">
                 <AlertCircle className="h-5 w-5" />
                 Đăng ký mới đang tạm đóng
@@ -189,7 +189,7 @@ export function RegisterPage() {
               <p className="text-sm leading-6">
                 Hệ thống hiện không nhận tài khoản mới. Vui lòng quay lại sau hoặc liên hệ hỗ trợ nếu bạn cần được cấp tài khoản.
               </p>
-              <Link to="/login" className="mt-4 inline-flex h-11 items-center justify-center rounded-xl bg-amber-700 px-4 text-sm font-bold text-white hover:bg-amber-800">
+              <Link to="/login" className="mt-4 inline-flex h-11 items-center justify-center rounded-xl bg-primary px-4 text-sm font-bold text-primary-foreground hover:bg-primary/90">
                 Quay lại đăng nhập
               </Link>
             </div>
@@ -209,7 +209,7 @@ export function RegisterPage() {
                     <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/80" />
                     <Input placeholder="Nguyễn Văn A" {...registerField('name', { validate: validateName })} className="pl-10 h-12 rounded-xl border-border focus:border-primary" />
                   </div>
-                  {errors.name && <p className="text-xs text-red-600 mt-1">{errors.name.message}</p>}
+                  {errors.name && <p className="text-xs text-destructive mt-1">{errors.name.message}</p>}
                 </div>
                 <div>
                   <Label className="text-foreground/80 mb-2 block">Email công ty / cá nhân</Label>
@@ -217,7 +217,7 @@ export function RegisterPage() {
                     <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/80" />
                   <Input type="email" placeholder="Nhập email của bạn" {...registerField('email', { validate: validateEmail })} className="pl-10 h-12 rounded-xl border-border focus:border-primary" />
                   </div>
-                  {errors.email && <p className="text-xs text-red-600 mt-1">{errors.email.message}</p>}
+                  {errors.email && <p className="text-xs text-destructive mt-1">{errors.email.message}</p>}
                 </div>
                 <div>
                   <Label className="text-foreground/80 mb-2 block">Mật khẩu</Label>
@@ -228,7 +228,7 @@ export function RegisterPage() {
                       {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
-                  {errors.password && <p className="text-xs text-red-600 mt-1">{errors.password.message}</p>}
+                  {errors.password && <p className="text-xs text-destructive mt-1">{errors.password.message}</p>}
                   {passwordValue && (
                     <div className="flex gap-3 mt-2.5">
                       {AUTH_PASSWORD_RULES.map(c => (
@@ -246,7 +246,7 @@ export function RegisterPage() {
                     <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/80" />
                     <Input type="password" placeholder="Nhập lại mật khẩu" {...registerField('confirm', { validate: (value) => validateConfirmPassword(value, watch('password')) })} className="pl-10 h-12 rounded-xl border-border focus:border-primary" />
                   </div>
-                  {errors.confirm && <p className="text-xs text-red-600 mt-1">{errors.confirm.message}</p>}
+                  {errors.confirm && <p className="text-xs text-destructive mt-1">{errors.confirm.message}</p>}
                 </div>
                 <button
                   type="submit"

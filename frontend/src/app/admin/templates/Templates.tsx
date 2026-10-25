@@ -54,13 +54,13 @@ const TYPE_OPTIONS = ['headline', 'email', 'landing', 'social', 'description', '
 
 const typeBadgeColor: Record<string, string> = {
   headline: 'bg-primary/10 text-primary',
-  email: 'bg-warning/15 text-amber-800',
+  email: 'bg-warning/15 text-foreground',
   landing: 'bg-primary/10 text-primary',
-  social: 'bg-warning/15 text-amber-800',
+  social: 'bg-warning/15 text-foreground',
   description: 'bg-primary/10 text-primary',
-  ads: 'bg-warning/15 text-amber-800',
+  ads: 'bg-warning/15 text-foreground',
   cta: 'bg-primary/10 text-primary',
-  seo: 'bg-warning/15 text-amber-800',
+  seo: 'bg-warning/15 text-foreground',
   review: 'bg-primary/10 text-primary',
 };
 
@@ -291,7 +291,7 @@ export function AdminTemplates() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setTrashOpen(true)}
-              className="relative flex items-center gap-1.5 border border-border hover:border-red-300 hover:bg-destructive/10 text-muted-foreground hover:text-red-600 rounded-xl px-3 py-2 text-sm font-semibold transition-all"
+              className="relative flex items-center gap-1.5 border border-border hover:border-destructive/45 hover:bg-destructive/10 text-muted-foreground hover:text-destructive rounded-xl px-3 py-2 text-sm font-semibold transition-all"
             >
               <Trash2 className="w-4 h-4" />
               Thùng rác
@@ -310,7 +310,7 @@ export function AdminTemplates() {
             { label: 'Tổng templates', value: templates.length, icon: ScrollText, color: 'text-primary bg-primary/5' },
             { label: 'Đang hoạt động', value: templates.filter(template => template.active).length, icon: Zap, color: 'text-primary bg-primary/5' },
             { label: 'Lượt sử dụng', value: templates.reduce((total, template) => total + template.uses, 0).toLocaleString('vi-VN'), icon: BarChart3, color: 'text-primary bg-primary/5' },
-            { label: 'System templates', value: templates.filter(template => template.isSystem).length, icon: ShieldCheck, color: 'text-amber-600 bg-warning/10' },
+            { label: 'System templates', value: templates.filter(template => template.isSystem).length, icon: ShieldCheck, color: 'text-warning bg-warning/10' },
           ].map((item) => (
             <StatTile key={item.label} icon={item.icon} label={item.label} value={item.value} color={item.color} />
           ))}
@@ -397,7 +397,7 @@ export function AdminTemplates() {
                     </button>
                     <button
                       onClick={() => setConfirmDelete(template)}
-                      className="w-8 h-8 flex items-center justify-center border border-red-200 text-red-500 hover:bg-destructive/10 rounded-lg transition-colors"
+                      className="w-8 h-8 flex items-center justify-center border border-destructive/35 text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>

@@ -22,8 +22,8 @@ function MaintenancePage({
         <div className="mb-8">
           <BrandLogo size="lg" />
         </div>
-        <div className="rounded-lg border border-amber-200 bg-card p-8 shadow-sm">
-          <div className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
+        <div className="rounded-lg border border-warning/35 bg-card p-8 shadow-sm">
+          <div className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-warning/15 text-foreground">
             <Clock className="h-6 w-6" />
           </div>
           <h1 className="mb-3 text-3xl font-bold text-foreground">{siteName} đang bảo trì</h1>

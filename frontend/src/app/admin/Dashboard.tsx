@@ -72,9 +72,9 @@ export function AdminDashboard() {
 
   const statCards = useMemo(() => [
     { label: 'Tổng người dùng', value: formatNumber(stats?.totalUsers || 0), sub: `${formatNumber(stats?.activeUsers || 0)} đang hoạt động`, icon: Users, color: 'bg-primary/10 text-primary' },
-    { label: 'Nội dung đã tạo', value: formatNumber(stats?.totalContents || 0), sub: `${formatNumber(stats?.deletedContents || 0)} trong thùng rác`, icon: FileText, color: 'bg-emerald-100 text-emerald-700' },
-    { label: 'Lượt generate', value: formatNumber(usageTotals?.count || stats?.totalUsage || 0), sub: `${formatNumber(usageTotals?.totalTokens || stats?.totalTokens || 0)} tokens`, icon: Zap, color: 'bg-amber-100 text-amber-700' },
-    { label: 'Audit hôm nay', value: formatNumber(stats?.auditEventsToday || 0), sub: `${formatNumber(stats?.warningsToday || 0)} warning, ${formatNumber(stats?.errorsToday || 0)} error`, icon: Activity, color: 'bg-teal-100 text-teal-700' },
+    { label: 'Nội dung đã tạo', value: formatNumber(stats?.totalContents || 0), sub: `${formatNumber(stats?.deletedContents || 0)} trong thùng rác`, icon: FileText, color: 'bg-success/15 text-success' },
+    { label: 'Lượt generate', value: formatNumber(usageTotals?.count || stats?.totalUsage || 0), sub: `${formatNumber(usageTotals?.totalTokens || stats?.totalTokens || 0)} tokens`, icon: Zap, color: 'bg-warning/15 text-foreground' },
+    { label: 'Audit hôm nay', value: formatNumber(stats?.auditEventsToday || 0), sub: `${formatNumber(stats?.warningsToday || 0)} warning, ${formatNumber(stats?.errorsToday || 0)} error`, icon: Activity, color: 'bg-info/15 text-info' },
   ], [stats, usageTotals]);
 
   return (
@@ -152,10 +152,10 @@ export function AdminDashboard() {
 
               <div className="grid grid-cols-2 gap-4 min-[1100px]:grid-cols-4">
                 {[
-                  { label: 'Tổng lượt generate', value: formatNumber(usageTotals?.count || 0), icon: Zap, color: 'bg-amber-100 text-amber-700' },
+                  { label: 'Tổng lượt generate', value: formatNumber(usageTotals?.count || 0), icon: Zap, color: 'bg-warning/15 text-foreground' },
                   { label: 'Tổng token', value: formatNumber(usageTotals?.totalTokens || 0), icon: Database, color: 'bg-primary/10 text-primary' },
-                  { label: 'Quota units', value: formatNumber(usageTotals?.quotaUnits || 0), icon: Gauge, color: 'bg-emerald-100 text-emerald-700' },
-                  { label: 'Người dùng phát sinh', value: formatNumber(usageTotals?.activeUsers || 0), icon: UserRound, color: 'bg-teal-100 text-teal-700' },
+                  { label: 'Quota units', value: formatNumber(usageTotals?.quotaUnits || 0), icon: Gauge, color: 'bg-success/15 text-success' },
+                  { label: 'Người dùng phát sinh', value: formatNumber(usageTotals?.activeUsers || 0), icon: UserRound, color: 'bg-info/15 text-info' },
                 ].map((item) => {
                   const Icon = item.icon;
                   return (

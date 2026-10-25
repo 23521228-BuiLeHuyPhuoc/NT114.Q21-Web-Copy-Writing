@@ -21,8 +21,8 @@ export function CustomerAccessDenied() {
   return (
     <div className='flex min-h-[80vh] items-center justify-center p-6'>
       <div className='max-w-md text-center'>
-        <div className='mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-3xl border-2 border-red-100 bg-destructive/10'>
-          <ShieldOff className='h-12 w-12 text-red-400' />
+        <div className='mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-md border-2 border-destructive/25 bg-destructive/10'>
+          <ShieldOff className='h-12 w-12 text-destructive' />
         </div>
 
         <h2 className='mb-2 text-2xl font-bold text-foreground'>{TEXT.title}</h2>
@@ -38,7 +38,7 @@ export function CustomerAccessDenied() {
         )}
 
         {roleDef && (
-          <div className='mb-8 rounded-2xl border border-border bg-surface-muted p-4 text-left'>
+          <div className='mb-8 rounded-md border border-border bg-surface-muted p-4 text-left'>
             <p className='mb-3 text-xs font-bold uppercase tracking-widest text-muted-foreground'>{TEXT.scope}</p>
             <p className='text-sm text-foreground/70'>{roleDef.description}</p>
           </div>

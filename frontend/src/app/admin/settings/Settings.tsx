@@ -358,7 +358,7 @@ export function AdminSettings() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between gap-4 rounded-lg border p-4">
                   <div>
-                    <p className="text-sm font-medium text-red-700">Chế độ bảo trì</p>
+                    <p className="text-sm font-medium text-destructive">Chế độ bảo trì</p>
                     <p className="mt-0.5 text-xs text-muted-foreground">Người dùng sẽ thấy trang bảo trì, admin vẫn truy cập được.</p>
                   </div>
                   <Switch checked={form.maintenanceMode} onCheckedChange={(value) => updateField('maintenanceMode', value)} />
@@ -566,14 +566,14 @@ export function AdminSettings() {
                 </div>
                 <Badge variant="outline">Lần gần nhất: {formatDateTime(systemSettings?.quotaResetAt)}</Badge>
               </div>
-              <div className="rounded-lg border border-amber-300 bg-warning/10 p-4 text-sm text-amber-800">
+              <div className="rounded-lg border border-warning/45 bg-warning/10 p-4 text-sm text-foreground">
                 <AlertCircle className="mr-2 inline h-4 w-4" />
                 Hành động này không xóa lịch sử generate, chỉ đặt mốc để quota hiện tại trở về 0.
               </div>
               <Button
                 type="button"
                 variant="outline"
-                className="w-full justify-start border-amber-300 text-amber-800 hover:bg-warning/10 sm:w-auto"
+                className="w-full justify-start border-warning/45 text-foreground hover:bg-warning/10 sm:w-auto"
                 onClick={() => void handleResetQuotas()}
                 disabled={resetQuotas.isPending}
               >

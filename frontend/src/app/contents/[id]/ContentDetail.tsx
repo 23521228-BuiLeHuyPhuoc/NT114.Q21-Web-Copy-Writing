@@ -182,7 +182,7 @@ export function CustomerContentDetail() {
             <div className="flex flex-wrap items-center gap-2 mb-2">
               <Badge className="bg-primary/10 text-primary border-0">Đã xuất bản</Badge>
               <Badge className="bg-muted text-foreground/70 border-0">{content.type}</Badge>
-              <Badge className="max-w-full whitespace-normal bg-emerald-100 text-left text-emerald-700 border-0 leading-tight" title={content.model}>{content.model}</Badge>
+              <Badge className="max-w-full whitespace-normal bg-success/15 text-left text-success border-0 leading-tight" title={content.model}>{content.model}</Badge>
             </div>
             {isEditing ? (
               <Input
@@ -216,7 +216,7 @@ export function CustomerContentDetail() {
             <Button
               variant="outline"
               size="sm"
-              className="text-red-500 hover:text-red-600"
+              className="text-destructive hover:text-destructive"
               aria-label="Xóa bài viết"
               disabled={isBusy}
               onClick={handleDelete}
@@ -285,7 +285,7 @@ export function CustomerContentDetail() {
               </div>
             </Card>
 
-            <Card className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 border-primary/20">
+            <Card className="p-6 bg-primary/5 border-primary/20">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h3 className="font-semibold text-foreground mb-1">Tạo lại nội dung</h3>
@@ -323,13 +323,13 @@ export function CustomerContentDetail() {
             <Card className="p-5">
               <h3 className="font-semibold text-foreground mb-3">Điểm chất lượng</h3>
               <div className="text-center py-4">
-                <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-green-100 to-emerald-100 mb-3">
+                <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-success/15 mb-3">
                   <span className="text-2xl font-bold text-primary">{content.quality}%</span>
                 </div>
                 <p className="text-sm text-foreground/70">Chất lượng tốt</p>
                 <div className="flex items-center justify-center gap-1 mt-2">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} className={`w-4 h-4 ${i < 4 ? 'text-amber-400 fill-amber-400' : 'text-muted-foreground/60'}`} />
+                    <Star key={i} className={`w-4 h-4 ${i < 4 ? 'text-warning fill-warning' : 'text-muted-foreground/60'}`} />
                   ))}
                 </div>
               </div>

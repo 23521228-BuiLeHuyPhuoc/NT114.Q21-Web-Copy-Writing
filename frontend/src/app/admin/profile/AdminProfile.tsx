@@ -221,7 +221,7 @@ export function AdminProfile() {
               <div className="relative mb-4">
                 <Avatar className="w-24 h-24">
                   <AvatarImage src={user?.avatar || undefined} alt={user?.name || 'Avatar'} className="object-cover" />
-                  <AvatarFallback className="bg-gradient-to-br from-primary to-success text-primary-foreground text-3xl font-bold">
+                  <AvatarFallback className="bg-primary text-primary-foreground text-3xl font-bold">
                     {userInitial}
                   </AvatarFallback>
                 </Avatar>

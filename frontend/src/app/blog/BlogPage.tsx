@@ -15,8 +15,8 @@ import { matchesSearchRegex } from '@/lib/searchRegex';
 const catColor: Record<string, string> = {
   ai: 'bg-primary/10 text-primary',
   copy: 'bg-primary/10 text-primary',
-  marketing: 'bg-warning/15 text-amber-800',
-  case: 'bg-emerald-100 text-emerald-700',
+  marketing: 'bg-warning/15 text-foreground',
+  case: 'bg-success/15 text-success',
   news: 'bg-primary/10 text-primary',
 };
 
@@ -133,7 +133,7 @@ export function BlogPage() {
                 <div className="p-7">
                   <div className="mb-4 flex items-center gap-2">
                     <Badge className={`${catColor[featured.cat]} border-0 text-xs`}>{featured.catLabel}</Badge>
-                    <Badge className="border-0 bg-warning/15 text-xs text-amber-700">Nổi bật</Badge>
+                    <Badge className="border-0 bg-warning/15 text-xs text-foreground">Nổi bật</Badge>
                   </div>
                   <h2 className="mb-3 text-foreground transition-colors group-hover:text-primary" style={{ fontSize: '1.35rem' }}>
                     {featured.title}
@@ -238,7 +238,7 @@ export function BlogPage() {
             <div className="rounded-md border-2 border-foreground bg-primary p-6 text-primary-foreground shadow-[5px_5px_0_#172033]">
               <Wand2 className="mb-4 h-8 w-8 opacity-80" />
               <h3 className="mb-2 text-white" style={{ fontSize: '1.1rem' }}>Nhận bài viết mới nhất</h3>
-              <p className="mb-4 text-sm leading-relaxed text-green-100">
+              <p className="mb-4 text-sm leading-relaxed text-primary-foreground/85">
                 Mỗi tuần một bài hướng dẫn chuyên sâu về AI copywriting. Miễn phí.
               </p>
               <Input

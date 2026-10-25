@@ -56,10 +56,10 @@ const TYPE_LABELS: Record<AdminNotificationType, string> = {
 };
 
 const TYPE_CLASSES: Record<AdminNotificationType, string> = {
-  system: 'bg-blue-100 text-blue-700 border-0',
-  billing: 'bg-amber-100 text-amber-700 border-0',
-  ai: 'bg-emerald-100 text-emerald-700 border-0',
-  account: 'bg-slate-100 text-slate-700 border-0',
+  system: 'bg-info/15 text-info border-0',
+  billing: 'bg-warning/15 text-foreground border-0',
+  ai: 'bg-success/15 text-success border-0',
+  account: 'bg-muted text-muted-foreground border-0',
 };
 
 const MODE_LABELS: Record<AdminNotificationRecipientMode, string> = {
@@ -107,8 +107,8 @@ function roleBadge(account: AdminUser) {
 
   const def = getAdminRoleDef(account.adminRole);
   return (
-    <Badge className={`${def?.color || 'bg-emerald-100'} ${def?.textColor || 'text-emerald-700'} border-0 gap-1`}>
-      <span className={`h-1.5 w-1.5 rounded-full ${def?.dotColor || 'bg-emerald-500'}`} />
+    <Badge className={`${def?.color || 'bg-success/15'} ${def?.textColor || 'text-success'} border-0 gap-1`}>
+      <span className={`h-1.5 w-1.5 rounded-full ${def?.dotColor || 'bg-success'}`} />
       {def?.label || 'Admin'}
     </Badge>
   );
@@ -374,7 +374,7 @@ export function AdminNotifications() {
           <Card className="p-5">
             <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div className="flex items-center gap-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-success/15 text-success">
                   <Users className="h-4 w-4" />
                 </div>
                 <div>
@@ -427,7 +427,7 @@ export function AdminNotifications() {
                           disabled={recipientMode !== 'selected'}
                           onCheckedChange={(value) => toggleRecipient(account, value === true)}
                         />
-                        <div className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-xs font-bold text-white ${account.role === 'admin' ? 'bg-emerald-700' : 'bg-green-600'}`}>
+                        <div className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-xs font-bold text-success-foreground ${account.role === 'admin' ? 'bg-success' : 'bg-success/80'}`}>
                           {account.role === 'admin' ? <Shield className="h-4 w-4" /> : account.name.charAt(0).toUpperCase()}
                         </div>
                         <div className="min-w-0 flex-1">

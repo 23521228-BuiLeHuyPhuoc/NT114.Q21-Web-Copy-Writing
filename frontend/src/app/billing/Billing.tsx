@@ -100,7 +100,7 @@ const PAYMENT_METHODS = [
     shortName: 'VNPAY',
     desc: 'Thanh toán qua cổng VNPAY sandbox.',
     icon: CreditCard,
-    color: 'bg-emerald-100 text-emerald-700',
+    color: 'bg-success/15 text-success',
     guide: 'Sau khi bấm thanh toán, hệ thống sẽ tạo link VNPAY và chuyển sang trang thanh toán.',
   },
   {
@@ -118,7 +118,7 @@ const PAYMENT_METHODS = [
     shortName: 'VietQR',
     desc: 'Quét mã QR ngân hàng và chuyển khoản theo nội dung hóa đơn.',
     icon: QrCode,
-    color: 'bg-sky-100 text-sky-700',
+    color: 'bg-info/15 text-info',
     guide: 'Sau khi bấm thanh toán, hệ thống sẽ tạo mã VietQR với đúng số tiền và nội dung chuyển khoản.',
   },
 ];
@@ -274,7 +274,7 @@ function getInvoiceStatusMeta(status: string) {
     return { label: 'Đã thanh toán', className: 'bg-primary/10 text-primary' };
   }
   if (normalized === 'pending') {
-    return { label: 'Chờ xác nhận', className: 'bg-amber-100 text-amber-700' };
+    return { label: 'Chờ xác nhận', className: 'bg-warning/15 text-foreground' };
   }
   if (normalized === 'failed') {
     return { label: 'Thất bại', className: 'bg-destructive/10 text-destructive' };
@@ -811,13 +811,13 @@ function VietQrPaymentPanel({
   ];
 
   return (
-    <div className="max-w-full overflow-hidden rounded-lg border border-sky-200 bg-sky-50/70 p-3 sm:p-4">
+    <div className="max-w-full overflow-hidden rounded-lg border border-info/35 bg-info/10 p-3 sm:p-4">
       <div className="mb-3 flex min-w-0 flex-wrap items-center justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-sky-950">Quét mã VietQR</p>
-          <p className="text-xs leading-relaxed text-sky-800">Kiểm tra đúng số tiền và nội dung trước khi chuyển khoản.</p>
+          <p className="text-sm font-semibold text-info">Quét mã VietQR</p>
+          <p className="text-xs leading-relaxed text-info">Kiểm tra đúng số tiền và nội dung trước khi chuyển khoản.</p>
         </div>
-        <Badge className="shrink-0 border-0 bg-sky-100 text-sky-700">Chờ xác nhận</Badge>
+        <Badge className="shrink-0 border-0 bg-info/15 text-info">Chờ xác nhận</Badge>
       </div>
 
       <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(180px,240px)_minmax(0,1fr)]">
@@ -834,7 +834,7 @@ function VietQrPaymentPanel({
 
         <div className="min-w-0 space-y-2">
           {rows.map((row) => row.value ? (
-            <div key={row.label} className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-white/70 bg-white/90 px-3 py-2 shadow-sm">
+            <div key={row.label} className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-border bg-card/90 px-3 py-2 shadow-sm">
               <div className="min-w-0">
                 <p className="text-xs font-medium text-muted-foreground">{row.label}</p>
                 <p className={`max-w-full break-words text-sm [overflow-wrap:anywhere] ${row.emphasis ? 'font-semibold text-foreground' : 'text-foreground/80'}`}>
@@ -856,7 +856,7 @@ function VietQrPaymentPanel({
         </div>
       </div>
 
-      <p className="mt-3 max-w-full text-xs leading-relaxed text-sky-800">
+      <p className="mt-3 max-w-full text-xs leading-relaxed text-info">
         Sau khi chuyển khoản, hóa đơn sẽ ở trạng thái chờ xác nhận. Vui lòng giữ đúng số tiền và nội dung chuyển khoản để đối soát nhanh hơn.
       </p>
     </div>

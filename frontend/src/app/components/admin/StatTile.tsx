@@ -52,7 +52,7 @@ export function StatTile({
         <p className={`${valueClassName ?? 'text-2xl'} font-bold text-foreground`}>{value}</p>
         <p
           className={`text-xs mt-1 ${
-            trend.positive === false ? 'text-red-600' : 'text-primary'
+            trend.positive === false ? 'text-destructive' : 'text-primary'
           }`}
         >
           {trend.value}

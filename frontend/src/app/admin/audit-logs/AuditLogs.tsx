@@ -91,8 +91,8 @@ export function AdminAuditLogs() {
         <div className="mb-6 grid gap-4 sm:grid-cols-3">
           {[
             { label: 'Tổng events', value: summary.total.toLocaleString('vi-VN'), color: 'text-primary bg-primary/5', icon: Shield },
-            { label: 'Warnings', value: summary.warnings.toLocaleString('vi-VN'), color: 'text-amber-600 bg-warning/10', icon: AlertTriangle },
-            { label: 'Errors', value: summary.errors.toLocaleString('vi-VN'), color: 'text-red-600 bg-destructive/10', icon: AlertTriangle },
+            { label: 'Warnings', value: summary.warnings.toLocaleString('vi-VN'), color: 'text-warning bg-warning/10', icon: AlertTriangle },
+            { label: 'Errors', value: summary.errors.toLocaleString('vi-VN'), color: 'text-destructive bg-destructive/10', icon: AlertTriangle },
           ].map((s, i) => {
             const Icon = s.icon;
             return (
@@ -194,7 +194,7 @@ export function AdminAuditLogs() {
                     <TableCell>
                       <div>
                         <p className="text-sm">{log.user}</p>
-                        <Badge className={`border-0 text-xs ${log.role === 'admin' ? 'bg-destructive/10 text-red-600' : 'bg-muted text-foreground/70'}`}>{log.role}</Badge>
+                        <Badge className={`border-0 text-xs ${log.role === 'admin' ? 'bg-destructive/10 text-destructive' : 'bg-muted text-foreground/70'}`}>{log.role}</Badge>
                       </div>
                     </TableCell>
                     <TableCell className="text-sm text-foreground/70 max-w-64 truncate">{log.details}</TableCell>

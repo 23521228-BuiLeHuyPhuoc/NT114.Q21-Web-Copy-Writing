@@ -183,10 +183,10 @@ export function CustomerDashboard() {
   ];
 
   const quickActions = [
-    { title: 'AI Generator', desc: 'Tạo copy mới và lưu trực tiếp vào thư viện nội dung.', icon: Wand2, path: '/generate', color: 'from-primary to-red-700', cta: 'Tạo ngay' },
-    { title: 'Fine-tuning Studio', desc: 'Theo dõi dataset, job huấn luyện và model tùy chỉnh của bạn.', icon: Brain, path: '/fine-tune', color: 'from-info to-cyan-900', cta: 'Mở studio' },
-    { title: 'Thư viện nội dung', desc: 'Xem, lọc và chỉnh sửa toàn bộ nội dung đã tạo.', icon: FileText, path: '/contents', color: 'from-amber-500 to-amber-600', cta: 'Xem nội dung' },
-    { title: 'Kiểm tra đạo văn', desc: 'Kiểm tra tính độc đáo trước khi xuất bản nội dung.', icon: Key, path: '/plagiarism-check', color: 'from-slate-700 to-slate-900', cta: 'Kiểm tra' },
+    { title: 'AI Generator', desc: 'Tạo copy mới và lưu trực tiếp vào thư viện nội dung.', icon: Wand2, path: '/generate', color: 'bg-primary', cta: 'Tạo ngay' },
+    { title: 'Fine-tuning Studio', desc: 'Theo dõi dataset, job huấn luyện và model tùy chỉnh của bạn.', icon: Brain, path: '/fine-tune', color: 'bg-info', cta: 'Mở studio' },
+    { title: 'Thư viện nội dung', desc: 'Xem, lọc và chỉnh sửa toàn bộ nội dung đã tạo.', icon: FileText, path: '/contents', color: 'bg-warning', cta: 'Xem nội dung' },
+    { title: 'Kiểm tra đạo văn', desc: 'Kiểm tra tính độc đáo trước khi xuất bản nội dung.', icon: Key, path: '/plagiarism-check', color: 'bg-foreground', cta: 'Kiểm tra' },
   ];
 
   return (

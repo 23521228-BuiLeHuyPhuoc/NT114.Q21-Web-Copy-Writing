@@ -186,8 +186,8 @@ export function CustomerContents() {
           {[
             { label: 'Tổng nội dung', value: contents.length, icon: FileText, color: 'text-primary bg-primary/5' },
             { label: 'Đã xuất bản', value: contents.filter(c => c.status === 'published').length, icon: Star, color: 'text-primary bg-primary/5' },
-            { label: 'Bản nháp', value: contents.filter(c => c.status === 'draft').length, icon: Clock, color: 'text-amber-600 bg-warning/10' },
-            { label: 'Chất lượng TB', value: `${averageQuality}%`, icon: Sparkles, color: 'text-emerald-600 bg-emerald-50' },
+            { label: 'Bản nháp', value: contents.filter(c => c.status === 'draft').length, icon: Clock, color: 'text-warning bg-warning/10' },
+            { label: 'Chất lượng TB', value: `${averageQuality}%`, icon: Sparkles, color: 'text-success bg-success/10' },
           ].map((s) => {
             const Icon = s.icon;
             return (
@@ -243,7 +243,7 @@ export function CustomerContents() {
         )}
 
         {isError && (
-          <Card className="p-8 text-center text-red-500 mb-6 flex flex-col items-center gap-3">
+          <Card className="p-8 text-center text-destructive mb-6 flex flex-col items-center gap-3">
             <p>Không thể tải danh sách nội dung. Vui lòng thử lại.</p>
             <Button variant="outline" size="sm" onClick={() => refetch()}>
               Thử lại
@@ -307,7 +307,7 @@ export function CustomerContents() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-red-500"
+                          className="text-destructive"
                           aria-label={`Xóa ${item.title}`}
                           disabled={deleteContent.isPending || Boolean(isDeletingRef.current[item.id])}
                           onClick={() => handleDelete(item.id)}

@@ -16,9 +16,9 @@ import { plagiarismService, type PlagiarismReport, type PlagiarismRiskLevel, typ
 
 const RISK: Record<PlagiarismRiskLevel, { label: string; cls: string }> = {
   safe: { label: 'An toàn', cls: 'bg-primary/10 text-primary border-primary/20' },
-  review: { label: 'Cần rà soát', cls: 'bg-amber-100 text-amber-800 border-amber-200' },
-  high: { label: 'Rủi ro cao', cls: 'bg-orange-100 text-orange-800 border-orange-200' },
-  critical: { label: 'Trùng lặp cao', cls: 'bg-red-100 text-red-800 border-red-200' },
+  review: { label: 'Cần rà soát', cls: 'bg-warning/15 text-foreground border-warning/35' },
+  high: { label: 'Rủi ro cao', cls: 'bg-primary/15 text-primary border-primary/35' },
+  critical: { label: 'Trùng lặp cao', cls: 'bg-destructive/15 text-destructive border-destructive/35' },
 };
 
 function riskLevelFromScore(score: number): PlagiarismRiskLevel {
@@ -96,26 +96,26 @@ function splitIgnoredPhraseInput(value: string) {
 }
 
 function scoreClass(score: number, similarity = false) {
-  if (similarity) return score >= 45 ? 'text-red-600' : score >= 20 ? 'text-amber-600' : 'text-primary';
-  return score >= 80 ? 'text-primary' : score >= 60 ? 'text-amber-600' : 'text-red-600';
+  if (similarity) return score >= 45 ? 'text-destructive' : score >= 20 ? 'text-foreground' : 'text-primary';
+  return score >= 80 ? 'text-primary' : score >= 60 ? 'text-foreground' : 'text-destructive';
 }
 
 function suspiciousHighlightClass(score: number) {
-  if (score >= 70) return 'rounded border border-red-300 bg-red-200 px-1 py-0.5 text-red-950';
-  if (score >= 45) return 'rounded border border-red-200 bg-red-100 px-1 py-0.5 text-red-900';
-  return 'rounded border border-red-200 bg-red-50 px-1 py-0.5 text-red-800';
+  if (score >= 70) return 'rounded border border-destructive/45 bg-destructive/25 px-1 py-0.5 text-foreground';
+  if (score >= 45) return 'rounded border border-destructive/35 bg-destructive/15 px-1 py-0.5 text-foreground';
+  return 'rounded border border-destructive/35 bg-destructive/10 px-1 py-0.5 text-foreground';
 }
 
 function topicHighlightClass(score: number) {
-  if (score >= 70) return 'rounded border border-amber-300 bg-amber-200 px-1 py-0.5 text-amber-950';
-  if (score >= 45) return 'rounded border border-amber-200 bg-amber-100 px-1 py-0.5 text-amber-900';
-  return 'rounded border border-amber-200 bg-amber-50 px-1 py-0.5 text-amber-800';
+  if (score >= 70) return 'rounded border border-warning/45 bg-warning/25 px-1 py-0.5 text-foreground';
+  if (score >= 45) return 'rounded border border-warning/35 bg-warning/15 px-1 py-0.5 text-foreground';
+  return 'rounded border border-warning/35 bg-warning/10 px-1 py-0.5 text-foreground';
 }
 
 function scoreBadgeClass(score: number) {
-  if (score >= 70) return 'border-0 bg-red-100 text-red-800';
-  if (score >= 45) return 'border-0 bg-orange-100 text-orange-800';
-  if (score >= 20) return 'border-0 bg-amber-100 text-amber-800';
+  if (score >= 70) return 'border-0 bg-destructive/15 text-destructive';
+  if (score >= 45) return 'border-0 bg-primary/15 text-primary';
+  if (score >= 20) return 'border-0 bg-warning/15 text-foreground';
   return 'border-0 bg-primary/10 text-primary';
 }
 
@@ -483,8 +483,8 @@ function plagiarismConclusion(report: PlagiarismReport, visibleMatchCount?: numb
 
     return {
       icon: 'warn' as const,
-      className: 'border-red-200 bg-red-50 text-red-950',
-      iconClassName: 'text-red-600',
+      className: 'border-destructive/35 bg-destructive/10 text-destructive',
+      iconClassName: 'text-destructive',
       label: 'Có dấu hiệu đạo văn, cần rà soát',
       description: `Nguy cơ đạo văn cao nhất là ${plagiarism}%. ${evidenceDescription}`,
       detail: `${sourceText}; độ độc đáo còn ${originality}%. Nên viết lại các đoạn được bôi đỏ trước khi sử dụng.`,
@@ -494,8 +494,8 @@ function plagiarismConclusion(report: PlagiarismReport, visibleMatchCount?: numb
   if (topicSimilarity >= 20 || topicMatchCount > 0) {
     return {
       icon: 'warn' as const,
-      className: 'border-amber-200 bg-amber-50 text-amber-950',
-      iconClassName: 'text-amber-600',
+      className: 'border-warning/35 bg-warning/10 text-foreground',
+      iconClassName: 'text-warning',
       label: 'Tương đồng chủ đề, chưa đủ bằng chứng đạo văn',
       description: `Nguy cơ đạo văn chỉ ${plagiarism}%, chưa có đoạn vượt ngưỡng ${threshold}%. Tương đồng chủ đề/từ khóa là ${topicSimilarity}%.`,
       detail: `${sourceText}; không xem overlap từ là đạo văn nếu exact/n-gram thấp.`,
@@ -505,8 +505,8 @@ function plagiarismConclusion(report: PlagiarismReport, visibleMatchCount?: numb
   if (loadedSources <= 0) {
     return {
       icon: 'warn' as const,
-      className: 'border-amber-200 bg-amber-50 text-amber-950',
-      iconClassName: 'text-amber-600',
+      className: 'border-warning/35 bg-warning/10 text-foreground',
+      iconClassName: 'text-warning',
       label: 'Chưa đủ dữ liệu để kết luận',
       description: 'Hệ thống chưa có nguồn nào để so khớp, nên chưa thể đánh giá đạo văn theo nguồn.',
       detail: sourceText,
@@ -987,7 +987,7 @@ export function CustomerPlagiarismCheck() {
                   <p>Tìm thấy {displayMatches.length} đoạn vượt ngưỡng và {displayTopicMatches.length} đoạn tương đồng chủ đề trong {result.wordCount} từ kiểm tra.</p>
                   <p>Chế độ: {SENSITIVITY[result.sensitivity].label}; {result.ignoreCommonPhrases ? 'đã bỏ qua cụm CTA/câu mẫu phổ biến' : 'không bỏ qua cụm phổ biến'}.</p>
                   <p>Embeddings: {result.analysis.embedding.provider}/{result.analysis.embedding.model}; đã so cosine {result.analysis.embedding.comparedCount}/{result.analysis.embedding.candidateCount} nguồn, điểm ngữ nghĩa cao nhất {result.analysis.embedding.maxSimilarityScore}%.</p>
-                  {result.analysis.embedding.error && <p className='text-amber-700'>Embedding fallback/lỗi: {result.analysis.embedding.error}.</p>}
+                  {result.analysis.embedding.error && <p className='text-foreground'>Embedding fallback/lỗi: {result.analysis.embedding.error}.</p>}
                   {result.ignoredPhrases.length > 0 && <p>Đoạn/cụm tự bỏ qua: {breakableShortList(result.ignoredPhrases, 3)}</p>}
                   {result.analysis.commonCrawl.enabled && (
                     <div className='space-y-2'>
@@ -1000,23 +1000,23 @@ export function CustomerPlagiarismCheck() {
                         </p>
                       )}
                       {result.analysis.commonCrawl.translationError && (
-                        <p className='text-amber-700'>Dịch query lỗi: {result.analysis.commonCrawl.translationError}.</p>
+                        <p className='text-foreground'>Dịch query lỗi: {result.analysis.commonCrawl.translationError}.</p>
                       )}
                       {result.analysis.commonCrawl.serpApiError && (
-                        <p className='text-amber-700'>SerpApi lỗi: {result.analysis.commonCrawl.serpApiError}.</p>
+                        <p className='text-foreground'>SerpApi lỗi: {result.analysis.commonCrawl.serpApiError}.</p>
                       )}
                       <p>
                         Common Crawl: {commonCrawlStatusLabel(result.analysis.commonCrawl.status)}; nguồn {sourceModeLabel(result.analysis.commonCrawl.sourceMode)}; đã kiểm {result.analysis.commonCrawl.checkedUrlCount}/{result.analysis.commonCrawl.targetUrlCount} URL{result.analysis.commonCrawl.skippedUrlCount ? `, bỏ qua ${result.analysis.commonCrawl.skippedUrlCount} URL do giới hạn` : ''}, {result.analysis.commonCrawl.cdxHitCount} CDX record{result.analysis.commonCrawl.cdxErrorCount ? `, ${result.analysis.commonCrawl.cdxErrorCount} CDX lỗi` : ''}, {result.analysis.commonCrawl.warcFetchCount} WARC fetch, {result.analysis.commonCrawl.liveFetchCount} live fetch, dùng {result.analysis.commonCrawl.candidateCount}/{result.analysis.commonCrawl.maxSnapshots || result.analysis.commonCrawl.candidateCount} nguồn web; thời gian {durationLabel(result.analysis.commonCrawl.elapsedMs)}/{durationLabel(result.analysis.commonCrawl.budgetMs)}; độ phủ {coverageLabel(result.analysis.commonCrawl.coverageLevel)}{result.analysis.commonCrawl.indexes.length ? `; index ${shortList(result.analysis.commonCrawl.indexes)}` : ''}.
                       </p>
                       <p>Kết luận chỉ dựa trên các URL SerpApi và nguồn web đã nạp, không phải toàn bộ web.</p>
                       {shouldShowCdxError(result.analysis.commonCrawl) && (
-                        <p className='text-amber-700'>CDX phản hồi lỗi gần nhất: {result.analysis.commonCrawl.lastCdxError}.</p>
+                        <p className='text-foreground'>CDX phản hồi lỗi gần nhất: {result.analysis.commonCrawl.lastCdxError}.</p>
                       )}
                       {result.analysis.commonCrawl.budgetExhausted && (
-                        <p className='text-amber-700'>Common Crawl đã dừng do hết ngân sách thời gian; kết quả chỉ phản ánh các URL/snapshot đã kịp kiểm.</p>
+                        <p className='text-foreground'>Common Crawl đã dừng do hết ngân sách thời gian; kết quả chỉ phản ánh các URL/snapshot đã kịp kiểm.</p>
                       )}
                       {result.analysis.commonCrawl.coverageLevel !== 'good' && (
-                        <p className='text-amber-700'>{coverageWarning(result.analysis.commonCrawl.coverageLevel, result.analysis.commonCrawl.candidateCount)}</p>
+                        <p className='text-foreground'>{coverageWarning(result.analysis.commonCrawl.coverageLevel, result.analysis.commonCrawl.candidateCount)}</p>
                       )}
                       {result.analysis.commonCrawl.serpApiQueryCount > 0 && result.analysis.commonCrawl.searchQueries.length > 0 && (
                         <p>SerpApi query đã chạy: {breakableShortList(result.analysis.commonCrawl.searchQueries.slice(0, Math.max(1, result.analysis.commonCrawl.serpApiQueryCount)), 2)}</p>
@@ -1041,8 +1041,8 @@ export function CustomerPlagiarismCheck() {
                       )}
                     </div>
                   )}
-                  {result.analysis.commonCrawl.status === 'error' && result.analysis.commonCrawl.error && <p className='text-red-700'>Common Crawl lỗi: {result.analysis.commonCrawl.error}</p>}
-                  {result.analysis.unavailableSourceTypes.length > 0 && <p className='text-amber-700'>Chưa khả dụng: {result.analysis.unavailableSourceTypes.map(sourceTypeLabel).join(', ')}.</p>}
+                  {result.analysis.commonCrawl.status === 'error' && result.analysis.commonCrawl.error && <p className='text-destructive'>Common Crawl lỗi: {result.analysis.commonCrawl.error}</p>}
+                  {result.analysis.unavailableSourceTypes.length > 0 && <p className='text-foreground'>Chưa khả dụng: {result.analysis.unavailableSourceTypes.map(sourceTypeLabel).join(', ')}.</p>}
                 </div>
               </div>
             </div>
@@ -1052,19 +1052,19 @@ export function CustomerPlagiarismCheck() {
           <Card className='p-5'>
             <h2 className='mb-4 flex items-center gap-2 font-semibold text-foreground'><FileText className='h-4 w-4 text-primary' /> Văn bản đã kiểm tra</h2>
             <div className='mb-3 flex flex-wrap gap-2 text-xs text-muted-foreground'>
-              <span className='inline-flex items-center gap-1'><span className='h-2.5 w-2.5 rounded bg-red-200 ring-1 ring-red-300' /> Nghi đạo văn</span>
-              <span className='inline-flex items-center gap-1'><span className='h-2.5 w-2.5 rounded bg-amber-200 ring-1 ring-amber-300' /> Tương đồng chủ đề/từ khóa</span>
+              <span className='inline-flex items-center gap-1'><span className='h-2.5 w-2.5 rounded bg-destructive/25 ring-1 ring-destructive/45' /> Nghi đạo văn</span>
+              <span className='inline-flex items-center gap-1'><span className='h-2.5 w-2.5 rounded bg-warning/25 ring-1 ring-warning/45' /> Tương đồng chủ đề/từ khóa</span>
             </div>
             <div className='max-h-[300px] overflow-auto whitespace-pre-wrap rounded-lg border bg-background p-4 text-sm leading-7 text-foreground'>{renderHighlightedText(result.checkText, displayMatches, displayTopicMatches, result.ignoredPhrases)}</div>
             {displayMatches.length > 0 ? (
               <div className='mt-4 space-y-3'>
                 <h3 className='text-sm font-semibold text-foreground'>Đoạn có khả năng đạo văn</h3>
                 {displayMatches.map((match, index) => (
-                  <div key={`${match.start}-${match.end}-${index}`} className='rounded-lg border border-red-100 bg-red-50/50 p-4'>
+                  <div key={`${match.start}-${match.end}-${index}`} className='rounded-lg border border-destructive/25 bg-destructive/10 p-4'>
                     <div className='flex flex-wrap items-center justify-between gap-2'>
                       <div>
-                        <p className='text-sm font-semibold text-red-950'>Đoạn {index + 1}: {basisLabel(match.scoreBasis)}</p>
-                        <p className='mt-1 text-xs text-red-800'>{basisDescription(match.scoreBasis)}</p>
+                        <p className='text-sm font-semibold text-destructive'>Đoạn {index + 1}: {basisLabel(match.scoreBasis)}</p>
+                        <p className='mt-1 text-xs text-destructive'>{basisDescription(match.scoreBasis)}</p>
                       </div>
                       <Badge className={scoreBadgeClass(match.score)}>{match.score}%</Badge>
                     </div>
@@ -1090,11 +1090,11 @@ export function CustomerPlagiarismCheck() {
               <div className='mt-4 space-y-3'>
                 <h3 className='text-sm font-semibold text-foreground'>Đoạn tương đồng chủ đề/từ khóa</h3>
                 {displayTopicMatches.map((match, index) => (
-                  <div key={`topic-${match.start}-${match.end}-${index}`} className='rounded-lg border border-amber-100 bg-amber-50/60 p-4'>
+                  <div key={`topic-${match.start}-${match.end}-${index}`} className='rounded-lg border border-warning/25 bg-warning/10 p-4'>
                     <div className='flex flex-wrap items-center justify-between gap-2'>
                       <div>
-                        <p className='text-sm font-semibold text-amber-950'>Đoạn {index + 1}: {basisLabel(match.scoreBasis)}</p>
-                        <p className='mt-1 text-xs text-amber-800'>Đoạn này có nhiều từ khóa/chủ đề giống nguồn, nhưng chưa đủ exact/n-gram/embedding để kết luận đạo văn.</p>
+                        <p className='text-sm font-semibold text-foreground'>Đoạn {index + 1}: {basisLabel(match.scoreBasis)}</p>
+                        <p className='mt-1 text-xs text-foreground'>Đoạn này có nhiều từ khóa/chủ đề giống nguồn, nhưng chưa đủ exact/n-gram/embedding để kết luận đạo văn.</p>
                       </div>
                       <Badge className={scoreBadgeClass(match.score)}>{match.score}%</Badge>
                     </div>
@@ -1118,7 +1118,7 @@ export function CustomerPlagiarismCheck() {
         )}
         {result && (
           <Card className='p-5'>
-            <h2 className='mb-4 flex items-center gap-2 font-semibold text-foreground'><AlertTriangle className='h-4 w-4 text-amber-600' /> Nguồn tương đồng ({displaySources.length})</h2>
+            <h2 className='mb-4 flex items-center gap-2 font-semibold text-foreground'><AlertTriangle className='h-4 w-4 text-warning' /> Nguồn tương đồng ({displaySources.length})</h2>
             <div className='space-y-3'>
               {displaySources.length === 0 ? (
                 <p className='rounded-lg border border-dashed p-4 text-sm text-muted-foreground'>Không tìm thấy nguồn tương đồng đáng kể.</p>

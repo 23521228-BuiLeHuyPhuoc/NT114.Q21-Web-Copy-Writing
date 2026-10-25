@@ -125,7 +125,7 @@ export function ForgotPasswordPage() {
     email: { icon: Mail,       iconBg: 'bg-primary/10',   iconColor: 'text-primary',   title: 'Quên mật khẩu?',            sub: 'Nhập email để nhận mã OTP xác nhận' },
     otp:   { icon: KeyRound,   iconBg: 'bg-primary/10',   iconColor: 'text-primary',   title: 'Nhập mã OTP',               sub: `Mã 6 chữ số đã gửi đến ${email}` },
     reset: { icon: KeyRound,   iconBg: 'bg-primary/10',   iconColor: 'text-primary',   title: 'Đặt mật khẩu mới',        sub: 'Chọn mật khẩu an toàn, ít nhất 8 ký tự' },
-    done:  { icon: CheckCircle2, iconBg: 'bg-emerald-100', iconColor: 'text-emerald-600', title: 'Đổi mật khẩu thành công!', sub: 'Bạn có thể đăng nhập với mật khẩu mới' },
+    done:  { icon: CheckCircle2, iconBg: 'bg-success/15', iconColor: 'text-success', title: 'Đổi mật khẩu thành công!', sub: 'Bạn có thể đăng nhập với mật khẩu mới' },
   };
 
   const cfg = STEP_CONFIG[step];
@@ -142,7 +142,7 @@ export function ForgotPasswordPage() {
           <ArrowLeft className="w-4 h-4" /> Quay lại đăng nhập
         </Link>
 
-        <div className="bg-card rounded-3xl shadow-xl shadow-primary/20 border border-border p-8">
+        <div className="bg-card rounded-md shadow-xl shadow-primary/20 border border-border p-8">
           {/* Logo */}
           <div className="flex justify-center mb-8">
             <Link to="/" className="inline-flex items-center hover:opacity-80 transition-opacity">
@@ -151,7 +151,7 @@ export function ForgotPasswordPage() {
           </div>
 
           {/* Step icon */}
-          <div className={`w-16 h-16 ${cfg.iconBg} rounded-2xl flex items-center justify-center mx-auto mb-5`}>
+          <div className={`w-16 h-16 ${cfg.iconBg} rounded-md flex items-center justify-center mx-auto mb-5`}>
             <Icon className={`w-8 h-8 ${cfg.iconColor}`} />
           </div>
 
@@ -166,7 +166,7 @@ export function ForgotPasswordPage() {
               <div>
                 <Label className="text-foreground/80 mb-2 block">Email đã đăng ký</Label>
                 <Input type="email" placeholder="Nhập email đã đăng ký" {...emailForm.register('email', { validate: validateEmail })} className="h-12 rounded-xl border-border focus:border-primary" />
-                {emailForm.formState.errors.email && <p className="text-xs text-red-600 mt-1">{emailForm.formState.errors.email.message}</p>}
+                {emailForm.formState.errors.email && <p className="text-xs text-destructive mt-1">{emailForm.formState.errors.email.message}</p>}
               </div>
               <button type="submit" disabled={isLoading || emailForm.formState.isSubmitting} className="h-12 w-full rounded-md bg-primary text-sm font-bold text-primary-foreground shadow-[4px_4px_0_rgba(23,32,51,.18)] transition-colors hover:bg-primary/90 disabled:opacity-60">
                 {isLoading ? 'Đang gửi...' : 'Gửi mã OTP →'}
@@ -218,7 +218,7 @@ export function ForgotPasswordPage() {
               <div>
                 <Label className="text-foreground/80 mb-2 block">Mật khẩu mới</Label>
                 <Input type="password" placeholder="Ít nhất 8 ký tự" {...resetForm.register('newPass', { validate: validateStrongPassword })} className="h-12 rounded-xl border-border focus:border-primary" />
-                {resetForm.formState.errors.newPass && <p className="text-xs text-red-600 mt-1">{resetForm.formState.errors.newPass.message}</p>}
+                {resetForm.formState.errors.newPass && <p className="text-xs text-destructive mt-1">{resetForm.formState.errors.newPass.message}</p>}
                 {newPassword && (
                   <div className="grid grid-cols-2 gap-2 mt-2">
                     {AUTH_PASSWORD_RULES.map((rule) => (
@@ -233,7 +233,7 @@ export function ForgotPasswordPage() {
               <div>
                 <Label className="text-foreground/80 mb-2 block">Xác nhận mật khẩu mới</Label>
                 <Input type="password" placeholder="Nhập lại mật khẩu" {...resetForm.register('confirmPass', { validate: (value) => validateConfirmPassword(value, resetForm.watch('newPass')) })} className="h-12 rounded-xl border-border focus:border-primary" />
-                {resetForm.formState.errors.confirmPass && <p className="text-xs text-red-600 mt-1">{resetForm.formState.errors.confirmPass.message}</p>}
+                {resetForm.formState.errors.confirmPass && <p className="text-xs text-destructive mt-1">{resetForm.formState.errors.confirmPass.message}</p>}
               </div>
               <button type="submit" disabled={isLoading || resetForm.formState.isSubmitting} className="h-12 w-full rounded-md bg-primary text-sm font-bold text-primary-foreground shadow-[4px_4px_0_rgba(23,32,51,.18)] transition-colors hover:bg-primary/90 disabled:opacity-60">
                 {isLoading ? 'Đang đặt lại...' : 'Đặt lại mật khẩu →'}

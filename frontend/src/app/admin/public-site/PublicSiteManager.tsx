@@ -300,7 +300,7 @@ export function PublicSiteManager() {
                 <div className="max-w-lg">
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-foreground">{post.title}</span>
-                    {post.featured && <Badge className="border-0 bg-warning/15 text-amber-800">Featured</Badge>}
+                    {post.featured && <Badge className="border-0 bg-warning/15 text-foreground">Featured</Badge>}
                   </div>
                   <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">/{post.slug} - {post.excerpt}</p>
                 </div>
@@ -308,12 +308,12 @@ export function PublicSiteManager() {
               <TableCell><Badge className="border-0 bg-primary/10 text-primary">{post.catLabel}</Badge></TableCell>
               <TableCell className="text-sm text-foreground/70">{post.author}</TableCell>
               <TableCell className="text-sm text-muted-foreground">{post.date}</TableCell>
-              <TableCell>{post.published === false ? <Badge variant="outline">Ẩn</Badge> : <Badge className="border-0 bg-emerald-100 text-emerald-700">Hiện</Badge>}</TableCell>
+              <TableCell>{post.published === false ? <Badge variant="outline">Ẩn</Badge> : <Badge className="border-0 bg-success/15 text-success">Hiện</Badge>}</TableCell>
               <TableCell>
                 <div className="flex justify-end gap-1">
                   <Link to={`/blog/${post.slug}`} className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"><Eye className="h-3.5 w-3.5" /></Link>
                   <Link to={`/admin/public-site/blog/${post.slug}`} className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-primary/5 hover:text-primary"><Edit2 className="h-3.5 w-3.5" /></Link>
-                  <button onClick={() => removePost(post)} className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-red-500"><Trash2 className="h-3.5 w-3.5" /></button>
+                  <button onClick={() => removePost(post)} className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
                 </div>
               </TableCell>
             </TableRow>
@@ -339,7 +339,7 @@ export function PublicSiteManager() {
         <div className="mb-6 grid grid-cols-2 gap-4 min-[1000px]:grid-cols-3">
           <StatTile icon={Globe2} label="Trang quản lý" value={PUBLIC_PAGE_FIELD_DEFS.length} color="text-primary bg-primary/5" />
           <StatTile icon={Newspaper} label="Bài blog" value={blogPosts.length} color="text-primary bg-primary/5" />
-          <StatTile icon={FileText} label="Đang hiển thị" value={visibleBlogCount} color="text-emerald-700 bg-emerald-100" />
+          <StatTile icon={FileText} label="Đang hiển thị" value={visibleBlogCount} color="text-success bg-success/15" />
         </div>
 
         <div className="mb-6 flex flex-wrap gap-2 rounded-xl border border-border bg-card p-1">
