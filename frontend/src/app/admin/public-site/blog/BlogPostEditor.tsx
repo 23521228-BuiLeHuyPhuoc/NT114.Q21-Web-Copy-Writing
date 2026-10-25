@@ -213,7 +213,7 @@ export function BlogPostEditor({ slug, mode }: BlogPostEditorProps) {
             </Link>
           </Card>
         ) : (
-          <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
+          <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
             <div className="space-y-5">
               <Card className="p-5">
                 <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_260px]">

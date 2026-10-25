@@ -229,7 +229,7 @@ export function CustomerDashboard() {
           })}
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(330px,.65fr)]">
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(330px,.65fr)]">
           <div className="space-y-6">
             <Card className="overflow-hidden border-2 border-foreground">
               <div className="flex items-center justify-between border-b-2 border-foreground bg-foreground px-5 py-3 text-background">

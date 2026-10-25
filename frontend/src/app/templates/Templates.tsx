@@ -211,7 +211,7 @@ export function CustomerTemplates() {
             </div>
           </Card>
 
-          <div className="grid gap-5 lg:grid-cols-[220px_minmax(0,1fr)]">
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-[220px_minmax(0,1fr)]">
             <aside className="h-fit border-2 border-foreground bg-card p-3 lg:sticky lg:top-24">
               <p className="px-2 pb-3 text-xs font-bold uppercase tracking-[.06em] text-muted-foreground">Danh mục</p>
               <div className="space-y-1">
@@ -226,7 +226,7 @@ export function CustomerTemplates() {
               {isLoading && <Card className="paper-noise p-8 text-sm text-muted-foreground">Đang mở kho template...</Card>}
               {error && <Card className="flex-row items-center gap-2 border-destructive/40 p-4 text-sm text-destructive"><AlertCircle className="h-4 w-4" /> Không thể tải template API. Kiểm tra backend hoặc đăng nhập lại.</Card>}
               {!isLoading && !error && visibleTemplates.length === 0 && <EditorialEmptyState title="Chưa có mẫu phù hợp" description="Thử danh mục hoặc từ khóa khác. Các mẫu từ backend sẽ xuất hiện tại đây." />}
-              {visibleTemplates.length > 0 && <div className="grid gap-5 xl:grid-cols-2">{visibleTemplates.map((template) => <TemplateCard key={template.id} template={template} />)}</div>}
+              {visibleTemplates.length > 0 && <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">{visibleTemplates.map((template) => <TemplateCard key={template.id} template={template} />)}</div>}
             </div>
           </div>
         </div>

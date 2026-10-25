@@ -552,7 +552,7 @@ export function AdminPermissions() {
         </Card>
 
         {managementView === 'groups' ? (
-          <div className="grid gap-5 xl:grid-cols-[minmax(300px,360px)_1fr]">
+          <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(300px,360px)_1fr]">
             <div className="space-y-5">
               <Card className="gap-4 p-5">
                 <div className="flex items-start justify-between gap-3">
@@ -784,7 +784,7 @@ export function AdminPermissions() {
             </Card>
           </div>
         ) : (
-          <div className="grid gap-5 xl:grid-cols-[minmax(300px,360px)_1fr]">
+          <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(300px,360px)_1fr]">
             <div className="space-y-5">
               <Card className="gap-4 p-5">
                 <div className="flex items-center gap-2">
