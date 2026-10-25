@@ -5,7 +5,8 @@ import { PublicNavbar } from '@/app/components/public/PublicNavbar';
 import { PublicFooter } from '@/app/components/public/PublicFooter';
 import { AIDemoSection } from '@/app/components/public/AIDemoSection';
 import { PublicRichText } from '@/app/components/public/PublicRichText';
-import { EditorialGlyph, ManuscriptHeroArtwork } from '@/app/components/EditorialArtwork';
+import { EditorialGlyph } from '@/app/components/EditorialArtwork';
+import { HeroGeneratorDemo } from '@/app/components/public/HeroGeneratorDemo';
 import { getPublicText } from '@/lib/publicSiteDefaults';
 import { publicSiteService, type PublicPageContent } from '@/services/publicSiteService';
 
@@ -107,7 +108,7 @@ export function LandingPage() {
             </div>
 
             <div className="editorial-reveal-delay lg:-mr-10">
-              <ManuscriptHeroArtwork />
+              <HeroGeneratorDemo />
             </div>
           </div>
 

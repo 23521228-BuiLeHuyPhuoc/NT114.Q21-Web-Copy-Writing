@@ -17,6 +17,18 @@
   46%, 100% { opacity: 0; }
 }
 
+@keyframes editorial-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .35; transform: scale(.75); }
+}
+
+.editorial-demo-caret { animation: cursor-blink 1s steps(1) infinite; }
+.editorial-demo-pulse { animation: editorial-pulse 1.2s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .editorial-demo-caret, .editorial-demo-pulse { animation: none; }
+}
+
 html {
   scroll-behavior: smooth;
   font-family: var(--font-sans);

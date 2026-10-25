@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from '@/lib/next-router-compat';
-import { ArrowUpRight, Mail } from 'lucide-react';
+import { ArrowUpRight, Mail, MapPin, Phone } from 'lucide-react';
 import { BrandLogo } from '@/app/components/BrandLogo';
 import { PublicRichText } from '@/app/components/public/PublicRichText';
 import { getPublicText } from '@/lib/publicSiteDefaults';
@@ -34,6 +34,8 @@ export function PublicFooter() {
   const footerBrandDescription = getPublicText(footerContent, 'brandDescription', 'CopyPro là studio AI hỗ trợ đội ngũ nội dung đi từ brief đến bản copy có thể tiếp tục chỉnh sửa, lưu trữ và quản lý.');
   const footerEmail = getPublicText(footerContent, 'email', PUBLIC_SUPPORT_EMAIL);
   const footerCopyright = getPublicText(footerContent, 'copyright', '© 2026 CopyPro.');
+  const footerPhone = getPublicText(footerContent, 'phone', '');
+  const footerAddress = getPublicText(footerContent, 'address', '');
 
   return (
     <footer className="border-t-2 border-foreground bg-foreground text-background">
@@ -82,6 +84,17 @@ export function PublicFooter() {
             <a href={`mailto:${footerEmail}`} className="mt-4 inline-flex items-center gap-2 text-sm text-background/70 hover:text-accent">
               <Mail className="h-4 w-4" /> {footerEmail}
             </a>
+            {footerPhone && (
+              <a href={`tel:${footerPhone.replace(/[^\d+]/g, '')}`} className="mt-3 flex items-center gap-2 text-sm text-background/70 hover:text-accent">
+                <Phone className="h-4 w-4" /> {footerPhone}
+              </a>
+            )}
+            {footerAddress && (
+              <div className="mt-3 flex items-start gap-2 text-sm text-background/70">
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
+                <PublicRichText content={footerContent} field="address" fallback={footerAddress} className="[&_a]:text-accent [&_a]:underline" />
+              </div>
+            )}
           </div>
         </div>
 
