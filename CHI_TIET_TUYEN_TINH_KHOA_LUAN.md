@@ -2,7 +2,7 @@
 
 **Đề tài:** Phương pháp kiểm chứng tuyên bố về thông số kỹ thuật có điều kiện ràng buộc trong quảng cáo  
 **Sinh viên:** Bùi Lê Huy Phước (23521228) · **CBHD** (cán bộ hướng dẫn): ThS Trần Hồng Nghi · **Hạn nộp:** 31/12/2026  
-Kế hoạch bám theo [đề cương bản cuối](de_cuong/23521228_BuiLeHuyPhuoc_DeCuongKLTN.pdf) ngày 11/10/2026. Cập nhật lần cuối: 11/10/2026.
+Kế hoạch bám theo [đề cương bản cuối](de_cuong/23521228_BuiLeHuyPhuoc_DeCuongKLTN.pdf) ngày 11/10/2026. Cập nhật lần cuối: 13/10/2026.
 
 > **Cách dùng file này**
 >
@@ -345,21 +345,26 @@ Kế hoạch bám theo [đề cương bản cuối](de_cuong/23521228_BuiLeHuyPh
 
 **Ngày:** Thứ Bảy 24/10 – Chủ nhật 25/10 · **Thời lượng:** khoảng 6 giờ · **Thuộc:** Nội dung 1 (dữ liệu)
 
+> Repo CopyPro vẫn đang được sửa trên `main` (commit `a62c31f` ngày 13/10/2026 đổi cách lưu bài). Tạo nhánh `kiem-chung-thong-so` từ `main` mới nhất và đối chiếu lại các đường dẫn ở [T7.3](#t7-3) trước khi sửa.
+
 **Để làm gì.** Sinh quảng cáo đúng như CopyPro sinh, và ghi lại mọi thứ để chạy lại được.
 
 **Việc cần làm**
 
-- [ ] Thêm hai mô hình vào CopyPro (repo `NT114.Q21-Web-Copy-Writing`, làm trên nhánh `kiem-chung-thong-so` như [T7.3](#t7-3)), khai báo trong `backend/src/config/generatorModels.js` và bảng ánh xạ trong `backend/src/services/aiService.js`:
-  - GPT-OSS 120B qua Groq, mã `openai/gpt-oss-120b`;
-  - Gemini 3.6 Flash, mã `gemini-3.6-flash`. Trang mô hình của Google ngày 11/10/2026 ghi đây là bản ổn định thế hệ trước, nên phải lưu tên và phiên bản mô hình ở mọi lần gọi (rủi ro ngừng phục vụ ở [T9.1](#t9-1)).
-- [ ] Viết `src/kiemchung/sinh_quang_cao.py` **gọi chính CopyPro**: chạy backend CopyPro trên máy, đăng nhập bằng một tài khoản thử, rồi gọi `POST /api/contents/generate` với các trường như người dùng nhập trên giao diện. Nhờ vậy quảng cáo đúng là "do CopyPro tạo": đi qua câu lệnh của giao diện, câu lệnh hệ thống và tham số mà backend tự thêm (ở commit `09a35a5`, backend thêm câu lệnh hệ thống và đặt nhiệt độ 0,75, top-p 0,9 khi gọi Gemini và Groq).
-- [ ] Phương án dự phòng nếu không chạy được backend: chép `buildPrompt()` (giao diện), `getProviderPrompt()`, câu lệnh hệ thống và tham số (backend) sang Python; kiểm thử so khớp từng ký tự; ghi trong khóa luận là "sinh bằng câu lệnh và tham số của CopyPro qua script".
+- [ ] Thêm hai mô hình vào CopyPro (repo `NT114.Q21-Web-Copy-Writing`, nhánh `kiem-chung-thong-so`, các tệp ở [T7.3](#t7-3)):
+  - GPT-OSS 120B qua Groq: mã trong CopyPro `groq-gpt-oss-120b`, ánh xạ sang `openai/gpt-oss-120b`. Mã phải bắt đầu bằng `groq-` thì backend mới gửi sang Groq;
+  - Gemini 3.6 Flash: mã trong CopyPro `gemini-3-6-flash`, ánh xạ sang `gemini-3.6-flash`. Trang mô hình của Google ngày 11/10/2026 ghi đây là bản ổn định thế hệ trước, nên phải lưu tên và phiên bản mô hình ở mọi lần gọi (rủi ro ngừng phục vụ ở [T9.1](#t9-1));
+  - khai báo ở 5 tệp: `backend/src/config/generatorModels.js`, `backend/src/services/aiService.js` (`GEMINI_MODEL_MAP`, `GROQ_MODEL_MAP`), `backend/src/utils/modelDisplayName.js`, `frontend/src/lib/generatorConfig.ts` (danh sách mô hình trên giao diện) và `frontend/src/lib/modelDisplayName.ts`;
+  - thêm hai mã mới vào gói Pro ở trang quản trị: gói lưu sẵn danh sách mô hình trong CSDL nên không tự cập nhật, thiếu bước này API trả lỗi 403;
+  - để trống `GROQ_MODEL` ở cả `.env` lẫn trang cài đặt của quản trị: nếu có giá trị thì mọi lần gọi Groq đều dùng mô hình đó, bất kể chọn mô hình nào.
+- [ ] Viết `src/kiemchung/sinh_quang_cao.py` **gọi chính CopyPro**: chạy backend CopyPro trên máy, đăng nhập qua `POST /api/auth/user/login` bằng tài khoản gói Pro (ví dụ tài khoản demo `customer@copypro.vn` do `yarn seed` của backend tạo trên CSDL ở máy; gói Free chỉ cho 30 bài mỗi tháng và chỉ dùng `gemini-flash-lite`), rồi gọi `POST /api/contents/generate`. API này nhận câu lệnh đã ghép sẵn ở giao diện chứ không nhận từng ô nhập, nên script ghép câu lệnh y như hàm `buildPrompt()` trong `frontend/src/app/generate/Generator.tsx` và gửi kèm các trường giao diện gửi (`type`, `industry`, `tone`, `language`, `model`, `length`, `variations`, `maxOutputTokens`). Nhờ vậy quảng cáo đúng là "do CopyPro tạo": đi qua câu lệnh của giao diện, câu lệnh hệ thống và tham số mà backend tự thêm (nhiệt độ 0,75, top-p 0,9 khi gọi Gemini và Groq). Mỗi lần sinh, CopyPro tự lưu bài vào thư viện của tài khoản; lưu lại mã bài (`item.id`) mà API trả về.
+- [ ] Phương án dự phòng nếu không chạy được backend: chép thêm `getProviderPrompt()`, câu lệnh hệ thống và tham số của backend (`backend/src/services/aiService.js`) sang Python rồi gọi thẳng API của Google và Groq; kiểm thử so khớp từng ký tự; ghi trong khóa luận là "sinh bằng câu lệnh và tham số của CopyPro qua script".
 - [ ] Dùng thiết lập ở [T3.3](#t3-3); chốt điểm 7 và 13 ở [T10](#t10).
-- [ ] Mỗi lần gọi lưu đầu vào, đầu ra, mô hình, tham số và thời điểm. Sinh thử 2–3 bài bằng giao diện CopyPro để đối chiếu với bài sinh qua script.
+- [ ] Mỗi lần gọi lưu đầu vào, đầu ra, mô hình, tham số, thời điểm và mã bài trên CopyPro. Sinh thử 2–3 bài bằng giao diện CopyPro với cùng đầu vào: trường `prompt` CopyPro lưu cho mỗi bài phải trùng từng ký tự với câu lệnh script ghép. Thử vài bài với GPT-OSS 120B xem có bị cụt không (mô hình này suy luận trước khi viết, còn CopyPro giới hạn 1.800 token cho độ dài vừa); nếu bị cụt thì ghi vào nhật ký và chốt cách xử lý trước Bước 12.
 
-**Làm ra:** `src/kiemchung/sinh_quang_cao.py`; hai mô hình mới trong CopyPro.
+**Làm ra:** `src/kiemchung/sinh_quang_cao.py`; hai mô hình mới trong CopyPro (nhánh `kiem-chung-thong-so`).
 
-**Xong khi:** gọi được cả hai mô hình qua CopyPro; mỗi lần gọi được lưu đủ thông tin.
+**Xong khi:** gọi được cả hai mô hình qua CopyPro; câu lệnh script ghép trùng từng ký tự với câu lệnh CopyPro lưu; mỗi lần gọi được lưu đủ thông tin.
 
 **Tra cứu:** [T3.3](#t3-3) (thiết lập sinh quảng cáo), [T7](#t7) (CopyPro), [T10](#t10).
 
@@ -986,17 +991,19 @@ Kế hoạch bám theo [đề cương bản cuối](de_cuong/23521228_BuiLeHuyPh
 
 **Ngày:** Thứ Tư 09/12 – Thứ Bảy 12/12 · **Thời lượng:** khoảng 16 giờ · **Thuộc:** Nội dung 4 (CopyPro)
 
+> Trước khi bắt đầu, gộp `main` mới nhất của CopyPro vào nhánh `kiem-chung-thong-so`, vì `main` vẫn đang được sửa ở chính các tệp bước này đụng tới (`Generator.tsx`, `GeneratorResults.tsx`, `ContentDetail.tsx`).
+
 **Để làm gì.** Đưa tính năng "Kiểm chứng thông số" vào CopyPro (Nội dung 4).
 
 **Việc cần làm**
 
-- [ ] Backend theo [T7.3](#t7-3): thêm tuyến `POST /api/contents/:id/verify-specs`; dịch vụ `specVerificationService.js` gọi API kiểm chứng của Bước 34, giới hạn thời gian 60 giây; lưu kết quả vào `Content.specVerification`.
-- [ ] Giao diện theo [T7.4](#t7-4): nút "Kiểm chứng thông số" và ô chọn mẫu sản phẩm, đặt cạnh điểm chất lượng và kết quả kiểm tra đạo văn; bảng kết quả tô màu theo nhãn, luôn có chữ tên nhãn; mỗi tuyên bố xem được đoạn nguồn và lý do.
-- [ ] Trang chi tiết nội dung hiển thị kết quả đã lưu.
+- [ ] Backend theo [T7.3](#t7-3): thêm tuyến `POST /api/contents/:id/verify-specs`; dịch vụ `specVerificationService.js` đổi nội dung bài (lưu dạng HTML) sang chữ thường, gọi API kiểm chứng của Bước 34 với giới hạn thời gian 60 giây, rồi lưu kết quả vào `Content.specVerification`; thêm trường này vào hàm `serializeContent` trong `backend/src/services/contentService.js`, nếu không giao diện không nhận được kết quả.
+- [ ] Giao diện theo [T7.4](#t7-4): nút "Kiểm chứng thông số" và ô chọn mẫu sản phẩm đặt trong `GeneratorResults.tsx`, cạnh điểm chất lượng và tỷ lệ đạo văn; bảng kết quả tô màu theo nhãn, luôn có chữ tên nhãn; mỗi tuyên bố xem được đoạn nguồn và lý do. Chỉ kiểm phiên bản đang chọn: nếu phiên bản này chưa được lưu thành bài riêng thì lưu trước bằng `persistGeneratedContent()` rồi gọi `verify-specs` với mã bài đó; không kiểm "bản gộp gốc" mà CopyPro tự lưu khi sinh, vì bản này chứa mọi phiên bản.
+- [ ] Trang chi tiết nội dung hiển thị kết quả đã lưu. Thêm kiểm thử cho nút kiểm chứng và chạy `yarn test` ở `frontend/`: repo đã có kiểm thử tích hợp cho trang tạo bài, trang chi tiết và việc lưu bài, các kiểm thử này phải vẫn qua.
 
 **Làm ra:** nhánh `kiem-chung-thong-so` trong repo CopyPro.
 
-**Xong khi:** chạy được trên máy: tạo quảng cáo → chọn mẫu → kiểm chứng → xem và lưu kết quả.
+**Xong khi:** chạy được trên máy: tạo quảng cáo → chọn mẫu → kiểm chứng → xem và lưu kết quả; `yarn test` ở frontend qua hết.
 
 **Tra cứu:** [T7](#t7) (tích hợp vào CopyPro).
 
@@ -1512,8 +1519,9 @@ Tên thư mục và tệp mã nguồn viết không dấu để tránh lỗi tr�
 | Chế độ | `ten`: chỉ nhập tên sản phẩm; `ten_thong_so`: nhập thêm đoạn thông số chính hãng vào ô "Thông tin bổ sung" | Đề cương |
 | Từ khóa | Để trống, để chế độ `ten` đúng là "chỉ nhập tên sản phẩm". Chỉ khi Bước 16 thấy quá ít tuyên bố mới điền tên các nhóm thông số, không kèm con số, cho mọi bài | Đề xuất; phương án rủi ro trong đề cương; điểm 13 ở [T10](#t10) |
 | Giọng văn, độ dài | `professional` (Chuyên nghiệp), `medium` | Đề xuất, chốt ở Bước 11 |
-| Nhiệt độ và tham số khác | Giữ nguyên tham số backend CopyPro tự đặt (ở commit `09a35a5`: nhiệt độ 0,75 và top-p 0,9 khi gọi Gemini và Groq) | Mã nguồn CopyPro |
-| Cách gọi | API `POST /api/contents/generate` của backend CopyPro | Bước 11 |
+| Các ô khác trên giao diện | Đối tượng mục tiêu để trống; thanh nhiệt độ giữ 0,7; giới hạn đầu ra 1.800 token (mặc định của độ dài vừa). Các giá trị này được ghi thẳng vào câu lệnh nên script phải dùng đúng như vậy | Mã nguồn CopyPro (`buildPrompt()` trong `Generator.tsx`) |
+| Nhiệt độ và tham số khác | Giữ nguyên tham số backend CopyPro tự đặt: nhiệt độ 0,75 và top-p 0,9 khi gọi Gemini và Groq (không đổi từ commit `09a35a5` đến `4489632`) | Mã nguồn CopyPro |
+| Cách gọi | API `POST /api/contents/generate` của backend CopyPro, đăng nhập bằng tài khoản gói Pro; câu lệnh ghép như `buildPrompt()` của giao diện | Bước 11 |
 | Số phiên bản mỗi lần gọi | 1, để mỗi lần gọi là một bài | Đề xuất, điểm 7 ở [T10](#t10) |
 
 <a id="t3-4"></a>
@@ -2011,7 +2019,7 @@ Giả thuyết được kiểm trên tuyên bố từ quảng cáo thông thư�
 
 ### T7. Tích hợp vào CopyPro
 
-CopyPro là repo `23521228-BuiLeHuyPhuoc/NT114.Q21-Web-Copy-Writing` (Next.js, Express, MongoDB). Các đường dẫn tệp dưới đây khớp mã nguồn ở commit `09a35a5`.
+CopyPro là repo `23521228-BuiLeHuyPhuoc/NT114.Q21-Web-Copy-Writing` (Next.js, Express, MongoDB). Các đường dẫn tệp dưới đây khớp mã nguồn ở commit `4489632` (13/10/2026). So với `09a35a5`, commit `a62c31f` chỉ đổi giao diện: bấm "Lưu" giờ lưu phiên bản đang chọn thành một bài riêng dạng HTML (`persistGeneratedContent.ts`), còn "bản gộp gốc" chứa mọi phiên bản vẫn được tự lưu khi sinh; backend không đổi. Repo vẫn đang được sửa trên `main`, nên đối chiếu lại các đường dẫn này ở Bước 11 và trước Bước 40.
 
 <a id="t7-1"></a>
 
@@ -2026,8 +2034,8 @@ flowchart LR
     BE -->|"5. Hiển thị"| UI
 ```
 
-1. Người dùng chọn mẫu sản phẩm và bấm "Kiểm chứng thông số"; trình duyệt gửi `POST /api/contents/:id/verify-specs`.
-2. `specVerificationService.js` của backend gọi dịch vụ Python ở địa chỉ `SPEC_VERIFIER_URL` (`POST /kiem-chung`).
+1. Người dùng chọn mẫu sản phẩm và bấm "Kiểm chứng thông số" cho phiên bản đang chọn. Nếu phiên bản này chưa được lưu thành bài riêng, giao diện lưu trước bằng `persistGeneratedContent()` (bấm "Lưu" cũng chạy hàm này); sau đó trình duyệt gửi `POST /api/contents/:id/verify-specs` với mã bài riêng đó. Không kiểm "bản gộp gốc" mà CopyPro tự lưu khi sinh, vì bản này chứa mọi phiên bản.
+2. `specVerificationService.js` của backend đổi nội dung bài (lưu dạng HTML) sang chữ thường rồi gọi dịch vụ Python ở địa chỉ `SPEC_VERIFIER_URL` (`POST /kiem-chung`).
 3. Dịch vụ chạy tách tuyên bố → BM25 → trích xuất có neo nguồn → chuẩn hóa → A–D → lý do, rồi trả nhãn, đoạn nguồn và lý do của từng tuyên bố.
 4. Backend lưu kết quả vào `Content.specVerification`.
 5. Giao diện hiển thị bảng kết quả; trang chi tiết nội dung đọc lại kết quả đã lưu.
@@ -2045,18 +2053,25 @@ flowchart LR
 
 #### T7.3 Thay đổi trong repo CopyPro (nhánh `kiem-chung-thong-so`)
 
+Tạo nhánh từ `main` mới nhất khi bắt đầu Bước 11 và gộp `main` vào nhánh thường xuyên, nhất là trước Bước 40, vì `main` vẫn đang được sửa.
+
 | Tệp | Thay đổi | Bước |
 |---|---|---|
-| `backend/src/config/generatorModels.js`, `backend/src/services/aiService.js` | Thêm hai LLM sinh quảng cáo ([T3.3](#t3-3)) | [11](#b11) |
+| `backend/src/config/generatorModels.js`, `backend/src/services/aiService.js` (`GEMINI_MODEL_MAP`, `GROQ_MODEL_MAP`), `backend/src/utils/modelDisplayName.js` | Thêm hai LLM sinh quảng cáo ([T3.3](#t3-3)) với mã `gemini-3-6-flash` và `groq-gpt-oss-120b` | [11](#b11) |
+| `frontend/src/lib/generatorConfig.ts`, `frontend/src/lib/modelDisplayName.ts` | Hiện hai mô hình mới trên trang tạo bài | [11](#b11) |
+| Gói Pro (trang quản trị, lưu trong MongoDB); biến `GROQ_MODEL` | Thêm hai mã mô hình vào gói; để trống `GROQ_MODEL` | [11](#b11) |
 | `backend/src/models/Content.js` | Thêm `specVerification`: `productId`, `results[]`, `verifiedAt`, `verifierVersion` | [40](#b40) |
 | `backend/src/routes/user/contentRoutes.js` | Thêm `router.post('/:id/verify-specs', …)` | [40](#b40) |
 | `backend/src/controllers/user/contentController.js` | Thêm `verifySpecs` | [40](#b40) |
+| `backend/src/services/contentService.js` | Thêm `specVerification` vào `serializeContent` | [40](#b40) |
 | `backend/src/services/specVerificationService.js` (mới) | Gọi dịch vụ Python; xử lý quá thời gian; lưu kết quả | [40](#b40) |
 | `backend/src/validations/contentValidation.js` | Lược đồ kiểm tra đầu vào cho `verify-specs` | [40](#b40) |
 | `frontend/src/services/contentService.ts`, `frontend/src/hooks/queries/useContents.ts` | Hàm và hook gọi API mới | [40](#b40) |
-| `frontend/src/app/generate/Generator.tsx` | Nút "Kiểm chứng thông số" và ô chọn mẫu sản phẩm, cạnh điểm chất lượng và kết quả kiểm tra đạo văn | [40](#b40) |
+| `frontend/src/app/components/generator/GeneratorResults.tsx` | Nút "Kiểm chứng thông số" và ô chọn mẫu sản phẩm, cạnh điểm chất lượng và tỷ lệ đạo văn | [40](#b40) |
+| `frontend/src/app/generate/Generator.tsx`, `frontend/src/app/generate/persistGeneratedContent.ts` | Trạng thái và hàm xử lý nút; lưu phiên bản đang chọn thành bài riêng trước khi kiểm chứng | [40](#b40) |
 | `frontend/src/app/contents/[id]/ContentDetail.tsx` | Hiển thị kết quả đã lưu | [40](#b40) |
 | `SpecVerificationPanel.tsx` (mới) | Bảng kết quả kiểm chứng | [40](#b40) |
+| Kiểm thử frontend (`*.integration.test.tsx`, chạy `yarn test`) | Thêm kiểm thử cho nút kiểm chứng; các kiểm thử cũ vẫn qua | [40](#b40) |
 
 <a id="t7-4"></a>
 
@@ -2065,7 +2080,7 @@ flowchart LR
 - Mỗi tuyên bố tô màu theo nhãn: **Đúng** xanh lá, **Sai** đỏ, **Lệch điều kiện** cam, **Chưa đủ thông tin** xám; luôn có chữ tên nhãn, không chỉ dựa vào màu.
 - Mỗi tuyên bố có nút xem đoạn nguồn chính hãng và lý do.
 - Ô chọn mẫu sản phẩm: người dùng chọn mẫu; hệ thống không tự nhận diện sản phẩm, đúng phạm vi đề cương.
-- Kết quả được lưu cùng nội dung đã tạo và xem lại được ở trang chi tiết nội dung.
+- Kết quả được lưu cùng bài riêng của phiên bản đã kiểm và xem lại được ở trang chi tiết của bài đó.
 
 <a id="t7-5"></a>
 
