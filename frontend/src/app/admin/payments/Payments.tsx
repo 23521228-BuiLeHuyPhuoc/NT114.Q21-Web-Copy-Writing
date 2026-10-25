@@ -211,7 +211,7 @@ export function AdminPayments() {
                 </SelectContent>
               </Select>
               <Select value={filterMethod} onValueChange={setFilterMethod}>
-                <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="w-52"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tất cả phương thức</SelectItem>
                   {methodOptions.map(method => <SelectItem key={method} value={method}>{method}</SelectItem>)}
