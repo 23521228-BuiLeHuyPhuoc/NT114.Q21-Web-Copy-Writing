@@ -6,6 +6,8 @@ const BASE_GENERATOR_MODELS = [
   'groq-llama-3-3-70b',
   'groq-llama-3-1-8b',
   'gemini-3-flash-preview',
+  'gemini-3-6-flash',
+  'groq-gpt-oss-120b',
   'gemma-4-26b',
   'freegpt4-gpt-4',
 ];

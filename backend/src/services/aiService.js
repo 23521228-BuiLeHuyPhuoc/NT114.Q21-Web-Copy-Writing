@@ -198,6 +198,7 @@ const GEMINI_MODEL_MAP = {
   'gemini-3-flash-preview': 'gemini-3-flash-preview',
   'gemini-3-1-flash-lite': 'gemini-3.1-flash-lite',
   'gemini-3-5-flash': 'gemini-3.5-flash',
+  'gemini-3-6-flash': 'gemini-3.6-flash',
   'gemma-4-26b': 'gemma-4-26b-a4b-it',
   'gemma-4-31b': 'gemma-4-31b-it',
   gpt35: 'gemini-2.5-flash-lite',
@@ -209,6 +210,7 @@ const GEMINI_MODEL_MAP = {
 const GROQ_MODEL_MAP = {
   'groq-llama-3-3-70b': 'llama-3.3-70b-versatile',
   'groq-llama-3-1-8b': 'llama-3.1-8b-instant',
+  'groq-gpt-oss-120b': 'openai/gpt-oss-120b',
   llama3: 'llama-3.3-70b-versatile',
   'llama3-8b': 'llama-3.1-8b-instant',
 };
@@ -595,6 +597,18 @@ function buildFallbackVersion(payload, index) {
         'Lời kêu gọi hành động: Bắt đầu ngay hôm nay.',
       ].join('\n\n');
   }
+}
+
+const REASONING_TOKEN_HEADROOM = Number(process.env.REASONING_TOKEN_HEADROOM) || 8192;
+
+function isReasoningProviderModel(providerModel) {
+  const model = String(providerModel || '');
+  return /^gemini-(2\.5|[3-9])/.test(model) || model.startsWith('openai/gpt-oss');
+}
+
+function getProviderMaxTokens(payload, providerModel) {
+  const limit = getMaxOutputTokens(payload);
+  return isReasoningProviderModel(providerModel) ? limit + REASONING_TOKEN_HEADROOM : limit;
 }
 
 function buildFallbackOutput(payload) {
@@ -1011,7 +1025,7 @@ async function callGemini(payload) {
     : `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
   const providerPrompt = getProviderPrompt(payload);
   const controller = new AbortController();
-  const timeoutMs = model.startsWith('gemma-') ? 90000 : 30000;
+  const timeoutMs = model.startsWith('gemma-') || isReasoningProviderModel(model) ? 90000 : 30000;
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
@@ -1037,7 +1051,7 @@ async function callGemini(payload) {
           generationConfig: {
             temperature: 0.75,
             topP: 0.9,
-            maxOutputTokens: getMaxOutputTokens(payload),
+            maxOutputTokens: getProviderMaxTokens(payload, model),
           },
         }),
       },
@@ -1619,7 +1633,7 @@ async function callGroq(payload) {
         ],
         temperature: 0.75,
         top_p: 0.9,
-        max_completion_tokens: getMaxOutputTokens(payload),
+        max_completion_tokens: getProviderMaxTokens(payload, model),
       }),
     });
 

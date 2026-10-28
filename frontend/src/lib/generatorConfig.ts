@@ -25,6 +25,8 @@ export const MODELS = [
   { id: 'groq-llama-3-3-70b', name: 'Llama 3.3 70B (Groq)', badge: 'Groq', color: 'text-orange-600', desc: 'Groq-hosted Llama for longer copy and stronger reasoning.', latency: '~1-3s', tokens: '128K' },
   { id: 'groq-llama-3-1-8b', name: 'Llama 3.1 8B Instant', badge: 'Groq', color: 'text-amber-600', desc: 'Fast Llama option for drafts and bulk generation.', latency: '<1s', tokens: '128K' },
   { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', badge: 'Google', color: 'text-emerald-600', desc: 'Preview Gemini model exposed by the configured provider.', latency: '~2s', tokens: '1M' },
+  { id: 'gemini-3-6-flash', name: 'Gemini 3.6 Flash', badge: 'Google', color: 'text-green-700', desc: 'Stable Gemini 3.6 Flash model for marketing copy.', latency: '~5-20s', tokens: '1M' },
+  { id: 'groq-gpt-oss-120b', name: 'GPT-OSS 120B (Groq)', badge: 'Groq', color: 'text-orange-700', desc: 'OpenAI open-weight reasoning model hosted on Groq.', latency: '~2-10s', tokens: '131K' },
   { id: 'gemma-4-26b', name: 'Gemma 4 26B', badge: 'Google', color: 'text-orange-600', desc: 'Gemma model through the configured Gemini API.', latency: '~30-90s', tokens: '262K' },
   { id: 'freegpt4-gpt-4', name: 'GPT-4 Free API', badge: 'FreeGPT4', color: 'text-indigo-600', desc: 'Online FreeGPT4 endpoint configured by FREEGPT4_BASE_URL.', latency: '~5-30s', tokens: 'provider' },
 ];
