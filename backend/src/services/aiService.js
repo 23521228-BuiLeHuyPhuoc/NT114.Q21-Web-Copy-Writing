@@ -198,6 +198,7 @@ const GEMINI_MODEL_MAP = {
   'gemini-3-flash-preview': 'gemini-3-flash-preview',
   'gemini-3-1-flash-lite': 'gemini-3.1-flash-lite',
   'gemini-3-5-flash': 'gemini-3.5-flash',
+  'gemini-3-5-flash-lite': 'gemini-3.5-flash-lite',
   'gemini-3-6-flash': 'gemini-3.6-flash',
   'gemma-4-26b': 'gemma-4-26b-a4b-it',
   'gemma-4-31b': 'gemma-4-31b-it',
@@ -211,6 +212,8 @@ const GROQ_MODEL_MAP = {
   'groq-llama-3-3-70b': 'llama-3.3-70b-versatile',
   'groq-llama-3-1-8b': 'llama-3.1-8b-instant',
   'groq-gpt-oss-120b': 'openai/gpt-oss-120b',
+  'groq-gpt-oss-20b': 'openai/gpt-oss-20b',
+  'groq-qwen-3-8-27b': 'qwen/qwen3.8-27b',
   llama3: 'llama-3.3-70b-versatile',
   'llama3-8b': 'llama-3.1-8b-instant',
 };

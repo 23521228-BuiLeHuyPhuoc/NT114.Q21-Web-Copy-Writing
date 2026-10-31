@@ -2,14 +2,12 @@ const FINE_TUNED_MODEL_ACCESS = 'fine-tuned';
 
 const BASE_GENERATOR_MODELS = [
   'gemini-flash',
-  'gemini-flash-lite',
-  'groq-llama-3-3-70b',
-  'groq-llama-3-1-8b',
+  'gemini-3-5-flash-lite',
   'gemini-3-flash-preview',
   'gemini-3-6-flash',
   'groq-gpt-oss-120b',
-  'gemma-4-26b',
-  'freegpt4-gpt-4',
+  'groq-gpt-oss-20b',
+  'groq-qwen-3-8-27b',
 ];
 
 const ALL_GENERATOR_MODEL_ACCESS = [

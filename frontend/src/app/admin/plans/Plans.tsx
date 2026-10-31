@@ -70,7 +70,7 @@ function calculateWeeklyQuota(fiveHourQuota: string) {
 }
 
 const FINE_TUNED_MODEL_ACCESS = 'fine-tuned';
-const DEFAULT_LIMITED_MODELS = ['gemini-flash', 'gemini-flash-lite', 'freegpt4-gpt-4'];
+const DEFAULT_LIMITED_MODELS = ['gemini-flash', 'gemini-3-5-flash-lite'];
 const isDisabledModelAccess = (modelId: string) => modelId.startsWith('openrouter-') || modelId.startsWith('openrouter/') || modelId.endsWith(':free');
 
 const MODEL_ACCESS_OPTIONS = [

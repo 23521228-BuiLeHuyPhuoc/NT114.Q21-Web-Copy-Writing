@@ -181,7 +181,7 @@ function toId(value) {
 }
 
 const DEFAULT_PLAN_MODEL_ACCESS = {
-  free: ['gemini-flash-lite'],
+  free: ['gemini-3-5-flash-lite'],
   pro: ALL_GENERATOR_MODEL_ACCESS,
   business: ALL_GENERATOR_MODEL_ACCESS,
 };
